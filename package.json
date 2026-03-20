@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/sharadstartalpha-art/koniqtech/issues"
   },
-  "homepage": "https://github.com/sharadstartalpha-art/koniqtech#readme"
+  "homepage": "https://github.com/sharadstartalpha-art/koniqtech#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
 }

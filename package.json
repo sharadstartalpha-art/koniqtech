@@ -1,0 +1,21 @@
+{
+  "name": "koniqtech",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sharadstartalpha-art/koniqtech.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sharadstartalpha-art/koniqtech/issues"
+  },
+  "homepage": "https://github.com/sharadstartalpha-art/koniqtech#readme"
+}

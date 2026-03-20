@@ -1,9 +1,12 @@
-const http = require("http");
+const express = require("express");
+const app = express();
 
-const server = http.createServer((req, res) => {
-  res.end("Hello from Hostinger 🚀");
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello from Hostinger 🚀");
 });
 
-server.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

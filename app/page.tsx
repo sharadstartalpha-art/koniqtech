@@ -10,7 +10,7 @@ export default function Home() {
         Build smarter. Work faster. Scale your business with AI tools.
       </p>
 
-    <a href="/api/auth/signin">
+    <a href="/api/auth/signin?callbackUrl=/dashboard">
   <button className="bg-black text-white px-6 py-3 rounded-lg">
     Login with GitHub
   </button>

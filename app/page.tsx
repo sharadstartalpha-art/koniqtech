@@ -10,9 +10,11 @@ export default function Home() {
         Build smarter. Work faster. Scale your business with AI tools.
       </p>
 
-      <button className="bg-black text-white px-6 py-3 rounded-lg">
-        Get Started
-      </button>
+    <a href="/api/auth/signin">
+  <button className="bg-black text-white px-6 py-3 rounded-lg">
+    Login with GitHub
+  </button>
+</a>
 
     </main>
   );

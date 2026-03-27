@@ -1,55 +1,72 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 
 export async function POST(req: Request) {
-  const { plan } = await req.json();
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2026-03-25.dahlia",
+    });
 
-  // 🔥 Map plans → price
-  const priceMap: any = {
-    starter: {
-      amount: 1900,
-      credits: 500,
-    },
-    growth: {
-      amount: 4900,
-      credits: 2000,
-    },
-    pro: {
-      amount: 9900,
-      credits: 5000,
-    },
-  };
+    const { plan } = await req.json();
 
-  const selected = priceMap[plan];
-
-  if (!selected) {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-  }
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    mode: "payment",
-
-metadata: {
-  userId: "USER_ID_HERE",
-},
-
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `${plan} plan`,
-          },
-          unit_amount: selected.amount,
-        },
-        quantity: 1,
+    // 🔥 Plan mapping
+    const priceMap: Record<string, { amount: number; credits: number }> = {
+      starter: {
+        amount: 1900,
+        credits: 500,
       },
-    ],
+      growth: {
+        amount: 4900,
+        credits: 2000,
+      },
+      pro: {
+        amount: 9900,
+        credits: 5000,
+      },
+    };
 
-    success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?success=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
-  });
+    const selected = priceMap[plan];
 
-  return NextResponse.json({ url: session.url });
+    if (!selected) {
+      return NextResponse.json(
+        { error: "Invalid plan" },
+        { status: 400 }
+      );
+    }
+
+    // 🔥 TODO: replace with real user session later
+    const userId = "TEMP_USER_ID";
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+
+      metadata: {
+        userId,
+        credits: selected.credits.toString(),
+      },
+
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${plan.toUpperCase()} Plan`,
+            },
+            unit_amount: selected.amount,
+          },
+          quantity: 1,
+        },
+      ],
+
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
+    });
+
+    return NextResponse.json({ url: session.url });
+
+  } catch (error) {
+    console.error("Stripe Checkout Error:", error);
+    return new Response("Stripe error", { status: 500 });
+  }
 }

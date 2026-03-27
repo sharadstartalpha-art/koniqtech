@@ -1,68 +1,74 @@
-import OpenAI from "openai"
-import { prisma } from "@/lib/prisma"
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-})
+import OpenAI from "openai";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { message, projectId } = await req.json()
+    const { message, projectId } = await req.json();
 
+    // ❌ validate input
     if (!message || !projectId) {
-      return new Response("Missing data", { status: 400 })
+      return new Response("Missing data", { status: 400 });
     }
 
-    // ✅ get previous messages
+    // ✅ INIT OpenAI INSIDE FUNCTION (IMPORTANT FIX)
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
+
+    // ✅ get previous messages (context)
     const history = await prisma.message.findMany({
       where: { projectId },
       orderBy: { createdAt: "asc" },
       take: 20,
-    })
+    });
 
-    const formatted = history.map((m) => ({
+    const formattedMessages = history.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
-    }))
+    }));
 
-    // ✅ add new user message
-    formatted.push({ role: "user", content: message })
+    // ✅ add current user message
+    formattedMessages.push({
+      role: "user",
+      content: message,
+    });
 
+    // ✅ AI call
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are an AI assistant inside a SaaS product.",
+          content:
+            "You are an AI assistant inside a SaaS product that helps with lead generation, automation, and productivity.",
         },
-        ...formatted,
+        ...formattedMessages,
       ],
-    })
+    });
 
-    const reply = completion.choices[0].message.content || ""
+    const reply = completion.choices[0].message.content || "";
 
-    // ✅ SAVE USER MESSAGE
+    // ✅ save user message
     await prisma.message.create({
       data: {
         content: message,
         role: "user",
         projectId,
       },
-    })
+    });
 
-    // ✅ SAVE AI MESSAGE
+    // ✅ save AI response
     await prisma.message.create({
       data: {
         content: reply,
         role: "assistant",
         projectId,
       },
-    })
+    });
 
-    return Response.json({ reply })
-
-  } catch (err) {
-    console.error(err)
-    return new Response("AI error", { status: 500 })
+    return Response.json({ reply });
+  } catch (error) {
+    console.error("AI ERROR:", error);
+    return new Response("AI error", { status: 500 });
   }
 }

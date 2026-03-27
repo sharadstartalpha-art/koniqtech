@@ -11,7 +11,7 @@ const handler = NextAuth({
   ],
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user }: any) {
       if (!user?.email) return true;
 
       const dbUser = await prisma.user.upsert({

@@ -1,16 +1,26 @@
-import { prisma } from "../../../../lib/prisma"
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!params.id) {
-    return new Response("Project ID required", { status: 400 })
-  }
+  const { id } = await params;
 
-  await prisma.project.delete({
-    where: { id: params.id },
-  })
+  const body = await req.json();
 
-  return Response.redirect("http://localhost:3000/dashboard")
+  const project = await prisma.project.findUnique({
+  where: { id },
+});
+
+// ✅ FIX
+if (!project) {
+  return new Response("Project not found", { status: 404 });
+}
+
+const messages = await prisma.message.findMany({
+  where: { projectId: project.id },
+  orderBy: { createdAt: "asc" },
+});
+  return NextResponse.json(project);
 }

@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
 
 export async function POST(req: Request) {
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY!,
+  });
+
   const { leadIds } = await req.json();
 
   // fire & forget

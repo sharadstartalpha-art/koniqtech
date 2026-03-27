@@ -14,9 +14,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <h1 className="text-xl font-bold mb-8">KoniqTech</h1>
 
           <nav className="flex flex-col gap-4 text-sm">
-            <Link href="/dashboard">📊 Dashboard</Link>
-            <Link href="/product/lead-finder">🚀 Lead Finder</Link>
-            <Link href="/pricing">💳 Pricing</Link>
+            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/product/lead-finder">Lead Finder</Link>
+            <Link href="/pricing">Pricing</Link>
           </nav>
         </div>
 
@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       </div>
 
-      {/* Content */}
+      {/* Main */}
       <div className="flex-1 p-10 bg-gray-50 overflow-y-auto">
         {children}
       </div>

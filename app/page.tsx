@@ -3,7 +3,9 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+
+  const session = sessionData?.data;
 
   return (
     <div className="p-10">
@@ -24,16 +26,15 @@ export default function Home() {
             Welcome {session.user?.email}
           </p>
 
-          <a
-            href="/dashboard"
-            className="block mb-4 text-blue-600 underline"
-          >
+          <a href="/dashboard" className="text-blue-600 underline">
             Go to Dashboard
           </a>
 
+          <br />
+
           <button
             onClick={() => signOut()}
-            className="bg-gray-300 px-4 py-2 rounded"
+            className="mt-4 bg-gray-300 px-4 py-2 rounded"
           >
             Logout
           </button>

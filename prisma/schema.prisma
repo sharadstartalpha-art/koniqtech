@@ -89,7 +89,7 @@ model Lead {
 
   company String?
   website String?
-
+email String?
   status LeadStatus @default(NEW)
 
   createdAt DateTime @default(now())

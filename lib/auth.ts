@@ -12,7 +12,7 @@ export const authOptions = {
   ],
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user }: any) {
       if (!user.email) return false
 
       // ✅ auto-create user

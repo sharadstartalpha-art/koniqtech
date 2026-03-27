@@ -24,18 +24,22 @@ export default async function ProjectPage({ params }: any) {
   }
 
   // ✅ get project
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      product: true,
-    },
-  })
+ const project = await prisma.project.findUnique({
+  where: { id },
+  include: {
+    product: true, // ✅ ADD THIS
+  },
+});
 
+// ✅ FIX
+if (!project) {
+  return <div>Project not found</div>;
+}
 
- const messages = await prisma.message.findMany({
+const messages = await prisma.message.findMany({
   where: { projectId: project.id },
   orderBy: { createdAt: "asc" },
-})
+});
 
   // ❌ not found OR not yours
   if (!project || project.userId !== user.id) {
@@ -63,7 +67,7 @@ export default async function ProjectPage({ params }: any) {
 
     {/* ✅ AI CHAT HERE */}
     
-    <AIChat projectId={project.id} initialMessages={messages} />
+   <AIChat projectId={project.id} initialMessages={messages as any} />
 
     
 

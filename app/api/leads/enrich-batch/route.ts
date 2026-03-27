@@ -1,82 +1,29 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
-
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
-
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
-  });
-
-  const { leadIds } = await req.json();
-
-  // fire & forget
-  processLeads(leadIds);
-
-  return NextResponse.json({ started: true });
-}
-
-// 🔥 Email finder
-async function findEmail(domain: string) {
   try {
-    const res = await fetch(
-      `https://api.hunter.io/v2/domain-search?domain=${domain}&api_key=${process.env.HUNTER_API_KEY}`
-    );
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
 
-    const data = await res.json();
+    const { leadIds } = await req.json();
 
-    const emails = data?.data?.emails;
-
-    if (emails && emails.length > 0) {
-      return emails[0].value;
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-// 🔥 Main worker
-async function processLeads(leadIds: string[]) {
-  for (const id of leadIds) {
-    try {
+    for (const id of leadIds) {
       const lead = await prisma.lead.findUnique({
         where: { id },
-        include: { enrichment: true },
       });
 
       if (!lead) continue;
 
-      // ✅ skip already processed
-      if (lead.status === "ENRICHED") continue;
-
-      // update status
-      await prisma.lead.update({
-        where: { id },
-        data: { status: "ENRICHING" },
-      });
-
-      // 🔥 Extract domain
-      const domain = lead.website
-        ?.replace("https://", "")
-        .replace("http://", "")
-        .split("/")[0];
-
-      // 🔥 Get email
-      const email = domain ? await findEmail(domain) : null;
-
-      // 🔥 AI enrichment
       const prompt = `
 Company: ${lead.company}
 Website: ${lead.website}
 
-Return JSON:
-{
-  "summary": "...",
-  "outreach": "..."
-}
+Give:
+1. What they do (1 line)
+2. Why they need lead gen tools
+3. Cold email opener
 `;
 
       const completion = await openai.chat.completions.create({
@@ -84,47 +31,27 @@ Return JSON:
         messages: [{ role: "user", content: prompt }],
       });
 
-      let summary = "";
-      let outreach = "";
+      const text = completion.choices[0].message.content || "";
 
-      try {
-        const parsed = JSON.parse(
-          completion.choices[0].message.content || "{}"
-        );
-        summary = parsed.summary || "";
-        outreach = parsed.outreach || "";
-      } catch {
-        summary = completion.choices[0].message.content || "";
-      }
+      await prisma.leadEnrichment.upsert({
+        where: { leadId: id },
+        update: { summary: text },
+        create: {
+          leadId: id,
+          summary: text,
+        },
+      });
 
-      // 🔥 Save everything together
-      await prisma.$transaction([
-        prisma.lead.update({
-          where: { id },
-          data: {
-            email,
-            status: "ENRICHED", // ✅ FIXED
-          },
-        }),
-
-        prisma.leadEnrichment.upsert({
-          where: { leadId: id },
-          update: {
-            summary,
-            outreachLine: outreach,
-          },
-          create: {
-            leadId: id,
-            summary,
-            outreachLine: outreach,
-          },
-        }),
-      ]);
-    } catch (err) {
       await prisma.lead.update({
         where: { id },
-        data: { status: "FAILED" },
+        data: { status: "ENRICHED" },
       });
     }
+
+    return Response.json({ success: true });
+
+  } catch (err) {
+    console.error(err);
+    return new Response("Error", { status: 500 });
   }
 }

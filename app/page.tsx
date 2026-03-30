@@ -34,5 +34,3 @@ const data = sessionData?.data;
 }
 
 
-const { data, status } = useSession();
-console.log("SESSION:", data, status);

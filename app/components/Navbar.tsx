@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+const data = sessionData?.data;
 
   return (
     <div className="flex justify-between items-center mb-6">

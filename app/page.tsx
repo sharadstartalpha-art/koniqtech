@@ -8,7 +8,7 @@ const data = sessionData?.data;
 
   return (
     <div className="text-center mt-20">
-      {!session ? (
+      {!data ? (
         <>
           <h1 className="text-3xl font-bold mb-4">
             AI Lead Finder SaaS

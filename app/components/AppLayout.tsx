@@ -5,7 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const sessionData = useSession();
-const data = sessionData?.data;
+  const data = sessionData?.data;
 
   return (
     <div className="flex h-screen">
@@ -21,7 +21,7 @@ const data = sessionData?.data;
           </nav>
         </div>
 
-        {session && (
+        {data && (
           <button
             onClick={() => signOut()}
             className="bg-white text-black px-3 py-2 rounded"

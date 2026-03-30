@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+const data = sessionData?.data;
 
   return (
     <div className="flex h-screen">

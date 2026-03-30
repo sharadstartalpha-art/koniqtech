@@ -3,7 +3,8 @@
 import { useSession, signIn } from "next-auth/react";
 
 export default function Home() {
-  const { data: session } = useSession();
+  const sessionData = useSession();
+const data = sessionData?.data;
 
   return (
     <div className="text-center mt-20">

@@ -13,7 +13,7 @@ const data = sessionData?.data;
         KoniqTech
       </Link>
 
-      {session && (
+      {data && (
         <div className="flex gap-4 items-center">
           <Link href="/dashboard">Dashboard</Link>
           <button

@@ -37,7 +37,6 @@ export async function POST(req: Request) {
   const data = await res.json();
   const results = data.organic || [];
 
-  // ✅ USE REAL RESULTS
   const leads = await Promise.all(
     results.map((item: any) =>
       prisma.lead.create({
@@ -51,7 +50,6 @@ export async function POST(req: Request) {
     )
   );
 
-  // ✅ decrement credits AFTER
   if (leads.length > 0) {
     await prisma.userCredits.update({
       where: { userId },
@@ -63,7 +61,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // 🔥 trigger enrichment
   fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/leads/enrich-batch`, {
     method: "POST",
     body: JSON.stringify({

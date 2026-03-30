@@ -32,3 +32,7 @@ const data = sessionData?.data;
     </div>
   );
 }
+
+
+const { data, status } = useSession();
+console.log("SESSION:", data, status);

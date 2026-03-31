@@ -13,13 +13,18 @@ export default function LeadFinderPage() {
     setLoading(true);
 
     const res = await fetch("/api/leads/generate", {
-      method: "POST",
-      body: JSON.stringify({ query }),
-    });
+  method: "POST",
+  body: JSON.stringify({ query }),
+});
 
-    const data = await res.json();
+const data = await res.json();
 
-    setLeads(data.leads); // ✅ IMPORTANT
+if (!res.ok) {
+  alert(data.error); // ✅ shows "No credits"
+  return;
+}
+
+setLeads(data.leads);
 
     setLoading(false);
   };

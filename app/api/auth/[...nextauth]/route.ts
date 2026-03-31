@@ -2,7 +2,8 @@ import NextAuth from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { prisma } from "@/lib/prisma";
 
-const handler = NextAuth({
+// ✅ EXPORT THIS
+export const authOptions = {
   providers: [
     GitHubProvider({
       clientId: process.env.GITHUB_ID!,
@@ -36,6 +37,9 @@ const handler = NextAuth({
       return true;
     },
   },
-});
+};
+
+// ✅ USE IT HERE
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

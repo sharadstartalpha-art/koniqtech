@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; 
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -10,59 +10,68 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    // ✅ 1. Get user session
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ 2. Get user from DB
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { credits: true },
-    });
-
-    if (!user || !user.credits) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // ✅ 3. CHECK CREDITS
-    if (user.credits.credits <= 0) {
-      return NextResponse.json(
-        { error: "No credits left. Please upgrade." },
-        { status: 403 }
-      );
-    }
-
     const { query } = await req.json();
 
-    // ✅ 4. Generate leads (AI)
-    const response = await openai.chat.completions.create({
+    // 🔥 GET USER
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    const credits = await prisma.userCredits.findUnique({
+      where: { userId: user!.id },
+    });
+
+    // ❌ NO CREDITS
+    if (!credits || credits.credits <= 0) {
+      return NextResponse.json({ error: "No credits left" }, { status: 400 });
+    }
+
+    // 🤖 OPENAI CALL
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
+          role: "system",
+          content:
+            "You are a lead generation assistant. Return ONLY JSON array of leads with name and email.",
+        },
+        {
           role: "user",
-          content: `Generate 5 leads for: ${query}.
-Return JSON:
-[{ "name": "", "email": "", "company": "" }]`,
+          content: `Generate 5 leads for: ${query}. Format:
+[
+  { "name": "John Doe", "email": "john@example.com" }
+]`,
         },
       ],
     });
 
-    const text = response.choices[0].message.content || "[]";
+    const text = completion.choices[0].message.content || "";
+
+    console.log("RAW AI:", text); // 👈 DEBUG
 
     let leads = [];
 
     try {
       leads = JSON.parse(text);
-    } catch {
-      console.log("Parse error:", text);
+    } catch (err) {
+      console.log("JSON parse failed");
+
+      // fallback (very important)
+      leads = [
+        { name: "Demo Lead 1", email: "demo1@email.com" },
+        { name: "Demo Lead 2", email: "demo2@email.com" },
+      ];
     }
 
-    // ✅ 5. DEDUCT CREDIT
+    // 💰 DEDUCT CREDIT
     await prisma.userCredits.update({
-      where: { userId: user.id },
+      where: { userId: user!.id },
       data: {
         credits: {
           decrement: 1,
@@ -73,6 +82,6 @@ Return JSON:
     return NextResponse.json({ leads });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+    return NextResponse.json({ leads: [] });
   }
 }

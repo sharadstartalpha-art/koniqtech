@@ -1,50 +1,56 @@
 "use client";
 
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+
 export default function Pricing() {
-  const plans = [
-    { name: "Starter", price: "$19/mo", leads: "500 leads" },
-    { name: "Growth", price: "$49/mo", leads: "2000 leads" },
-    { name: "Pro", price: "$99/mo", leads: "5000 leads" },
-  ];
-
-  const handleUpgrade = async () => {
-    const res = await fetch("/api/stripe/checkout", {
-      method: "POST",
-    });
-
-    const data = await res.json();
-    window.location.href = data.url;
-  };
-
   return (
-    <div>
-      <h1 className="text-3xl font-semibold mb-10">Pricing</h1>
+    <PayPalScriptProvider
+      options={{
+        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
+      }}
+    >
+      <div>
+        <h1 className="text-3xl font-semibold mb-10">Pricing</h1>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <div
-            key={plan.name}
-            className={`p-6 rounded-2xl border shadow-sm ${
-              plan.name === "Pro"
-                ? "border-black scale-105 bg-white"
-                : "bg-white"
-            }`}
-          >
-            <h3 className="text-lg font-semibold">{plan.name}</h3>
-            <p className="text-3xl font-bold mt-2">{plan.price}</p>
-            <p className="text-gray-500 text-sm mt-1">
-              {plan.leads}
-            </p>
-
-            <button
-              onClick={handleUpgrade}
-              className="mt-6 w-full bg-black text-white py-2 rounded-lg"
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            { name: "Starter", price: "19" },
+            { name: "Growth", price: "49" },
+            { name: "Pro", price: "99" },
+          ].map((plan) => (
+            <div
+              key={plan.name}
+              className="p-6 rounded-2xl border shadow-sm bg-white"
             >
-              Upgrade
-            </button>
-          </div>
-        ))}
+              <h3 className="text-lg font-semibold">{plan.name}</h3>
+              <p className="text-3xl font-bold mt-2">${plan.price}/mo</p>
+
+              <div className="mt-6">
+                <PayPalButtons
+                  createOrder={(data, actions) => {
+                    return actions.order.create({
+                      purchase_units: [
+                        {
+                          amount: {
+                            value: plan.price,
+                          },
+                        },
+                      ],
+                    });
+                  }}
+                  onApprove={async (data, actions) => {
+                    await actions.order?.capture();
+
+                    alert("Payment successful 🎉");
+
+                    // 🔥 TODO: call your API to upgrade user plan
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </PayPalScriptProvider>
   );
 }

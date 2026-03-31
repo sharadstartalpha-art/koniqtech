@@ -1,3 +1,5 @@
+"use client";
+
 export default function Pricing() {
   const plans = [
     { name: "Starter", price: "$19/mo", leads: "500 leads" },
@@ -5,15 +7,14 @@ export default function Pricing() {
     { name: "Pro", price: "$99/mo", leads: "5000 leads" },
   ];
 
+  const handleUpgrade = async () => {
+    const res = await fetch("/api/stripe/checkout", {
+      method: "POST",
+    });
 
-const handleUpgrade = async () => {
-  const res = await fetch("/api/stripe/checkout", {
-    method: "POST",
-  });
-
-  const data = await res.json();
-  window.location.href = data.url;
-};
+    const data = await res.json();
+    window.location.href = data.url;
+  };
 
   return (
     <div>
@@ -36,11 +37,11 @@ const handleUpgrade = async () => {
             </p>
 
             <button
-  onClick={handleUpgrade}
-  className="mt-6 w-full bg-black text-white py-2 rounded-lg"
->
-  Upgrade
-</button>
+              onClick={handleUpgrade}
+              className="mt-6 w-full bg-black text-white py-2 rounded-lg"
+            >
+              Upgrade
+            </button>
           </div>
         ))}
       </div>

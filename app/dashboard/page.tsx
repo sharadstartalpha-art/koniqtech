@@ -20,18 +20,18 @@ export default function Dashboard() {
     <div>
       <h1 className="text-3xl font-semibold mb-6">Dashboard</h1>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="bg-white p-4 rounded shadow">
+      {/* Cards */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border">
           <p className="text-gray-500 text-sm">Credits</p>
-          <p className="text-2xl font-bold">
+          <p className="text-3xl font-bold mt-2">
             {credits?.credits ?? "..."}
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded shadow">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border">
           <p className="text-gray-500 text-sm">Projects</p>
-          <p className="text-2xl font-bold">
+          <p className="text-3xl font-bold mt-2">
             {projects.length}
           </p>
         </div>
@@ -40,30 +40,29 @@ export default function Dashboard() {
       {/* CTA */}
       <a
         href="/product/lead-finder"
-        className="inline-block bg-black text-white px-6 py-3 rounded mb-6"
+        className="inline-block bg-black text-white px-6 py-3 rounded-lg mb-6 hover:opacity-90"
       >
         🚀 Start Lead Finder
       </a>
 
       {/* Projects */}
-      <div className="space-y-4">
-        {projects.map((project) => (
-          <a
-            key={project.id}
-            href={`/project/${project.id}`}
-            className="block bg-white p-4 rounded shadow hover:shadow-md"
-          >
-            <h3 className="font-semibold">{project.name}</h3>
-          </a>
-        ))}
-
-        {/* Empty state */}
-        {projects.length === 0 && (
-          <p className="text-gray-500">
-            No projects yet. Click "Start Lead Finder".
-          </p>
-        )}
-      </div>
+      {projects.length === 0 ? (
+        <p className="text-gray-500">
+          No projects yet. Click "Start Lead Finder".
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {projects.map((p) => (
+            <a
+              key={p.id}
+              href={`/project/${p.id}`}
+              className="block bg-white p-4 rounded-xl shadow-sm border hover:shadow-md"
+            >
+              <h3 className="font-semibold">{p.name}</h3>
+            </a>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

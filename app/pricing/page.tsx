@@ -30,10 +30,11 @@ export default function Pricing() {
 <PayPalButtons
   createOrder={(data, actions) => {
     return actions.order.create({
+      intent: "CAPTURE", // ✅ ADD THIS LINE
       purchase_units: [
         {
           amount: {
-            currency_code: "USD", // ✅ FIXED
+            currency_code: "USD",
             value: plan.price,
           },
         },

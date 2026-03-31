@@ -45,17 +45,18 @@ export default function LeadFinderPage() {
       </div>
 
       {/* ✅ SHOW RESULTS */}
-      <div className="space-y-3">
-        {leads.map((lead, i) => (
-          <div
-            key={i}
-            className="p-4 border rounded bg-white shadow-sm"
-          >
-            <p className="font-semibold">{lead.name}</p>
-            <p className="text-gray-500 text-sm">{lead.email}</p>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-3">
+  {leads.map((lead, i) => (
+    <div
+      key={i}
+      className="p-4 border rounded bg-white shadow-sm"
+    >
+      <p className="font-semibold">{lead.name}</p>
+      <p className="text-gray-500 text-sm">{lead.email}</p>
+      <p className="text-gray-400 text-xs">{lead.company}</p>
+    </div>
+  ))}
+</div>
     </div>
   );
 }

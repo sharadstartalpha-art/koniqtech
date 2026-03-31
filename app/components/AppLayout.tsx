@@ -37,7 +37,7 @@ export default function AppLayout({
 
         {data && (
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="bg-white text-black px-3 py-2 rounded-lg hover:bg-gray-200"
           >
             Logout

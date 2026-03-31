@@ -7,28 +7,34 @@ export default function LeadFinderPage() {
   const [loading, setLoading] = useState(false);
   const [leads, setLeads] = useState<any[]>([]);
 
-  const handleGenerate = async () => {
-    if (!query) return;
-
+const handleGenerate = async () => {
+  try {
     setLoading(true);
 
     const res = await fetch("/api/leads/generate", {
-  method: "POST",
-  body: JSON.stringify({ query }),
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
 
-const data = await res.json();
+    const data = await res.json();
 
-if (!res.ok) {
-  alert(data.error); // ✅ shows "No credits"
-  return;
-}
+    console.log("API RESPONSE:", data); // 👈 debug
 
-setLeads(data.leads);
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
 
+    setLeads(data.leads); // ✅ THIS WAS MISSING
+  } catch (err) {
+    console.error(err);
+  } finally {
     setLoading(false);
-  };
-
+  }
+};
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-4">Lead Finder</h1>

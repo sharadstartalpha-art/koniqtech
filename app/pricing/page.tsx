@@ -5,6 +5,16 @@ export default function Pricing() {
     { name: "Pro", price: "$99/mo", leads: "5000 leads" },
   ];
 
+
+const handleUpgrade = async () => {
+  const res = await fetch("/api/stripe/checkout", {
+    method: "POST",
+  });
+
+  const data = await res.json();
+  window.location.href = data.url;
+};
+
   return (
     <div>
       <h1 className="text-3xl font-semibold mb-10">Pricing</h1>
@@ -25,9 +35,12 @@ export default function Pricing() {
               {plan.leads}
             </p>
 
-            <button className="mt-6 w-full bg-black text-white py-2 rounded-lg hover:opacity-90">
-              Upgrade
-            </button>
+            <button
+  onClick={handleUpgrade}
+  className="mt-6 w-full bg-black text-white py-2 rounded-lg"
+>
+  Upgrade
+</button>
           </div>
         ))}
       </div>

@@ -56,5 +56,5 @@ if (!product) {
   },
 })
 
-  return Response.redirect("http://localhost:3000/dashboard")
+  return Response.redirect("https://koniqtech.com/dashboard")
 }

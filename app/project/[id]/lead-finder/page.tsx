@@ -1,24 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 
 export default function LeadFinderPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const params = useParams(); // ✅ get project id
+  const [leads, setLeads] = useState<any[]>([]);
 
   const handleGenerate = async () => {
+    if (!query) return;
+
     setLoading(true);
 
-    await fetch("/api/leads/generate", {
+    const res = await fetch("/api/leads/generate", {
       method: "POST",
-      body: JSON.stringify({
-        projectId: params.id, // ✅ IMPORTANT
-        query,
-      }),
+      body: JSON.stringify({ query }),
     });
+
+    const data = await res.json();
+
+    setLeads(data.leads); // ✅ IMPORTANT
 
     setLoading(false);
   };
@@ -41,6 +42,19 @@ export default function LeadFinderPage() {
         >
           {loading ? "Generating..." : "Generate"}
         </button>
+      </div>
+
+      {/* ✅ SHOW RESULTS */}
+      <div className="space-y-3">
+        {leads.map((lead, i) => (
+          <div
+            key={i}
+            className="p-4 border rounded bg-white shadow-sm"
+          >
+            <p className="font-semibold">{lead.name}</p>
+            <p className="text-gray-500 text-sm">{lead.email}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

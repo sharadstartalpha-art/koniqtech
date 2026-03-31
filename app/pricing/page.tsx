@@ -26,26 +26,31 @@ export default function Pricing() {
               <p className="text-3xl font-bold mt-2">${plan.price}/mo</p>
 
               <div className="mt-6">
-                <PayPalButtons
-                  createOrder={(data, actions) => {
-                    return actions.order.create({
-                      purchase_units: [
-                        {
-                          amount: {
-                            value: plan.price,
-                          },
-                        },
-                      ],
-                    });
-                  }}
-                  onApprove={async (data, actions) => {
-                    await actions.order?.capture();
+                
+<PayPalButtons
+  createOrder={(data, actions) => {
+    return actions.order.create({
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "USD", // ✅ FIXED
+            value: plan.price,
+          },
+        },
+      ],
+    });
+  }}
+  onApprove={async (data, actions) => {
+    await actions.order?.capture();
 
-                    alert("Payment successful 🎉");
+    await fetch("/api/paypal/success", {
+      method: "POST",
+    });
 
-                    // 🔥 TODO: call your API to upgrade user plan
-                  }}
-                />
+    alert("Payment successful 🎉");
+  }}
+/>
+
               </div>
             </div>
           ))}

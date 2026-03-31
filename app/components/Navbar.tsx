@@ -17,7 +17,7 @@ const data = sessionData?.data;
         <div className="flex gap-4 items-center">
           <Link href="/dashboard">Dashboard</Link>
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="bg-gray-200 px-3 py-1 rounded"
           >
             Logout

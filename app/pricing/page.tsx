@@ -28,9 +28,10 @@ export default function Pricing() {
               <div className="mt-6">
                 
 <PayPalButtons
+  style={{ layout: "vertical" }} // ensures visible button
   createOrder={(data, actions) => {
     return actions.order.create({
-      intent: "CAPTURE", // ✅ ADD THIS LINE
+      intent: "CAPTURE",
       purchase_units: [
         {
           amount: {

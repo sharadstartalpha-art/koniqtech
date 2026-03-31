@@ -15,6 +15,8 @@ export default function LeadFinderPage() {
     setLoading(false);
   };
 
+
+  
   return (
     <div>
       <h1 className="text-2xl font-semibold mb-4">Lead Finder</h1>
@@ -28,11 +30,11 @@ export default function LeadFinderPage() {
         />
 
         <button
-          onClick={generate}
-          className="bg-black text-white px-4 py-2 rounded"
-        >
-          {loading ? "Generating..." : "Generate"}
-        </button>
+  onClick={handleGenerate}
+  className="bg-black text-white px-4 py-2 rounded"
+>
+  Generate
+</button>
       </div>
     </div>
   );

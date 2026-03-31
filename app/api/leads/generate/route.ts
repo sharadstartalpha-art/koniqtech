@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     });
   }
 
-  fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/leads/enrich-batch`, {
+  fetch("/api/leads/enrich-batch", {
     method: "POST",
     body: JSON.stringify({
       leadIds: leads.map((l) => l.id),

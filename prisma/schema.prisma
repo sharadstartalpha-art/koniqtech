@@ -7,45 +7,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//////////////////////////////////////////////////////
-// 🔐 AUTH SYSTEM (NextAuth Compatible)
-//////////////////////////////////////////////////////
-
 model User {
-  id       String  @id @default(cuid())
-  name     String?
-  email    String  @unique
-  password String?
-  image    String?
-
-  role Role @default(USER)
-
-  accounts Account[]
-  sessions Session[]
-
-  credits      UserCredits?
-  transactions Transaction[]
-
-  projects Project[]
-  leads    Lead[]
-
-  subscriptions Subscription[] // ✅ ADD THIS
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  image         String?
+  createdAt     DateTime       @default(now())
+  password      String?
+  role          Role           @default(USER)
+  updatedAt     DateTime       @updatedAt
+  accounts      Account[]
+  leads         Lead[]
+  projects      Project[]
+  sessions      Session[]
+  subscriptions Subscription[]
+  transactions  Transaction[]
+  credits       UserCredits?
 }
 
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
-  provider          String // google, github, facebook
+  provider          String
   providerAccountId String
   refresh_token     String?
   access_token      String?
   expires_at        Int?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -55,8 +44,105 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+model UserCredits {
+  id      String @id @default(cuid())
+  userId  String @unique
+  balance Int    @default(20)
+  user    User   @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id        String          @id @default(cuid())
+  userId    String
+  amount    Float
+  credits   Int
+  type      TransactionType
+  status    String
+  provider  String?
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  createdAt   DateTime  @default(now())
+  description String?
+  isActive    Boolean   @default(true)
+  projects    Project[]
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  chats     Chat[]
+  leads     Lead[]
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  projectId String
+  createdAt DateTime  @default(now())
+  project   Project   @relation(fields: [projectId], references: [id])
+  messages  Message[]
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  createdAt DateTime    @default(now())
+  chatId    String
+  role      MessageRole
+  chat      Chat        @relation(fields: [chatId], references: [id])
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String?
+  name      String?
+  email     String?
+  company   String?
+  website   String?
+  phone     String?
+  location  String?
+  source    String?
+  score     Int?
+  createdAt DateTime @default(now())
+  project   Project? @relation(fields: [projectId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String
+  price         Float
+  credits       Int
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String
+  planId    String
+  status    String
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  plan      Plan      @relation(fields: [planId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, planId])
 }
 
 enum Role {
@@ -64,151 +150,12 @@ enum Role {
   ADMIN
 }
 
-//////////////////////////////////////////////////////
-// 💰 WALLET / CREDITS SYSTEM
-//////////////////////////////////////////////////////
-
-model UserCredits {
-  id      String @id @default(cuid())
-  userId  String @unique
-  balance Int    @default(20) // free credits
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model Transaction {
-  id       String          @id @default(cuid())
-  userId   String
-  amount   Float
-  credits  Int
-  type     TransactionType
-  status   String
-  provider String? // paypal, stripe
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
-
 enum TransactionType {
   CREDIT_PURCHASE
   CREDIT_USAGE
 }
 
-//////////////////////////////////////////////////////
-// 🧠 MULTI-SAAS PRODUCTS SYSTEM
-//////////////////////////////////////////////////////
-
-model Product {
-  id          String  @id @default(cuid())
-  name        String
-  slug        String  @unique
-  description String?
-  isActive    Boolean @default(true)
-
-  projects Project[]
-
-  createdAt DateTime @default(now())
-}
-
-model Project {
-  id        String @id @default(cuid())
-  name      String
-  userId    String
-  productId String
-
-  chats Chat[]
-  leads Lead[]
-
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
-}
-
-//////////////////////////////////////////////////////
-// 🤖 AI CHAT SYSTEM
-//////////////////////////////////////////////////////
-
-model Chat {
-  id        String @id @default(cuid())
-  projectId String
-
-  messages Message[]
-
-  createdAt DateTime @default(now())
-
-  project Project @relation(fields: [projectId], references: [id])
-}
-
-model Message {
-  id      String      @id @default(cuid())
-  chatId  String
-  role    MessageRole
-  content String
-
-  createdAt DateTime @default(now())
-
-  chat Chat @relation(fields: [chatId], references: [id])
-}
-
 enum MessageRole {
   USER
   ASSISTANT
-}
-
-//////////////////////////////////////////////////////
-// 🎯 LEAD SYSTEM
-//////////////////////////////////////////////////////
-
-model Lead {
-  id        String  @id @default(cuid())
-  userId    String
-  projectId String?
-
-  name     String?
-  email    String?
-  company  String?
-  website  String?
-  phone    String?
-  location String?
-
-  source String? // google, apollo, hunter
-  score  Int? // AI score
-
-  createdAt DateTime @default(now())
-
-  user    User     @relation(fields: [userId], references: [id])
-  project Project? @relation(fields: [projectId], references: [id])
-}
-
-//////////////////////////////////////////////////////
-// 💳 SUBSCRIPTION / PLANS
-//////////////////////////////////////////////////////
-
-model Plan {
-  id       String  @id @default(cuid())
-  name     String
-  price    Float
-  credits  Int
-  isActive Boolean @default(true)
-
-  subscriptions Subscription[] // ✅ ADD THIS
-
-  createdAt DateTime @default(now())
-}
-
-model Subscription {
-  id        String   @id @default(cuid())
-  userId    String
-  planId    String
-
-  status    String
-  startDate DateTime @default(now())
-  endDate   DateTime?
-
-  user User @relation(fields: [userId], references: [id])
-  plan Plan @relation(fields: [planId], references: [id])
-
-  @@unique([userId, planId]) // ✅ ADD HERE
 }

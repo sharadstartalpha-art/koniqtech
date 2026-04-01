@@ -3,51 +3,47 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL") // ⭐ THIS FIXES EVERYTHING
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
+//////////////////////////////////////////////////////
+// 🔐 AUTH SYSTEM (NextAuth Compatible)
+//////////////////////////////////////////////////////
 
 model User {
-  id       String       @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String?
-  email    String?      @unique
+  email    String  @unique
+  password String?
   image    String?
-  credits  UserCredits?
-  // ✅ ADD THESE
+
+  role Role @default(USER)
+
   accounts Account[]
   sessions Session[]
+
+  credits      UserCredits?
+  transactions Transaction[]
+
   projects Project[]
-}
+  leads    Lead[]
 
-model Project {
-  id   String @id @default(cuid())
-  name String
+  subscriptions Subscription[] // ✅ ADD THIS
 
-  // 👇 ADD THIS
-  leads Lead[]
-
-  createdAt DateTime  @default(now())
-  User      User?     @relation(fields: [userId], references: [id])
-  userId    String?
-  product   Product   @relation(fields: [productId], references: [id])
-  productId String
-  Message   Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
-  provider          String
+  provider          String // google, github, facebook
   providerAccountId String
   refresh_token     String?
   access_token      String?
   expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -63,73 +59,156 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Product {
-  id   String @id @default(cuid())
-  name String
-  slug String @unique
-
-  projects Project[] // ⭐ ADD THIS
+enum Role {
+  USER
+  ADMIN
 }
 
-model Message {
-  id        String   @id @default(cuid())
-  content   String
-  role      String // "user" | "assistant"
+//////////////////////////////////////////////////////
+// 💰 WALLET / CREDITS SYSTEM
+//////////////////////////////////////////////////////
+
+model UserCredits {
+  id      String @id @default(cuid())
+  userId  String @unique
+  balance Int    @default(20) // free credits
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id       String          @id @default(cuid())
+  userId   String
+  amount   Float
+  credits  Int
+  type     TransactionType
+  status   String
+  provider String? // paypal, stripe
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum TransactionType {
+  CREDIT_PURCHASE
+  CREDIT_USAGE
+}
+
+//////////////////////////////////////////////////////
+// 🧠 MULTI-SAAS PRODUCTS SYSTEM
+//////////////////////////////////////////////////////
+
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  projects Project[]
+
+  createdAt DateTime @default(now())
+}
+
+model Project {
+  id        String @id @default(cuid())
+  name      String
+  userId    String
+  productId String
+
+  chats Chat[]
+  leads Lead[]
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// 🤖 AI CHAT SYSTEM
+//////////////////////////////////////////////////////
+
+model Chat {
+  id        String @id @default(cuid())
   projectId String
+
+  messages Message[]
+
   createdAt DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id])
 }
 
+model Message {
+  id      String      @id @default(cuid())
+  chatId  String
+  role    MessageRole
+  content String
+
+  createdAt DateTime @default(now())
+
+  chat Chat @relation(fields: [chatId], references: [id])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+//////////////////////////////////////////////////////
+// 🎯 LEAD SYSTEM
+//////////////////////////////////////////////////////
+
 model Lead {
-  id String @id @default(cuid())
+  id        String  @id @default(cuid())
+  userId    String
+  projectId String?
 
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
+  name     String?
+  email    String?
+  company  String?
+  website  String?
+  phone    String?
+  location String?
 
-  company String?
-  website String?
-email String?
-  status LeadStatus @default(NEW)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  enrichment LeadEnrichment?
-}
-
-model LeadEnrichment {
-  id String @id @default(cuid())
-
-  leadId String @unique
-  lead   Lead   @relation(fields: [leadId], references: [id])
-
-  summary      String?
-  industry     String?
-  painPoints   String?
-  outreachLine String?
-
-  rawContent String?
+  source String? // google, apollo, hunter
+  score  Int? // AI score
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
 }
 
-enum LeadStatus {
-  NEW
-  ENRICHING
-  ENRICHED
-  FAILED
+//////////////////////////////////////////////////////
+// 💳 SUBSCRIPTION / PLANS
+//////////////////////////////////////////////////////
+
+model Plan {
+  id       String  @id @default(cuid())
+  name     String
+  price    Float
+  credits  Int
+  isActive Boolean @default(true)
+
+  subscriptions Subscription[] // ✅ ADD THIS
+
+  createdAt DateTime @default(now())
 }
 
-model UserCredits {
-  id String @id @default(cuid())
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  planId    String
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  status    String
+  startDate DateTime @default(now())
+  endDate   DateTime?
 
-  credits Int    @default(20)
-  plan    String @default("FREE")
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
 
-  updatedAt DateTime @updatedAt
+  @@unique([userId, planId]) // ✅ ADD HERE
 }

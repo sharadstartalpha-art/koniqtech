@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -15,7 +16,12 @@ export default function RegisterPage() {
       body: JSON.stringify({ email, password }),
     })
 
-    alert("Account created 🎉")
+    await signIn("credentials", {
+  email,
+  password,
+  redirect: true,
+  callbackUrl: "/onboarding", // 🔥 or "/dashboard"
+});
     router.push("/dashboard")
   }
 

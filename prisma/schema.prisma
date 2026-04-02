@@ -111,6 +111,7 @@ model Lead {
   projectId String?
   name      String?
   email     String?
+  contactEmail String?   // ✅ REQUIRED
   company   String?
   website   String?
   phone     String?
@@ -119,10 +120,9 @@ model Lead {
   score     Int?
   createdAt DateTime @default(now())
 
-  project Project? @relation(fields: [projectId], references: [id])
-  user    User     @relation(fields: [userId], references: [id])
+  project   Project? @relation(fields: [projectId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
-  // 🔥 ADD THESE (VERY IMPORTANT)
   sequences LeadSequence[]
   status    LeadStatus?
 }
@@ -189,7 +189,7 @@ model LeadSequence {
 model LeadStatus {
   id        String   @id @default(cuid())
   leadId    String   @unique
-  status    String   @default("NEW") // NEW, CONTACTED, REPLIED, CLOSED
+  status    String   @default("NEW")
   updatedAt DateTime @updatedAt
 
   lead Lead @relation(fields: [leadId], references: [id])

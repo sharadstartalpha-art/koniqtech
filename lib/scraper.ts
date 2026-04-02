@@ -1,13 +1,12 @@
 import axios from "axios"
 
-export async function extractEmails(url: string): Promise<string[]> {
+export function extractEmails(html: string): string[] {
   try {
-    const res = await axios.get(url)
+    const matches = html.match(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+    )
 
-    const emails =
-      res.data.match(
-        /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
-      ) || []
+    const emails = (matches || []) as string[] // ✅ FIX
 
     return [...new Set(emails)]
   } catch {

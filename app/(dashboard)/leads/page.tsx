@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 export default async function LeadsPage() {
   const leads = await prisma.lead.findMany({
     include: {
-      status: true,
+      status: true, // ✅ works only after db push
     },
   })
 
@@ -14,7 +14,11 @@ export default async function LeadsPage() {
       {leads.map((lead) => (
         <div key={lead.id} className="bg-white p-4 mb-2 rounded shadow">
           <p>{lead.name}</p>
-          <p>{lead.contactEmail}</p>
+
+          {/* ✅ SAFE FALLBACK */}
+          <p>{lead.contactEmail || lead.email}</p>
+
+          {/* ✅ SAFE STATUS */}
           <p>Status: {lead.status?.status || "NEW"}</p>
         </div>
       ))}

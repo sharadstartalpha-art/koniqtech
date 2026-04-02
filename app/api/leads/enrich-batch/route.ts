@@ -1,20 +1,20 @@
-import OpenAI from "openai";
-import { prisma } from "@/lib/prisma";
+import OpenAI from "openai"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(req: Request) {
   try {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY!,
-    });
+    })
 
-    const { leadIds } = await req.json();
+    const { leadIds } = await req.json()
 
     for (const id of leadIds) {
       const lead = await prisma.lead.findUnique({
         where: { id },
-      });
+      })
 
-      if (!lead) continue;
+      if (!lead) continue
 
       const prompt = `
 Company: ${lead.company}
@@ -24,34 +24,22 @@ Give:
 1. What they do (1 line)
 2. Why they need lead gen tools
 3. Cold email opener
-`;
+`
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
-      });
+      })
 
-      const text = completion.choices[0].message.content || "";
+      const text = completion.choices[0].message.content || ""
 
-      await prisma.leadEnrichment.upsert({
-        where: { leadId: id },
-        update: { summary: text },
-        create: {
-          leadId: id,
-          summary: text,
-        },
-      });
-
-      await prisma.lead.update({
-        where: { id },
-        data: { status: "ENRICHED" },
-      });
+      // ✅ TEMP: no DB storage (safe)
+      console.log("Enrichment result:", text)
     }
 
-    return Response.json({ success: true });
-
+    return Response.json({ success: true })
   } catch (err) {
-    console.error(err);
-    return new Response("Error", { status: 500 });
+    console.error(err)
+    return new Response("Error", { status: 500 })
   }
 }

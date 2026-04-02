@@ -28,8 +28,8 @@ if (!user) {
   user = await prisma.user.create({
     data: {
       email: session.user.email,
-      name: session.user.name,
-      image: session.user.image,
+     name: session.user.email || "User",
+     image: null,
     },
   })
 }

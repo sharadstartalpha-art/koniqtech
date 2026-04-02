@@ -1,74 +1,86 @@
-import OpenAI from "openai";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server"
+import OpenAI from "openai"
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+})
 
 export async function POST(req: Request) {
   try {
-    const { message, projectId } = await req.json();
+    const { message, projectId } = await req.json()
 
-    // ❌ validate input
     if (!message || !projectId) {
-      return new Response("Missing data", { status: 400 });
+      return NextResponse.json(
+        { error: "Missing message or projectId" },
+        { status: 400 }
+      )
     }
 
-    // ✅ INIT OpenAI INSIDE FUNCTION (IMPORTANT FIX)
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY!,
-    });
-
-    // ✅ get previous messages (context)
-    const history = await prisma.message.findMany({
+    // ✅ Find or create chat
+    let chat = await prisma.chat.findFirst({
       where: { projectId },
+    })
+
+    if (!chat) {
+      chat = await prisma.chat.create({
+        data: { projectId },
+      })
+    }
+
+    // ✅ Get history
+    const history = await prisma.message.findMany({
+      where: { chatId: chat.id },
       orderBy: { createdAt: "asc" },
       take: 20,
-    });
+    })
 
-    const formattedMessages = history.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
+    // ✅ Format messages
+    const formattedMessages: OpenAI.Chat.ChatCompletionMessageParam[] =
+      history.map((msg) => ({
+        role: msg.role === "USER" ? "user" : "assistant",
+        content: msg.content,
+      }))
 
-    // ✅ add current user message
     formattedMessages.push({
       role: "user",
       content: message,
-    });
+    })
 
-    // ✅ AI call
+    // ✅ OpenAI
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an AI assistant inside a SaaS product that helps with lead generation, automation, and productivity.",
-        },
-        ...formattedMessages,
-      ],
-    });
+      messages: formattedMessages,
+    })
 
-    const reply = completion.choices[0].message.content || "";
+    const reply =
+      completion.choices[0]?.message?.content || "No response"
 
-    // ✅ save user message
+    // ✅ Save USER
     await prisma.message.create({
       data: {
+        chatId: chat.id,
         content: message,
-        role: "user",
-        projectId,
+        role: "USER",
       },
-    });
+    })
 
-    // ✅ save AI response
+    // ✅ Save AI
     await prisma.message.create({
       data: {
+        chatId: chat.id,
         content: reply,
-        role: "assistant",
-        projectId,
+        role: "ASSISTANT",
       },
-    });
+    })
 
-    return Response.json({ reply });
+    return NextResponse.json({ success: true, reply })
   } catch (error) {
-    console.error("AI ERROR:", error);
-    return new Response("AI error", { status: 500 });
+    console.error(error)
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    )
   }
 }

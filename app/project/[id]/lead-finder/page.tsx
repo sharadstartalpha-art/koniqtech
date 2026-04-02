@@ -1,73 +1,88 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState } from "react"
 
-export default function LeadFinderPage() {
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [leads, setLeads] = useState<any[]>([]);
+export default function LeadFinder() {
+  const [query, setQuery] = useState("")
+  const [leads, setLeads] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
 
-const handleGenerate = async () => {
-  try {
-    setLoading(true);
+  const generateLeads = async () => {
+    setLoading(true)
 
-    const res = await fetch("/api/leads/generate", {
+    const res = await fetch("/api/leads/real", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({ query }),
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
-    console.log("API RESPONSE:", data); // 👈 debug
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    setLeads(data.leads); // ✅ THIS WAS MISSING
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setLoading(false);
+    setLeads(data.leads)
+    setLoading(false)
   }
-};
+
+  const scoreLead = async (lead: any, index: number) => {
+    const res = await fetch("/api/leads/score", {
+      method: "POST",
+      body: JSON.stringify({ lead }),
+    })
+
+    const data = await res.json()
+
+    // ✅ attach score to that lead
+    const updated = [...leads]
+    updated[index] = { ...lead, ...data }
+
+    setLeads(updated)
+  }
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold mb-4">Lead Finder</h1>
+      <h1 className="text-xl font-bold mb-4">Lead Finder</h1>
 
-      <div className="flex gap-2 mb-6">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Find SaaS founders in USA"
-          className="border px-4 py-2 rounded w-full"
-        />
+      <input
+        placeholder="e.g. dentists in bangalore"
+        className="border p-2 mr-2"
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
-        <button
-          onClick={handleGenerate}
-          className="bg-black text-white px-4 py-2 rounded"
-        >
-          {loading ? "Generating..." : "Generate"}
-        </button>
+      <button
+        onClick={generateLeads}
+        className="bg-black text-white px-4 py-2 rounded"
+      >
+        {loading ? "Loading..." : "Generate"}
+      </button>
+
+      <div className="mt-6">
+        {leads.map((lead, i) => (
+          <div key={i} className="bg-white p-4 mb-4 rounded shadow">
+            
+            <p className="font-semibold">{lead.name}</p>
+            <p>{lead.website}</p>
+            <p className="text-green-600">{lead.email}</p>
+
+            {/* 🔥 BUTTON INSIDE LOOP */}
+            <button
+              onClick={() => scoreLead(lead, i)}
+              className="bg-blue-500 text-white px-3 py-1 mt-2 rounded"
+            >
+              Score & Generate Email
+            </button>
+
+            {/* ✅ SHOW RESULT HERE */}
+            {lead.score && (
+              <div className="mt-3 text-sm bg-gray-50 p-3 rounded">
+                <p><strong>Score:</strong> {lead.score}</p>
+                <p><strong>Reason:</strong> {lead.reason}</p>
+                <p className="text-green-700">
+                  <strong>Email:</strong> {lead.email}
+                </p>
+              </div>
+            )}
+
+          </div>
+        ))}
       </div>
-
-      {/* ✅ SHOW RESULTS */}
-    <div className="space-y-3">
-  {leads.map((lead, i) => (
-    <div
-      key={i}
-      className="p-4 border rounded bg-white shadow-sm"
-    >
-      <p className="font-semibold">{lead.name}</p>
-      <p className="text-gray-500 text-sm">{lead.email}</p>
-      <p className="text-gray-400 text-xs">{lead.company}</p>
     </div>
-  ))}
-</div>
-    </div>
-  );
+  )
 }

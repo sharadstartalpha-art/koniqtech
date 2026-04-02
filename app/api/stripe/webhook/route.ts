@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     await prisma.userCredits.update({
       where: { userId },
       data: {
-        credits: {
+        balance: {
           increment: 500,
         },
       },

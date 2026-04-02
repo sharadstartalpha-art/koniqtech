@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 body {
-  background: #fff;
-  color: #000;
+  background: #f9fafb;
 }

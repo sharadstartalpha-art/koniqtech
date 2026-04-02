@@ -57,6 +57,8 @@ export default function HomePage() {
         >
           Create Free Account
         </a>
+
+        alert("🎁 You got 20 free leads!")
       </section>
     </div>
   )

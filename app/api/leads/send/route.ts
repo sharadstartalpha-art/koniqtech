@@ -1,5 +1,6 @@
+export const dynamic = "force-dynamic"
+
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
 import { resend } from "@/lib/email"
 
 export async function POST(req: Request) {
@@ -19,9 +20,7 @@ export async function POST(req: Request) {
         from: "KoniqTech <onboarding@resend.dev>",
         to: lead.contactEmail,
         subject: "Quick question",
-        html: `
-          <p>${lead.generatedEmail || "Hi,"}</p>
-        `,
+        html: `<p>${lead.generatedEmail || "Hi,"}</p>`,
       })
 
       results.push({

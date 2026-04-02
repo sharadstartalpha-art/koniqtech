@@ -16,11 +16,11 @@ export default function RegisterPage() {
       body: JSON.stringify({ email, password }),
     })
 
-    await signIn("credentials", {
+   await signIn("credentials", {
   email,
   password,
   redirect: true,
-  callbackUrl: "/onboarding", // 🔥 or "/dashboard"
+  callbackUrl: "/dashboard",
 });
     router.push("/dashboard")
   }

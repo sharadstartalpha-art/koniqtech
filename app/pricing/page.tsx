@@ -1,20 +1,34 @@
-"use client"
+"use client";
 
 export default function PricingPage() {
-  const handleUpgrade = async (plan: string) => {
-    const res = await fetch("/api/paypal/checkout", {
-      method: "POST",
-      body: JSON.stringify({ plan }),
-    })
+  const handleUpgrade = async (planId: string) => {
+    try {
+      const res = await fetch("/api/paypal/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ planId }), // ✅ FIXED
+      });
 
-    const data = await res.json()
+      const data = await res.json();
 
-    if (data.url) {
-      window.location.href = data.url
-    } else {
-      alert("Payment failed ❌")
+      // 🔥 Extract PayPal approval URL
+      const approveLink = data?.links?.find(
+        (link: any) => link.rel === "approve"
+      );
+
+      if (approveLink?.href) {
+        window.location.href = approveLink.href;
+      } else {
+        alert("Payment initialization failed. Try again.");
+        console.error("PayPal response:", data);
+      }
+    } catch (error) {
+      console.error("Upgrade error:", error);
+      alert("Something went wrong. Please try again.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-10">
@@ -29,9 +43,7 @@ export default function PricingPage() {
           <p>10 leads</p>
           <p>No email sending</p>
 
-          <button
-            className="mt-4 w-full bg-gray-300 py-2 rounded"
-          >
+          <button className="mt-4 w-full bg-gray-300 py-2 rounded">
             Start Free
           </button>
         </div>
@@ -45,7 +57,7 @@ export default function PricingPage() {
           <p>Email sending</p>
 
           <button
-            onClick={() => handleUpgrade("PRO")}
+            onClick={() => handleUpgrade("PRO_PLAN_ID")} // 🔥 replace with real ID
             className="mt-4 w-full bg-black text-white py-2 rounded"
           >
             Upgrade
@@ -60,7 +72,7 @@ export default function PricingPage() {
           <p>Automation</p>
 
           <button
-            onClick={() => handleUpgrade("AGENCY")}
+            onClick={() => handleUpgrade("AGENCY_PLAN_ID")} // 🔥 replace with real ID
             className="mt-4 w-full bg-black text-white py-2 rounded"
           >
             Upgrade
@@ -69,5 +81,5 @@ export default function PricingPage() {
 
       </div>
     </div>
-  )
+  );
 }

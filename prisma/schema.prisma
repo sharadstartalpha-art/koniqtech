@@ -121,6 +121,10 @@ model Lead {
 
   project Project? @relation(fields: [projectId], references: [id])
   user    User     @relation(fields: [userId], references: [id])
+
+  // 🔥 ADD THESE (VERY IMPORTANT)
+  sequences LeadSequence[]
+  status    LeadStatus?
 }
 
 model Plan {
@@ -159,4 +163,34 @@ enum TransactionType {
 enum MessageRole {
   USER
   ASSISTANT
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  leadId    String
+  email     String
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model LeadSequence {
+  id          String   @id @default(cuid())
+  leadId      String
+  step        Int
+  subject     String
+  content     String
+  sent        Boolean  @default(false)
+  scheduledAt DateTime
+  createdAt   DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id])
+}
+
+model LeadStatus {
+  id        String   @id @default(cuid())
+  leadId    String   @unique
+  status    String   @default("NEW") // NEW, CONTACTED, REPLIED, CLOSED
+  updatedAt DateTime @updatedAt
+
+  lead Lead @relation(fields: [leadId], references: [id])
 }

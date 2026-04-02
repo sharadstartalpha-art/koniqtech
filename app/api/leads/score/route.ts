@@ -6,48 +6,36 @@ const openai = new OpenAI({
 })
 
 export async function POST(req: Request) {
-  try {
-    const { lead } = await req.json()
+  const { lead } = await req.json()
 
-    const prompt = `
-You are a B2B sales expert.
+  const prompt = `
+Write a cold email for this business.
 
-Lead:
 Name: ${lead.name}
 Website: ${lead.website}
 
 Return JSON:
 {
-  "score": number (0-100),
-  "reason": "why this is a good lead",
-  "email": "cold email opener"
+  "score": number,
+  "reason": "short reason",
+  "generatedEmail": "full cold email message"
 }
 `
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "user", content: prompt },
-      ],
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: prompt }],
+  })
+
+  try {
+    return NextResponse.json(
+      JSON.parse(completion.choices[0].message.content || "")
+    )
+  } catch {
+    return NextResponse.json({
+      score: 50,
+      reason: "Default",
+      generatedEmail: "Hi, I can help grow your business.",
     })
-
-    const text = completion.choices[0].message.content || ""
-
-    let result
-
-    try {
-      result = JSON.parse(text)
-    } catch {
-      result = {
-        score: 50,
-        reason: "Default scoring",
-        email: "Hi, I can help you grow your business.",
-      }
-    }
-
-    return NextResponse.json(result)
-  } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: "Failed" }, { status: 500 })
   }
 }

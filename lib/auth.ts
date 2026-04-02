@@ -1,11 +1,11 @@
-import { NextAuthOptions } from "next-auth"
-import GithubProvider from "next-auth/providers/github"
-import GoogleProvider from "next-auth/providers/google"
-import FacebookProvider from "next-auth/providers/facebook"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
-import bcrypt from "bcrypt"
+import { NextAuthOptions } from "next-auth";
+import GithubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+import FacebookProvider from "next-auth/providers/facebook";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcrypt";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -33,22 +33,26 @@ export const authOptions: NextAuthOptions = {
         password: {},
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.email || !credentials?.password) return null;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-        })
+        });
 
-        if (!user || !user.password) return null
+        if (!user || !user.password) return null;
 
         const isValid = await bcrypt.compare(
           credentials.password,
           user.password
-        )
+        );
 
-        if (!isValid) return null
+        if (!isValid) return null;
 
-        return user
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
       },
     }),
   ],
@@ -58,10 +62,27 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    // ✅ Ensure user ID persists
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+
+    // ✅ Attach user ID to session
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+
+    // ✅ Create credits on first login
     async signIn({ user }) {
       const existing = await prisma.userCredits.findUnique({
         where: { userId: user.id },
-      })
+      });
 
       if (!existing) {
         await prisma.userCredits.create({
@@ -69,16 +90,15 @@ export const authOptions: NextAuthOptions = {
             userId: user.id,
             balance: 20,
           },
-        })
+        });
       }
-      return true
+
+      return true;
     },
 
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub as string
-      }
-      return session
+    // 🔥 CRITICAL FIX (YOUR MAIN BUG)
+    async redirect({ url, baseUrl }) {
+      return `${baseUrl}/dashboard`;
     },
   },
 
@@ -87,4 +107,4 @@ export const authOptions: NextAuthOptions = {
   },
 
   secret: process.env.NEXTAUTH_SECRET,
-}
+};

@@ -1,29 +1,15 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 
-export async function POST() {
-  const session = await getServerSession(authOptions)
+export async function POST(req: Request) {
+  const { plan } = await req.json()
 
-  const userId = (session?.user as any)?.id
-
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    )
+  // 🔥 Replace with your real PayPal links
+  const links: any = {
+    PRO: "https://www.paypal.com/paypalme/YOUR_LINK/19",
+    AGENCY: "https://www.paypal.com/paypalme/YOUR_LINK/49",
   }
 
-  // ✅ UPDATE CREDITS (FIXED)
-  await prisma.userCredits.update({
-    where: { userId },
-    data: {
-      balance: {
-        increment: 2000, // add credits
-      },
-    },
+  return NextResponse.json({
+    url: links[plan],
   })
-
-  return NextResponse.json({ success: true })
 }

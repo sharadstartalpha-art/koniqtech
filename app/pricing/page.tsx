@@ -1,64 +1,67 @@
-"use client";
-
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+"use client"
 
 export default function PricingPage() {
+  const handleUpgrade = async (plan: string) => {
+    const res = await fetch("/api/paypal/checkout", {
+      method: "POST",
+      body: JSON.stringify({ plan }),
+    })
+
+    const data = await res.json()
+
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      alert("Payment failed ❌")
+    }
+  }
+
   return (
-    <div className="p-10 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-10">
+      <h1 className="text-3xl font-bold text-center mb-10">Pricing</h1>
 
-      <h1 className="text-3xl font-bold text-center mb-10">
-        Pricing
-      </h1>
-
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
 
         {/* FREE */}
-        <div className="border p-6 rounded">
-          <h2 className="text-xl font-semibold">Free</h2>
-          <p className="text-gray-500">$0</p>
+        <div className="bg-white p-6 rounded shadow text-center">
+          <h2 className="text-xl font-bold mb-2">Free</h2>
+          <p className="text-2xl mb-4">$0</p>
+          <p>10 leads</p>
+          <p>No email sending</p>
 
-          <ul className="mt-4 text-sm">
-            <li>10 leads</li>
-            <li>No email sending</li>
-          </ul>
-
-          <button className="mt-6 bg-gray-200 w-full py-2 rounded">
+          <button
+            className="mt-4 w-full bg-gray-300 py-2 rounded"
+          >
             Start Free
           </button>
         </div>
 
         {/* PRO */}
-        <div className="border p-6 rounded border-black">
-          <h2 className="text-xl font-semibold">Pro</h2>
-          <p className="text-gray-500">$19/month</p>
-
-          <ul className="mt-4 text-sm">
-            <li>1000 leads</li>
-            <li>AI scoring</li>
-            <li>Email sending</li>
-          </ul>
+        <div className="bg-white p-6 rounded shadow text-center border-2 border-black">
+          <h2 className="text-xl font-bold mb-2">Pro</h2>
+          <p className="text-2xl mb-4">$19/month</p>
+          <p>1000 leads</p>
+          <p>AI scoring</p>
+          <p>Email sending</p>
 
           <button
-            onClick={() => fetch("/api/stripe/checkout")}
-            className="mt-6 bg-black text-white w-full py-2 rounded"
+            onClick={() => handleUpgrade("PRO")}
+            className="mt-4 w-full bg-black text-white py-2 rounded"
           >
             Upgrade
           </button>
         </div>
 
         {/* AGENCY */}
-        <div className="border p-6 rounded">
-          <h2 className="text-xl font-semibold">Agency</h2>
-          <p className="text-gray-500">$49/month</p>
-
-          <ul className="mt-4 text-sm">
-            <li>Unlimited leads</li>
-            <li>Automation</li>
-          </ul>
+        <div className="bg-white p-6 rounded shadow text-center">
+          <h2 className="text-xl font-bold mb-2">Agency</h2>
+          <p className="text-2xl mb-4">$49/month</p>
+          <p>Unlimited leads</p>
+          <p>Automation</p>
 
           <button
-            onClick={() => fetch("/api/stripe/checkout")}
-            className="mt-6 bg-black text-white w-full py-2 rounded"
+            onClick={() => handleUpgrade("AGENCY")}
+            className="mt-4 w-full bg-black text-white py-2 rounded"
           >
             Upgrade
           </button>

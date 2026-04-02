@@ -1,1 +1,0 @@
-alert("You got 20 free leads 🎁")

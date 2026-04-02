@@ -15,22 +15,22 @@ export default function PricingPage() {
         {/* FREE */}
         <div className="border p-6 rounded">
           <h2 className="text-xl font-semibold">Free</h2>
-          <p className="text-gray-500">₹0</p>
+          <p className="text-gray-500">$0</p>
 
           <ul className="mt-4 text-sm">
             <li>10 leads</li>
             <li>No email sending</li>
           </ul>
 
-          <a href="/register" className="block mt-6 bg-gray-200 p-2 text-center rounded">
+          <button className="mt-6 bg-gray-200 w-full py-2 rounded">
             Start Free
-          </a>
+          </button>
         </div>
 
         {/* PRO */}
         <div className="border p-6 rounded border-black">
           <h2 className="text-xl font-semibold">Pro</h2>
-          <p className="text-gray-500">₹999/month</p>
+          <p className="text-gray-500">$19/month</p>
 
           <ul className="mt-4 text-sm">
             <li>1000 leads</li>
@@ -40,7 +40,7 @@ export default function PricingPage() {
 
           <button
             onClick={() => fetch("/api/stripe/checkout")}
-            className="block mt-6 bg-black text-white p-2 w-full rounded"
+            className="mt-6 bg-black text-white w-full py-2 rounded"
           >
             Upgrade
           </button>
@@ -49,7 +49,7 @@ export default function PricingPage() {
         {/* AGENCY */}
         <div className="border p-6 rounded">
           <h2 className="text-xl font-semibold">Agency</h2>
-          <p className="text-gray-500">₹2999/month</p>
+          <p className="text-gray-500">$49/month</p>
 
           <ul className="mt-4 text-sm">
             <li>Unlimited leads</li>
@@ -57,8 +57,8 @@ export default function PricingPage() {
           </ul>
 
           <button
-            onClick={() => fetch("/api/paypal/checkout")}
-            className="block mt-6 bg-black text-white p-2 w-full rounded"
+            onClick={() => fetch("/api/stripe/checkout")}
+            className="mt-6 bg-black text-white w-full py-2 rounded"
           >
             Upgrade
           </button>

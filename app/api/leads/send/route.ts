@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
 import { resend } from "@/lib/email"
 
 export async function POST(req: Request) {
   try {
     const { leads } = await req.json()
 
+    if (!leads || !Array.isArray(leads)) {
+      return NextResponse.json({ error: "Invalid leads" }, { status: 400 })
+    }
+
     const results = []
 
     for (const lead of leads) {
       if (!lead.contactEmail) continue
 
-      const response = await resend.emails.send({
+      await resend.emails.send({
         from: "KoniqTech <onboarding@resend.dev>",
         to: lead.contactEmail,
         subject: "Quick question",
         html: `
-          <p>Hi,</p>
-          <p>${lead.generatedEmail || "Let's connect!"}</p>
+          <p>${lead.generatedEmail || "Hi,"}</p>
         `,
       })
 
@@ -25,13 +29,16 @@ export async function POST(req: Request) {
         sent: true,
         status: "SENT",
         sentAt: new Date(),
-        messageId: response.data?.id,
       })
     }
 
-    return NextResponse.json({ leads: results })
-  } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: "Failed" }, { status: 500 })
+    return NextResponse.json({ results })
+  } catch (error) {
+    console.error("Send Error:", error)
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    )
   }
 }

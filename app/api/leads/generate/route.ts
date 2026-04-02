@@ -1,35 +1,40 @@
-import { NextResponse } from "next/server";
-import OpenAI from "openai";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { NextResponse } from "next/server"
+import OpenAI from "openai"
+import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
-});
+})
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions)
 
     if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { query } = await req.json();
+    const { query } = await req.json()
 
-    // 🔥 GET USER
+    // ✅ GET USER
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-    });
+    })
 
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // ✅ GET CREDITS
     const credits = await prisma.userCredits.findUnique({
-      where: { userId: user!.id },
-    });
+      where: { userId: user.id },
+    })
 
     // ❌ NO CREDITS
-    if (!credits || credits.credits <= 0) {
-      return NextResponse.json({ error: "No credits left" }, { status: 400 });
+    if (!credits || credits.balance <= 0) {
+      return NextResponse.json({ error: "No credits left" }, { status: 400 })
     }
 
     // 🤖 OPENAI CALL
@@ -49,39 +54,34 @@ export async function POST(req: Request) {
 ]`,
         },
       ],
-    });
+    })
 
-    const text = completion.choices[0].message.content || "";
+    const text = completion.choices[0].message.content || ""
 
-    console.log("RAW AI:", text); // 👈 DEBUG
-
-    let leads = [];
+    let leads = []
 
     try {
-      leads = JSON.parse(text);
-    } catch (err) {
-      console.log("JSON parse failed");
-
-      // fallback (very important)
+      leads = JSON.parse(text)
+    } catch {
       leads = [
         { name: "Demo Lead 1", email: "demo1@email.com" },
         { name: "Demo Lead 2", email: "demo2@email.com" },
-      ];
+      ]
     }
 
-    // 💰 DEDUCT CREDIT
+    // 💰 DEDUCT CREDIT (FIXED)
     await prisma.userCredits.update({
-      where: { userId: user!.id },
+      where: { userId: user.id },
       data: {
-        credits: {
+        balance: {
           decrement: 1,
         },
       },
-    });
+    })
 
-    return NextResponse.json({ leads });
+    return NextResponse.json({ leads })
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ leads: [] });
+    console.error(err)
+    return NextResponse.json({ leads: [] })
   }
 }

@@ -2,62 +2,49 @@
 
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
-export default function Pricing() {
+export default function PricingPage() {
   return (
-    <PayPalScriptProvider
-      options={{
-        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!,
-      }}
-    >
-      <div>
-        <h1 className="text-3xl font-semibold mb-10">Pricing</h1>
+    <div className="max-w-4xl mx-auto py-10">
+      <h1 className="text-3xl font-bold text-center mb-10">
+        Upgrade Your Plan 🚀
+      </h1>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { name: "Starter", price: "19" },
-            { name: "Growth", price: "49" },
-            { name: "Pro", price: "99" },
-          ].map((plan) => (
-            <div
-              key={plan.name}
-              className="p-6 rounded-2xl border shadow-sm bg-white"
-            >
-              <h3 className="text-lg font-semibold">{plan.name}</h3>
-              <p className="text-3xl font-bold mt-2">${plan.price}/mo</p>
-
-              <div className="mt-6">
-                
-<PayPalButtons
-  style={{ layout: "vertical" }} // ensures visible button
-  createOrder={(data, actions) => {
-    return actions.order.create({
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          amount: {
-            currency_code: "USD",
-            value: plan.price,
-          },
-        },
-      ],
-    });
-  }}
-  onApprove={async (data, actions) => {
-    await actions.order?.capture();
-
-    await fetch("/api/paypal/success", {
-      method: "POST",
-    });
-
-    alert("Payment successful 🎉");
-  }}
-/>
-
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-6">
+        <Plan
+          name="Starter"
+          price="$9"
+          credits="500"
+        />
+        <Plan
+          name="Growth"
+          price="$29"
+          credits="2000"
+        />
+        <Plan
+          name="Pro"
+          price="$79"
+          credits="10000"
+        />
       </div>
-    </PayPalScriptProvider>
-  );
+    </div>
+  )
+}
+
+function Plan({ name, price, credits }: any) {
+  return (
+    <div className="border p-6 rounded-xl text-center">
+      <h2 className="text-xl font-bold">{name}</h2>
+      <p className="text-3xl my-4">{price}</p>
+      <p>{credits} credits</p>
+
+      <button
+  onClick={() => {
+  window.location.href = `/api/paypal/checkout?plan=GROWTH`
+}}
+  className="mt-4 bg-black text-white px-4 py-2 rounded"
+>
+  Upgrade
+</button>
+    </div>
+  )
 }

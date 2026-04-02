@@ -37,7 +37,11 @@ if (!project) {
 }
 
 const messages = await prisma.message.findMany({
-  where: { projectId: project.id },
+  where: {
+  chat: {
+    projectId: project.id,
+  },
+},
   orderBy: { createdAt: "asc" },
 });
 

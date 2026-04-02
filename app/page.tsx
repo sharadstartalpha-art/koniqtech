@@ -1,4 +1,9 @@
+"use client"
+
+import { useRouter } from "next/navigation"
+
 export default function HomePage() {
+const router = useRouter()
   return (
     <div className="min-h-screen bg-white text-black px-6 py-12">
 
@@ -51,13 +56,9 @@ export default function HomePage() {
           Start getting clients today
         </h2>
 
-        <a
-          href="/register"
-          className="bg-black text-white px-6 py-3 rounded"
-        >
-          Create Free Account
-        </a>
-
+        <button onClick={() => router.push("/register")}>
+      Get Started
+    </button>
         alert("🎁 You got 20 free leads!")
       </section>
     </div>

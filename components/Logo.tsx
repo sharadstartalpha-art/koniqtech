@@ -6,13 +6,13 @@ export default function Logo() {
       <Image
         src="/logo.png"
         alt="KoniqTech"
-        width={32}
-        height={32}
+        width={40}   // 🔥 increased
+        height={40}
         priority
       />
-      <span className="font-bold text-lg">
-        KoniqTech
-      </span>
+      <span className="font-bold text-xl hidden sm:block">
+  KoniqTech
+</span>
     </div>
   );
 }

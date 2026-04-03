@@ -4,30 +4,16 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
 
-      {/* NAVBAR */}
-      <nav className="flex justify-between items-center px-8 py-4 border-b sticky top-0 bg-white z-50">
-        <Logo />
-
-        <div className="flex gap-4 items-center">
-          <a href="/login" className="text-sm border px-4 py-2 rounded">
-            Login
-          </a>
-
-          <a
-            href="/register"
-            className="bg-primary text-white px-5 py-2 rounded-lg shadow"
-          >
-            Get Started
-          </a>
-        </div>
-      </nav>
-
+      
+      
       {/* HERO */}
-      <section className="text-center py-20 px-6 max-w-5xl mx-auto">
-
+<section className="text-center py-20 px-6 max-w-5xl mx-auto bg-gradient-to-b from-white to-gray-100 rounded-xl">
+        
         <h1 className="text-5xl font-bold leading-tight mb-6">
-          Find Leads. <span className="text-primary">Close Deals.</span> Faster.
-        </h1>
+  Find Leads.{" "}
+  <span className="text-blue-600">Close Deals.</span>{" "}
+  Faster.
+</h1>
 
         <p className="text-lg text-gray-600 mb-8">
           AI-powered lead generation, scoring, and outreach platform  

@@ -6,7 +6,7 @@ export const metadata = {
   title: "KoniqTech",
   description: "AI Lead Generation SaaS",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.png", // must match file
   },
 };
 

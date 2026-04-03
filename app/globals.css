@@ -6,3 +6,11 @@
 body {
   background: #f9fafb;
 }
+
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: scale(1.03);
+}

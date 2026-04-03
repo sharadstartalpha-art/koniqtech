@@ -1,5 +1,7 @@
 import Logo from "@/components/Logo";
+import EmailPopup from "@/components/EmailPopup";
 
+<EmailPopup />
 export default function Home() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
@@ -70,26 +72,65 @@ export default function Home() {
           Everything you need to scale outreach
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
 
-          {[
-            "Find real business leads",
-            "AI scoring & insights",
-            "Auto cold email generator",
-            "Send emails in 1 click",
-            "Follow-up sequences",
-            "CRM pipeline tracking",
-          ].map((item, i) => (
-            <div
-              key={i}
-              className="p-6 border rounded-xl hover:shadow-md transition"
-            >
-              <p className="font-medium">{item}</p>
-            </div>
-          ))}
+  {[
+    "Find real business leads",
+    "AI scoring & insights",
+    "Auto cold email generator",
+    "Send emails in 1 click",
+    "Follow-up sequences",
+    "CRM pipeline tracking"
+  ].map((item, i) => (
+    <div
+      key={i}
+      className="p-6 bg-white rounded-xl border shadow-sm 
+                 hover:shadow-xl hover:-translate-y-1 
+                 transition-all duration-300 cursor-pointer"
+    >
+      <p className="font-medium text-gray-800">{item}</p>
+    </div>
+  ))}
 
-        </div>
+</div>
       </section>
+
+
+
+<section className="py-20 text-center">
+  <h2 className="text-3xl font-bold mb-10">Simple Pricing</h2>
+
+  <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+
+    {/* BASIC */}
+    <div className="p-6 border rounded-xl">
+      <h3 className="text-xl font-semibold">Starter</h3>
+      <p className="text-3xl font-bold my-4">$0</p>
+      <p className="text-gray-500 mb-6">Limited credits</p>
+      <button className="w-full border py-2 rounded-lg">Get Started</button>
+    </div>
+
+    {/* PRO (HIGHLIGHT) */}
+    <div className="p-6 rounded-xl border-2 border-blue-600 shadow-lg scale-105 bg-white">
+      <h3 className="text-xl font-semibold">Pro 🚀</h3>
+      <p className="text-3xl font-bold my-4">$29/mo</p>
+      <p className="text-gray-500 mb-6">Unlimited leads</p>
+      <button className="w-full bg-blue-600 text-white py-2 rounded-lg">
+        Upgrade Now
+      </button>
+    </div>
+
+    {/* AGENCY */}
+    <div className="p-6 border rounded-xl">
+      <h3 className="text-xl font-semibold">Agency</h3>
+      <p className="text-3xl font-bold my-4">$79/mo</p>
+      <p className="text-gray-500 mb-6">Team features</p>
+      <button className="w-full border py-2 rounded-lg">Contact Sales</button>
+    </div>
+
+  </div>
+</section>
+
 
 
 {/* TESTIMONIALS */}

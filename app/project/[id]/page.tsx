@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { notFound } from "next/navigation"
-import AIChat from "@/app/components/AIChat"
+import AIChat from "@/components/AIChat"
 
 export default async function ProjectPage({ params }: any) {
   const { id } = await params;

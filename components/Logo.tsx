@@ -3,7 +3,7 @@ import Image from "next/image";
 export default function Logo() {
   return (
     <Image
-      src="/logo.svg"
+      src="/logo.png"
       alt="KoniqTech"
       width={120}
       height={40}

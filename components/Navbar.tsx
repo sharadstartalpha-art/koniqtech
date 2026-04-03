@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-
+import Logo from "@/components/Logo";
 export default function Navbar() {
   const { data: session } = useSession();
 
   return (
     <nav className="flex justify-between items-center p-4 border-b">
-      <Link href="/" className="font-bold text-xl">
-        KoniqTech
-      </Link>
+       <a href="/">
+        <Logo />
+      </a>
+
 
       <div className="flex gap-4">
         {!session ? (

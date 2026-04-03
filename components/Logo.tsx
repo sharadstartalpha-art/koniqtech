@@ -2,12 +2,15 @@ import Image from "next/image";
 
 export default function Logo() {
   return (
-    <Image
-      src="/logo.png"
-      alt="KoniqTech"
-      width={40}
-      height={40}
-      priority
-    />
+    <div className="flex items-center">
+      <Image
+        src="/logo.png"
+        alt="KoniqTech"
+        width={120}
+        height={40}
+        priority
+        className="object-contain"
+      />
+    </div>
   );
 }

@@ -1,6 +1,14 @@
 import "./globals.css";
-import Navbar from "@/app/components/Navbar";
-import SessionWrapper from "./components/SessionWrapper";
+import Navbar from "@/components/Navbar";
+import SessionWrapper from "@/components/SessionWrapper";
+
+export const metadata = {
+  title: "KoniqTech",
+  description: "AI Lead Generation SaaS",
+  icons: {
+    icon: "/favicon.png",
+  },
+};
 
 export default function RootLayout({
   children,

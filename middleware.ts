@@ -1,19 +1,24 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getToken } from "next-auth/jwt"
+import { withAuth } from "next-auth/middleware";
 
-export async function middleware(req: NextRequest) {
-  const token = await getToken({ req })
+export default withAuth({
+  callbacks: {
+    authorized: ({ req, token }) => {
+      const pathname = req.nextUrl.pathname;
 
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login")
-  const isDashboard = req.nextUrl.pathname.startsWith("/dashboard")
+      // ✅ Allow auth routes
+      if (pathname.startsWith("/api/auth")) {
+        return true;
+      }
 
-  if (!token && isDashboard) {
-    return NextResponse.redirect(new URL("/login", req.url))
-  }
+      // 🔒 Protect everything else
+      return !!token;
+    },
+  },
+});
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
-  }
-
-  return NextResponse.next()
-}
+export const config = {
+  matcher: [
+    "/dashboard/:path*",
+    "/api/:path*",
+  ],
+};

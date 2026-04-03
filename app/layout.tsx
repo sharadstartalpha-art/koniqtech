@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import SessionWrapper from "@/components/SessionWrapper";
+import "./globals.css";   // ✅ MUST BE HERE
 
 export default function RootLayout({ children }: any) {
   return (

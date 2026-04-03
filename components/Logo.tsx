@@ -1,10 +1,13 @@
+import Image from "next/image";
+
 export default function Logo() {
   return (
     <div className="flex items-center gap-2">
-      <img
+      <Image
         src="/logo.png"
         alt="KoniqTech"
-        className="w-8 h-8"
+        width={32}
+        height={32}
       />
       <span className="font-bold text-lg">
         KoniqTech

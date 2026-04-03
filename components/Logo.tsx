@@ -5,8 +5,8 @@ export default function Logo() {
     <Image
       src="/logo.png"
       alt="KoniqTech"
-      width={120}
-      height={40}
+      width={240}
+      height={80}
       priority
     />
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import UpgradeModal from "@/components/UpgradeModal";
 
 export default function LeadFinder() {
   const [query, setQuery] = useState("");
@@ -174,4 +175,10 @@ export default function LeadFinder() {
       </div>
     </div>
   );
+
+
+{showUpgrade && (
+  <UpgradeModal onClose={() => setShowUpgrade(false)} />
+)}
+
 }

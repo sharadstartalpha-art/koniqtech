@@ -6,15 +6,15 @@ export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return Response.json({ credits: 0 });
+    return Response.json({ balance: 0 });
   }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    include: { credits: true },
+    include: { balance: true },
   });
 
   return Response.json({
-    credits: user?.credits?.balance || 0,
+    balance: user?.balance?.balance || 0,
   });
 }

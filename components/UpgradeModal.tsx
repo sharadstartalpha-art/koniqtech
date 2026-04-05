@@ -1,72 +1,84 @@
 "use client";
 
-export default function UpgradeModal({ onClose }: any) {
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-  const upgrade = async (planId: string) => {
+export default function UpgradeModal({ onClose }: any) {
+  const [timeLeft, setTimeLeft] = useState(300); // 5 min
+
+  // ⏳ TIMER
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+
+  const upgrade = async (plan: string) => {
     const res = await fetch("/api/paypal/checkout", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ plan }),
     });
 
     const data = await res.json();
 
-    const approveLink = data?.links?.find(
-      (l: any) => l.rel === "approve"
-    );
-
-    if (approveLink?.href) {
-      window.location.href = approveLink.href;
-    } else {
-      alert("Payment failed");
+    if (data.url) {
+      window.location.href = data.url;
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-      <div className="bg-white p-6 rounded-xl w-[360px] text-center shadow-xl">
-
-        <h2 className="text-xl font-bold mb-2">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white p-6 rounded-xl w-[380px] text-center shadow-xl"
+      >
+        <h2 className="text-2xl font-bold mb-2">
           Upgrade Required 🚀
         </h2>
 
-        <p className="text-red-500 text-sm mt-2">
-          ⚠ You're out of credits
+        {/* 🔴 URGENCY */}
+        <p className="text-red-500 text-sm mb-3">
+          Offer expires in {minutes}:{seconds.toString().padStart(2, "0")}
         </p>
 
-        <ul className="text-sm text-gray-600 mt-4 space-y-1 text-left">
+        {/* 💎 VALUE */}
+        <ul className="text-sm text-gray-600 mb-4 text-left">
           <li>✔ Unlimited leads</li>
           <li>✔ AI scoring</li>
           <li>✔ Email automation</li>
           <li>✔ Priority processing</li>
         </ul>
 
-        {/* 💰 CTA BUTTONS */}
+        {/* 🔥 PRO PLAN (HIGHLIGHT) */}
         <button
-          onClick={() => upgrade("PRO_PLAN_ID")}
-          className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg"
+          onClick={() => upgrade("PRO")}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg mb-2 hover:scale-105 transition"
         >
-          Upgrade Pro ($19)
+          🔥 Upgrade Pro - $19
         </button>
 
+        {/* AGENCY */}
         <button
-          onClick={() => upgrade("AGENCY_PLAN_ID")}
-          className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg"
+          onClick={() => upgrade("AGENCY")}
+          className="w-full border py-2 rounded-lg"
         >
-          Upgrade Agency ($49)
+          Agency - $49
         </button>
 
         <button
           onClick={onClose}
           className="mt-4 text-sm text-gray-500"
         >
-          Cancel
+          Maybe later
         </button>
-
-      </div>
+      </motion.div>
     </div>
   );
 }

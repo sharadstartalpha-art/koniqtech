@@ -49,20 +49,23 @@ export default function PricingPage() {
         </div>
 
         {/* PRO */}
-        <div className="bg-white p-6 rounded shadow text-center border-2 border-black">
-          <h2 className="text-xl font-bold mb-2">Pro</h2>
-          <p className="text-2xl mb-4">$19/month</p>
-          <p>1000 leads</p>
-          <p>AI scoring</p>
-          <p>Email sending</p>
+   <div className="bg-white p-6 rounded shadow border-2 border-blue-600 relative scale-105">
 
-          <button
-            onClick={() => handleUpgrade("PRO_PLAN_ID")} // 🔥 replace with real ID
-            className="mt-4 w-full bg-black text-white py-2 rounded"
-          >
-            Upgrade
-          </button>
-        </div>
+  {/* BEST VALUE TAG */}
+  <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
+    BEST VALUE
+  </span>
+
+  <h2 className="text-xl font-bold mb-2">Pro</h2>
+  <p className="text-2xl mb-4">$19/month</p>
+
+  <button
+    onClick={() => handleUpgrade("PRO")}
+    className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:scale-105 transition"
+  >
+    Upgrade
+  </button>
+</div>
 
         {/* AGENCY */}
         <div className="bg-white p-6 rounded shadow text-center">
@@ -79,7 +82,23 @@ export default function PricingPage() {
           </button>
         </div>
 
+<p className="text-center text-red-500 text-sm mb-6">
+  🔥 Limited offer: Get 2x credits today only
+</p>
+
+
+
       </div>
     </div>
   );
+
+{credits === 0 && (
+  <button
+    onClick={() => setShowUpgrade(true)}
+    className="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg"
+  >
+    Upgrade 🚀
+  </button>
+)}
+
 }

@@ -11,7 +11,7 @@ export default function LeadFinder() {
   const [credits, setCredits] = useState<number | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
-  // ✅ FETCH CREDITS
+  // ✅ Fetch credits
   const fetchCredits = async () => {
     const res = await fetch("/api/user/credits");
     const data = await res.json();
@@ -22,12 +22,18 @@ export default function LeadFinder() {
     fetchCredits();
   }, []);
 
-  // ✅ GENERATE LEADS
+  // ✅ Generate Leads (FIXED)
   const generateLeads = async () => {
     setLoading(true);
 
+    const projectId = localStorage.getItem("projectId");
+
     const res = await fetch("/api/leads/real", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-project-id": projectId || "",
+      },
       body: JSON.stringify({ query }),
     });
 
@@ -42,29 +48,20 @@ export default function LeadFinder() {
     setLeads(data.leads);
     setLoading(false);
 
-    await fetchCredits(); // refresh credits
+    await fetchCredits();
     toast.success("Leads generated 🚀");
   };
 
-  // ✅ SCORE
-  const scoreLead = async (lead: any, index: number) => {
-    const res = await fetch("/api/leads/score", {
-      method: "POST",
-      body: JSON.stringify({ lead }),
-    });
-
-    const data = await res.json();
-
-    const updated = [...leads];
-    updated[index] = { ...lead, ...data };
-
-    setLeads(updated);
-  };
-
-  // ✅ SEND EMAILS
+  // ✅ Send emails (FIX projectId)
   const sendEmails = async () => {
+    const projectId = localStorage.getItem("projectId");
+
     const res = await fetch("/api/leads/send", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-project-id": projectId || "",
+      },
       body: JSON.stringify({ leads }),
     });
 
@@ -85,7 +82,6 @@ export default function LeadFinder() {
     <div>
       <h1 className="text-xl font-bold mb-4">Lead Finder</h1>
 
-      {/* ⚠️ OUT OF CREDITS */}
       {credits === 0 && (
         <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
           ⚠ You're out of credits — upgrade to continue
@@ -98,23 +94,21 @@ export default function LeadFinder() {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {/* ✅ FIXED BUTTON */}
-     {/* ✅ FIXED BUTTON */}
-<button
-  onClick={generateLeads}
-  disabled={credits === 0}
-  className={`px-4 py-2 rounded ${
-    credits === 0
-      ? "bg-gray-300 cursor-not-allowed"
-      : "bg-black text-white"
-  }`}
->
-  {credits === 0
-    ? "No Credits Left"
-    : loading
-    ? "Loading..."
-    : "Generate"}
-</button>
+      <button
+        onClick={generateLeads}
+        disabled={credits === 0}
+        className={`px-4 py-2 rounded ${
+          credits === 0
+            ? "bg-gray-300 cursor-not-allowed"
+            : "bg-black text-white"
+        }`}
+      >
+        {credits === 0
+          ? "No Credits Left"
+          : loading
+          ? "Loading..."
+          : "Generate"}
+      </button>
 
       <button
         onClick={sendEmails}
@@ -133,52 +127,14 @@ export default function LeadFinder() {
             <p className="text-green-600">
               {lead.contactEmail || "No email"}
             </p>
-
-            <button
-              onClick={() => scoreLead(lead, i)}
-              className="bg-blue-500 text-white px-3 py-1 mt-2 rounded"
-            >
-              Generate AI Email
-            </button>
-
-            <button
-              onClick={async () => {
-                await fetch("/api/sequences/create", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    leadId: lead.id,
-                    generatedEmail: lead.generatedEmail,
-                  }),
-                });
-
-                toast.success("Sequence started 🚀");
-              }}
-              className="bg-purple-600 text-white px-3 py-1 mt-2 rounded"
-            >
-              Start Sequence
-            </button>
-
-            {lead.generatedEmail && (
-              <div className="mt-2 bg-gray-100 p-2 rounded text-sm">
-                <p><strong>AI Email:</strong></p>
-                <p>{lead.generatedEmail}</p>
-              </div>
-            )}
-
-            {lead.sent && (
-              <p className="text-green-600 mt-2">
-                ✅ Email Sent
-              </p>
-            )}
           </div>
         ))}
       </div>
+
+      {/* ✅ FIXED MODAL */}
+      {showUpgrade && (
+        <UpgradeModal onClose={() => setShowUpgrade(false)} />
+      )}
     </div>
   );
-
-
-{showUpgrade && (
-  <UpgradeModal onClose={() => setShowUpgrade(false)} />
-)}
-
 }

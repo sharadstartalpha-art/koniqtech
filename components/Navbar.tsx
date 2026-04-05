@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -28,7 +29,7 @@ export default function Navbar() {
 
         {/* RIGHT */}
         <div className="flex gap-4 items-center">
-
+               <ProjectSwitcher />
           {session && (
             <div className="text-sm bg-gray-100 px-3 py-1 rounded-lg">
               💳 Credits: <span className="font-semibold">{credits ?? "..."}</span>

@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Resend } from "resend";
 
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
@@ -33,7 +32,6 @@ export async function POST(req: NextRequest) {
     // 👤 3. Get user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { balance: true },
     });
 
     if (!user) {
@@ -43,43 +41,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ⚡ 4. Check balance BEFORE sending
-    try {
-      await checkBalance(user.id, 1);
-    } catch (err) {
+    // ⚡ 4. CHECK BALANCE (FIXED ✅)
+    const balance = await getUserBalance(user.id);
+
+    if (balance <= 0) {
       return NextResponse.json(
-        { error: "NO_balance" },
+        { error: "NO_CREDITS" },
         { status: 402 }
       );
     }
 
-    // 📧 5. Send email via Resend
+    // 📧 5. Send email
     const emailResponse = await resend.emails.send({
-      from: "KoniqTech <onboarding@koniqtech.com>", // change to your domain later
+      from: "KoniqTech <onboarding@koniqtech.com>",
       to,
       subject,
       html,
     });
 
-    // ❌ If email fails → DO NOT deduct balance
     if (!emailResponse || emailResponse.error) {
       return NextResponse.json(
-        { error: "Email failed to send" },
+        { error: "Email failed" },
         { status: 500 }
       );
     }
 
-    // 💳 6. Deduct balance AFTER success
-    await prisma.userBalance.update({
-      where: { userId: user.id },
-      data: {
-        balance: {
-          decrement: 1,
-        },
-      },
-    });
+    // 💳 6. Deduct AFTER success (FIXED ✅)
+    await deductCredit(user.id);
 
-    // 📊 7. Track usage (optional but recommended)
+    // 📊 7. Track usage
     await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -93,10 +83,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Email sent successfully",
     });
+
   } catch (error) {
-    console.error("EMAIL SEND ERROR:", error);
+    console.error("EMAIL ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal server error" },

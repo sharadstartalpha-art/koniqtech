@@ -11,7 +11,7 @@ export async function GET() {
   }
 
   const users = await prisma.user.findMany({
-    include: { credits: true },
+    include: { balance: true },
   });
 
   return NextResponse.json(users);

@@ -78,14 +78,14 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    // ✅ Create credits on first login
+    // ✅ Create balance on first login
     async signIn({ user }) {
-      const existing = await prisma.userCredits.findUnique({
+      const existing = await prisma.userBalance.findUnique({
         where: { userId: user.id },
       });
 
       if (!existing) {
-       await prisma.userCredits.upsert({
+       await prisma.userBalance.upsert({
   where: { userId: user.id },
   update: {},
   create: {

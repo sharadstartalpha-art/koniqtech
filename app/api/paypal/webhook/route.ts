@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 💳 Add credits
-    if (user.credits) {
+    if (user.balance) {
       await prisma.userCredits.update({
         where: { userId: user.id },
         data: {

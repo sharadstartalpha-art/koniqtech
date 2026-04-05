@@ -85,12 +85,14 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (!existing) {
-        await prisma.userCredits.create({
-          data: {
-            userId: user.id,
-            balance: 20,
-          },
-        });
+       await prisma.userCredits.upsert({
+  where: { userId: user.id },
+  update: {},
+  create: {
+    userId: user.id,
+    balance: 20,
+  },
+});
       }
 
       return true;

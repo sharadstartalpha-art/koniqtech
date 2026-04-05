@@ -1,28 +1,29 @@
-import { checkCredits } from "@/lib/checkCredits";
-import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { deductCredit } from "@/lib/credits";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  const user = await prisma.user.findUnique({
-    where: { email: session?.user?.email! },
-  });
+  if (!session?.user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // ✅ CHECK credits BEFORE action
-  await checkCredits(user!.id, 1);
+  try {
+    // 🔥 CHECK + DEDUCT CREDIT
+    await deductCredit(session.user.id);
 
-  // 🔥 YOUR AI LEAD GENERATION LOGIC HERE
+    // ✅ YOUR ORIGINAL LOGIC
+    return Response.json({ success: true });
 
-  // ✅ DEDUCT credits AFTER success
-  await prisma.userCredits.update({
-    where: { userId: user!.id },
-    data: {
-      balance: { decrement: 1 },
-    },
-  });
+  } catch (err: any) {
+    if (err.message === "NO_CREDITS") {
+      return Response.json(
+        { error: "NO_CREDITS" },
+        { status: 403 }
+      );
+    }
 
-  return NextResponse.json({ success: true });
+    return Response.json({ error: "Server error" }, { status: 500 });
+  }
 }

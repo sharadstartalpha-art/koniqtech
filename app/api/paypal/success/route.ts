@@ -1,15 +1,28 @@
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
-  const { plan } = await req.json()
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("userId");
+  const plan = url.searchParams.get("plan");
 
-  // 🔥 Replace with your real PayPal links
-  const links: any = {
-    PRO: "https://www.paypal.com/paypalme/YOUR_LINK/19",
-    AGENCY: "https://www.paypal.com/paypalme/YOUR_LINK/49",
-  }
+  let creditsToAdd = 0;
 
-  return NextResponse.json({
-    url: links[plan],
-  })
+  if (plan === "PRO") creditsToAdd = 100;
+  if (plan === "AGENCY") creditsToAdd = 500;
+
+  // 🔥 UPSERT (important)
+  await prisma.userCredits.upsert({
+    where: { userId: userId! },
+    update: {
+      credits: {
+        increment: creditsToAdd,
+      },
+    },
+    create: {
+      userId: userId!,
+      credits: creditsToAdd,
+    },
+  });
+
+  return Response.redirect("https://koniqtech.com/dashboard");
 }

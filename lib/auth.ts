@@ -117,8 +117,8 @@ export const authOptions: NextAuthOptions = {
   }
 
   return true;
-}
-  },
+},
+  
 
     // ✅ REDIRECT FIX
     async redirect({ baseUrl }) {

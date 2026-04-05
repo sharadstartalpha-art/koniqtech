@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import SessionWrapper from "@/components/SessionWrapper";
 import "./globals.css";   // ✅ MUST BE HERE
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
   title: "KoniqTech",
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: any) {
         <SessionWrapper>
           <Navbar />   {/* ✅ ONLY NAVBAR */}
           {children}
+           <Toaster position="top-right" />
         </SessionWrapper>
       </body>
     </html>

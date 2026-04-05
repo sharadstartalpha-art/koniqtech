@@ -7,18 +7,26 @@ export default function LeadFinder() {
   const [leads, setLeads] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
-  const generateLeads = async () => {
-    setLoading(true)
+  const [showUpgrade, setShowUpgrade] = useState(false)
 
-    const res = await fetch("/api/leads/real", {
-      method: "POST",
-      body: JSON.stringify({ query }),
-    })
+const generateLeads = async () => {
+  setLoading(true)
 
-    const data = await res.json()
-    setLeads(data.leads)
+  const res = await fetch("/api/leads/real", {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  })
+
+  if (res.status === 403) {
+    setShowUpgrade(true)
     setLoading(false)
+    return
   }
+
+  const data = await res.json()
+  setLeads(data.leads)
+  setLoading(false)
+}
 
   const scoreLead = async (lead: any, index: number) => {
     const res = await fetch("/api/leads/score", {
@@ -44,6 +52,7 @@ export default function LeadFinder() {
     setLeads(data.leads)
   }
 
+  
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Lead Finder</h1>

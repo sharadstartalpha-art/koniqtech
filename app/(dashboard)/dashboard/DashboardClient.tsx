@@ -82,7 +82,9 @@ export default function DashboardClient({ user }: any) {
       </div>
 
       {/* Upgrade Modal */}
-      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+     {showUpgrade && (
+  <UpgradeModal onClose={() => setShowUpgrade(false)} />
+)}
     </div>
   );
 }

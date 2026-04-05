@@ -18,32 +18,33 @@ export default function Navbar() {
 
         {/* RIGHT: BUTTONS */}
         <div className="flex gap-3 items-center">
-          {!session ? (
-            <>
-              <Link
-                href="/login"
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
-              >
-                Login
-              </Link>
 
-              <Link
-                href="/register"
-                className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow"
-              >
-                Get Started
-              </Link>
-            </>
-          ) : (
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 border rounded-lg"
-            >
-              Dashboard
-            </Link>
-          )}
-        </div>
+  {session?.user?.role === "ADMIN" && (
+    <Link href="/admin" className="px-4 py-2">
+      Admin
+    </Link>
+  )}
 
+  {!session ? (
+    <>
+      <Link href="/login" className="px-4 py-2 border rounded-lg">
+        Login
+      </Link>
+
+      <Link
+        href="/register"
+        className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+      >
+        Get Started
+      </Link>
+    </>
+  ) : (
+    <Link href="/dashboard" className="px-4 py-2 border rounded-lg">
+      Dashboard
+    </Link>
+  )}
+
+</div>
       </div>
     </nav>
   );

@@ -14,12 +14,14 @@ export async function POST(req: Request) {
   })
 
   // 🔥 CREATE WALLET
-  await prisma.userCredits.create({
-    data: {
-      userId: user.id,
-      balance: 20,
-    },
-  })
+ await prisma.userCredits.upsert({
+  where: { userId: user.id },
+  update: {},
+  create: {
+    userId: user.id,
+    balance: 20,
+  },
+});
 
   return Response.json(user)
 }

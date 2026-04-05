@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     const userId = session.metadata.userId;
 
-    await prisma.userCredits.update({
+    await prisma.userBalance.update({
       where: { userId },
       data: {
         balance: {

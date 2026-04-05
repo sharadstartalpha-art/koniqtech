@@ -7,10 +7,10 @@ import Logo from "@/components/Logo";
 export default function DashboardClient({ user }: any) {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
-  const credits = user?.credits?.balance || 0;
+  const balance = user?.balance?.balance || 0;
 
   const handleGenerate = async () => {
-    if (credits <= 0) {
+    if (balance <= 0) {
       setShowUpgrade(true);
       return;
     }
@@ -28,7 +28,7 @@ export default function DashboardClient({ user }: any) {
 
         <div className="flex items-center gap-4">
           <span className="text-sm">
-            Credits: <b>{credits}</b>
+            Balance: <b>{balance}</b>
           </span>
 
           <button
@@ -64,7 +64,7 @@ export default function DashboardClient({ user }: any) {
           {/* Card 3 */}
           <div className="bg-white p-6 rounded shadow">
             <h2 className="font-semibold mb-2">Credits Left</h2>
-            <p className="text-3xl font-bold">{credits}</p>
+            <p className="text-3xl font-bold">{balance}</p>
           </div>
 
         </div>

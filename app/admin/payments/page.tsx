@@ -20,7 +20,7 @@ fetch("/api/admin/payments")
           <tr className="border-b">
             <th className="p-2">User</th>
             <th className="p-2">Amount</th>
-            <th className="p-2">Credits</th>
+            <th className="p-2">Balance</th>
             <th className="p-2">Status</th>
           </tr>
         </thead>
@@ -30,7 +30,7 @@ fetch("/api/admin/payments")
             <tr key={p.id} className="border-b">
               <td className="p-2">{p.user.email}</td>
               <td className="p-2">${p.amount}</td>
-              <td className="p-2">{p.credits}</td>
+              <td className="p-2">{p.balance}</td>
               <td className="p-2">{p.status}</td>
             </tr>
           ))}

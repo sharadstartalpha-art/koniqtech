@@ -1,11 +1,11 @@
 import { prisma } from "./prisma";
 
-export async function checkCredits(userId: string, required = 1) {
-  const credits = await prisma.userCredits.findUnique({
+export async function checkBalance(userId: string, required = 1) {
+  const balance = await prisma.userBalance.findUnique({
     where: { userId },
   });
 
-  if (!credits || credits.balance < required) {
+  if (!balance || balance.balance < required) {
     throw new Error("NO_CREDITS");
   }
 }

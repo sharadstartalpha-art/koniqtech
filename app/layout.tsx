@@ -1,7 +1,8 @@
 import Navbar from "@/components/Navbar";
 import SessionWrapper from "@/components/SessionWrapper";
-import "./globals.css";   // ✅ MUST BE HERE
+import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import { UpgradeProvider } from "@/components/UpgradeProvider";
 
 export const metadata = {
   title: "KoniqTech",
@@ -9,14 +10,17 @@ export const metadata = {
     icon: "/favicon.png",
   },
 };
+
 export default function RootLayout({ children }: any) {
   return (
     <html lang="en">
       <body className="bg-gray-50 text-black">
         <SessionWrapper>
-          <Navbar />   {/* ✅ ONLY NAVBAR */}
-          {children}
-           <Toaster position="top-right" />
+          <UpgradeProvider>
+            <Navbar />
+            {children}
+            <Toaster position="top-right" />
+          </UpgradeProvider>
         </SessionWrapper>
       </body>
     </html>

@@ -62,7 +62,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    // ✅ Ensure user ID persists
+    // ✅ JWT
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
-    // ✅ Attach user ID to session
+    // ✅ SESSION
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
@@ -78,28 +78,33 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    // ✅ Create balance on first login
+    // ✅ SIGN IN LOGIC (MERGED PROPERLY)
     async signIn({ user }) {
-      const existing = await prisma.userBalance.findUnique({
+      // 🔥 Ensure balance exists
+      await prisma.userBalance.upsert({
         where: { userId: user.id },
+        update: {},
+        create: {
+          userId: user.id,
+          balance: 20,
+        },
       });
 
-      if (!existing) {
-       await prisma.userBalance.upsert({
-  where: { userId: user.id },
-  update: {},
-  create: {
-    userId: user.id,
-    balance: 20,
-  },
-});
+      // 🔥 Check onboarding
+      const existing = await prisma.user.findUnique({
+        where: { email: user.email! },
+        include: { projects: true },
+      });
+
+      if (!existing?.projects?.length) {
+        return "/onboarding";
       }
 
       return true;
     },
 
-    // 🔥 CRITICAL FIX (YOUR MAIN BUG)
-    async redirect({ url, baseUrl }) {
+    // ✅ REDIRECT FIX
+    async redirect({ baseUrl }) {
       return `${baseUrl}/dashboard`;
     },
   },

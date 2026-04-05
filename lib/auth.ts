@@ -80,15 +80,22 @@ export const authOptions: NextAuthOptions = {
 
     // ✅ SIGN IN LOGIC (MERGED PROPERLY)
     async signIn({ user }) {
+
+      const existingBalance = await prisma.userBalance.findUnique({
+      where: { userId: user.id },
+    });
+
       // 🔥 Ensure balance exists
-      await prisma.userBalance.upsert({
-        where: { userId: user.id },
-        update: {},
-        create: {
+    if (!existingBalance) {
+      await prisma.userBalance.create({
+        data: {
           userId: user.id,
           balance: 20,
         },
       });
+    }
+
+    
 
       // 🔥 Check onboarding
       const existing = await prisma.user.findUnique({
@@ -100,8 +107,24 @@ export const authOptions: NextAuthOptions = {
         return "/onboarding";
       }
 
-      return true;
-    },
+      const existingProjects = await prisma.project.findMany({
+      where: { userId: user.id },
+    });
+
+    if (existingProjects.length === 0) {
+      const product = await prisma.product.findFirst();
+
+      await prisma.project.create({
+        data: {
+          name: "My First Project",
+          userId: user.id,
+          productId: product!.id,
+        },
+      });
+    }
+
+    return true;
+  },
 
     // ✅ REDIRECT FIX
     async redirect({ baseUrl }) {

@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-  const [credits, setCredits] = useState(0);
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    fetch("/api/user/credits")
+    fetch("/api/user/balance")
       .then(res => res.json())
-      .then(data => setCredits(data.credits));
+      .then(data => setBalance(data.balance));
   }, []);
 
   return (
@@ -18,9 +18,9 @@ export default function Dashboard() {
         Welcome back 🚀
       </h1>
 
-      {/* 💳 SHOW CREDITS */}
+      {/* 💳 SHOW balance */}
       <p className="mb-4 text-gray-600">
-        Credits left: <span className="font-bold">{credits}</span>
+        Balance left: <span className="font-bold">{balance}</span>
       </p>
 
     </div>

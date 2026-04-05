@@ -20,7 +20,7 @@ export default async function DashboardLayout({
 
         <nav className="space-y-4 text-sm">
           <Link href="/dashboard">Dashboard</Link>
-          <Link href="/dashboard/credits">Credits</Link>
+          <Link href="/dashboard/balance">Balance</Link>
           <Link href="/pricing">Upgrade</Link>
         </nav>
       </aside>

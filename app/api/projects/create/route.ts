@@ -11,23 +11,13 @@ export async function POST(req: Request) {
     where: { email: session?.user?.email! },
   });
 
-  // ✅ GET OR CREATE PRODUCT
-  let product = await prisma.product.findFirst();
-
-  if (!product) {
-    product = await prisma.product.create({
-      data: {
-        name: "Lead Generation",
-        slug: "lead-gen",
-      },
-    });
-  }
+  const product = await prisma.product.findFirst();
 
   const project = await prisma.project.create({
     data: {
       name,
       userId: user!.id,
-      productId: product.id,
+      productId: product!.id,
     },
   });
 

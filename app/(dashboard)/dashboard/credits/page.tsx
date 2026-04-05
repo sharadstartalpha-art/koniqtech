@@ -8,7 +8,7 @@ export default async function CreditsPage() {
   const user = await prisma.user.findUnique({
     where: { email: session?.user?.email! },
     include: {
-      credits: true,
+      balance: true,
       transactions: true,
     },
   })

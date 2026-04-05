@@ -13,7 +13,7 @@ export async function deductCredit(userId: string) {
     where: { id: userId },
   });
 
-  if (!user || user.credits <= 0) {
+  if (!user || user.balance <= 0) {
     throw new Error("NO_CREDITS");
   }
 

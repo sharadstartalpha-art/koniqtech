@@ -19,7 +19,7 @@ const user = await prisma.user.findUnique({
   include: { credits: true },
 });
 
-if (!user?.credits || user.credits.balance <= 0) {
+if (!user?.credits || user.balance?.balance <= 0) {
   return Response.json({ error: "NO_CREDITS" }, { status: 403 });
 }
 

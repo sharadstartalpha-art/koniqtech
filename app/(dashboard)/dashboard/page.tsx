@@ -8,7 +8,7 @@ export default async function DashboardPage() {
 
   const user = await prisma.user.findUnique({
     where: { email: session?.user?.email! },
-    include: { credits: true },
+    include: { balance: true },
   });
 
   return <DashboardClient user={user} />;

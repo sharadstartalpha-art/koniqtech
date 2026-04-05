@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkCredits } from "@/lib/checkCredits";
+import { checkBalance } from "@/lib/checkBalance";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Resend } from "resend";
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     // 👤 3. Get user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { credits: true },
+      include: { balance: true },
     });
 
     if (!user) {
@@ -42,12 +42,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ⚡ 4. Check credits BEFORE sending
+    // ⚡ 4. Check balance BEFORE sending
     try {
-      await checkCredits(user.id, 1);
+      await checkBalance(user.id, 1);
     } catch (err) {
       return NextResponse.json(
-        { error: "NO_CREDITS" },
+        { error: "NO_balance" },
         { status: 402 }
       );
     }
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       html,
     });
 
-    // ❌ If email fails → DO NOT deduct credits
+    // ❌ If email fails → DO NOT deduct balance
     if (!emailResponse || emailResponse.error) {
       return NextResponse.json(
         { error: "Email failed to send" },
@@ -68,8 +68,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 💳 6. Deduct credits AFTER success
-    await prisma.userCredits.update({
+    // 💳 6. Deduct balance AFTER success
+    await prisma.userBalance.update({
       where: { userId: user.id },
       data: {
         balance: {
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         amount: 0,
-        credits: 1,
+        balance: 1,
         type: "CREDIT_USAGE",
         status: "EMAIL_SENT",
         provider: "system",

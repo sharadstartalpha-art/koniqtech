@@ -4,9 +4,9 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const userId = "GET_FROM_SESSION"; // replace
 
-  const credits = await prisma.userCredits.findUnique({
+  const balance = await prisma.userBalance.findUnique({
     where: { userId },
   });
 
-  return NextResponse.json(credits);
+  return NextResponse.json(balance);
 }

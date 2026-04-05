@@ -8,7 +8,7 @@ export default async function CreditsPage() {
   const user = await prisma.user.findUnique({
     where: { email: session?.user?.email! },
     include: {
-      balance: true,
+      balance: true,        // ✅ FIXED
       transactions: true,
     },
   })
@@ -20,7 +20,7 @@ export default async function CreditsPage() {
       <div className="bg-white p-6 rounded shadow mb-6">
         <p>Balance</p>
         <h2 className="text-2xl font-bold">
-          {user?.credits?.balance}
+          {user?.balance?.balance ?? 0} {/* ✅ FIXED */}
         </h2>
       </div>
 
@@ -29,7 +29,7 @@ export default async function CreditsPage() {
       {user?.transactions.map((t) => (
         <div key={t.id} className="bg-white p-3 mb-2 rounded">
           <p>{t.type}</p>
-          <p>{t.credits} credits</p>
+          <p>{t.balance} credits</p> {/* ✅ FIXED */}
         </div>
       ))}
     </div>

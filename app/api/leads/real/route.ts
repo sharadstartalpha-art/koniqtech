@@ -7,32 +7,31 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
+    const session = await getServerSession(authOptions);
 
-const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-if (!session?.user?.email) {
-  return Response.json({ error: "Unauthorized" }, { status: 401 });
-}
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { balance: true }, // ✅ FIXED
+    });
 
-const user = await prisma.user.findUnique({
-  where: { email: session.user.email },
-  include: { credits: true },
-});
+    // ✅ CHECK CREDITS
+    if (!user?.balance || user.balance.balance <= 0) {
+      return Response.json({ error: "NO_CREDITS" }, { status: 403 });
+    }
 
-if (!user?.credits || user.balance?.balance <= 0) {
-  return Response.json({ error: "NO_CREDITS" }, { status: 403 });
-}
-
-await prisma.userCredits.update({
-  where: { userId: user.id },
-  data: {
-    balance: {
-      decrement: 1,
-    },
-  },
-});
-
-
+    // ✅ DECREMENT CREDIT
+    await prisma.userBalance.update({
+      where: { userId: user.id },
+      data: {
+        balance: {
+          decrement: 1,
+        },
+      },
+    });
 
     const { query } = await req.json()
 
@@ -67,11 +66,11 @@ await prisma.userCredits.update({
         email = emails[0] || null
       }
 
-     leads.push({
-  name: place.name,
-  website,
-  contactEmail: email, // ✅ FIXED
-})
+      leads.push({
+        name: place.name,
+        website,
+        contactEmail: email,
+      })
     }
 
     return NextResponse.json({ leads })

@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   if (plan === "AGENCY") balanceToAdd = 500;
 
   // 🔥 UPSERT (important)
-  await prisma.userbalance.upsert({
+  await prisma.prisma.userBalance.upsert({
     where: { userId: userId! },
     update: {
       balance: {

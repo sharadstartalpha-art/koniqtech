@@ -1,24 +1,24 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getUserBalance(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const userBalance = await prisma.userBalance.findUnique({
+    where: { userId },
   });
 
-  return user?.balance || 0;
+  return userBalance?.balance || 0;
 }
 
 export async function deductCredit(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const userBalance = await prisma.userBalance.findUnique({
+    where: { userId },
   });
 
-  if (!user || user.balance <= 0) {
+  if (!userBalance || userBalance.balance <= 0) {
     throw new Error("NO_CREDITS");
   }
 
-  await prisma.user.update({
-    where: { id: userId },
+  await prisma.userBalance.update({
+    where: { userId },
     data: {
       balance: {
         decrement: 1,

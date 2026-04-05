@@ -10,18 +10,18 @@ export async function POST(req: Request) {
     const { plan } = await req.json();
 
     // 🔥 Plan mapping
-    const priceMap: Record<string, { amount: number; credits: number }> = {
+    const priceMap: Record<string, { amount: number; balance: number }> = {
       starter: {
         amount: 1900,
-        credits: 500,
+        balance: 500,
       },
       growth: {
         amount: 4900,
-        credits: 2000,
+        balance: 2000,
       },
       pro: {
         amount: 9900,
-        credits: 5000,
+        balance: 5000,
       },
     };
 
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
       metadata: {
         userId,
-        credits: selected.credits.toString(),
+        balance: selected.balance.toString(),
       },
 
       line_items: [

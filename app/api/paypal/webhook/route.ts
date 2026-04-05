@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // 👤 Find user
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { credits: true },
+      include: { balance: true },
     });
 
     if (!user) {
@@ -46,21 +46,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 💳 Add credits
+    // 💳 Add balance
     if (user.balance) {
-      await prisma.userCredits.update({
+      await prisma.userBalance.update({
         where: { userId: user.id },
         data: {
           balance: {
-            increment: plan.credits,
+            increment: plan.balance,
           },
         },
       });
     } else {
-      await prisma.userCredits.create({
+      await prisma.userBalance.create({
         data: {
           userId: user.id,
-          balance: plan.credits,
+          balance: plan.balance,
         },
       });
     }
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         amount: plan.price,
-        credits: plan.credits,
+        balance: plan.balance,
         type: "CREDIT_PURCHASE",
         status: "SUCCESS",
         provider: "paypal",

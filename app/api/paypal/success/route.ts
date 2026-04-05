@@ -1,28 +1,29 @@
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const userId = url.searchParams.get("userId");
-  const plan = url.searchParams.get("plan");
+  const { searchParams } = new URL(req.url);
 
-  let creditsToAdd = 0;
+  const userId = searchParams.get("userId");
+  const creditsToAdd = Number(searchParams.get("credits") || 0);
 
-  if (plan === "PRO") creditsToAdd = 100;
-  if (plan === "AGENCY") creditsToAdd = 500;
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
 
-  // 🔥 UPSERT (important)
+  // ✅ UPSERT credits
   await prisma.userCredits.upsert({
-    where: { userId: userId! },
+    where: { userId },
     update: {
-      credits: {
+      balance: {
         increment: creditsToAdd,
       },
     },
     create: {
-      userId: userId!,
-      credits: creditsToAdd,
+      userId,
+      balance: creditsToAdd,
     },
   });
 
-  return Response.redirect("https://koniqtech.com/dashboard");
+  return NextResponse.redirect("http://localhost:3000/dashboard");
 }

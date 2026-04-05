@@ -7,15 +7,15 @@ export default function ProjectSwitcher() {
   const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/projects/user")
+    fetch("/api/projects")
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);
 
-        // ✅ load saved project
         const saved = localStorage.getItem("projectId");
-        if (saved) setActive(saved);
-        else if (data[0]) {
+        if (saved) {
+          setActive(saved);
+        } else if (data.length > 0) {
           setActive(data[0].id);
           localStorage.setItem("projectId", data[0].id);
         }
@@ -25,14 +25,16 @@ export default function ProjectSwitcher() {
   const switchProject = (id: string) => {
     setActive(id);
     localStorage.setItem("projectId", id);
-    window.location.reload(); // simple refresh
+
+    // 🔥 reload to apply everywhere
+    window.location.reload();
   };
 
   return (
     <select
       value={active || ""}
       onChange={(e) => switchProject(e.target.value)}
-      className="border px-2 py-1 rounded"
+      className="border px-3 py-2 rounded bg-white"
     >
       {projects.map((p) => (
         <option key={p.id} value={p.id}>

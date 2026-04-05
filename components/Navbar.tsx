@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Logo from "@/components/Logo";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 
+
 export default function Navbar() {
   const { data: session } = useSession();
   const [credits, setCredits] = useState<number | null>(null);

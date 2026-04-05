@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { deductCredit } from "@/lib/credits";
+import { deductCredit } from "@/lib/balance";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

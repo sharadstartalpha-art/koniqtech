@@ -22,7 +22,7 @@ model User {
   sessions      Session[]
   subscriptions Subscription[]
   transactions  Transaction[]
-  credits       UserCredits?
+  balance       UserBalance?
 }
 
 model Account {
@@ -47,7 +47,7 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model UserCredits {
+model UserBalance {
   id      String @id @default(cuid())
   userId  String @unique
   balance Int    @default(20)
@@ -58,7 +58,7 @@ model Transaction {
   id        String          @id @default(cuid())
   userId    String
   amount    Float
-  credits   Int
+  balance   Int
   type      TransactionType
   status    String
   provider  String?
@@ -131,7 +131,7 @@ model Plan {
   id            String         @id @default(cuid())
   name          String
   price         Float
-  credits       Int
+  balance       Int
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   subscriptions Subscription[]

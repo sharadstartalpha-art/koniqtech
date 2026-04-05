@@ -79,51 +79,45 @@ export const authOptions: NextAuthOptions = {
     },
 
     // ✅ SIGN IN LOGIC (MERGED PROPERLY)
-    async signIn({ user }) {
+ async signIn({ user }) {
+  // ✅ Ensure balance exists
+  const existingBalance = await prisma.userBalance.findUnique({
+    where: { userId: user.id },
+  });
 
-      const existingBalance = await prisma.userBalance.findUnique({
-      where: { userId: user.id },
+  if (!existingBalance) {
+    await prisma.userBalance.create({
+      data: {
+        userId: user.id,
+        balance: 20,
+      },
+    });
+  }
+
+  // ✅ Get user with projects
+  const existing = await prisma.user.findUnique({
+    where: { email: user.email! },
+    include: { projects: true },
+  });
+
+  // 🔥 CREATE PROJECT FIRST
+  if (!existing?.projects?.length) {
+    const product = await prisma.product.findFirst();
+
+    await prisma.project.create({
+      data: {
+        name: "My First Project",
+        userId: user.id,
+        productId: product!.id,
+      },
     });
 
-      // 🔥 Ensure balance exists
-    if (!existingBalance) {
-      await prisma.userBalance.create({
-        data: {
-          userId: user.id,
-          balance: 20,
-        },
-      });
-    }
+    // 👉 THEN redirect
+    return "/onboarding";
+  }
 
-    
-
-      // 🔥 Check onboarding
-      const existing = await prisma.user.findUnique({
-        where: { email: user.email! },
-        include: { projects: true },
-      });
-
-      if (!existing?.projects?.length) {
-        return "/onboarding";
-      }
-
-      const existingProjects = await prisma.project.findMany({
-      where: { userId: user.id },
-    });
-
-    if (existingProjects.length === 0) {
-      const product = await prisma.product.findFirst();
-
-      await prisma.project.create({
-        data: {
-          name: "My First Project",
-          userId: user.id,
-          productId: product!.id,
-        },
-      });
-    }
-
-    return true;
+  return true;
+}
   },
 
     // ✅ REDIRECT FIX

@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json([], { status: 200 }); // ✅ NEVER return HTML
   }
 
   const user = await prisma.user.findUnique({
@@ -14,5 +15,5 @@ export async function GET() {
     include: { projects: true },
   });
 
-  return Response.json(user?.projects || []);
+  return NextResponse.json(user?.projects || []);
 }

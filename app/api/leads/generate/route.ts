@@ -9,13 +9,11 @@ export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 
-    console.log("SESSION:", session);
-
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔥 find user's project
+    // 🔥 get project
     const project = await prisma.project.findFirst({
       where: { userId: session.user.id },
     });
@@ -27,12 +25,15 @@ export async function POST() {
       );
     }
 
+    // 🔥 CREATE LEAD (FIXED)
     const lead = await prisma.lead.create({
       data: {
-        name: "Test Lead",
-        email: `lead${Date.now()}@test.com`,
         userId: session.user.id,
-        projectId: project.id, // 🔥 IMPORTANT
+        projectId: project.id,
+
+        name: "Generated Lead",
+        email: `lead${Date.now()}@test.com`,
+        contactEmail: `lead${Date.now()}@test.com`, // ✅ REQUIRED FIX
       },
     });
 
@@ -41,10 +42,10 @@ export async function POST() {
     return NextResponse.json({ success: true, lead });
 
   } catch (error) {
-    console.error("GENERATE ERROR:", error);
+    console.error("ERROR:", error);
 
     return NextResponse.json(
-      { error: "Server error" },
+      { error: "Failed to generate lead" },
       { status: 500 }
     );
   }

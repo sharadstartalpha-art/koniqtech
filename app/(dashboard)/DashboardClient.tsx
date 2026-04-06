@@ -35,7 +35,7 @@ export default function DashboardClient({ user, leadsCount }: any) {
 
     alert("✅ Lead generated!");
 
-    router.refresh(); // ✅ important
+    router.refresh(); // ✅ important (no reload)
 
     setLoading(false);
   };
@@ -54,7 +54,7 @@ export default function DashboardClient({ user, leadsCount }: any) {
 
           <button
             onClick={() => setShowUpgrade(true)}
-            className="bg-primary text-white px-4 py-2 rounded"
+            className="bg-blue-600 text-white px-4 py-2 rounded"
           >
             Upgrade
           </button>

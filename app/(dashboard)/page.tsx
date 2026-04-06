@@ -16,17 +16,12 @@ export default async function DashboardPage() {
     include: { balance: true },
   });
 
-  // ✅ COUNT LEADS FROM DB
+  // ✅ COUNT ONLY USER LEADS
   const leadsCount = await prisma.lead.count({
     where: {
       userId: session.user.id,
     },
   });
 
-  return (
-    <DashboardClient
-      user={user}
-      leadsCount={leadsCount}
-    />
-  );
+  return <DashboardClient user={user} leadsCount={leadsCount} />;
 }

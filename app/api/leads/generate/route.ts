@@ -13,10 +13,26 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ✅ get project
-    const project = await prisma.project.findFirst({
-      where: { userId: session.user.id },
+    // ✅ GET USER
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: { balance: true, projects: true },
     });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // ❌ NO CREDITS
+    if (!user.balance || user.balance.balance <= 0) {
+      return NextResponse.json(
+        { error: "No credits left" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ FIX: GET PROJECT PROPERLY
+    const project = user.projects[0];
 
     if (!project) {
       return NextResponse.json(
@@ -25,20 +41,30 @@ export async function POST() {
       );
     }
 
-    // ✅ CREATE LEAD (ALL REQUIRED FIELDS)
+    // ✅ CREATE LEAD
     const lead = await prisma.lead.create({
       data: {
-        userId: session.user.id,
-        projectId: project.id,
+        userId: user.id,
+        projectId: project.id, // 🔥 FIXED
 
         name: "Generated Lead",
         email: `lead${Date.now()}@test.com`,
-        contactEmail: `lead${Date.now()}@test.com`, // 🔥 MUST
+        contactEmail: `lead${Date.now()}@test.com`,
         company: "Test Company",
       },
     });
 
-    console.log("✅ CREATED:", lead);
+    // ✅ DEDUCT CREDIT
+    await prisma.userBalance.update({
+      where: { userId: user.id },
+      data: {
+        balance: {
+          decrement: 1,
+        },
+      },
+    });
+
+    console.log("✅ LEAD:", lead);
 
     return NextResponse.json({ success: true });
 
@@ -46,7 +72,7 @@ export async function POST() {
     console.error("❌ ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to generate lead" },
+      { error: "Server error" },
       { status: 500 }
     );
   }

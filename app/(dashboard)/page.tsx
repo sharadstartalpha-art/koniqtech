@@ -12,11 +12,13 @@ export default async function DashboardPage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user?.email! },
-    include: { balance: true },
+    where: { id: session.user.id },
+    include: {
+      balance: true,
+      projects: true,
+    },
   });
 
-  // ✅ COUNT LEADS
   const leadsCount = await prisma.lead.count({
     where: {
       userId: user?.id,

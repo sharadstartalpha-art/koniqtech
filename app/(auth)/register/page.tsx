@@ -11,7 +11,7 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   // STEP 1 → Send OTP
   const register = async () => {
     if (!email || !password) {
@@ -103,13 +103,20 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full border px-3 py-2 rounded"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+         <input
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    className="w-full border px-3 py-2 rounded"
+    onChange={(e) => setPassword(e.target.value)}
+  />
 
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-2 top-2 text-sm"
+  >
+    {showPassword ? "Hide" : "Show"}
+</button>
           <button
             onClick={register}
             disabled={loading}

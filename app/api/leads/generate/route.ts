@@ -1,29 +1,55 @@
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { deductCredit } from "@/lib/balance";
+import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+export const runtime = "nodejs";
 
-  if (!session?.user?.id) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+export async function POST() {
   try {
-    // 🔥 CHECK + DEDUCT CREDIT
-    await deductCredit(session.user.id);
+    const session = await getServerSession(authOptions);
 
-    // ✅ YOUR ORIGINAL LOGIC
-    return Response.json({ success: true });
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  } catch (err: any) {
-    if (err.message === "NO_CREDITS") {
-      return Response.json(
-        { error: "NO_CREDITS" },
-        { status: 403 }
+    // 🔥 get user balance
+    const balance = await prisma.userBalance.findUnique({
+      where: { userId: session.user.id },
+    });
+
+    if (!balance || balance.balance <= 0) {
+      return NextResponse.json(
+        { error: "No credits left" },
+        { status: 400 }
       );
     }
 
-    return Response.json({ error: "Server error" }, { status: 500 });
+    // 🔥 create fake lead (example)
+    const lead = await prisma.lead.create({
+      data: {
+        userId: session.user.id,
+        name: "New Lead",
+        email: `lead${Date.now()}@test.com`,
+      },
+    });
+
+    // 🔥 deduct credit
+    await prisma.userBalance.update({
+      where: { userId: session.user.id },
+      data: {
+        balance: { decrement: 1 },
+      },
+    });
+
+    return NextResponse.json({ success: true, lead });
+
+  } catch (error) {
+    console.error("GENERATE LEAD ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
   }
 }

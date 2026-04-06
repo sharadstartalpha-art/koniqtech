@@ -194,3 +194,17 @@ model LeadStatus {
 
   lead Lead @relation(fields: [leadId], references: [id])
 }
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+}

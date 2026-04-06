@@ -1,28 +1,29 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-import { useEffect, useState } from "react";
+export default async function DashboardPage() {
+  const session = await getServerSession(authOptions);
 
-export default function Dashboard() {
-  const [balance, setBalance] = useState(0);
-
-  useEffect(() => {
-    fetch("/api/user/balance")
-      .then(res => res.json())
-      .then(data => setBalance(data.balance));
-  }, []);
+  const leads = await prisma.lead.findMany({
+    where: {
+      userId: session?.user?.id,
+    },
+  });
 
   return (
-    <div className="p-6">
+    <div>
+      <h1>Welcome back 🚀</h1>
 
-      <h1 className="text-2xl font-bold mb-4">
-        Welcome back 🚀
-      </h1>
+      <p>Total Leads: {leads.length}</p>
 
-      {/* 💳 SHOW balance */}
-      <p className="mb-4 text-gray-600">
-        Balance left: <span className="font-bold">{balance}</span>
-      </p>
-
+      <ul>
+        {leads.map((lead) => (
+          <li key={lead.id}>
+            {lead.name} - {lead.email}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

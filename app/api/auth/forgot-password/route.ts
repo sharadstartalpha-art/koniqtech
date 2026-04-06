@@ -3,6 +3,7 @@ import { sendEmail } from "@/lib/mail";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
 export async function POST(req: Request) {
   const { email } = await req.json();
 

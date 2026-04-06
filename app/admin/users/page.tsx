@@ -7,49 +7,67 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { name: "Mon", users: 5, revenue: 20 },
-  { name: "Tue", users: 8, revenue: 50 },
-  { name: "Wed", users: 12, revenue: 80 },
-  { name: "Thu", users: 15, revenue: 120 },
-  { name: "Fri", users: 20, revenue: 200 },
-];
+import { useEffect, useState } from "react";
 
 export default function AdminDashboard() {
+  const [stats, setStats] = useState({
+    users: 0,
+    revenue: 0,
+    leads: 0,
+  });
+
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetch("/api/admin/stats");
+      const data = await res.json();
+
+      setStats(data.stats);
+      setChartData(data.chart);
+    };
+
+    fetchData();
+  }, []);
+
   return (
-    <div>
+    <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Admin Dashboard 📊</h1>
 
+      {/* STATS */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded shadow">
-          <p>Total Users</p>
-          <h2 className="text-xl font-bold">120</h2>
+          <p className="text-gray-500">Total Users</p>
+          <h2 className="text-2xl font-bold">{stats.users}</h2>
         </div>
 
         <div className="bg-white p-4 rounded shadow">
-          <p>Total Revenue</p>
-          <h2 className="text-xl font-bold">$2,340</h2>
+          <p className="text-gray-500">Total Revenue</p>
+          <h2 className="text-2xl font-bold">${stats.revenue}</h2>
         </div>
 
         <div className="bg-white p-4 rounded shadow">
-          <p>Total Leads Generated</p>
-          <h2 className="text-xl font-bold">5,200</h2>
+          <p className="text-gray-500">Total Leads Generated</p>
+          <h2 className="text-2xl font-bold">{stats.leads}</h2>
         </div>
       </div>
 
+      {/* CHART */}
       <div className="bg-white p-6 rounded shadow">
         <h2 className="mb-4 font-semibold">Growth Overview</h2>
 
-        <LineChart width={600} height={300} data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip />
-          <Line type="monotone" dataKey="users" />
-          <Line type="monotone" dataKey="revenue" />
-        </LineChart>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Line type="monotone" dataKey="users" />
+            <Line type="monotone" dataKey="revenue" />
+          </LineChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

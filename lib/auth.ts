@@ -79,8 +79,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     // ✅ SIGN IN LOGIC (MERGED PROPERLY)
- async signIn({ user }) {
-  // ✅ Ensure balance exists
+async signIn({ user }) {
   const existingBalance = await prisma.userBalance.findUnique({
     where: { userId: user.id },
   });
@@ -94,13 +93,11 @@ export const authOptions: NextAuthOptions = {
     });
   }
 
-  // ✅ Get user with projects
   const existing = await prisma.user.findUnique({
     where: { email: user.email! },
     include: { projects: true },
   });
 
-  // 🔥 CREATE PROJECT FIRST
   if (!existing?.projects?.length) {
     const product = await prisma.product.findFirst();
 
@@ -112,18 +109,23 @@ export const authOptions: NextAuthOptions = {
       },
     });
 
-    // 👉 THEN redirect
-    return "/onboarding";
+    // ✅ allow redirect handling instead of forcing here
+    return true;
   }
 
   return true;
 },
-  
 
     // ✅ REDIRECT FIX
-    async redirect({ baseUrl }) {
-      return `${baseUrl}/dashboard`;
-    },
+    async redirect({ url, baseUrl }) {
+  // allow relative URLs
+  if (url.startsWith("/")) return baseUrl + url;
+
+  // allow same-origin
+  if (new URL(url).origin === baseUrl) return url;
+
+  return baseUrl + "/dashboard";
+},
   },
 
   pages: {

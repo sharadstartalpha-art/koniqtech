@@ -41,9 +41,10 @@ export default function RegisterPage() {
 
   // STEP 2 → Verify OTP + Create User
   const verifyOtp = async () => {
-    setLoading(true);
-    setMessage("");
+  setLoading(true);
+  setMessage("");
 
+  try {
     const verifyRes = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: {
@@ -52,13 +53,14 @@ export default function RegisterPage() {
       body: JSON.stringify({ email, otp }),
     });
 
+    const verifyData = await verifyRes.json();
+
     if (!verifyRes.ok) {
-      setMessage("Invalid OTP");
+      setMessage(verifyData.error || "Invalid OTP");
       setLoading(false);
       return;
     }
 
-    // Create user AFTER OTP success
     const registerRes = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
@@ -67,21 +69,26 @@ export default function RegisterPage() {
       body: JSON.stringify({ email, password }),
     });
 
+    const registerData = await registerRes.json();
+
     if (!registerRes.ok) {
-      setMessage("Registration failed");
+      setMessage(registerData.error || "Registration failed");
       setLoading(false);
       return;
     }
 
     setMessage("✅ Account created!");
 
-    // redirect
     setTimeout(() => {
       window.location.href = "/login";
     }, 1500);
 
-    setLoading(false);
-  };
+  } catch (err) {
+    setMessage("Something went wrong");
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="max-w-md mx-auto mt-20 p-6 border rounded space-y-4">

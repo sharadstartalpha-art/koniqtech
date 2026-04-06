@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import UpgradeModal from "@/components/UpgradeModal";
 import Logo from "@/components/Logo";
 
-export default function DashboardClient({ user }: any) {
+export default function DashboardClient({ user, leadsCount }: any) {
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const balance = user?.balance?.balance || 0;
 
@@ -15,8 +19,25 @@ export default function DashboardClient({ user }: any) {
       return;
     }
 
-    await fetch("/api/leads/generate", { method: "POST" });
-    window.location.reload();
+    setLoading(true);
+
+    const res = await fetch("/api/leads/generate", {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      setLoading(false);
+      return;
+    }
+
+    alert("✅ Lead generated!");
+
+    router.refresh(); // ✅ important
+
+    setLoading(false);
   };
 
   return (
@@ -49,19 +70,19 @@ export default function DashboardClient({ user }: any) {
 
         <div className="grid md:grid-cols-3 gap-6">
 
-          {/* Card 1 */}
+          {/* Leads */}
           <div className="bg-white p-6 rounded shadow">
             <h2 className="font-semibold mb-2">Leads Generated</h2>
-            <p className="text-3xl font-bold">120</p>
+            <p className="text-3xl font-bold">{leadsCount}</p>
           </div>
 
-          {/* Card 2 */}
+          {/* Emails */}
           <div className="bg-white p-6 rounded shadow">
             <h2 className="font-semibold mb-2">Emails Sent</h2>
-            <p className="text-3xl font-bold">45</p>
+            <p className="text-3xl font-bold">0</p>
           </div>
 
-          {/* Card 3 */}
+          {/* Credits */}
           <div className="bg-white p-6 rounded shadow">
             <h2 className="font-semibold mb-2">Credits Left</h2>
             <p className="text-3xl font-bold">{balance}</p>
@@ -69,22 +90,23 @@ export default function DashboardClient({ user }: any) {
 
         </div>
 
-        {/* Action */}
+        {/* Button */}
         <div className="mt-10">
           <button
             onClick={handleGenerate}
-            className="bg-accent text-white px-6 py-3 rounded"
+            disabled={loading}
+            className="bg-green-600 text-white px-6 py-3 rounded"
           >
-            Generate Leads
+            {loading ? "Generating..." : "Generate Leads"}
           </button>
         </div>
 
       </div>
 
-      {/* Upgrade Modal */}
-     {showUpgrade && (
-  <UpgradeModal onClose={() => setShowUpgrade(false)} />
-)}
+      {/* Modal */}
+      {showUpgrade && (
+        <UpgradeModal onClose={() => setShowUpgrade(false)} />
+      )}
     </div>
   );
 }

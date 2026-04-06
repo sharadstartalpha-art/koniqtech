@@ -13,14 +13,15 @@ export default function DashboardClient({ user, leadsCount }: any) {
 
   const balance = user?.balance?.balance || 0;
 
-  const handleGenerate = async () => {
-    if (balance <= 0) {
-      setShowUpgrade(true);
-      return;
-    }
+ const handleGenerate = async () => {
+  if (balance <= 0) {
+    setShowUpgrade(true);
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
+  try {
     const res = await fetch("/api/leads/generate", {
       method: "POST",
     });
@@ -29,16 +30,19 @@ export default function DashboardClient({ user, leadsCount }: any) {
 
     if (!res.ok) {
       alert(data.error);
-      setLoading(false);
       return;
     }
 
     alert("✅ Lead generated!");
 
-    router.refresh(); // ✅ important (no reload)
+    router.refresh(); // ✅ DO THIS (NOT reload)
 
-    setLoading(false);
-  };
+  } catch (err) {
+    alert("Something went wrong");
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="min-h-screen bg-gray-50">

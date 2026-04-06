@@ -13,7 +13,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔥 get project
+    // ✅ get project
     const project = await prisma.project.findFirst({
       where: { userId: session.user.id },
     });
@@ -25,7 +25,7 @@ export async function POST() {
       );
     }
 
-    // 🔥 CREATE LEAD (FIXED)
+    // ✅ CREATE LEAD (ALL REQUIRED FIELDS)
     const lead = await prisma.lead.create({
       data: {
         userId: session.user.id,
@@ -33,16 +33,17 @@ export async function POST() {
 
         name: "Generated Lead",
         email: `lead${Date.now()}@test.com`,
-        contactEmail: `lead${Date.now()}@test.com`, // ✅ REQUIRED FIX
+        contactEmail: `lead${Date.now()}@test.com`, // 🔥 MUST
+        company: "Test Company",
       },
     });
 
-    console.log("LEAD CREATED:", lead);
+    console.log("✅ CREATED:", lead);
 
-    return NextResponse.json({ success: true, lead });
+    return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("ERROR:", error);
+    console.error("❌ ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to generate lead" },

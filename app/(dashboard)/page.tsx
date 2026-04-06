@@ -11,13 +11,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // ✅ get user
   const user = await prisma.user.findUnique({
     where: { email: session.user?.email! },
     include: { balance: true },
   });
 
-  // ✅ get leads count
+  // ✅ COUNT LEADS
   const leadsCount = await prisma.lead.count({
     where: {
       userId: user?.id,

@@ -1,44 +1,23 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import DashboardClient from "./DashboardClient";
 
-import { useState } from "react";
+export default async function DashboardPage() {
+  // ✅ FIRST get session
+  const session = await getServerSession(authOptions);
 
-export default function DashboardPage() {
-  const [loading, setLoading] = useState(false);
+  // ✅ THEN check it
+  if (!session) {
+    redirect("/login");
+  }
 
-  const generateLead = async () => {
-    setLoading(true);
+  // ✅ Fetch user with balance
+  const user = await prisma.user.findUnique({
+    where: { email: session.user?.email! },
+    include: { balance: true },
+  });
 
-    try {
-      const res = await fetch("/api/leads/generate", {
-        method: "POST",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error);
-        return;
-      }
-
-      alert("✅ Lead generated!");
-      
-      // optional: refresh page
-      window.location.reload();
-
-    } catch (err) {
-      alert("Something went wrong");
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <button
-      onClick={generateLead}
-      disabled={loading}
-      className="bg-green-600 text-white px-4 py-2 rounded"
-    >
-      {loading ? "Generating..." : "Generate Leads"}
-    </button>
-  );
+  return <DashboardClient user={user} />;
 }

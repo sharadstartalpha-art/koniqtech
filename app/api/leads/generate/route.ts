@@ -9,43 +9,39 @@ export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 
+    console.log("SESSION:", session);
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔥 get user balance
-    const balance = await prisma.userBalance.findUnique({
+    // 🔥 find user's project
+    const project = await prisma.project.findFirst({
       where: { userId: session.user.id },
     });
 
-    if (!balance || balance.balance <= 0) {
+    if (!project) {
       return NextResponse.json(
-        { error: "No credits left" },
+        { error: "No project found" },
         { status: 400 }
       );
     }
 
-    // 🔥 create fake lead (example)
     const lead = await prisma.lead.create({
       data: {
-        userId: session.user.id,
-        name: "New Lead",
+        name: "Test Lead",
         email: `lead${Date.now()}@test.com`,
+        userId: session.user.id,
+        projectId: project.id, // 🔥 IMPORTANT
       },
     });
 
-    // 🔥 deduct credit
-    await prisma.userBalance.update({
-      where: { userId: session.user.id },
-      data: {
-        balance: { decrement: 1 },
-      },
-    });
+    console.log("LEAD CREATED:", lead);
 
     return NextResponse.json({ success: true, lead });
 
   } catch (error) {
-    console.error("GENERATE LEAD ERROR:", error);
+    console.error("GENERATE ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },

@@ -6,7 +6,7 @@ import { useState } from "react";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+const [showPassword, setShowPassword] = useState(false);
   const login = async () => {
     const res = await signIn("credentials", {
       email,
@@ -70,11 +70,19 @@ export default function LoginPage() {
         />
 
         <input
-          type="password"
-          placeholder="Password"
-          className="w-full border px-3 py-2 rounded"
-          onChange={(e) => setPassword(e.target.value)}
-        />
+    type={showPassword ? "text" : "password"}
+    placeholder="Password"
+    className="w-full border px-3 py-2 rounded"
+    onChange={(e) => setPassword(e.target.value)}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-2 top-2 text-sm"
+  >
+    {showPassword ? "Hide" : "Show"}
+  </button>
 
         <button
           onClick={login}

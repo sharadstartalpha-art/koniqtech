@@ -47,26 +47,17 @@ export default function LoginPage() {
         </h1>
 
         {/* OAuth */}
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-          className="w-full bg-red-500 text-white py-2 rounded mb-3"
-        >
-          Continue with Google
-        </button>
+        <button onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+  Continue with Google
+</button>
 
-        <button
-          onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
-          className="w-full bg-black text-white py-2 rounded mb-3"
-        >
-          Continue with GitHub
-        </button>
+<button onClick={() => signIn("github", { callbackUrl: "/dashboard" })}>
+  Continue with GitHub
+</button>
 
-        <button
-          onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
-          className="w-full bg-blue-600 text-white py-2 rounded mb-4"
-        >
-          Continue with Facebook
-        </button>
+<button onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}>
+  Continue with Facebook
+</button>
 
         <p className="text-sm mb-3 text-gray-500">OR</p>
 

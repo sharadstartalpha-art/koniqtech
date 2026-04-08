@@ -22,7 +22,8 @@ model User {
   sessions      Session[]
   subscriptions Subscription[]
   transactions  Transaction[]
-  balance       UserBalance?
+  balance       Balance?
+  UserBalance   UserBalance?
 }
 
 model Account {
@@ -106,22 +107,22 @@ model Message {
 }
 
 model Lead {
-  id        String   @id @default(cuid())
-  userId    String
-  projectId String?
-  name      String?
-  email     String?
-  contactEmail String?   // ✅ REQUIRED
-  company   String?
-  website   String?
-  phone     String?
-  location  String?
-  source    String?
-  score     Int?
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  projectId    String?
+  name         String?
+  email        String?
+  contactEmail String? // ✅ REQUIRED
+  company      String?
+  website      String?
+  phone        String?
+  location     String?
+  source       String?
+  score        Int?
+  createdAt    DateTime @default(now())
 
-  project   Project? @relation(fields: [projectId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+  user    User     @relation(fields: [userId], references: [id])
 
   sequences LeadSequence[]
   status    LeadStatus?
@@ -196,15 +197,23 @@ model LeadStatus {
 }
 
 model VerificationToken {
-  id        String   @id @default(cuid())
-  email     String
-  token     String   @unique
-  expires   DateTime
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  email     String
-  token     String   @unique
-  expires   DateTime
+  id      String   @id @default(cuid())
+  email   String
+  token   String   @unique
+  expires DateTime
+}
+
+model Balance {
+  id      String @id @default(cuid())
+  userId  String @unique
+  balance Int
+
+  user User @relation(fields: [userId], references: [id])
 }

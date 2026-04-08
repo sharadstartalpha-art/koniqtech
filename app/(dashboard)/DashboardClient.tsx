@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function DashboardClient({ user, leadsCount }: any) {
+export default function DashboardClient({ user, leadsCount = 0 }: any) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -15,14 +15,22 @@ export default function DashboardClient({ user, leadsCount }: any) {
       return;
     }
 
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    await fetch("/api/leads/generate", {
-      method: "POST",
-    });
+      const res = await fetch("/api/leads/generate", {
+        method: "POST",
+      });
 
-    router.refresh(); // 🔥 IMPORTANT
-    setLoading(false);
+      const data = await res.json();
+      console.log("API RESPONSE:", data); // 🔥 DEBUG
+
+      router.refresh(); // ✅ refresh server data
+    } catch (err) {
+      console.error("ERROR:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,19 +38,20 @@ export default function DashboardClient({ user, leadsCount }: any) {
       <h1 className="text-2xl font-bold mb-6">Welcome back 🚀</h1>
 
       <div className="grid md:grid-cols-3 gap-6">
-
+        {/* Leads */}
         <div className="bg-white p-6 rounded shadow">
           <h2>Leads Generated</h2>
           <p className="text-3xl font-bold">{leadsCount}</p>
         </div>
 
+        {/* Credits */}
         <div className="bg-white p-6 rounded shadow">
           <h2>Credits Left</h2>
           <p className="text-3xl font-bold">{balance}</p>
         </div>
-
       </div>
 
+      {/* Button */}
       <button
         onClick={handleGenerate}
         disabled={loading}

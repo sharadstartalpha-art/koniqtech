@@ -7,25 +7,29 @@ import DashboardClient from "./DashboardClient";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // ❌ Not logged in
-  if (!session || !session.user?.email) {
+  if (!session?.user?.email) {
     redirect("/login");
   }
 
-  // ✅ Get user
+  // ✅ ALWAYS get user from email
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { balance: true },
   });
 
-  // ❗ CRITICAL FIX: use user.id (NOT session.user.id)
+  if (!user) {
+    redirect("/login");
+  }
+
+  // ✅ COUNT LEADS USING REAL USER ID
   const leadsCount = await prisma.lead.count({
     where: {
-      userId: user?.id,
+      userId: user.id,
     },
   });
 
-  console.log("SERVER LEADS COUNT:", leadsCount); // 🔥 DEBUG
+  console.log("DASHBOARD USER:", user.id);
+  console.log("LEADS COUNT:", leadsCount);
 
   return <DashboardClient user={user} leadsCount={leadsCount} />;
 }

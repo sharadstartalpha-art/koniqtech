@@ -23,11 +23,11 @@ export default function DashboardClient({ user, leadsCount = 0 }: any) {
       });
 
       const data = await res.json();
-      console.log("API RESPONSE:", data); // 🔥 DEBUG
+      console.log("API RESPONSE:", data);
 
       router.refresh(); // ✅ refresh server data
     } catch (err) {
-      console.error("ERROR:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -37,21 +37,18 @@ export default function DashboardClient({ user, leadsCount = 0 }: any) {
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">Welcome back 🚀</h1>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Leads */}
+      <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded shadow">
           <h2>Leads Generated</h2>
           <p className="text-3xl font-bold">{leadsCount}</p>
         </div>
 
-        {/* Credits */}
         <div className="bg-white p-6 rounded shadow">
           <h2>Credits Left</h2>
           <p className="text-3xl font-bold">{balance}</p>
         </div>
       </div>
 
-      {/* Button */}
       <button
         onClick={handleGenerate}
         disabled={loading}

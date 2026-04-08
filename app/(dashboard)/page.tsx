@@ -5,28 +5,36 @@ import { redirect } from "next/navigation";
 import DashboardClient from "./DashboardClient";
 
 export default async function DashboardPage() {
-  const user = await prisma.user.findFirst({
-  where: {
-    email: session?.user?.email,
-  },
-  include: { balance: true },
-});
+  // ✅ STEP 1: GET SESSION FIRST
+  const session = await getServerSession(authOptions);
 
-console.log("DASHBOARD USER ID:", user?.id);
+  if (!session) {
+    redirect("/login");
+  }
+
+  // ✅ STEP 2: GET USER (using SAME logic as API)
+  const user = await prisma.user.findFirst({
+    where: {
+      email: session.user?.email!, // safe now
+    },
+    include: { balance: true },
+  });
 
   if (!user) {
     redirect("/login");
   }
 
-  // ✅ COUNT LEADS USING REAL USER ID
-  const leadsCount = await prisma.lead.count({
-  where: {
-    userId: user?.id,
-  },
-});
+  console.log("DASHBOARD USER ID:", user.id);
 
-  console.log("DASHBOARD USER:", user.id);
+  // ✅ STEP 3: COUNT LEADS
+  const leadsCount = await prisma.lead.count({
+    where: {
+      userId: user.id,
+    },
+  });
+
   console.log("LEADS COUNT:", leadsCount);
 
+  // ✅ STEP 4: PASS TO CLIENT
   return <DashboardClient user={user} leadsCount={leadsCount} />;
 }

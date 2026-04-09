@@ -1,7 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 
 export default async function AnalyticsPage() {
+  await requireAdmin();
   const users = await prisma.user.count();
+const session = await getServerSession(authOptions);
+
+if (session?.user?.role !== "ADMIN") {
+  return <div>Unauthorized</div>;
+}
+
   const revenue = await prisma.transaction.aggregate({
     _sum: { amount: true },
   });

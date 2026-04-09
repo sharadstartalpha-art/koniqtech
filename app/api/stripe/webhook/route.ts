@@ -28,10 +28,10 @@ export async function POST(req: Request) {
 
     const userId = session.metadata.userId;
 
-    await prisma.userBalance.update({
+    await prisma.balance.update({
       where: { userId },
       data: {
-        balance: {
+        amount: {
           increment: 500,
         },
       },

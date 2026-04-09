@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const resource = body.resource;
 
     const email = resource?.payer?.email_address;
-    const planId = resource?.custom_id; // ✅ ONLY SOURCE OF TRUTH
+    const planId = resource?.custom_id;
 
     if (!email || !planId) {
       return NextResponse.json(
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 👤 Find user
+    // 👤 user
     const user = await prisma.user.findUnique({
       where: { email },
       include: { balance: true },
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔥 Fetch plan (ONLY THIS — no duplicate!)
-    const plan = await prisma.plan.findUnique({
+    // 📦 product = plan
+    const plan = await prisma.product.findUnique({
       where: { id: planId },
     });
 
@@ -46,56 +46,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 💳 Add balance
+    // 💰 Add credits (use amount)
     if (user.balance) {
-      await prisma.userBalance.update({
+      await prisma.balance.update({
         where: { userId: user.id },
         data: {
-          balance: {
-            increment: plan.balance,
+          amount: {
+            increment: plan.price, // or credits if you add later
           },
         },
       });
     } else {
-      await prisma.userBalance.create({
+      await prisma.balance.create({
         data: {
           userId: user.id,
-          balance: plan.balance,
+          amount: plan.price,
         },
       });
     }
 
-    // 🧾 Create transaction
+    // 🧾 transaction
     await prisma.transaction.create({
       data: {
         userId: user.id,
         amount: plan.price,
-        balance: plan.balance,
         type: "CREDIT_PURCHASE",
-        status: "SUCCESS",
-        provider: "paypal",
-      },
-    });
-
-    // 📦 Update subscription
-    await prisma.subscription.upsert({
-      where: {
-        userId_planId: {
-          userId: user.id,
-          planId: plan.id,
-        },
-      },
-      update: {
-        status: "ACTIVE",
-      },
-      create: {
-        userId: user.id,
-        planId: plan.id,
-        status: "ACTIVE",
       },
     });
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error("PAYPAL WEBHOOK ERROR:", error);
 

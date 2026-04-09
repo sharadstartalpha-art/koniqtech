@@ -6,8 +6,8 @@ declare module "next-auth" {
       id: string;
       email: string;
       role: string;
-      projectId?: string;
     };
+    projectId?: string; // ✅ MUST BE HERE (top level)
   }
 
   interface User {

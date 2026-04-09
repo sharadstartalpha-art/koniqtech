@@ -1,27 +1,29 @@
 import { prisma } from "@/lib/prisma";
 
-export async function getUserBalance(userId: string) {
-  const userBalance = await prisma.userBalance.findUnique({
+// ✅ get balance
+export async function getBalance(userId: string) {
+  const balance = await prisma.balance.findUnique({
     where: { userId },
   });
 
-  return userBalance?.balance || 0;
+  return balance?.amount ?? 0; // ✅ FIXED (amount, not balance)
 }
 
+// ✅ deduct credit
 export async function deductCredit(userId: string) {
-  const userBalance = await prisma.userBalance.findUnique({
+  const balance = await prisma.balance.findUnique({
     where: { userId },
   });
 
-  if (!userBalance || userbalance.credits <= 0) {
+  if (!balance || balance.amount <= 0) {
     throw new Error("NO_CREDITS");
   }
 
-  await prisma.userBalance.update({
+  await prisma.balance.update({
     where: { userId },
     data: {
-      balance: {
-        decrement: 1,
+      amount: {
+        decrement: 1, // ✅ FIXED
       },
     },
   });

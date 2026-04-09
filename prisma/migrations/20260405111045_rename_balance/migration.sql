@@ -23,16 +23,16 @@ ADD COLUMN     "balance" INTEGER NOT NULL;
 DROP TABLE "UserCredits";
 
 -- CreateTable
-CREATE TABLE "UserBalance" (
+CREATE TABLE "balance" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "balance" INTEGER NOT NULL DEFAULT 20,
 
-    CONSTRAINT "UserBalance_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "balance_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UserBalance_userId_key" ON "UserBalance"("userId");
+CREATE UNIQUE INDEX "balance_userId_key" ON "balance"("userId");
 
 -- AddForeignKey
-ALTER TABLE "UserBalance" ADD CONSTRAINT "UserBalance_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "balance" ADD CONSTRAINT "balance_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

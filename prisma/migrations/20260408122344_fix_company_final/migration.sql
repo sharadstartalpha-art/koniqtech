@@ -24,7 +24,7 @@
   - You are about to drop the `Plan` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `Session` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `Subscription` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `UserBalance` table. If the table is not empty, all the data it contains will be lost.
+  - You are about to drop the `balance` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `VerificationToken` table. If the table is not empty, all the data it contains will be lost.
   - Made the column `projectId` on table `Lead` required. This step will fail if there are existing NULL values in that column.
   - Added the required column `price` to the `Product` table without a default value. This is not possible if the table is not empty.
@@ -60,7 +60,7 @@ ALTER TABLE "Subscription" DROP CONSTRAINT "Subscription_planId_fkey";
 ALTER TABLE "Subscription" DROP CONSTRAINT "Subscription_userId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "UserBalance" DROP CONSTRAINT "UserBalance_userId_fkey";
+ALTER TABLE "balance" DROP CONSTRAINT "balance_userId_fkey";
 
 -- AlterTable
 ALTER TABLE "Balance" DROP COLUMN "balance",
@@ -124,7 +124,7 @@ DROP TABLE "Session";
 DROP TABLE "Subscription";
 
 -- DropTable
-DROP TABLE "UserBalance";
+DROP TABLE "balance";
 
 -- DropTable
 DROP TABLE "VerificationToken";

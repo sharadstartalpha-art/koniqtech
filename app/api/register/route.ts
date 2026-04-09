@@ -1,27 +1,28 @@
-import { prisma } from "@/lib/prisma"
-import bcrypt from "bcrypt"
+import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
-  const { email, password } = await req.json()
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const userId = url.searchParams.get("userId");
+  const plan = url.searchParams.get("plan");
 
-  const hashed = await bcrypt.hash(password, 10)
+  let balanceToAdd = 0;
 
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashed,
+  if (plan === "PRO") balanceToAdd = 100;
+  if (plan === "AGENCY") balanceToAdd = 500;
+
+  // 🔥 UPSERT (important)
+  await prisma.balance.upsert({
+    where: { userId: userId! },
+    update: {
+      amount: {
+        increment: balanceToAdd,
+      },
     },
-  })
+    create: {
+      userId: userId!,
+      amount: balanceToAdd,
+    },
+  });
 
-  // 🔥 CREATE WALLET
- await prisma.userBalance.upsert({
-  where: { userId: user.id },
-  update: {},
-  create: {
-    userId: user.id,
-    balance: 20,
-  },
-});
-
-  return Response.json(user)
+  return Response.redirect("https://koniqtech.com/dashboard");
 }

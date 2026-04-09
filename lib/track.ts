@@ -5,7 +5,6 @@ export async function track(userId: string, event: string) {
     data: {
       userId,
       amount: 0,
-      balance: 0,
       type: "CREDIT_USAGE",
       status: event,
     },

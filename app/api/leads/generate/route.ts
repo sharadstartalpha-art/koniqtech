@@ -18,7 +18,7 @@ export async function POST() {
     return NextResponse.json({ error: "User not found" });
   }
 
-  const projectId = session.user.projectId; // ✅ FIXED
+  const projectId = session.projectId; // ✅ FIXED
 
   if (!projectId) {
     return NextResponse.json(

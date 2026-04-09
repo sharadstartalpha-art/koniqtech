@@ -29,11 +29,12 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) return null;
 
+        // ✅ MUST MATCH next-auth.d.ts
         return {
           id: user.id,
           email: user.email,
-          role: user.role,
-          projectId: user.projects?.[0]?.id || null,
+          role: user.role || "USER", // ✅ FIXED
+          projectId: user.projects?.[0]?.id || undefined,
         };
       },
     }),
@@ -48,13 +49,12 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role; // ✅ ADD THIS
         token.projectId = user.projectId;
       }
 
-      // 🔄 project switch
-      if (trigger === "update" && session?.user?.projectId) {
-        token.projectId = session.user.projectId;
+      if (trigger === "update" && session?.projectId) {
+        token.projectId = session.projectId;
       }
 
       return token;
@@ -63,10 +63,12 @@ export const authOptions: NextAuthOptions = {
     // ✅ SESSION
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
-        session.user.projectId = token.projectId;
+        session.user.id = token.id as string;
+        session.user.role = token.role as string; // ✅ ADD THIS
       }
+
+      session.projectId = token.projectId as string | undefined;
+
       return session;
     },
 
@@ -77,7 +79,9 @@ export const authOptions: NextAuthOptions = {
         include: { projects: true },
       });
 
-      if (!dbUser?.projects?.length) {
+      if (!dbUser) return false;
+
+      if (!dbUser.projects.length) {
         const product = await prisma.product.findFirst();
 
         if (product) {

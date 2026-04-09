@@ -1,67 +1,67 @@
 "use client";
 
-import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import Logo from "@/components/Logo";
-import ProjectSwitcher from "@/components/ProjectSwitcher";
-
+import { useSession } from "next-auth/react";
 
 export default function Navbar() {
-  const { data: session } = useSession();
-  const [credits, setCredits] = useState<number | null>(null);
+  const { data: session, update } = useSession();
+
+  const [projects, setProjects] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (session) {
-      fetch("/api/user/credits")
-        .then(res => res.json())
-        .then(data => setCredits(data.credits));
-    }
-  }, [session]);
+    fetch("/api/projects")
+      .then((res) => res.json())
+      .then(setProjects);
+  }, []);
+
+  const switchProject = async (projectId: string) => {
+    await update({ projectId }); // 🔥 updates JWT
+    setOpen(false);
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b shadow-sm">
-      <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="flex justify-between p-4 bg-white border-b">
+      
+      {/* LEFT */}
+      <div className="flex items-center gap-4">
+        <span className="font-bold">KoniqTech</span>
 
-        {/* LEFT */}
-        <Link href="/" className="flex items-center">
-          <Logo />
-        </Link>
+        {/* PROJECT DROPDOWN */}
+        <div className="relative">
+          <button
+            onClick={() => setOpen(!open)}
+            className="px-3 py-1 border rounded"
+          >
+            {session?.projectId
+              ? projects.find(p => p.id === session.projectId)?.name
+              : "Select Project"}
+          </button>
 
-        {/* RIGHT */}
-        <div className="flex gap-4 items-center">
-               <ProjectSwitcher />
-          {session && (
-            <div className="text-sm bg-gray-100 px-3 py-1 rounded-lg">
-              💳 Credits: <span className="font-semibold">{credits ?? "..."}</span>
+          {open && (
+            <div className="absolute top-10 bg-white border shadow w-60">
+              {projects.map((p) => (
+                <div
+                  key={p.id}
+                  onClick={() => switchProject(p.id)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {p.name} ({p.product.name})
+                </div>
+              ))}
+
+              <div className="border-t p-2 text-blue-600 cursor-pointer">
+                + Create Project
+              </div>
             </div>
           )}
-
-          {!session ? (
-            <>
-              <Link href="/login" className="px-4 py-2 border rounded-lg">
-                Login
-              </Link>
-              <Link href="/register" className="px-5 py-2 bg-blue-600 text-white rounded-lg">
-                Get Started
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/dashboard" className="px-4 py-2 border rounded-lg">
-                Dashboard
-              </Link>
-
-              {session?.user?.role === "ADMIN" && (
-                <Link href="/admin" className="px-4 py-2">
-                  Admin
-                </Link>
-              )}
-            </>
-          )}
-
         </div>
       </div>
-    </nav>
+
+      {/* RIGHT */}
+      <div>
+        {session?.user?.email}
+      </div>
+    </div>
   );
 }

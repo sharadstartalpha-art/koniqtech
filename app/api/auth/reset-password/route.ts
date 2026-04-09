@@ -11,17 +11,20 @@ export async function POST(req: Request) {
     where: { token },
   });
 
-  if (!record || record.expires < new Date()) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+  // ✅ FIXED
+  if (!record || record.expiresAt < new Date()) {
+    return NextResponse.json({ error: "Invalid or expired token" }, { status: 400 });
   }
 
   const hashed = await bcrypt.hash(password, 10);
 
+  // ✅ FIXED
   await prisma.user.update({
-    where: { email: record.email },
+    where: { id: record.userId },
     data: { password: hashed },
   });
 
+  // ✅ cleanup token
   await prisma.passwordResetToken.delete({
     where: { id: record.id },
   });

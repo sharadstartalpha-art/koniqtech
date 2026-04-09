@@ -15,31 +15,31 @@ export async function POST(req: Request) {
     }
 
     // get latest OTP (IMPORTANT FIX)
-    const record = await prisma.verificationToken.findFirst({
-      where: { email },
-      orderBy: { expires: "desc" },
-    });
+const record = await prisma.verificationToken.findFirst({
+  where: { email },
+  orderBy: { expiresAt: "desc" }, // ✅ FIX
+});
 
-    if (!record) {
-      return NextResponse.json(
-        { error: "OTP not found" },
-        { status: 400 }
-      );
-    }
+if (!record) {
+  return NextResponse.json(
+    { error: "OTP not found" },
+    { status: 400 }
+  );
+}
 
-    if (record.token !== otp) {
-      return NextResponse.json(
-        { error: "Invalid OTP" },
-        { status: 400 }
-      );
-    }
+if (record.token !== otp) {
+  return NextResponse.json(
+    { error: "Invalid OTP" },
+    { status: 400 }
+  );
+}
 
-    if (record.expires < new Date()) {
-      return NextResponse.json(
-        { error: "OTP expired" },
-        { status: 400 }
-      );
-    }
+if (record.expiresAt < new Date()) { // ✅ FIX
+  return NextResponse.json(
+    { error: "OTP expired" },
+    { status: 400 }
+  );
+}
 
     // delete after success
     await prisma.verificationToken.delete({

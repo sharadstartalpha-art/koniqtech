@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       include: { balance: true }, // ✅ correct
     });
 
-    if (!user?.balance || user.balance.balance <= 0) {
+    if (!user?.balance || user.balance.credits <= 0) {
       return NextResponse.json({ error: "NO_CREDITS" }, { status: 403 });
     }
 

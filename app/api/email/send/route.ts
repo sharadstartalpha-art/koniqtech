@@ -70,16 +70,15 @@ export async function POST(req: NextRequest) {
     await deductCredit(user.id);
 
     // 📊 7. Track usage
-    await prisma.transaction.create({
-      data: {
-        userId: user.id,
-        amount: 0,
-        balance: 1,
-        type: "CREDIT_USAGE",
-        status: "EMAIL_SENT",
-        provider: "system",
-      },
-    });
+   await prisma.transaction.create({
+  data: {
+    userId: user.id,
+    amount: -1, // ✅ IMPORTANT: credit used
+    type: "CREDIT_USAGE",
+    status: "EMAIL_SENT",
+    provider: "system",
+  },
+});
 
     return NextResponse.json({
       success: true,

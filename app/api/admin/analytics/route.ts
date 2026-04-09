@@ -17,7 +17,7 @@ export async function GET() {
 
   // ✅ PAYMENTS (revenue)
   const payments = await prisma.transaction.findMany({
-    where: { status: "SUCCESS" },
+  
     select: { createdAt: true, amount: true },
   });
 

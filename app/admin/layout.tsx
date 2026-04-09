@@ -1,13 +1,27 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default async function AdminLayout({ children }: any) {
-  const session = await getServerSession(authOptions);
+export default function AdminLayout({ children }: any) {
+  return (
+    <div className="flex min-h-screen">
 
-  if (session?.user?.role !== "ADMIN") {
-    redirect("/");
-  }
+      {/* Sidebar */}
+      <div className="w-64 bg-black text-white p-6">
+        <h2 className="text-xl font-bold mb-6">Admin Panel</h2>
 
-  return <div className="p-6">{children}</div>;
+        <nav className="space-y-3">
+          <Link href="/admin">Dashboard</Link><br />
+          <Link href="/admin/users">Users</Link><br />
+          <Link href="/admin/products">Products</Link><br />
+          <Link href="/admin/projects">Projects</Link><br />
+          <Link href="/admin/payments">Payments</Link><br />
+          <Link href="/admin/analytics">Analytics</Link>
+        </nav>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 p-8 bg-gray-100">
+        {children}
+      </div>
+    </div>
+  );
 }

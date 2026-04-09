@@ -27,8 +27,12 @@ export async function POST(req: Request) {
   const { name, slug } = await req.json();
 
   const product = await prisma.product.create({
-    data: { name, slug },
-  });
+  data: {
+    name,
+    slug,
+    price: 10, // ✅ REQUIRED
+  },
+});
 
   return NextResponse.json(product);
 }

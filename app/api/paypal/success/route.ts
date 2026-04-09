@@ -2,25 +2,29 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
+
   const userId = url.searchParams.get("userId");
   const plan = url.searchParams.get("plan");
 
-  let balanceToAdd = 0;
+  if (!userId || !plan) {
+    return new Response("Missing params", { status: 400 });
+  }
 
-  if (plan === "PRO") balanceToAdd = 100;
-  if (plan === "AGENCY") balanceToAdd = 500;
+  let creditsToAdd = 0;
 
-  // 🔥 UPSERT (important)
-  await prisma.userBalance.upsert({
-    where: { userId: userId! },
+  if (plan === "PRO") creditsToAdd = 100;
+  if (plan === "AGENCY") creditsToAdd = 500;
+
+  await prisma.balance.upsert({
+    where: { userId },
     update: {
-      balance: {
-        increment: balanceToAdd,
+      amount: {
+        increment: creditsToAdd,
       },
     },
     create: {
-      userId: userId!,
-      balance: balanceToAdd,
+      userId,
+      amount: creditsToAdd,
     },
   });
 

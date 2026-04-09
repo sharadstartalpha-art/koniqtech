@@ -18,14 +18,14 @@ export async function POST(req: Request) {
       include: { balance: true }, // ✅ correct
     });
 
-    if (!user?.balance || user.balance.credits <= 0) {
+    if (!user?.balance || user.balance.amount <= 0) {
       return NextResponse.json({ error: "NO_CREDITS" }, { status: 403 });
     }
 
-    await prisma.userBalance.update({
+    await prisma.balance.update({
       where: { userId: user.id },
       data: {
-        balance: { decrement: 1 },
+        amount: { decrement: 1 },
       },
     });
 

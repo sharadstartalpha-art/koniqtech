@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 
 export default async function ProductsPage() {
+  await requireAdmin();
   const products = await prisma.product.findMany();
+const session = await getServerSession(authOptions);
 
+if (session?.user?.role !== "ADMIN") {
+  return <div>Unauthorized</div>;
+}
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Products</h1>

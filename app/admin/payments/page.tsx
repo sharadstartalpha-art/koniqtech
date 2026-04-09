@@ -1,16 +1,21 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 
-import { useEffect, useState } from "react";
+export default async function PaymentsPage() {
+  await requireAdmin();
+const session = await getServerSession(authOptions);
 
-export default function PaymentsPage() {
-  const [payments, setPayments] = useState<any[]>([]);
+if (session?.user?.role !== "ADMIN") {
+  return <div>Unauthorized</div>;
+}
 
-  useEffect(() => {
-    fetch("/api/admin/payments")
-      .then(res => res.json())
-      .then(setPayments);
-  }, []);
-fetch("/api/admin/payments")
+  const payments = await prisma.transaction.findMany({
+    include: { user: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Payments</h1>
@@ -20,7 +25,7 @@ fetch("/api/admin/payments")
           <tr className="border-b">
             <th className="p-2">User</th>
             <th className="p-2">Amount</th>
-            <th className="p-2">Balance</th>
+            <th className="p-2">Type</th>
             <th className="p-2">Status</th>
           </tr>
         </thead>
@@ -30,7 +35,7 @@ fetch("/api/admin/payments")
             <tr key={p.id} className="border-b">
               <td className="p-2">{p.user.email}</td>
               <td className="p-2">${p.amount}</td>
-              <td className="p-2">{p.balance}</td>
+              <td className="p-2">{p.type}</td>
               <td className="p-2">{p.status}</td>
             </tr>
           ))}

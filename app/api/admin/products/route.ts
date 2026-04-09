@@ -2,9 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/admin";
 
 // ✅ GET PRODUCTS
 export async function GET() {
+  await requireAdmin();
   const session = await getServerSession(authOptions);
 
   if (session?.user?.role !== "ADMIN") {

@@ -15,6 +15,6 @@ export async function GET() {
   });
 
   return Response.json({
-    balance: user?.balance?.balance || 0,
+    balance: user?.balance?.amount || 0,
   });
 }

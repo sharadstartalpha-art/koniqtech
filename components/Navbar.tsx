@@ -16,9 +16,13 @@ export default function Navbar() {
   }, []);
 
   const switchProject = async (projectId: string) => {
-    await update({ projectId }); // 🔥 updates JWT
+    await update({ projectId }); // ✅ updates JWT
     setOpen(false);
   };
+
+  const currentProject = projects.find(
+    (p) => p.id === session?.projectId
+  );
 
   return (
     <div className="flex justify-between p-4 bg-white border-b">
@@ -33,9 +37,7 @@ export default function Navbar() {
             onClick={() => setOpen(!open)}
             className="px-3 py-1 border rounded"
           >
-            {session?.projectId
-              ? projects.find(p => p.id === session.projectId)?.name
-              : "Select Project"}
+            {currentProject?.name || "Select Project"}
           </button>
 
           {open && (
@@ -46,7 +48,7 @@ export default function Navbar() {
                   onClick={() => switchProject(p.id)}
                   className="p-2 hover:bg-gray-100 cursor-pointer"
                 >
-                  {p.name} ({p.product.name})
+                  {p.name} ({p.product?.name})
                 </div>
               ))}
 

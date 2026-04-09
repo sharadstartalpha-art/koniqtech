@@ -17,7 +17,7 @@ async function main() {
       role: "ADMIN",
       balance: {
         create: {
-          credits: 9999,
+          amount: 9999,
         },
       },
     },

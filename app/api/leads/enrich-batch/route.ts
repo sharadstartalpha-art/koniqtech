@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
       const prompt = `
 Company: ${lead.company}
-Website: ${lead.website}
+Website: ${lead.website || "Not available"}
 
 Give:
 1. What they do (1 line)

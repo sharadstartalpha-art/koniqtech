@@ -1,42 +1,23 @@
 import { NextAuthOptions } from "next-auth";
-import GithubProvider from "next-auth/providers/github";
-import GoogleProvider from "next-auth/providers/google";
-import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
-
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
-    }),
-
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-    }),
-
     CredentialsProvider({
       name: "credentials",
       credentials: {
         email: {},
         password: {},
       },
+
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          include: { projects: true },
         });
 
         if (!user || !user.password) return null;
@@ -51,7 +32,8 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          role: user.role,
+          projectId: user.projects?.[0]?.id || null,
         };
       },
     }),
@@ -63,69 +45,54 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     // ✅ JWT
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
+        token.projectId = user.projectId;
       }
+
+      // 🔄 project switch
+      if (trigger === "update" && session?.user?.projectId) {
+        token.projectId = session.user.projectId;
+      }
+
       return token;
     },
 
     // ✅ SESSION
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.projectId = token.projectId;
       }
       return session;
     },
 
-    // ✅ SIGN IN LOGIC (MERGED PROPERLY)
-async signIn({ user }) {
-  const existingBalance = await prisma.userBalance.findUnique({
-    where: { userId: user.id },
-  });
+    // ✅ AUTO CREATE PROJECT
+    async signIn({ user }) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email: user.email! },
+        include: { projects: true },
+      });
 
-  if (!existingBalance) {
-    await prisma.userBalance.create({
-      data: {
-        userId: user.id,
-        balance: 20,
-      },
-    });
-  }
+      if (!dbUser?.projects?.length) {
+        const product = await prisma.product.findFirst();
 
-  const existing = await prisma.user.findUnique({
-    where: { email: user.email! },
-    include: { projects: true },
-  });
+        if (product) {
+          await prisma.project.create({
+            data: {
+              name: "My First Project",
+              userId: dbUser.id,
+              productId: product.id,
+            },
+          });
+        }
+      }
 
-  if (!existing?.projects?.length) {
-    const product = await prisma.product.findFirst();
-
-    await prisma.project.create({
-      data: {
-        name: "My First Project",
-        userId: user.id,
-        productId: product!.id,
-      },
-    });
-
-    // ✅ allow redirect handling instead of forcing here
-    return true;
-  }
-
-  return true;
-},
-
-    // ✅ REDIRECT FIX
-    async redirect({ url, baseUrl }) {
-  // allow relative URLs
-  if (url.startsWith("/")) return baseUrl + url;
-
-  // allow same-origin
-  if (new URL(url).origin === baseUrl) return url;
-
-  return baseUrl + "/dashboard";
-},
+      return true;
+    },
   },
 
   pages: {

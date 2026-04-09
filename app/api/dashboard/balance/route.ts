@@ -10,11 +10,11 @@ export async function GET() {
     return NextResponse.json({ balance: 0 });
   }
 
-  const balance = await prisma.userBalance.findUnique({
+  const balance = await prisma.balance.findUnique({
     where: { userId: session.user.id },
   });
 
   return NextResponse.json({
-    balance: balance?.balance || 0,
+    balance: balance?.amount || 0, // ✅ FIXED
   });
 }

@@ -1,11 +1,7 @@
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/prisma";
 
 export default async function LeadsPage() {
-  const leads: any[] = await prisma.lead.findMany({
-    include: {
-      status: true,
-    },
-  })
+  const leads = await prisma.lead.findMany();
 
   return (
     <div>
@@ -15,9 +11,9 @@ export default async function LeadsPage() {
         <div key={lead.id} className="bg-white p-4 mb-2 rounded shadow">
           <p>{lead.name}</p>
           <p>{lead.contactEmail || lead.email}</p>
-          <p>Status: {lead.status?.status || "NEW"}</p>
+          <p>{lead.company}</p>
         </div>
       ))}
     </div>
-  )
+  );
 }

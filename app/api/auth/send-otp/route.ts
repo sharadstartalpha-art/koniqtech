@@ -9,13 +9,12 @@ export async function POST(req: Request) {
   const { email } = await req.json();
 
   const otp = generateOTP();
- 
 
   await prisma.verificationToken.create({
     data: {
       email,
       token: otp,
-      expires: new Date(Date.now() + 10 * 60 * 1000), // 10 min
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // ✅ FIXED
     },
   });
 

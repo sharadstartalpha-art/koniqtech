@@ -1,29 +1,27 @@
 import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/mail";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
 export async function POST(req: Request) {
   const { email } = await req.json();
 
   const token = crypto.randomBytes(32).toString("hex");
 
-  await prisma.passwordResetToken.create({
-    data: {
-      email,
-      token,
-      expires: new Date(Date.now() + 15 * 60 * 1000),
-    },
-  });
+ const user = await prisma.user.findUnique({
+  where: { email },
+});
 
-  const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
+if (!user) {
+  return NextResponse.json({ error: "User not found" });
+}
 
-  await sendEmail(
-    email,
-    "Reset Password",
-    `<a href="${resetLink}">Reset Password</a>`
-  );
+await prisma.passwordResetToken.create({
+  data: {
+    userId: user.id,
+    token,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 15),
+  },
+});
 
   return NextResponse.json({ success: true });
 }

@@ -2,11 +2,14 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-const [showPassword, setShowPassword] = useState(false);
+
   const login = async () => {
     const res = await signIn("credentials", {
       email,
@@ -14,89 +17,44 @@ const [showPassword, setShowPassword] = useState(false);
       redirect: false,
     });
 
-    if (res?.error) {
-      alert("Invalid credentials");
-      return;
-    }
+    if (res?.ok) {
+      // 🔥 fetch session to check role
+      const session = await fetch("/api/auth/session").then((r) => r.json());
 
-    window.location.href = "/dashboard";
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    } else {
+      alert("Invalid credentials");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-md border rounded-xl p-6 space-y-4 shadow">
-        <h1 className="text-xl font-semibold text-center">
-          Welcome back 👋
-        </h1>
+    <div className="flex h-screen items-center justify-center">
+      <div className="p-6 bg-white rounded shadow w-80">
+        <h1 className="text-xl font-bold mb-4">Login</h1>
 
-        {/* GOOGLE */}
-        <button
-          onClick={() =>
-            signIn("google", { callbackUrl: "/dashboard" })
-          }
-          className="w-full bg-red-500 text-white py-2 rounded"
-        >
-          Continue with Google
-        </button>
-
-        {/* GITHUB */}
-        <button
-          onClick={() =>
-            signIn("github", { callbackUrl: "/dashboard" })
-          }
-          className="w-full bg-black text-white py-2 rounded"
-        >
-          Continue with GitHub
-        </button>
-
-        {/* FACEBOOK */}
-        <button
-          onClick={() =>
-            signIn("facebook", { callbackUrl: "/dashboard" })
-          }
-          className="w-full bg-blue-600 text-white py-2 rounded"
-        >
-          Continue with Facebook
-        </button>
-
-        <div className="text-center text-sm">OR</div>
-
-        {/* EMAIL LOGIN */}
         <input
-          type="email"
           placeholder="Email"
-          className="w-full border px-3 py-2 rounded"
           onChange={(e) => setEmail(e.target.value)}
+          className="border p-2 w-full mb-2"
         />
 
         <input
-    type={showPassword ? "text" : "password"}
-    placeholder="Password"
-    className="w-full border px-3 py-2 rounded"
-    onChange={(e) => setPassword(e.target.value)}
-  />
-
-  <button
-    type="button"
-    onClick={() => setShowPassword(!showPassword)}
-    className="absolute right-2 top-2 text-sm"
-  >
-    {showPassword ? "Hide" : "Show"}
-  </button>
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+          className="border p-2 w-full mb-4"
+        />
 
         <button
           onClick={login}
-          className="w-full bg-blue-600 text-white py-2 rounded"
+          className="bg-black text-white w-full py-2"
         >
           Login
         </button>
-
-        <p className="text-sm text-center">
-          Don’t have an account?{" "}
-          <a href="/register" className="text-blue-600">
-            Register
-          </a>
-        </p>
       </div>
     </div>
   );

@@ -7,42 +7,32 @@ export async function POST() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await prisma.user.findFirst({
-    where: {
-      email: session.user.email,
-    },
-    include: { balance: true },
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
   });
 
-  console.log("API USER ID:", user?.id);
-
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ error: "User not found" });
   }
 
-  if (!user.balance || user.balance.balance <= 0) {
-    return NextResponse.json({ error: "No credits" }, { status: 400 });
+  const projectId = session.user.projectId; // ✅ FIXED
+
+  if (!projectId) {
+    return NextResponse.json(
+      { error: "No project selected" },
+      { status: 400 }
+    );
   }
 
-  // ✅ CREATE LEAD
   await prisma.lead.create({
     data: {
       name: "Generated Lead",
       email: `lead${Date.now()}@test.com`,
       userId: user.id,
-    },
-  });
-
-  // ✅ DEDUCT CREDIT
-  await prisma.balance.update({
-    where: { userId: user.id },
-    data: {
-      balance: {
-        decrement: 1,
-      },
+      projectId,
     },
   });
 

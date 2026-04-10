@@ -17,15 +17,15 @@ export default function PricingPage() {
     },
   ];
 
-  const handleBuy = async (planId: string) => {
-    const res = await fetch("/api/paypal/create-order", {
-      method: "POST",
-      body: JSON.stringify({ planId }),
-    });
+ const handleBuy = async (planId: string) => {
+  const res = await fetch("/api/paypal/subscribe", {
+    method: "POST",
+    body: JSON.stringify({ planId }),
+  });
 
-    const data = await res.json();
-    window.location.href = data.approveUrl;
-  };
+  const data = await res.json();
+  window.location.href = data.approveUrl;
+};
 
   return (
     <div className="max-w-6xl mx-auto py-20">

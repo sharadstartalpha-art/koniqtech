@@ -1,87 +1,61 @@
-import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
+export async function POST(req: Request) {
+  const body = await req.json();
 
-    if (body.event_type !== "PAYMENT.CAPTURE.COMPLETED") {
-      return NextResponse.json({ ok: true });
-    }
+  const event = body.event_type;
 
-    const resource = body.resource;
+  // 🔥 SUBSCRIPTION CREATED
+  if (event === "BILLING.SUBSCRIPTION.ACTIVATED") {
+    const sub = body.resource;
 
-    const email = resource?.payer?.email_address;
-    const planId = resource?.custom_id;
+    const email = sub.subscriber.email_address;
 
-    if (!email || !planId) {
-      return NextResponse.json(
-        { error: "Missing email or planId" },
-        { status: 400 }
-      );
-    }
-
-    // 👤 user
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { balance: true },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
+    if (!user) return new Response("User not found");
 
-    // 📦 product = plan
-    const plan = await prisma.product.findUnique({
-      where: { id: planId },
-    });
-
-    if (!plan) {
-      return NextResponse.json(
-        { error: "Plan not found" },
-        { status: 404 }
-      );
-    }
-
-    // 💰 Add credits (use amount)
-    if (user.balance) {
-      await prisma.balance.update({
-        where: { userId: user.id },
-        data: {
-          amount: {
-            increment: plan.price, // or credits if you add later
-          },
-        },
-      });
-    } else {
-      await prisma.balance.create({
-        data: {
-          userId: user.id,
-          amount: plan.price,
-        },
-      });
-    }
-
-    // 🧾 transaction
-    await prisma.transaction.create({
+    await prisma.subscription.create({
       data: {
         userId: user.id,
-        amount: plan.price,
-        type: "CREDIT_PURCHASE",
+        planId: "mapped-plan-id", // map from PayPal plan
+        status: "ACTIVE",
+      },
+    });
+  }
+
+  // 🔥 PAYMENT SUCCESS
+  if (event === "PAYMENT.SALE.COMPLETED") {
+    const sale = body.resource;
+
+    const email = sale.billing_agreement_id;
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) return new Response("User not found");
+
+    await prisma.payment.create({
+      data: {
+        userId: user.id,
+        amount: parseFloat(sale.amount.total),
+        status: "COMPLETED",
       },
     });
 
-    return NextResponse.json({ success: true });
-
-  } catch (error) {
-    console.error("PAYPAL WEBHOOK ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Webhook failed" },
-      { status: 500 }
-    );
+    // 💰 add credits
+    await prisma.balance.update({
+      where: { userId: user.id },
+      data: {
+        amount: {
+          increment: 1000, // map per plan
+        },
+      },
+    });
   }
+
+  return new Response("OK");
 }

@@ -1,36 +1,39 @@
+"use client";
+
 import Link from "next/link";
-import { LayoutDashboard, Folder, CreditCard } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 const nav = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Projects", href: "/projects", icon: Folder },
-  { name: "Billing", href: "/billing", icon: CreditCard },
+  { name: "Dashboard", href: "/admin" },
+  { name: "Users", href: "/admin/users" },
+  { name: "Products", href: "/admin/products" },
+  { name: "Projects", href: "/admin/projects" },
+  { name: "Payments", href: "/admin/payments" },
+  { name: "Analytics", href: "/admin/analytics" },
 ];
 
 export default function Sidebar() {
-  return (
-    <div className="w-64 bg-white border-r border-gray-200 h-full p-4 flex flex-col">
-      {/* Logo */}
-      <div className="text-xl font-semibold mb-8">KoniqTech</div>
+  const pathname = usePathname();
 
-      {/* Nav */}
-      <nav className="space-y-1">
-        {nav.map((item) => (
+  return (
+    <div className="w-64 bg-black text-white p-4">
+      <h2 className="text-lg font-semibold mb-6">Admin Panel</h2>
+
+      {nav.map((item) => {
+        const active = pathname === item.href;
+
+        return (
           <Link
             key={item.name}
             href={item.href}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition"
+            className={`block px-3 py-2 rounded mb-1 ${
+              active ? "bg-white text-black" : "hover:bg-gray-800"
+            }`}
           >
-            <item.icon size={18} />
             {item.name}
           </Link>
-        ))}
-      </nav>
-
-      {/* Bottom */}
-      <div className="mt-auto text-xs text-gray-400">
-        © 2026 KoniqTech
-      </div>
+        );
+      })}
     </div>
   );
 }

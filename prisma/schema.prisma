@@ -33,6 +33,7 @@ model User {
   balance       Balance?
   transactions  Transaction[]
   payments      Payment[]
+  unsubscribed Boolean @default(false)
 }
 
 model Company {
@@ -209,4 +210,37 @@ model Payment {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+
+model Campaign {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+
+  steps CampaignStep[]
+}
+
+model CampaignStep {
+  id          String @id @default(cuid())
+  campaignId  String
+  subject     String
+  content     String
+  delay       Int // hours
+
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  userId    String
+  leadId    String?
+  email     String
+
+  status    String
+  opened    Boolean @default(false)
+  clicked   Boolean @default(false)
+
+  createdAt DateTime @default(now())
 }

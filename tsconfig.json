@@ -17,7 +17,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "baseUrl": ".", // ✅ THIS FIXES YOUR ISSUE
+    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./*"

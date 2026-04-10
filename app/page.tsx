@@ -1,17 +1,27 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 
-export default async function Home() {
-  const session = await getServerSession(authOptions);
+export default function HomePage() {
+  return (
+    <div className="h-screen flex flex-col items-center justify-center">
 
-  if (!session) {
-    redirect("/login");
-  }
+      <h1 className="text-4xl font-bold">
+        KoniqTech 🚀
+      </h1>
 
-  if (session.user.role === "ADMIN") {
-    redirect("/admin");
-  }
+      <p className="text-gray-500 mt-2">
+        AI Lead Generation Platform
+      </p>
 
-  redirect("/dashboard");
+      <div className="flex gap-4 mt-6">
+        <Link href="/login" className="bg-black text-white px-4 py-2 rounded">
+          Login
+        </Link>
+
+        <Link href="/register" className="border px-4 py-2 rounded">
+          Register
+        </Link>
+      </div>
+
+    </div>
+  );
 }

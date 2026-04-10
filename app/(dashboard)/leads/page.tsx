@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useUpgrade } from "@/components/UpgradeProvider";
 
 type Lead = {
   id: string;
   name: string;
-  email?: string;
-  contactEmail?: string;
+  email: string;
   company?: string;
 };
 
@@ -16,87 +14,83 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const router = useRouter();
+  const [filters, setFilters] = useState({
+    industry: "",
+    location: "",
+    title: "",
+  });
+
   const { setShowUpgrade } = useUpgrade();
 
-  // ✅ Fetch leads
-  const fetchLeads = async () => {
-    const res = await fetch("/api/leads");
-    const data = await res.json();
-    setLeads(data);
-  };
-
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
-  // ✅ Generate lead
-  const handleGenerate = async () => {
+  const generateLeads = async () => {
     setLoading(true);
 
-    try {
-      const res = await fetch("/api/leads/generate", {
-        method: "POST",
-      });
+    const res = await fetch("/api/leads/generate", {
+      method: "POST",
+      body: JSON.stringify(filters),
+    });
 
-      // 🚨 No credits
-      if (res.status === 403) {
-        setShowUpgrade(true); // 🔥 open modal
-        setLoading(false);
-        return;
-      }
-
-      await fetchLeads(); // refresh list
-    } catch (err) {
-      console.error(err);
+    if (res.status === 403) {
+      setShowUpgrade(true);
+      setLoading(false);
+      return;
     }
 
+    const data = await res.json();
+    setLeads(data.leads);
     setLoading(false);
   };
 
   return (
     <div className="space-y-6">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">CRM Pipeline</h1>
+      <h1 className="text-2xl font-bold">Lead Generator 🚀</h1>
 
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90"
-        >
-          {loading ? "Generating..." : "Generate Lead"}
-        </button>
+      {/* FILTERS */}
+      <div className="bg-white p-4 rounded-xl border grid md:grid-cols-3 gap-4">
+        <input
+          placeholder="Industry (e.g SaaS)"
+          className="border p-2 rounded"
+          onChange={(e) =>
+            setFilters({ ...filters, industry: e.target.value })
+          }
+        />
+
+        <input
+          placeholder="Location (e.g USA)"
+          className="border p-2 rounded"
+          onChange={(e) =>
+            setFilters({ ...filters, location: e.target.value })
+          }
+        />
+
+        <input
+          placeholder="Job Title (e.g CEO)"
+          className="border p-2 rounded"
+          onChange={(e) =>
+            setFilters({ ...filters, title: e.target.value })
+          }
+        />
       </div>
 
-      {/* EMPTY STATE */}
-      {leads.length === 0 && (
-        <div className="bg-white border rounded-xl p-6 text-center text-gray-500">
-          No leads yet. Generate your first lead 🚀
-        </div>
-      )}
+      {/* BUTTON */}
+      <button
+        onClick={generateLeads}
+        className="bg-black text-white px-6 py-2 rounded-lg"
+      >
+        {loading ? "Generating..." : "Generate Leads"}
+      </button>
 
-      {/* LEADS LIST */}
+      {/* RESULTS */}
       <div className="grid gap-4">
         {leads.map((lead) => (
-          <div
-            key={lead.id}
-            className="bg-white p-5 rounded-xl border shadow-sm hover:shadow-md transition"
-          >
+          <div key={lead.id} className="p-4 bg-white rounded-xl border">
             <p className="font-semibold">{lead.name}</p>
-
-            <p className="text-sm text-gray-500">
-              {lead.contactEmail || lead.email}
-            </p>
-
-            <p className="text-sm text-gray-400 mt-1">
-              {lead.company || "No company"}
-            </p>
+            <p className="text-sm text-gray-500">{lead.email}</p>
+            <p className="text-sm">{lead.company}</p>
           </div>
         ))}
       </div>
-
     </div>
   );
 }

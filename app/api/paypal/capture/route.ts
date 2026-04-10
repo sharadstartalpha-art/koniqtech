@@ -2,14 +2,24 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const token = searchParams.get("token"); // PayPal order ID
-
   const session = await getServerSession();
-  const userId = session?.user?.id;
+
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const userId = session.user.id;
+
+  const { searchParams } = new URL(req.url);
+  const planId = searchParams.get("planId");
+  const token = searchParams.get("token");
+
+  if (!planId || !token) {
+    throw new Error("Invalid request");
+  }
 
   // Capture payment
-  const res = await fetch(
+  await fetch(
     `https://api-m.sandbox.paypal.com/v2/checkout/orders/${token}/capture`,
     {
       method: "POST",
@@ -23,42 +33,37 @@ export async function GET(req: Request) {
     }
   );
 
-  const data = await res.json();
+  const plan = await prisma.plan.findUnique({
+    where: { id: planId },
+  });
 
-  // 🔥 Determine plan
-  const amount = data.purchase_units[0].payments.captures[0].amount.value;
+  if (!plan) throw new Error("Plan not found");
 
-  let planId = "starter";
-  let credits = 1000;
-
-  if (amount == "29") {
-    planId = "pro";
-    credits = 5000;
-  }
-
-  // ✅ Create / Update Subscription
+  // ✅ Subscription
   await prisma.subscription.upsert({
     where: { userId },
     update: {
-      planId,
+      planId: plan.id,
       status: "ACTIVE",
     },
     create: {
       userId,
-      planId,
+      planId: plan.id,
       status: "ACTIVE",
     },
   });
 
-  // ✅ Add credits
+  // ✅ Credits
   await prisma.balance.update({
     where: { userId },
     data: {
       amount: {
-        increment: credits,
+        increment: plan.credits,
       },
     },
   });
 
-  return Response.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`);
+  return Response.redirect(
+    `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`
+  );
 }

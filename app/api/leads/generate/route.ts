@@ -7,32 +7,48 @@ export async function POST() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
+    include: { balance: true },
   });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" });
+  // ✅ SAFE CHECK
+  if (!user || !user.balance || user.balance.amount <= 0) {
+    return new Response("Upgrade plan to continue", { status: 403 });
   }
 
-  const projectId = session.projectId; // ✅ FIXED
+  // 🚨 FIX: REMOVE projectId from session
+  const project = await prisma.project.findFirst({
+    where: { userId: user.id },
+  });
 
-  if (!projectId) {
+  if (!project) {
     return NextResponse.json(
-      { error: "No project selected" },
+      { error: "No project found" },
       { status: 400 }
     );
   }
 
+  // ✅ create lead
   await prisma.lead.create({
     data: {
       name: "Generated Lead",
       email: `lead${Date.now()}@test.com`,
       userId: user.id,
-      projectId,
+      projectId: project.id,
+    },
+  });
+
+  // 💰 deduct credit
+  await prisma.balance.update({
+    where: { userId: user.id },
+    data: {
+      amount: {
+        decrement: 1,
+      },
     },
   });
 

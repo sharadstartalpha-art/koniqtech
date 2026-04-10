@@ -1,3 +1,4 @@
+import "./globals.css";
 import { UpgradeProvider } from "@/components/UpgradeProvider";
 
 export default function RootLayout({ children }: any) {

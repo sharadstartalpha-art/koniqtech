@@ -4,12 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const nav = [
-  { name: "Dashboard", href: "/admin" },
-  { name: "Users", href: "/admin/users" },
-  { name: "Products", href: "/admin/products" },
-  { name: "Projects", href: "/admin/projects" },
-  { name: "Payments", href: "/admin/payments" },
-  { name: "Analytics", href: "/admin/analytics" },
+  { name: "Dashboard", href: "/dashboard" },
+  { name: "Projects", href: "/projects" },
+  { name: "Credits", href: "/dashboard/credits" },
 ];
 
 export default function Sidebar() {
@@ -17,7 +14,7 @@ export default function Sidebar() {
 
   return (
     <div className="w-64 bg-black text-white p-4">
-      <h2 className="text-lg font-semibold mb-6">Admin Panel</h2>
+      <h2 className="text-lg font-semibold mb-6">KoniqTech</h2>
 
       {nav.map((item) => {
         const active = pathname === item.href;

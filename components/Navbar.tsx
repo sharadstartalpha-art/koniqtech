@@ -16,23 +16,14 @@ export default function Navbar() {
 
       {/* Right */}
       <div className="flex items-center gap-4">
-        {session ? (
-          <>
-            <Link href="/dashboard">Dashboard</Link>
-
-            <button
-              onClick={() => signOut()}
-              className="text-sm bg-black text-white px-3 py-1 rounded"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link href="/login">Login</Link>
-            <Link href="/register">Register</Link>
-          </>
-        )}
+       {session ? (
+  <button onClick={() => signOut()}>Logout</button>
+) : (
+  <>
+    <Link href="/login">Login</Link>
+    <Link href="/register">Register</Link>
+  </>
+)}
       </div>
     </div>
   );

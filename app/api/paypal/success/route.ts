@@ -6,7 +6,6 @@ import { authOptions } from "@/lib/auth";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  // ✅ FIX null issue
   const planId = searchParams.get("planId") ?? "";
 
   const session = await getServerSession(authOptions);
@@ -23,7 +22,6 @@ export async function GET(req: Request) {
     return NextResponse.redirect("/login");
   }
 
-  // ✅ SAFE PLAN QUERY
   const plan = await prisma.plan.findFirst({
     where: {
       name: {
@@ -37,12 +35,12 @@ export async function GET(req: Request) {
     return NextResponse.redirect("/pricing");
   }
 
-  // 🚨 FIX: no compound key → use delete + create OR updateMany
-
+  // 🔁 reset old subscription
   await prisma.subscription.deleteMany({
     where: { userId: user.id },
   });
 
+  // ✅ create new subscription
   await prisma.subscription.create({
     data: {
       userId: user.id,
@@ -58,6 +56,15 @@ export async function GET(req: Request) {
       amount: {
         increment: plan.credits,
       },
+    },
+  });
+
+  // 💳 save payment (AFTER prisma generate)
+  await prisma.payment.create({
+    data: {
+      userId: user.id,
+      amount: plan.price,
+      status: "COMPLETED",
     },
   });
 

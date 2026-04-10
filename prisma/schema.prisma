@@ -32,6 +32,7 @@ model User {
   leads         Lead[]
   balance       Balance?
   transactions  Transaction[]
+  payments      Payment[]
 }
 
 model Company {
@@ -189,11 +190,23 @@ model Plan {
 
 model Subscription {
   id        String   @id @default(cuid())
-  userId    String   @unique   // 🔥 THIS IS REQUIRED
+  userId    String   @unique // 🔥 THIS IS REQUIRED
   planId    String
   status    String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
   plan Plan @relation(fields: [planId], references: [id])
+
+  @@unique([userId, planId])
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  status    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

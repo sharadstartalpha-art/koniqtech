@@ -54,6 +54,9 @@ export default function Sidebar() {
         >
           Upgrade
         </Link>
+
+
+        <Link href="/dashboard/billing">Billing</Link>
       </div>
 
     </div>

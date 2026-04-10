@@ -28,50 +28,60 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="grid grid-cols-4 gap-6">
+   <div className="space-y-6">
 
-      {/* 💰 Credits */}
-      <div className="bg-white p-5 rounded-xl border">
-        <h2 className="text-sm text-gray-500">Credits Left</h2>
-
-        <p className="text-2xl font-bold">
-          {user.balance?.amount ?? 0}
-        </p>
-      </div>
-
-      {/* 📦 Plan */}
-      <div className="bg-white p-5 rounded-xl border">
-        <h2 className="text-sm text-gray-500">Current Plan</h2>
-
-        <p className="text-xl font-semibold mt-1">
-          {subscription?.plan?.name || "Free"}
-        </p>
-
-        <p className="text-sm text-gray-500">
-          {subscription?.plan?.credits || 0} credits
-        </p>
-      </div>
-
-      {/* 📊 Stats */}
-      {[
-        { title: "Users", value: "1" },
-        { title: "Projects", value: "1" },
-        { title: "Revenue", value: "$0" },
-        { title: "Credits", value: user.balance?.amount ?? 0 },
-      ].map((item) => (
-        <div
-          key={item.title}
-          className="bg-white p-5 rounded-xl border shadow-sm hover:shadow-md transition"
-        >
-          <p className="text-sm text-gray-500">
-            {item.title}
-          </p>
-
-          <h2 className="text-2xl font-semibold mt-2">
-            {item.value}
-          </h2>
-        </div>
-      ))}
+  {/* 💰 UPGRADE BANNER */}
+  <div className="bg-gradient-to-r from-black to-gray-800 text-white p-6 rounded-xl flex justify-between items-center">
+    <div>
+      <h2 className="text-lg font-semibold">
+        Upgrade your plan 🚀
+      </h2>
+      <p className="text-sm opacity-70">
+        Get more credits and unlock features
+      </p>
     </div>
+
+    <a
+      href="/pricing"
+      className="bg-white text-black px-4 py-2 rounded-lg"
+    >
+      Upgrade
+    </a>
+  </div>
+
+  {/* 📊 STATS GRID */}
+  <div className="grid grid-cols-4 gap-6">
+
+    {/* Credits */}
+    <div className="bg-white p-5 rounded-xl border shadow-sm">
+      <p className="text-sm text-gray-500">Credits</p>
+      <h2 className="text-2xl font-bold mt-2">
+        {user.balance?.amount ?? 0}
+      </h2>
+    </div>
+
+    {/* Plan */}
+    <div className="bg-white p-5 rounded-xl border shadow-sm">
+      <p className="text-sm text-gray-500">Plan</p>
+      <h2 className="text-xl font-semibold mt-2">
+        {subscription?.plan?.name || "Free"}
+      </h2>
+    </div>
+
+    {/* Projects */}
+    <div className="bg-white p-5 rounded-xl border shadow-sm">
+      <p className="text-sm text-gray-500">Projects</p>
+      <h2 className="text-2xl font-bold mt-2">1</h2>
+    </div>
+
+    {/* Revenue */}
+    <div className="bg-white p-5 rounded-xl border shadow-sm">
+      <p className="text-sm text-gray-500">Revenue</p>
+      <h2 className="text-2xl font-bold mt-2">$0</h2>
+    </div>
+
+  </div>
+
+</div>
   );
 }

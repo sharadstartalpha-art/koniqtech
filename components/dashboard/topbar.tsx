@@ -1,25 +1,22 @@
+"use client";
+
+import { signOut } from "next-auth/react";
+
 export default function Topbar() {
   return (
-    <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-      
-      {/* Left */}
-      <div className="text-sm font-medium">
+    <div className="h-14 bg-white border-b flex items-center justify-between px-6">
+
+      <h1 className="text-lg font-semibold">
         Dashboard
-      </div>
+      </h1>
 
-      {/* Right */}
-      <div className="flex items-center gap-4">
-        
-        {/* Credits */}
-        <div className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-medium">
-          120 credits
-        </div>
+      <button
+        onClick={() => signOut()}
+        className="bg-black text-white px-3 py-1 rounded-lg text-sm"
+      >
+        Logout
+      </button>
 
-        {/* User */}
-        <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm">
-          S
-        </div>
-      </div>
     </div>
   );
 }

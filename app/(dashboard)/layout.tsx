@@ -1,27 +1,18 @@
-import Sidebar from "@/components/dashboard/sidebar";
-import Topbar from "@/components/dashboard/topbar";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex h-screen bg-[#f6f9fc]">
+  const session = await getServerSession(authOptions);
 
-      {/* Sidebar */}
-      <Sidebar />
+  // 🔒 NOT LOGGED IN → BLOCK
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col">
-
-        <Topbar />
-
-        <main className="p-6 overflow-y-auto">
-          {children}
-        </main>
-
-      </div>
-    </div>
-  );
+  return <>{children}</>;
 }

@@ -8,8 +8,8 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: {},
-        password: {},
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" },
       },
 
       async authorize(credentials) {
@@ -29,11 +29,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!isValid) return null;
 
-        // ✅ MUST MATCH next-auth.d.ts
         return {
           id: user.id,
           email: user.email,
-          role: user.role || "USER", // ✅ FIXED
+          role: user.role || "USER",
           projectId: user.projects?.[0]?.id || undefined,
         };
       },
@@ -45,14 +44,15 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    // ✅ JWT
     async jwt({ token, user, trigger, session }) {
+      // 🔥 FIRST LOGIN
       if (user) {
         token.id = user.id;
-        token.role = user.role; // ✅ ADD THIS
+        token.role = user.role;
         token.projectId = user.projectId;
       }
 
+      // 🔁 UPDATE PROJECT SWITCH
       if (trigger === "update" && session?.projectId) {
         token.projectId = session.projectId;
       }
@@ -60,11 +60,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
-    // ✅ SESSION
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string; // ✅ ADD THIS
+        session.user.role = token.role as string;
       }
 
       session.projectId = token.projectId as string | undefined;
@@ -72,7 +71,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
-    // ✅ AUTO CREATE PROJECT
     async signIn({ user }) {
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email! },
@@ -81,6 +79,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) return false;
 
+      // 🔥 AUTO CREATE PROJECT
       if (!dbUser.projects.length) {
         const product = await prisma.product.findFirst();
 

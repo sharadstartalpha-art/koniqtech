@@ -132,7 +132,7 @@ export default function LeadFinder() {
       </div>
 
       {/* ✅ FIXED MODAL */}
-     {showUpgrade && <UpgradeModal />}
+     
     </div>
   );
 }

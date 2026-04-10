@@ -9,16 +9,14 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+  email,
+  password,
+  redirect: false,
+});
 
-    if (res?.ok) {
-      window.location.href = "/dashboard";
-    } else {
-      alert("Invalid credentials");
-    }
+if (res?.ok) {
+  window.location.href = "/dashboard";
+}
   };
 
   return (

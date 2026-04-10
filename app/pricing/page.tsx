@@ -7,10 +7,11 @@ export default function PricingPage() {
     { id: "enterprise", name: "Enterprise", price: 99, credits: 20000 },
   ];
 
-  const handleBuy = async (planId: string) => {
-    const res = await fetch("/api/paypal/create-order", {
+  const handleUpgrade = async (planName: string) => {
+  try {
+    const res = await fetch(`/api/paypal/create-order`, {
       method: "POST",
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({ plan: planName }),
     });
 
     const data = await res.json();
@@ -18,9 +19,12 @@ export default function PricingPage() {
     if (data?.approveUrl) {
       window.location.href = data.approveUrl;
     } else {
-      alert("Payment error");
+      alert("Something went wrong");
     }
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <div className="max-w-5xl mx-auto py-20 grid md:grid-cols-3 gap-6">
@@ -36,11 +40,11 @@ export default function PricingPage() {
           </p>
 
           <button
-            onClick={() => handleBuy(plan.id)}
-            className="mt-6 w-full bg-black text-white py-2 rounded-lg"
-          >
-            Upgrade
-          </button>
+  onClick={() => handleUpgrade(plan.name)}
+  className="mt-6 w-full bg-black text-white py-2 rounded-lg"
+>
+  Upgrade
+</button>
 
         </div>
       ))}

@@ -34,6 +34,7 @@ model User {
   transactions  Transaction[]
   payments      Payment[]
   unsubscribed Boolean @default(false)
+  dailyLimit Int @default(20) 
 }
 
 model Company {
@@ -237,10 +238,44 @@ model EmailLog {
   userId    String
   leadId    String?
   email     String
-
+scheduledAt DateTime? 
   status    String
   opened    Boolean @default(false)
   clicked   Boolean @default(false)
 
   createdAt DateTime @default(now())
+}
+
+model EmailThread {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String
+  createdAt DateTime @default(now())
+
+  messages EmailMessage[]
+}
+
+model EmailMessage {
+  id        String   @id @default(cuid())
+  threadId  String
+  from      String
+  to        String
+  body      String
+  createdAt DateTime @default(now())
+
+  thread EmailThread @relation(fields: [threadId], references: [id])
+}
+
+model EmailQueue {
+  id        String   @id @default(cuid())
+  userId    String
+  email     String
+  subject   String
+  body      String
+
+  status    String   @default("PENDING")
+  attempts  Int      @default(0)
+
+  scheduledAt DateTime
+  createdAt   DateTime @default(now())
 }

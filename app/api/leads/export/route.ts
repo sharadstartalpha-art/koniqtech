@@ -1,57 +1,29 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url)
-  const projectId = searchParams.get("projectId")
+export async function GET() {
+  const session = await getServerSession(authOptions);
 
-  if (!projectId) {
-    return NextResponse.json(
-      { error: "Missing projectId" },
-      { status: 400 }
-    )
+  if (!session?.user?.email) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
-  // ✅ ONLY FETCH EXISTING FIELDS
   const leads = await prisma.lead.findMany({
-    where: { projectId },
-  })
+    where: { user: { email: session.user.email } },
+  });
 
-  const csvRows: string[][] = []
+  const csv = [
+    ["Name", "Email", "Company"],
+    ...leads.map((l) => [l.name, l.email, l.company || ""]),
+  ]
+    .map((row) => row.join(","))
+    .join("\n");
 
-  // ✅ HEADER
-  csvRows.push([
-    "Name",
-    "Email",
-    "Company",
-    "Website",
-    "Phone",
-    "Location",
-  ])
-
-  // ✅ DATA
-  for (const lead of leads) {
-    csvRows.push([
-      lead.name || "",
-      lead.email || "",
-      lead.company || "",
-      lead.website || "",
-      lead.phone || "",
-      lead.location || "",
-    ])
-  }
-
-  // ✅ CSV BUILD
-  const csvContent = csvRows
-    .map((row) =>
-      row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
-    )
-    .join("\n")
-
-  return new NextResponse(csvContent, {
+  return new Response(csv, {
     headers: {
       "Content-Type": "text/csv",
       "Content-Disposition": "attachment; filename=leads.csv",
     },
-  })
+  });
 }

@@ -1,53 +1,56 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  const leads = await prisma.lead.findMany({
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json(leads);
-}
-export async function POST() {
+export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const body = await req.json();
+  const { industry, location, title } = body;
+
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { balance: true },
   });
 
-  // ✅ SAFE CHECK
+  // ✅ FIX 1: NULL SAFE
   if (!user || !user.balance || user.balance.amount <= 0) {
-    return new Response("Upgrade plan to continue", { status: 403 });
+    return new Response("No credits", { status: 403 });
   }
 
-  // 🚨 FIX: REMOVE projectId from session
-  const project = await prisma.project.findFirst({
-    where: { userId: user.id },
-  });
+  // ✅ FIX 2: REQUIRE PROJECT
+  const projectId = session?.projectId;
 
-  if (!project) {
-    return NextResponse.json(
-      { error: "No project found" },
-      { status: 400 }
-    );
+  if (!projectId) {
+    return new Response("No project selected", { status: 400 });
   }
 
-  // ✅ create lead
-  await prisma.lead.create({
-    data: {
-      name: "Generated Lead",
-      email: `lead${Date.now()}@test.com`,
-      userId: user.id,
-      projectId: project.id,
-    },
-  });
+  // 🔥 FAKE LEADS (REALISTIC)
+  const leads = Array.from({ length: 5 }).map((_, i) => ({
+    name: `${title || "Founder"} ${i}`,
+    email: `lead${Date.now()}${i}@${industry || "company"}.com`,
+    company: `${industry || "Tech"} Corp ${i}`,
+  }));
+
+  // 💾 SAVE
+  const created = await Promise.all(
+    leads.map((lead) =>
+      prisma.lead.create({
+        data: {
+          name: lead.name,
+          email: lead.email,
+          company: lead.company,
+          userId: user.id,
+          projectId, // ✅ REQUIRED
+        },
+      })
+    )
+  );
 
   // 💰 deduct credit
   await prisma.balance.update({
@@ -59,5 +62,5 @@ export async function POST() {
     },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ leads: created });
 }

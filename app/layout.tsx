@@ -1,19 +1,12 @@
-import "./globals.css";
-import SessionWrapper from "@/components/SessionWrapper";
-import Navbar from "@/components/Navbar";
+import { UpgradeProvider } from "@/components/UpgradeProvider";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: any) {
   return (
     <html>
       <body>
-        <SessionWrapper>
-          <Navbar />
+        <UpgradeProvider>
           {children}
-        </SessionWrapper>
+        </UpgradeProvider>
       </body>
     </html>
   );

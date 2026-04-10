@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export async function GET() {
+  const leads = await prisma.lead.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return NextResponse.json(leads);
+}
 export async function POST() {
   const session = await getServerSession(authOptions);
 

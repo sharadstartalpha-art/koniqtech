@@ -45,7 +45,7 @@ export default async function BillingPage() {
           </p>
         </div>
 
-        <UpgradeModal />
+       
       </div>
 
       {/* STATUS */}

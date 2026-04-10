@@ -5,9 +5,11 @@ import { redirect } from "next/navigation";
 import UsageMeter from "@/components/dashboard/UsageMeter";
 import UpgradeModal from "@/components/UpgradeModal";
 import LockedFeature from "@/components/LockedFeature";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
+  
 
   if (!session?.user?.email) {
     redirect("/login");
@@ -35,8 +37,15 @@ export default async function DashboardPage() {
 
    <div className="space-y-6">
 <div className="flex justify-end">
-  <UpgradeModal />
+ 
 </div>
+
+<Link
+  href="/pricing"
+  className="bg-black text-white px-4 py-2 rounded-lg"
+>
+  Upgrade 🚀
+</Link>
 
 <UsageMeter
   used={1000 - (user.balance?.amount ?? 0)}

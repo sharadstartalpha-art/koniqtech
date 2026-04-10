@@ -1,50 +1,43 @@
 "use client";
 
-import { useState } from "react";
+type Props = {
+  onClose: () => void;
+};
 
-export default function UpgradeModal() {
-  const [open, setOpen] = useState(false);
-
+export default function UpgradeModal({ onClose }: Props) {
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-black text-white px-4 py-2 rounded-lg"
+    <div
+      onClick={onClose}
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white p-6 rounded-xl w-[400px]"
       >
-        Upgrade 🚀
-      </button>
+        <h2 className="text-xl font-semibold mb-2">
+          Upgrade Required 🚀
+        </h2>
 
-      {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <p className="text-gray-500 text-sm mb-4">
+          You’ve run out of credits. Upgrade your plan to continue.
+        </p>
 
-          <div className="bg-white p-6 rounded-xl w-96">
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 border py-2 rounded-lg"
+          >
+            Cancel
+          </button>
 
-            <h2 className="text-xl font-semibold">
-              Upgrade your plan
-            </h2>
-
-            <p className="text-gray-500 mt-2">
-              Get more credits and unlock features
-            </p>
-
-            <a
-              href="/pricing"
-              className="block mt-6 bg-black text-white py-2 text-center rounded-lg"
-            >
-              View Plans
-            </a>
-
-            <button
-              onClick={() => setOpen(false)}
-              className="mt-3 w-full text-gray-500"
-            >
-              Cancel
-            </button>
-
-          </div>
-
+          <button
+            onClick={() => (window.location.href = "/pricing")}
+            className="flex-1 bg-black text-white py-2 rounded-lg"
+          >
+            Upgrade
+          </button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }

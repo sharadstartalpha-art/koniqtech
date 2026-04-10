@@ -132,9 +132,7 @@ export default function LeadFinder() {
       </div>
 
       {/* ✅ FIXED MODAL */}
-      {showUpgrade && (
-        <UpgradeModal onClose={() => setShowUpgrade(false)} />
-      )}
+     {showUpgrade && <UpgradeModal />}
     </div>
   );
 }

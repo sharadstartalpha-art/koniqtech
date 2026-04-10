@@ -2,6 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import UsageMeter from "@/components/dashboard/UsageMeter";
+import UpgradeModal from "@/components/UpgradeModal";
+import LockedFeature from "@/components/LockedFeature";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -28,8 +31,17 @@ export default async function DashboardPage() {
   });
 
   return (
-   <div className="space-y-6">
 
+
+   <div className="space-y-6">
+<div className="flex justify-end">
+  <UpgradeModal />
+</div>
+
+<UsageMeter
+  used={1000 - (user.balance?.amount ?? 0)}
+  total={subscription?.plan?.credits || 1000}
+/>
   {/* 💰 UPGRADE BANNER */}
   <div className="bg-gradient-to-r from-black to-gray-800 text-white p-6 rounded-xl flex justify-between items-center">
     <div>
@@ -81,6 +93,10 @@ export default async function DashboardPage() {
     </div>
 
   </div>
+<div className="mt-6">
+  <LockedFeature />
+</div>
+
 
 </div>
   );

@@ -1,16 +1,24 @@
 export default function Topbar() {
   return (
-    <div className="h-14 bg-white border-b flex items-center justify-between px-6">
-      <div className="text-sm text-gray-500">
-        Welcome back 👋
+    <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+      
+      {/* Left */}
+      <div className="text-sm font-medium">
+        Dashboard
       </div>
 
+      {/* Right */}
       <div className="flex items-center gap-4">
-        <div className="bg-black text-white px-3 py-1 rounded-md text-sm">
+        
+        {/* Credits */}
+        <div className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-medium">
           120 credits
         </div>
 
-        <div className="w-8 h-8 bg-gray-300 rounded-full" />
+        {/* User */}
+        <div className="w-9 h-9 rounded-full bg-black text-white flex items-center justify-center text-sm">
+          S
+        </div>
       </div>
     </div>
   );

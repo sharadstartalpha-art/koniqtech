@@ -23,9 +23,11 @@ async function main() {
     },
   });
 
-  // 🏢 Company
-  const company = await prisma.company.create({
-    data: {
+  // 🏢 Company (avoid duplicate)
+  const company = await prisma.company.upsert({
+    where: { ownerId: admin.id },
+    update: {},
+    create: {
       name: "KoniqTech",
       ownerId: admin.id,
     },
@@ -39,16 +41,42 @@ async function main() {
     },
   });
 
-  // 📦 Products
+  // 📦 Products (safe insert)
   await prisma.product.createMany({
     data: [
       { name: "Lead Finder", slug: "lead-finder", price: 1 },
       { name: "Meeting AI", slug: "meeting-ai", price: 2 },
       { name: "Automation Tool", slug: "automation-tool", price: 3 },
     ],
+    skipDuplicates: true,
   });
 
-  console.log("✅ Seed completed");
+  // 💳 PLANS (🔥 IMPORTANT)
+  await prisma.plan.createMany({
+    data: [
+      {
+        name: "Starter",
+        price: 10,
+        credits: 1000,
+        description: "Perfect for beginners",
+      },
+      {
+        name: "Pro",
+        price: 29,
+        credits: 5000,
+        description: "Best for scaling users",
+      },
+      {
+        name: "Enterprise",
+        price: 99,
+        credits: 20000,
+        description: "For heavy usage",
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log("✅ Seed completed (admin + products + plans)");
 }
 
 main()

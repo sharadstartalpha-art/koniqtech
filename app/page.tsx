@@ -1,27 +1,56 @@
-import Link from "next/link";
+"use client";
 
 export default function HomePage() {
-  return (
-    <div className="h-screen flex flex-col items-center justify-center">
+  const plans = [
+    { id: "starter", name: "Starter", price: 10, credits: 1000 },
+    { id: "pro", name: "Pro", price: 29, credits: 5000 },
+    { id: "enterprise", name: "Enterprise", price: 99, credits: 20000 },
+  ];
 
-      <h1 className="text-4xl font-bold">
-        KoniqTech 🚀
+  const handleBuy = async (planId: string) => {
+    const res = await fetch("/api/paypal/create-order", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    });
+
+    const data = await res.json();
+    window.location.href = data.approveUrl;
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto py-20">
+
+      <h1 className="text-3xl font-bold text-center mb-10">
+        Simple Pricing 💎
       </h1>
 
-      <p className="text-gray-500 mt-2">
-        AI Lead Generation Platform
-      </p>
+      <div className="grid md:grid-cols-3 gap-6">
+        {plans.map((plan) => (
+          <div
+            key={plan.id}
+            className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-lg transition"
+          >
+            <h2 className="text-lg font-semibold">
+              {plan.name}
+            </h2>
 
-      <div className="flex gap-4 mt-6">
-        <Link href="/login" className="bg-black text-white px-4 py-2 rounded">
-          Login
-        </Link>
+            <p className="text-3xl font-bold mt-4">
+              ${plan.price}
+            </p>
 
-        <Link href="/register" className="border px-4 py-2 rounded">
-          Register
-        </Link>
+            <p className="text-gray-500 mt-2">
+              {plan.credits} credits
+            </p>
+
+            <button
+              onClick={() => handleBuy(plan.id)}
+              className="mt-6 w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
+            >
+              Get Started
+            </button>
+          </div>
+        ))}
       </div>
-
     </div>
   );
 }

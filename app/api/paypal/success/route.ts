@@ -1,32 +1,65 @@
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
+  const { searchParams } = new URL(req.url);
 
-  const userId = url.searchParams.get("userId");
-  const plan = url.searchParams.get("plan");
+  // ✅ FIX null issue
+  const planId = searchParams.get("planId") ?? "";
 
-  if (!userId || !plan) {
-    return new Response("Missing params", { status: 400 });
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    return NextResponse.redirect("/login");
   }
 
-  let creditsToAdd = 0;
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
 
-  if (plan === "PRO") creditsToAdd = 100;
-  if (plan === "AGENCY") creditsToAdd = 500;
+  if (!user) {
+    return NextResponse.redirect("/login");
+  }
 
-  await prisma.balance.upsert({
-    where: { userId },
-    update: {
-      amount: {
-        increment: creditsToAdd,
+  // ✅ SAFE PLAN QUERY
+  const plan = await prisma.plan.findFirst({
+    where: {
+      name: {
+        equals: planId,
+        mode: "insensitive",
       },
-    },
-    create: {
-      userId,
-      amount: creditsToAdd,
     },
   });
 
-  return Response.redirect("https://koniqtech.com/dashboard");
+  if (!plan) {
+    return NextResponse.redirect("/pricing");
+  }
+
+  // 🚨 FIX: no compound key → use delete + create OR updateMany
+
+  await prisma.subscription.deleteMany({
+    where: { userId: user.id },
+  });
+
+  await prisma.subscription.create({
+    data: {
+      userId: user.id,
+      planId: plan.id,
+      status: "ACTIVE",
+    },
+  });
+
+  // 💰 add credits
+  await prisma.balance.update({
+    where: { userId: user.id },
+    data: {
+      amount: {
+        increment: plan.credits,
+      },
+    },
+  });
+
+  return NextResponse.redirect("/dashboard");
 }

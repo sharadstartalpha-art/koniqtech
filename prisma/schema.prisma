@@ -55,9 +55,9 @@ model Product {
   price       Int // credits cost OR subscription price
   active      Boolean @default(true)
 
-  createdAt     DateTime       @default(now())
-  subscriptions Subscription[]
-  projects      Project[]
+  createdAt DateTime @default(now())
+
+  projects Project[]
 }
 
 model Project {
@@ -157,15 +157,6 @@ model VerificationToken {
   createdAt DateTime @default(now())
 }
 
-model Plan {
-  id          String   @id @default(cuid())
-  name        String
-  price       Int
-  credits     Int
-  description String?
-  createdAt   DateTime @default(now())
-}
-
 model LeadSequence {
   id          String   @id @default(cuid())
   leadId      String
@@ -185,6 +176,17 @@ model LeadStatus {
   lead Lead @relation(fields: [leadId], references: [id])
 }
 
+model Plan {
+  id          String   @id @default(cuid())
+  name        String
+  price       Int
+  credits     Int
+  description String?
+  createdAt   DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
 model Subscription {
   id        String   @id @default(cuid())
   userId    String
@@ -192,8 +194,8 @@ model Subscription {
   status    String
   createdAt DateTime @default(now())
 
-  user User    @relation(fields: [userId], references: [id])
-  plan Product @relation(fields: [planId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
 
-  @@unique([userId, planId])
+  @@unique([userId])
 }

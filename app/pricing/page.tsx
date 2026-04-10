@@ -1,115 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export default function PricingPage() {
-  const [credits, setCredits] = useState<number | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
+  const plans = [
+    { id: "starter", name: "Starter", price: 10, credits: 1000 },
+    { id: "pro", name: "Pro", price: 29, credits: 5000 },
+  ];
 
-  // ✅ Fetch credits
-  useEffect(() => {
-    fetch("/api/user/credits")
-      .then((res) => res.json())
-      .then((data) => setCredits(data.credits));
-  }, []);
+  const handleBuy = async (planId: string) => {
+    const res = await fetch("/api/paypal/create-order", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    });
 
-  const handleUpgrade = async (planId: string) => {
-    try {
-      const res = await fetch("/api/paypal/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ planId }),
-      });
+    const data = await res.json();
 
-      const data = await res.json();
-
-      const approveLink = data?.links?.find(
-        (link: any) => link.rel === "approve"
-      );
-
-      if (approveLink?.href) {
-        window.location.href = approveLink.href;
-      } else {
-        alert("Payment initialization failed.");
-        console.error(data);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong.");
-    }
+    window.location.href = data.approveUrl;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-10">
-      <h1 className="text-3xl font-bold text-center mb-6">
-        Pricing
-      </h1>
-
-      {/* 🔥 URGENCY */}
-      <p className="text-center text-red-500 text-sm mb-6">
-        🔥 Limited offer: Get 2x credits today only
-      </p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-
-        {/* FREE */}
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h2 className="text-xl font-bold mb-2">Free</h2>
-          <p className="text-2xl mb-4">$0</p>
-          <p>10 leads</p>
-          <p>No email sending</p>
-
-          <button className="mt-4 w-full bg-gray-300 py-2 rounded">
-            Start Free
-          </button>
-        </div>
-
-        {/* 🔥 PRO (HIGHLIGHT) */}
-        <div className="bg-white p-6 rounded shadow border-2 border-blue-600 relative scale-105">
-
-          <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-            BEST VALUE
-          </span>
-
-          <h2 className="text-xl font-bold mb-2">Pro</h2>
-          <p className="text-2xl mb-4">$19/month</p>
+    <div className="max-w-5xl mx-auto py-20 grid md:grid-cols-2 gap-6">
+      {plans.map((plan) => (
+        <div key={plan.id} className="bg-white border p-6 rounded-xl">
+          <h2 className="text-xl font-semibold">{plan.name}</h2>
+          <p className="text-3xl font-bold mt-2">${plan.price}</p>
+          <p className="text-gray-500 mt-2">
+            {plan.credits} credits
+          </p>
 
           <button
-            onClick={() => handleUpgrade("PRO")}
-            className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:scale-105 transition"
+            onClick={() => handleBuy(plan.id)}
+            className="mt-6 w-full bg-black text-white py-2 rounded-lg"
           >
             Upgrade
           </button>
         </div>
-
-        {/* AGENCY */}
-        <div className="bg-white p-6 rounded shadow text-center">
-          <h2 className="text-xl font-bold mb-2">Agency</h2>
-          <p className="text-2xl mb-4">$49/month</p>
-          <p>Unlimited leads</p>
-          <p>Automation</p>
-
-          <button
-            onClick={() => handleUpgrade("AGENCY")}
-            className="mt-4 w-full bg-black text-white py-2 rounded"
-          >
-            Upgrade
-          </button>
-        </div>
-
-      </div>
-
-      {/* 🚀 FLOATING UPGRADE BUTTON */}
-      {credits === 0 && (
-        <button
-          onClick={() => setShowUpgrade(true)}
-          className="fixed bottom-6 right-6 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg"
-        >
-          Upgrade 🚀
-        </button>
-      )}
+      ))}
     </div>
   );
 }

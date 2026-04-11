@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic"; // ✅ FIX
+
 const plans = [
   { name: "Starter", price: 10, credits: 1000 },
   { name: "Pro", price: 29, credits: 5000 },
@@ -43,6 +45,7 @@ export default function PricingPage() {
             </button>
           </div>
         ))}
+
       </div>
     </div>
   );

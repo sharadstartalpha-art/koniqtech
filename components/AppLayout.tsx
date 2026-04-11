@@ -1,52 +1,45 @@
 "use client";
 
-import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { data } = useSession();
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const sessionData = useSession();
+  const session = sessionData?.data; // ✅ FIX
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <div className="w-64 bg-black text-white p-6 flex flex-col justify-between">
-        <div>
-          <h1 className="text-xl font-bold mb-10 tracking-tight">
-            🚀 KoniqTech
-          </h1>
+    <div className="min-h-screen flex flex-col">
 
-          <nav className="flex flex-col gap-3 text-sm">
-            <Link href="/dashboard" className="hover:text-gray-300">
-              Dashboard
-            </Link>
-            <Link
-              href="/product/lead-finder"
-              className="hover:text-gray-300"
+      {/* NAVBAR */}
+      <div className="flex justify-between items-center p-4 border-b">
+        <h1 className="font-bold">KoniqTech 🚀</h1>
+
+        <div className="flex items-center gap-4">
+          {session ? (
+            <>
+              <span className="text-sm text-gray-600">
+                {session.user?.email}
+              </span>
+
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="bg-black text-white px-3 py-2 rounded-lg"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <a
+              href="/login"
+              className="bg-black text-white px-3 py-2 rounded-lg"
             >
-              Lead Finder
-            </Link>
-            <Link href="/pricing" className="hover:text-gray-300">
-              Pricing
-            </Link>
-          </nav>
+              Login
+            </a>
+          )}
         </div>
-
-        {data && (
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="bg-white text-black px-3 py-2 rounded-lg hover:bg-gray-200"
-          >
-            Logout
-          </button>
-        )}
       </div>
 
-      {/* Main */}
-      <div className="flex-1 p-10 bg-gray-50 overflow-y-auto">
+      {/* CONTENT */}
+      <div className="flex-1 p-4">
         {children}
       </div>
     </div>

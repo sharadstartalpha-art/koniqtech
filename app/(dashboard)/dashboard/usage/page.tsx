@@ -1,22 +1,28 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function UsagePage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) return null;
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
 
+  // ✅ FETCH USER FIRST
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { email: session.user.email },
   });
 
-  if (!user?.workspaceId) return null;
+  if (!user?.workspaceId) {
+    return <div>No workspace found</div>;
+  }
 
+  // ✅ NOW SAFE
   const usage = await prisma.usage.findMany({
-    where: { workspaceId: user.workspaceId },
-    include: { user: true }, // ✅ IMPORTANT
-    orderBy: { createdAt: "desc" },
+    where: { userId: user.id }, // 🔥 FIXED (no workspaceId needed)
+    include: { user: true },
   });
 
   return (
@@ -24,7 +30,7 @@ export default async function UsagePage() {
       <h1 className="text-xl font-bold">Usage 📊</h1>
 
       {usage.map((u) => (
-        <div key={u.id} className="flex justify-between">
+        <div key={u.id} className="flex justify-between border p-3 rounded">
           <span>{u.user.email}</span>
           <span>{u.action}</span>
           <span>-{u.credits}</span>

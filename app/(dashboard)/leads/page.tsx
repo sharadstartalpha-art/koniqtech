@@ -25,7 +25,7 @@ const session = sessionData?.data;
     title: "",
   });
 
-  const { setShowUpgrade } = useUpgrade();
+  const { openUpgrade } = useUpgrade();
 
   const generateLeads = async () => {
     setLoading(true);
@@ -40,7 +40,7 @@ const session = sessionData?.data;
       });
 
       if (res.status === 403) {
-        setShowUpgrade(true);
+        openUpgrade();
         return;
       }
 

@@ -12,7 +12,5 @@ export async function POST(req: Request) {
     },
   });
 
-  // TODO: send email here
-
   return NextResponse.json({ success: true });
 }

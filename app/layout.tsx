@@ -1,16 +1,13 @@
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import UpgradeProvider from "@/components/UpgradeProvider";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: any) {
   return (
-    <html lang="en">
+    <html>
       <body>
-        <Navbar />
-        {children}
+        <UpgradeProvider>
+          {children}
+        </UpgradeProvider>
       </body>
     </html>
   );

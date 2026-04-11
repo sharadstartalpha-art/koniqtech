@@ -24,7 +24,7 @@ model User {
   // ✅ COMPANY RELATION (FIXED)
   companyId          String?
   company            Company?             @relation("CompanyUsers", fields: [companyId], references: [id])
-
+credits  Int    @default(0)
   // ✅ OWNER RELATION
   ownedCompany  Company?       @relation("CompanyOwner")
   subscriptions Subscription[]

@@ -79,6 +79,22 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) return false;
 
+if (!dbUser.workspaceId) {
+  const workspace = await prisma.workspace.create({
+    data: {
+      name: "My Workspace",
+    },
+  });
+
+  await prisma.user.update({
+    where: { id: dbUser.id },
+    data: {
+      workspaceId: workspace.id,
+    },
+  });
+}
+
+
       // 🔥 AUTO CREATE PROJECT
       if (!dbUser.projects.length) {
         const product = await prisma.product.findFirst();

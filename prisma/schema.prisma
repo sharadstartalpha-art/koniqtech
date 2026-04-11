@@ -35,6 +35,8 @@ credits  Int    @default(0)
   payments      Payment[]
   unsubscribed  Boolean        @default(false)
   dailyLimit    Int            @default(20)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
 }
 
 model Company {
@@ -297,3 +299,9 @@ model EmailQueue {
   stopped     Boolean  @default(false)
 }
 
+model Workspace {
+  id    String @id @default(cuid())
+  name  String
+
+  users User[]
+}

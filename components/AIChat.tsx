@@ -111,7 +111,7 @@ export default function AIChat({
       </div>
 
       {/* INPUT */}
-      <form onSubmit={sendMessage} className="flex gap-2 mt-3">
+      <form {(e) => { e.preventDefault(); sendMessage; }} className="flex gap-2 mt-3">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

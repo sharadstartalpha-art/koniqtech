@@ -3,7 +3,10 @@ export default function NewProjectPage() {
     <div>
       <h1 className="text-xl font-semibold">Create Project</h1>
 
-      <form className="mt-4 space-y-3">
+      <form onSubmit={(e) => {
+    e.preventDefault();
+   
+  }}className="mt-4 space-y-3">
         <input
           placeholder="Project name"
           className="border p-2 w-full"

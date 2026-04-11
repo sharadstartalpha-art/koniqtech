@@ -25,11 +25,13 @@ export default function HomePage() {
       </h1>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <div
-            key={plan.id}
-            className="bg-white p-6 rounded-2xl border shadow-sm hover:shadow-lg transition"
-          >
+       {plans.map((plan, i) => (
+  <div
+    key={plan.name}
+    className={`p-6 rounded-2xl border ${
+      i === 1 ? "border-black scale-105 shadow-lg" : ""
+    }`}
+  >
             <h2 className="text-lg font-semibold">
               {plan.name}
             </h2>
@@ -42,12 +44,10 @@ export default function HomePage() {
               {plan.credits} credits
             </p>
 
-            <button
-              onClick={() => handleBuy(plan.id)}
-              className="mt-6 w-full bg-black text-white py-2 rounded-lg hover:opacity-90"
-            >
-              Get Started
-            </button>
+            <button type="button" onClick={() => handleBuy(plan.name)} 
+            className="mt-6 w-full bg-black text-white py-3 rounded-lg">
+  Get Started
+</button>
           </div>
         ))}
       </div>

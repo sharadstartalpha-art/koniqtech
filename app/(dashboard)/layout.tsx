@@ -8,13 +8,25 @@ export default function DashboardLayout({
 }) {
   return (
     <UpgradeProvider>
-      <div className="flex">
-        <Sidebar />
+      <div className="flex h-screen">
 
-        <div className="flex-1 bg-gray-50 min-h-screen p-6">
-          {children}
-        </div>
-      </div>
+  <Sidebar />
+
+  <div className="flex-1 flex flex-col">
+
+    {/* TOPBAR */}
+    <div className="h-14 border-b flex items-center justify-between px-6">
+      <p className="font-semibold">KoniqTech 🚀</p>
+    </div>
+
+    {/* CONTENT */}
+    <div className="p-6 bg-gray-50 flex-1 overflow-auto">
+      {children}
+    </div>
+
+  </div>
+
+</div>
     </UpgradeProvider>
   );
 }

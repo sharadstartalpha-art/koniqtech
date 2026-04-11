@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 const links = [
   { name: "Dashboard", href: "/dashboard" },
@@ -34,6 +35,13 @@ export default function Sidebar() {
           </Link>
         ))}
       </div>
+
+<button
+  onClick={() => signOut({ callbackUrl: "/" })}
+  className="mt-6 text-sm text-red-500"
+>
+  Logout
+</button>
 
     </div>
   );

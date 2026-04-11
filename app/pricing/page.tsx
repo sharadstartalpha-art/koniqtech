@@ -22,11 +22,13 @@ export default function PricingPage() {
 
       <div className="grid md:grid-cols-3 gap-6">
 
-        {plans.map((plan) => (
-          <div
-            key={plan.name}
-            className="bg-white border p-6 rounded-2xl shadow hover:shadow-xl transition"
-          >
+        {plans.map((plan, i) => (
+  <div
+    key={plan.name}
+    className={`p-6 rounded-2xl border ${
+      i === 1 ? "border-black scale-105 shadow-lg" : ""
+    }`}
+  >
             <h2 className="text-xl font-semibold">{plan.name}</h2>
 
             <p className="text-4xl font-bold mt-4">

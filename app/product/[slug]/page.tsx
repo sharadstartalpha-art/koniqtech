@@ -51,7 +51,7 @@ export default async function ProductPage({
       </p>
 
       {/* CREATE PROJECT */}
-      <form action="/api/projects" method="POST" className="flex gap-2 mb-6">
+      <form onSubmit={(e) => { e.preventDefault(); }} action="/api/projects" method="POST" className="flex gap-2 mb-6">
         <input
           name="name"
           placeholder="New project name"

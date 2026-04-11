@@ -111,20 +111,22 @@ export default function AIChat({
       </div>
 
       {/* INPUT */}
-      <form {(e) => { e.preventDefault(); sendMessage; }} className="flex gap-2 mt-3">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask something..."
-          className="border p-2 flex-1 rounded"
-        />
-        <button
-          type="submit"
-          className="bg-black text-white px-4 rounded"
-        >
-          Send
-        </button>
-      </form>
+      <form onSubmit={sendMessage} className="flex gap-2 mt-3">
+  <input
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    placeholder="Ask something..."
+    className="border p-2 flex-1 rounded"
+  />
+
+  <button
+  type="submit"
+  disabled={loading}
+  className="bg-black text-white px-4 rounded disabled:opacity-50"
+>
+  {loading ? "..." : "Send"}
+</button>
+</form>
 
       {loading && (
         <p className="text-xs text-gray-400 mt-1">AI is typing...</p>

@@ -5,11 +5,14 @@ export async function GET(req: Request) {
   const id = searchParams.get("id");
 
   if (id) {
-    await prisma.emailLog.updateMany({
-      where: { leadId: id },
+    await prisma.emailLog.update({
+      where: { id },
       data: { opened: true },
     });
   }
 
-  return new Response(null, { status: 204 });
+  return new Response(
+    new Uint8Array([137,80,78,71]), // tiny pixel
+    { headers: { "Content-Type": "image/png" } }
+  );
 }

@@ -4,7 +4,8 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 
 export default function AuthButtons() {
-  const { data: session, status } = useSession();
+  const sessionData = useSession();
+const session = sessionData?.data;
 
   if (session) {
     return (

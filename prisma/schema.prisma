@@ -33,8 +33,8 @@ model User {
   balance       Balance?
   transactions  Transaction[]
   payments      Payment[]
-  unsubscribed Boolean @default(false)
-  dailyLimit Int @default(20) 
+  unsubscribed  Boolean        @default(false)
+  dailyLimit    Int            @default(20)
 }
 
 model Company {
@@ -213,7 +213,6 @@ model Payment {
   user User @relation(fields: [userId], references: [id])
 }
 
-
 model Campaign {
   id        String   @id @default(cuid())
   name      String
@@ -224,26 +223,40 @@ model Campaign {
 }
 
 model CampaignStep {
-  id          String @id @default(cuid())
-  campaignId  String
-  subject     String
-  content     String
-  delay       Int // hours
+  id         String @id @default(cuid())
+  campaignId String
+  subject    String
+  content    String
+  delay      Int // hours
 
   campaign Campaign @relation(fields: [campaignId], references: [id])
 }
 
 model EmailLog {
-  id        String   @id @default(cuid())
-  userId    String
-  leadId    String?
-  email     String
-scheduledAt DateTime? 
-  status    String
-  opened    Boolean @default(false)
-  clicked   Boolean @default(false)
+  id          String    @id @default(cuid())
+  userId      String
+  leadId      String?
+  email       String
+  scheduledAt DateTime?
+  status      String
+  opened      Boolean   @default(false)
+  clicked     Boolean   @default(false)
 
   createdAt DateTime @default(now())
+}
+
+
+
+model Email {
+  id        String   @id @default(cuid())
+  threadId  String
+  from      String
+  to        String
+  body      String
+  opened    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  thread EmailThread @relation(fields: [threadId], references: [id])
 }
 
 model EmailThread {
@@ -252,7 +265,9 @@ model EmailThread {
   subject   String
   createdAt DateTime @default(now())
 
+  // ✅ REQUIRED (this was missing)
   messages EmailMessage[]
+  Email    Email[]
 }
 
 model EmailMessage {
@@ -263,19 +278,22 @@ model EmailMessage {
   body      String
   createdAt DateTime @default(now())
 
+  // ✅ RELATION (correct)
   thread EmailThread @relation(fields: [threadId], references: [id])
 }
 
 model EmailQueue {
-  id        String   @id @default(cuid())
-  userId    String
-  email     String
-  subject   String
-  body      String
+  id      String @id @default(cuid())
+  userId  String
+  email   String
+  subject String
+  body    String
 
-  status    String   @default("PENDING")
-  attempts  Int      @default(0)
+  status   String @default("PENDING")
+  attempts Int    @default(0)
 
   scheduledAt DateTime
   createdAt   DateTime @default(now())
+  stopped     Boolean  @default(false)
 }
+

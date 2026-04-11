@@ -1,44 +1,30 @@
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 
 export default async function DashboardPage() {
-  const leadsCount = await prisma.lead.count();
+  const session = await getServerSession();
 
-  const emailsSent = await prisma.emailLog.count({
-    where: { status: "SENT" },
+  const userId = session?.user?.id;
+
+  const leadsCount = await prisma.lead.count({
+    where: { userId },
   });
 
-  const payments = await prisma.payment.findMany();
-
-  const revenue = payments.reduce(
-    (sum, p) => sum + p.amount,
-    0
-  );
+  const emailsSent = await prisma.emailLog.count({
+    where: { userId },
+  });
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="grid md:grid-cols-2 gap-4">
 
-      <h1 className="text-2xl font-bold">Dashboard 📊</h1>
+      <div className="bg-white p-6 rounded-xl border">
+        <p className="text-gray-500">Your Leads</p>
+        <p className="text-3xl font-bold">{leadsCount}</p>
+      </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
-
-        {/* LEADS */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <p className="text-gray-500">Leads Generated</p>
-          <p className="text-3xl font-bold">{leadsCount}</p>
-        </div>
-
-        {/* EMAILS */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <p className="text-gray-500">Emails Sent</p>
-          <p className="text-3xl font-bold">{emailsSent}</p>
-        </div>
-
-        {/* REVENUE */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <p className="text-gray-500">Revenue</p>
-          <p className="text-3xl font-bold">${revenue}</p>
-        </div>
-
+      <div className="bg-white p-6 rounded-xl border">
+        <p className="text-gray-500">Emails Sent</p>
+        <p className="text-3xl font-bold">{emailsSent}</p>
       </div>
 
     </div>

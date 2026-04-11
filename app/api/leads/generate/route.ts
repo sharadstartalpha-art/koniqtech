@@ -14,6 +14,9 @@ export async function POST(req: Request) {
     return new Response("No credits", { status: 403 });
   }
 
+  if (user.plan === "FREE" && user.credits <= 0) {
+  return new Response("Upgrade required", { status: 403 });
+}
   // ✅ FETCH REAL LEADS (Apollo)
   let leads = [];
 

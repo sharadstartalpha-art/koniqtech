@@ -2,45 +2,70 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
+  const body = await req.json();
 
-    // 👉 PayPal event
-    const eventType = body.event_type;
+  // ⚠️ In real PayPal → verify webhook signature
 
-    if (eventType === "CHECKOUT.ORDER.APPROVED") {
-      const email =
-        body.resource?.payer?.email_address || "unknown@user.com";
+  const userId = body.userId;
+  const plan = body.plan;
 
-      const amount = body.resource?.purchase_units?.[0]?.amount?.value;
+  // plan config
+  const PLAN_DATA: any = {
+    PRO: { credits: 5000, price: 29 },
+    ENTERPRISE: { credits: 20000, price: 99 },
+  };
 
-      // 🎯 MAP PLAN → CREDITS
-      let credits = 0;
+  const selectedPlan = PLAN_DATA[plan];
 
-      if (amount == "10") credits = 1000;
-      if (amount == "29") credits = 5000;
-      if (amount == "99") credits = 20000;
-
-      // ✅ FIND USER
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (user) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            credits: {
-              increment: credits,
-            },
-          },
-        });
-      }
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Webhook Error", err);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+  if (!selectedPlan) {
+    return NextResponse.json({ error: "Invalid plan" });
   }
+
+  // ✅ 1. UPDATE USER PLAN
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      plan,
+      credits: selectedPlan.credits,
+    },
+  });
+
+  // ✅ 2. CREATE PAYMENT (INVOICE)
+  await prisma.payment.create({
+    data: {
+      userId,
+      amount: selectedPlan.price,
+      status: "PAID",
+    },
+  });
+
+
+  await prisma.user.update({
+  where: { id: userId },
+  data: {
+    plan: "PRO",
+    credits: 5000,
+  },
+});
+
+  // ✅ 3. CREATE / UPDATE SUBSCRIPTION
+  await prisma.subscription.upsert({
+  where: { userId },
+
+  update: {
+    status: "ACTIVE",
+    plan,
+  },
+
+  create: {
+    status: "ACTIVE",
+    plan,
+
+    // ✅ FIX HERE
+    user: {
+      connect: { id: userId },
+    },
+  },
+});
+  return NextResponse.json({ success: true });
 }

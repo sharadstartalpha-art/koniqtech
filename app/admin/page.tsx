@@ -1,42 +1,40 @@
 import { prisma } from "@/lib/prisma";
+import AdminChart from "@/components/admin/AdminChart";
 
-export default async function AdminDashboard() {
+export default async function AdminPage() {
   const users = await prisma.user.count();
-  const projects = await prisma.project.count();
-  const products = await prisma.product.count();
-  const revenue = await prisma.transaction.aggregate({
-    _sum: { amount: true },
-  });
+  const payments = await prisma.payment.findMany();
+
+  const revenue = payments.reduce((sum, p) => sum + p.amount, 0);
+
+  const data = payments.map((p) => ({
+    date: new Date(p.createdAt).toLocaleDateString(),
+    amount: p.amount,
+  }));
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
+    <div className="space-y-6">
 
-      <div className="grid grid-cols-4 gap-6">
+      <h1 className="text-2xl font-bold">Admin Dashboard 🛠</h1>
 
-        <div className="bg-white p-6 rounded shadow">
+      {/* STATS */}
+      <div className="grid md:grid-cols-3 gap-4">
+
+        <div className="bg-white p-6 rounded-xl border">
           <p>Users</p>
-          <h2 className="text-2xl">{users}</h2>
+          <p className="text-3xl font-bold">{users}</p>
         </div>
 
-        <div className="bg-white p-6 rounded shadow">
-          <p>Projects</p>
-          <h2 className="text-2xl">{projects}</h2>
-        </div>
-
-        <div className="bg-white p-6 rounded shadow">
-          <p>Products</p>
-          <h2 className="text-2xl">{products}</h2>
-        </div>
-
-        <div className="bg-white p-6 rounded shadow">
+        <div className="bg-white p-6 rounded-xl border">
           <p>Revenue</p>
-          <h2 className="text-2xl">
-            ${revenue._sum.amount ?? 0}
-          </h2>
+          <p className="text-3xl font-bold">${revenue}</p>
         </div>
 
       </div>
+
+      {/* CHART */}
+      <AdminChart data={data} />
+
     </div>
   );
 }

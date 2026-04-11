@@ -31,7 +31,7 @@ export default function DashboardUI({ products, projects }: any) {
       </div>
 
       {/* 🔥 CREATE PROJECT */}
-     <form action="/api/projects" method="POST" className="flex gap-2 mb-6">
+     <form onSubmit={(e) => { e.preventDefault(); }}action="/api/projects" method="POST" className="flex gap-2 mb-6">
   <input
     name="name"
     placeholder="New project name"
@@ -65,7 +65,7 @@ export default function DashboardUI({ products, projects }: any) {
               </p>
             </div>
 
-            <form action={`/api/projects/${project.id}`} method="POST">
+            <form onSubmit={(e) => { e.preventDefault(); }} action={`/api/projects/${project.id}`} method="POST">
               <button className="text-red-500">Delete</button>
             </form>
           </div>

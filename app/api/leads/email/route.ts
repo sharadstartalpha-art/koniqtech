@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { resend } from "@/lib/email";
 import { generateEmail } from "@/lib/ai";
+import { sendGmail } from "@/lib/gmail";
 
 export async function POST(req: Request) {
   try {
@@ -13,24 +14,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ AI EMAIL
+    // ✅ GENERATE AI EMAIL
     const emailContent = await generateEmail(name, "Company");
 
+    const html = `
+      ${emailContent}
+
+      <hr/>
+
+      <p style="font-size:12px;color:gray">
+        <a href="${process.env.APP_URL}/api/unsubscribe?email=${email}">
+          Unsubscribe
+        </a>
+      </p>
+    `;
+
+    // ✅ SEND VIA GMAIL
+    await sendGmail(email, "Quick question", html);
+
+    // ✅ OPTIONAL: ALSO SEND VIA RESEND (backup)
     await resend.emails.send({
       from: "KoniqTech <onboarding@resend.dev>",
       to: email,
       subject: "Quick question",
-      html: `
-        ${emailContent}
-
-        <hr/>
-
-        <p style="font-size:12px;color:gray">
-          <a href="${process.env.APP_URL}/api/unsubscribe?email=${email}">
-            Unsubscribe
-          </a>
-        </p>
-      `,
+      html,
     });
 
     return NextResponse.json({ success: true });

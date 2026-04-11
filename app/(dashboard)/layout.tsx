@@ -1,18 +1,26 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import Sidebar from "@/components/dashboard/Sidebar";
+import { UpgradeProvider } from "@/components/UpgradeProvider";
 
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  return (
+    <UpgradeProvider>
 
-  // 🔒 NOT LOGGED IN → BLOCK
-  if (!session?.user?.email) {
-    redirect("/login");
-  }
+      <div className="flex">
 
-  return <>{children}</>;
+        {/* SIDEBAR */}
+        <Sidebar />
+
+        {/* MAIN */}
+        <div className="flex-1 bg-gray-50 min-h-screen p-6">
+          {children}
+        </div>
+
+      </div>
+
+    </UpgradeProvider>
+  );
 }

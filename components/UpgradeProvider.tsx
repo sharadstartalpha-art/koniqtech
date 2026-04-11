@@ -1,33 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import UpgradeModal from "@/components/UpgradeModal";
+import { createContext, useContext, useState } from "react";
+import UpgradeModal from "./UpgradeModal";
 
-type UpgradeContextType = {
-  setShowUpgrade: (value: boolean) => void;
-};
+const UpgradeContext = createContext<any>(null);
 
-const UpgradeContext = createContext<UpgradeContextType | null>(null);
-
-export function UpgradeProvider({ children }: { children: React.ReactNode }) {
+export function UpgradeProvider({ children }: any) {
   const [showUpgrade, setShowUpgrade] = useState(false);
-
-  const fetchCredits = async () => {
-    try {
-      const res = await fetch("/api/user/credits");
-      const data = await res.json();
-
-      if (data.credits === 0) {
-        setShowUpgrade(true);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchCredits();
-  }, []);
 
   return (
     <UpgradeContext.Provider value={{ setShowUpgrade }}>
@@ -40,13 +19,12 @@ export function UpgradeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ✅ FINAL EXPORT (IMPORTANT)
-export function useUpgrade() {
-  const context = useContext(UpgradeContext);
+export const useUpgrade = () => {
+  const ctx = useContext(UpgradeContext);
 
-  if (!context) {
+  if (!ctx) {
     throw new Error("useUpgrade must be used inside UpgradeProvider");
   }
 
-  return context;
-}
+  return ctx;
+};

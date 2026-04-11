@@ -1,40 +1,41 @@
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { requireAdmin } from "@/lib/admin";
+import { getMRR, getChurnRate, getRevenueSeries } from "@/lib/analytics";
+import AdminChart from "@/components/admin/AdminChart";
 
 export default async function AnalyticsPage() {
-  await requireAdmin();
-  const users = await prisma.user.count();
-const session = await getServerSession(authOptions);
-
-if (session?.user?.role !== "ADMIN") {
-  return <div>Unauthorized</div>;
-}
-
-  const revenue = await prisma.transaction.aggregate({
-    _sum: { amount: true },
-  });
+  const mrr = await getMRR();
+  const churn = await getChurnRate();
+  const revenue = await getRevenueSeries();
 
   return (
-    <div>
-      <h1 className="text-xl font-bold mb-6">Analytics</h1>
+    <div className="space-y-6">
 
-      <div className="grid grid-cols-2 gap-6">
+      <h1 className="text-2xl font-bold">
+        Analytics 📊
+      </h1>
 
-        <div className="bg-white p-6 rounded shadow">
-          <p>Total Users</p>
-          <h2 className="text-2xl">{users}</h2>
+      {/* METRICS */}
+      <div className="grid md:grid-cols-3 gap-4">
+
+        <div className="bg-white p-6 rounded-xl border">
+          <p className="text-gray-500">MRR</p>
+          <p className="text-2xl font-bold">${mrr}</p>
         </div>
 
-        <div className="bg-white p-6 rounded shadow">
-          <p>Total Revenue</p>
-          <h2 className="text-2xl">
-            ${revenue._sum.amount ?? 0}
-          </h2>
+        <div className="bg-white p-6 rounded-xl border">
+          <p className="text-gray-500">Churn</p>
+          <p className="text-2xl font-bold">{churn}%</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl border">
+          <p className="text-gray-500">Growth</p>
+          <p className="text-2xl font-bold">+12%</p>
         </div>
 
       </div>
+
+      {/* CHART */}
+      <AdminChart data={revenue} />
+
     </div>
   );
 }

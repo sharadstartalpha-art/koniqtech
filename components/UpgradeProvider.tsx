@@ -3,13 +3,23 @@
 import { createContext, useContext, useState } from "react";
 import UpgradeModal from "./UpgradeModal";
 
-const UpgradeContext = createContext<any>(null);
+type UpgradeContextType = {
+  openUpgrade: () => void;
+};
 
-export function UpgradeProvider({ children }: any) {
+const UpgradeContext = createContext<UpgradeContextType | null>(null);
+
+export default function UpgradeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
+  const openUpgrade = () => setShowUpgrade(true);
+
   return (
-    <UpgradeContext.Provider value={{ setShowUpgrade }}>
+    <UpgradeContext.Provider value={{ openUpgrade }}>
       {children}
 
       {showUpgrade && (
@@ -19,7 +29,8 @@ export function UpgradeProvider({ children }: any) {
   );
 }
 
-export const useUpgrade = () => {
+/* ✅ THIS WAS MISSING */
+export function useUpgrade() {
   const ctx = useContext(UpgradeContext);
 
   if (!ctx) {
@@ -27,4 +38,4 @@ export const useUpgrade = () => {
   }
 
   return ctx;
-};
+}

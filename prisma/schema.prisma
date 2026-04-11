@@ -25,21 +25,22 @@ model User {
   // ✅ COMPANY RELATION (FIXED)
   companyId          String?
   company            Company?             @relation("CompanyUsers", fields: [companyId], references: [id])
-   credits  Int    @default(0)
+  credits            Int                  @default(0)
   // ✅ OWNER RELATION
-  ownedCompany  Company?       @relation("CompanyOwner")
-  subscriptions Subscription[]
-  projects      Project[]
-  leads         Lead[]
-  balance       Balance?
-  transactions  Transaction[]
-  payments      Payment[]
-  isBanned  Boolean @default(false)
-  plan      String  @default("FREE")
-  unsubscribed  Boolean        @default(false)
-  dailyLimit    Int            @default(20)
-  workspaceId String?
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  ownedCompany       Company?             @relation("CompanyOwner")
+  subscriptions      Subscription[]
+  projects           Project[]
+  leads              Lead[]
+  balance            Balance?
+  transactions       Transaction[]
+  payments           Payment[]
+  usages             Usage[]
+  isBanned           Boolean              @default(false)
+  plan               String               @default("FREE")
+  unsubscribed       Boolean              @default(false)
+  dailyLimit         Int                  @default(20)
+  workspaceId        String?
+  workspace          Workspace?           @relation(fields: [workspaceId], references: [id])
 }
 
 model Company {
@@ -250,8 +251,6 @@ model EmailLog {
   createdAt DateTime @default(now())
 }
 
-
-
 model Email {
   id        String   @id @default(cuid())
   threadId  String
@@ -302,12 +301,7 @@ model EmailQueue {
   stopped     Boolean  @default(false)
 }
 
-model Workspace {
-  id    String @id @default(cuid())
-  name  String
 
-  users User[]
-}
 
 model Invite {
   id          String @id @default(cuid())
@@ -315,5 +309,31 @@ model Invite {
   workspaceId String
   role        Role
 
+  createdAt DateTime @default(now())
+}
+
+
+
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  credits   Int      @default(0)
+
+  users     User[]
+  usages    Usage[]
+
+  createdAt DateTime @default(now())
+}
+
+model Usage {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  action      String
+  credits     Int
   createdAt   DateTime @default(now())
+   meta      Json?
+  user       User      @relation(fields: [userId], references: [id])
+  workspace  Workspace @relation(fields: [workspaceId], references: [id])
 }

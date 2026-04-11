@@ -1,5 +1,6 @@
+
 import Sidebar from "@/components/dashboard/Sidebar";
-import { UpgradeProvider } from "@/components/UpgradeProvider";
+import UpgradeProvider from "@/components/UpgradeProvider";
 
 export default function DashboardLayout({
   children,

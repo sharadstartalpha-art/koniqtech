@@ -1,28 +1,35 @@
-import { prisma } from "@/lib/prisma";
+"use client";
 
-export default async function TeamPage() {
-  const users = await prisma.user.findMany();
+import { useState } from "react";
 
-  const pricePerUser = 10;
+export default function TeamPage() {
+  const [email, setEmail] = useState("");
+
+  async function invite() {
+    await fetch("/api/team/invite", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+
+    alert("Invite sent 🚀");
+  }
 
   return (
-    <div className="max-w-4xl mx-auto py-10 space-y-6">
+    <div className="max-w-xl space-y-4">
+      <h1 className="text-xl font-bold">Team 👥</h1>
 
-      <h1 className="text-2xl font-bold">Team 👥</h1>
+      <input
+        placeholder="Invite email"
+        onChange={(e) => setEmail(e.target.value)}
+        className="border p-2 w-full"
+      />
 
-      {users.map((u) => (
-        <div key={u.id} className="bg-white p-4 border rounded">
-          {u.email}
-        </div>
-      ))}
-
-      <div className="bg-black text-white p-6 rounded-xl">
-        <p>Total Seats: {users.length}</p>
-        <h2 className="text-xl font-bold">
-          Billing: ${users.length * pricePerUser}/month
-        </h2>
-      </div>
-
+      <button
+        onClick={invite}
+        className="bg-black text-white px-4 py-2"
+      >
+        Invite Member
+      </button>
     </div>
   );
 }

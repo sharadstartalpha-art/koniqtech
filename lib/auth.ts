@@ -3,6 +3,18 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+import { getServerSession } from "next-auth";
+
+export async function requireAdmin() {
+  const session = await getServerSession();
+
+  if (!session || session.user.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  return session;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -33,7 +45,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           role: user.role || "USER",
-          projectId: user.projects?.[0]?.id || undefined,
+         projectId: user.projects?.[0]?.id || undefined,
         };
       },
     }),
@@ -76,11 +88,15 @@ export const authOptions: NextAuthOptions = {
         where: { email: user.email! },
         include: { projects: true },
       });
+      
+if (!dbUser) return false;
 
-      if (!dbUser) return false;
+if (dbUser.isBanned) {
+  throw new Error("User is banned");
+}
 
-if (!dbUser.workspaceId) {
-  const workspace = await prisma.workspace.create({
+       if (!dbUser.workspaceId) {
+         const workspace = await prisma.workspace.create({
     data: {
       name: "My Workspace",
     },

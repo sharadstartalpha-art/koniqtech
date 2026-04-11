@@ -8,8 +8,9 @@ datasource db {
 }
 
 enum Role {
-  USER
   ADMIN
+  TEAM
+  USER
 }
 
 model User {
@@ -24,7 +25,7 @@ model User {
   // ✅ COMPANY RELATION (FIXED)
   companyId          String?
   company            Company?             @relation("CompanyUsers", fields: [companyId], references: [id])
-credits  Int    @default(0)
+   credits  Int    @default(0)
   // ✅ OWNER RELATION
   ownedCompany  Company?       @relation("CompanyOwner")
   subscriptions Subscription[]
@@ -33,6 +34,8 @@ credits  Int    @default(0)
   balance       Balance?
   transactions  Transaction[]
   payments      Payment[]
+  isBanned  Boolean @default(false)
+  plan      String  @default("FREE")
   unsubscribed  Boolean        @default(false)
   dailyLimit    Int            @default(20)
   workspaceId String?
@@ -304,4 +307,13 @@ model Workspace {
   name  String
 
   users User[]
+}
+
+model Invite {
+  id          String @id @default(cuid())
+  email       String
+  workspaceId String
+  role        Role
+
+  createdAt   DateTime @default(now())
 }

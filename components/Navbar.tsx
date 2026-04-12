@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { useState } from "react";
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
@@ -15,18 +17,12 @@ export default function Navbar() {
       </Link>
 
       {/* RIGHT SIDE */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6 relative">
 
-        {/* Always show pricing */}
         <Link href="/pricing">Pricing</Link>
 
         {session ? (
           <>
-            {/* 👤 USER NAME */}
-            <span className="text-sm text-gray-600">
-              {session.user?.email}
-            </span>
-
             {/* ROLE BASED DASHBOARD */}
             {session.user.role === "ADMIN" ? (
               <Link href="/admin/dashboard">Admin</Link>
@@ -34,13 +30,31 @@ export default function Navbar() {
               <Link href="/dashboard">Dashboard</Link>
             )}
 
-            {/* LOGOUT */}
-            <button
-              onClick={() => signOut()}
-              className="text-red-500"
-            >
-              Logout
-            </button>
+            {/* USER DROPDOWN */}
+            <div className="relative">
+              <button
+                onClick={() => setOpen(!open)}
+                className="font-medium"
+              >
+                {session.user.email}
+              </button>
+
+              {open && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg p-3 space-y-2 z-50">
+                  
+                  <p className="text-sm text-gray-500">
+                    {session.user.email}
+                  </p>
+
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full text-left text-red-500 hover:bg-gray-100 px-2 py-1 rounded"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </>
         ) : (
           <>

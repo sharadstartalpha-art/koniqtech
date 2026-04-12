@@ -1,40 +1,28 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { requireAdmin } from "@/lib/admin";
+import { requireAdmin } from "@/lib/auth";
 
-// ✅ GET PRODUCTS
-export async function GET() {
-  await requireAdmin();
-  const session = await getServerSession(authOptions);
-
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  const products = await prisma.product.findMany();
-
-  return NextResponse.json(products);
-}
-
-// ✅ CREATE PRODUCT
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  await requireAdmin();
 
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  const { name, slug } = await req.json();
+  const { name, slug, price, description } = await req.json();
 
   const product = await prisma.product.create({
-  data: {
-    name,
-    slug,
-    price: 10, // ✅ REQUIRED
-  },
-});
+    data: {
+      name,
+      slug,
+      price,
+      description,
+      active: true,
+    },
+  });
 
-  return NextResponse.json(product);
+  return Response.json(product);
+}
+
+export async function GET() {
+  const products = await prisma.product.findMany({
+    where: { active: true },
+  });
+
+  return Response.json(products);
 }

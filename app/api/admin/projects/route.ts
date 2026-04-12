@@ -1,20 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/admin";
 
-export async function GET() {
-  await requireAdmin();
-  const session = await getServerSession(authOptions);
+export async function POST(req: Request) {
+  const session = await getServerSession();
+  if (!session) return Response.json({ error: "Unauthorized" });
 
-  if (session?.user?.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const { productId } = await req.json();
 
-  const projects = await prisma.project.findMany({
-    include: { user: true },
+  const project = await prisma.project.create({
+    data: {
+      name: "My Project",
+      userId: session.user.id,
+      productId,
+    },
   });
 
-  return NextResponse.json(projects);
+  return Response.json(project);
 }

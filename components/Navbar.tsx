@@ -7,9 +7,17 @@ import { useState, useRef, useEffect } from "react";
 export default function Navbar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
-  // 🔥 close dropdown when clicking outside
+  // 🔥 fetch products for navbar
+  useEffect(() => {
+    fetch("/api/admin/products")
+      .then((res) => res.json())
+      .then(setProducts);
+  }, []);
+
+  // 🔥 close dropdown on outside click
   useEffect(() => {
     function handleClick(e: any) {
       if (!ref.current?.contains(e.target)) {
@@ -23,10 +31,21 @@ export default function Navbar() {
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
 
+      {/* LOGO */}
       <Link href="/" className="font-bold text-lg">
         KoniqTech 🚀
       </Link>
 
+      {/* CENTER LINKS (PRODUCTS) */}
+      <div className="flex gap-4">
+        {products.map((p) => (
+          <Link key={p.id} href={`/${p.slug}`}>
+            {p.name}
+          </Link>
+        ))}
+      </div>
+
+      {/* RIGHT SIDE */}
       <div className="flex items-center gap-6 relative">
 
         <Link href="/pricing">Pricing</Link>
@@ -40,7 +59,7 @@ export default function Navbar() {
               <Link href="/dashboard">Dashboard</Link>
             )}
 
-            {/* 🔥 DROPDOWN */}
+            {/* DROPDOWN */}
             <div ref={ref} className="relative">
               <button
                 onClick={() => setOpen(!open)}

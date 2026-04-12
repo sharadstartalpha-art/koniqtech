@@ -1,32 +1,20 @@
-import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
-  const userId = session?.user?.id;
+  if (!session) redirect("/login");
 
-  const leadsCount = await prisma.lead.count({
-    where: { userId },
-  });
-
-  const emailsSent = await prisma.emailLog.count({
-    where: { userId },
-  });
+  // 🔥 ADMIN goes to admin dashboard
+  if (session.user.role === "ADMIN") {
+    redirect("/admin/dashboard");
+  }
 
   return (
-    <div className="grid md:grid-cols-2 gap-4">
-
-      <div className="bg-white p-6 rounded-xl border">
-        <p className="text-gray-500">Your Leads</p>
-        <p className="text-3xl font-bold">{leadsCount}</p>
-      </div>
-
-      <div className="bg-white p-6 rounded-xl border">
-        <p className="text-gray-500">Emails Sent</p>
-        <p className="text-3xl font-bold">{emailsSent}</p>
-      </div>
-
+    <div>
+      <h1 className="text-2xl font-bold">User Dashboard 👤</h1>
     </div>
   );
 }

@@ -5,6 +5,11 @@ import { useSession } from "next-auth/react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  {session?.user.role === "ADMIN" ? (
+  <Link href="/admin/dashboard">Admin</Link>
+) : (
+  <Link href="/dashboard">Dashboard</Link>
+)}
 
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">

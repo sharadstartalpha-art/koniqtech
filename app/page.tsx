@@ -44,8 +44,10 @@ export default function HomePage() {
               {plan.credits} credits
             </p>
 
-            <button type="button" onClick={() => handleBuy(plan.name)} 
-            className="mt-6 w-full bg-black text-white py-3 rounded-lg">
+            <button
+  onClick={() => handleBuy(plan.name)}
+  className="bg-black text-white px-6 py-3 rounded-xl"
+>
   Get Started
 </button>
           </div>

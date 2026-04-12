@@ -8,6 +8,12 @@ export async function POST(req: Request) {
 
   const userId = body.userId;
   const plan = body.plan;
+  // 🔥 extract from webhook / metadata
+const workspaceId = body.workspaceId;
+const planId = body.planId;
+
+// mock fallback (for now)
+const planCredits = 5000;
 
   // plan config
   const PLAN_DATA: any = {
@@ -40,6 +46,15 @@ export async function POST(req: Request) {
   });
 
 
+await prisma.workspace.update({
+  where: { id: workspaceId },
+  data: {
+    credits: {
+      increment: planCredits, // 1000 / 5000 / etc
+    },
+  },
+});
+
   await prisma.user.update({
   where: { id: userId },
   data: {
@@ -51,21 +66,20 @@ export async function POST(req: Request) {
   // ✅ 3. CREATE / UPDATE SUBSCRIPTION
   await prisma.subscription.upsert({
   where: { userId },
-
   update: {
     status: "ACTIVE",
-    plan,
   },
-
   create: {
-    status: "ACTIVE",
-    plan,
-
-    // ✅ FIX HERE
     user: {
       connect: { id: userId },
     },
+    plan: {
+      connect: { id: planId },
+    },
+    status: "ACTIVE",
   },
 });
+
+   
   return NextResponse.json({ success: true });
 }

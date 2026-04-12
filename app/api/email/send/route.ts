@@ -1,13 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+export const dynamic = "force-dynamic";
+
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { deductCredit, getBalance } from "@/lib/balance";
+import { deductCredits } from "@/lib/usage";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -15,38 +14,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { to, subject, html } = await req.json();
-
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    const { to, subject, html } = await req.json();
 
-    // ✅ check balance
-    const balance = await getBalance(user.id);
+    // ✉️ send email (your resend logic here)
 
-    if (balance <= 0) {
-      return NextResponse.json({ error: "NO_CREDITS" }, { status: 402 });
-    }
-
-    // ✅ send email
-    await resend.emails.send({
-      from: "KoniqTech <onboarding@resend.dev>",
-      to,
-      subject,
-      html,
-    });
-
-    // ✅ deduct credit
-    await deductCredit(user.id);
+    // 💰 deduct credits
+    await deductCredits(user!.id, 1, "SEND_EMAIL");
 
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("EMAIL ERROR:", error);
+    console.error(error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

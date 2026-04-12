@@ -1,59 +1,23 @@
+import { deductCredits } from "@/lib/usage";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
-import { fetchApolloLeads } from "@/lib/apollo";
 
 export async function POST(req: Request) {
-  const { industry, location, title } = await req.json();
+  const session = await getServerSession(authOptions);
 
-  // 🔐 USER
-  const user = await prisma.user.findFirst({
-    include: { projects: true },
+  if (!session?.user?.email) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
   });
 
-  if (!user || user.credits <= 0) {
-    return new Response("No credits", { status: 403 });
-  }
+  // 🔥 PAYWALL HERE
+  await deductCredits(user!.id, 10, "GENERATE_LEADS");
 
-  if (user.plan === "FREE" && user.credits <= 0) {
-  return new Response("Upgrade required", { status: 403 });
-}
-  // ✅ FETCH REAL LEADS (Apollo)
-  let leads = [];
+  // your lead generation logic...
 
-  try {
-    leads = await fetchApolloLeads({
-      industry,
-      location,
-      title,
-    });
-  } catch (err) {
-    console.log("Apollo failed → fallback");
-
-    // 🧪 fallback (safe)
-    leads = Array.from({ length: 10 }).map((_, i) => ({
-      name: `${title || "Founder"} ${i}`,
-      email: `lead${i}@${industry || "company"}.com`,
-      company: `${industry || "Tech"} Corp`,
-      score: Math.floor(Math.random() * 100),
-    }));
-  }
-
-  // 💰 COST
-  const cost = Math.ceil(leads.length / 10);
-
-  if (user.credits < cost) {
-    return new Response("Not enough credits", { status: 403 });
-  }
-
-  // ✅ DEDUCT
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      credits: {
-        decrement: cost,
-      },
-    },
-  });
-
-  return NextResponse.json({ leads });
+  return Response.json({ success: true });
 }

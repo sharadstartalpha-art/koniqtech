@@ -20,7 +20,7 @@ export async function deductCredits(
     throw new Error("NO_CREDITS");
   }
 
-  // ✅ deduct from WORKSPACE (shared billing)
+  // ✅ deduct from workspace
   await prisma.workspace.update({
     where: { id: workspace.id },
     data: {
@@ -39,4 +39,19 @@ export async function deductCredits(
       credits: amount,
     },
   });
+}
+
+/* CHECK ONLY */
+export async function checkUsage(userId: string, cost: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: user?.workspaceId! },
+  });
+
+  if ((workspace?.credits || 0) < cost) {
+    throw new Error("NO_CREDITS");
+  }
 }

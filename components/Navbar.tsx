@@ -1,36 +1,43 @@
-
 "use client";
 
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export default function Navbar() {
-  const sessionData = useSession();
-const session = sessionData?.data;
-{session?.user?.role === "ADMIN" && (
-  <Link href="/admin">Admin</Link>
-)}
+  const { data: session, status } = useSession();
+
   return (
-    <div className="flex justify-between items-center px-6 py-4 border-b bg-white">
+    <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
+      
       <Link href="/" className="font-bold text-lg">
         KoniqTech 🚀
       </Link>
 
-      <div className="flex items-center gap-4">
-        {session ? (
+      <div className="flex gap-4 items-center">
+
+        <Link href="/pricing">Pricing</Link>
+
+        {status === "loading" ? (
+          <span className="text-sm text-gray-400">Loading...</span>
+        ) : session ? (
           <>
             <Link href="/dashboard">Dashboard</Link>
-            <button
-              onClick={() => signOut()}
-              className="bg-black text-white px-3 py-1 rounded"
+            <Link
+              href="/api/auth/signout"
+              className="text-red-500"
             >
               Logout
-            </button>
+            </Link>
           </>
         ) : (
           <>
             <Link href="/login">Login</Link>
-            <Link href="/register">Register</Link>
+            <Link
+              href="/register"
+              className="bg-black text-white px-4 py-2 rounded-lg"
+            >
+              Get Started
+            </Link>
           </>
         )}
       </div>

@@ -1,13 +1,21 @@
 import "./globals.css";
-import UpgradeProvider from "@/components/UpgradeProvider";
+import Navbar from "@/components/Navbar";
+import Providers from "@/components/Providers";
 
-export default function RootLayout({ children }: any) {
+export const dynamic = "force-dynamic";
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html>
+    <html lang="en">
       <body>
-        <UpgradeProvider>
+        <Providers>
+          <Navbar />
           {children}
-        </UpgradeProvider>
+        </Providers>
       </body>
     </html>
   );

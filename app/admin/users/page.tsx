@@ -47,6 +47,23 @@ export default function UsersPage() {
                 {u.isBanned ? "Unban" : "Ban"}
               </button>
 
+
+<button
+  onClick={() =>
+    fetch("/api/admin/credits", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: u.id,
+        amount: 100,
+      }),
+    }).then(() => location.reload())
+  }
+  className="px-3 py-1 bg-purple-500 text-white rounded"
+>
+  +100 Credits
+</button>
+
+
               {/* ROLE */}
               <button
                 onClick={() => updateUser(u.id, "role", "ADMIN")}

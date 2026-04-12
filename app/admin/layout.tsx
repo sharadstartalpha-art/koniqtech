@@ -1,24 +1,28 @@
-import Link from "next/link";
+import AdminSidebar from "@/components/AdminSidebar";
+import Navbar from "@/components/Navbar";
 
-export default function AdminLayout({ children }: any) {
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex min-h-screen">
+    <div>
 
-      {/* SIDEBAR */}
-      <div className="w-60 bg-black text-white p-4 space-y-4">
-        <h2 className="font-bold">Admin 🛠</h2>
+      {/* TOP NAVBAR */}
+      <Navbar />
 
-        <Link href="/admin">Dashboard</Link>
-        <Link href="/admin/users">Users</Link>
-        <Link href="/admin/products">Products</Link>
-        <Link href="/admin/payments">Payments</Link>
+      <div className="flex">
+
+        {/* SIDEBAR */}
+        <AdminSidebar />
+
+        {/* CONTENT */}
+        <div className="flex-1 p-6">
+          {children}
+        </div>
+
       </div>
-
-      {/* CONTENT */}
-      <div className="flex-1 p-6 bg-gray-50">
-        {children}
-      </div>
-
     </div>
   );
 }

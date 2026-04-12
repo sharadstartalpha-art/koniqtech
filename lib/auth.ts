@@ -2,11 +2,13 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-
 import { getServerSession } from "next-auth";
 
+//
+// 🔐 ADMIN GUARD
+//
 export async function requireAdmin() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== "ADMIN") {
     throw new Error("Unauthorized");
@@ -15,6 +17,9 @@ export async function requireAdmin() {
   return session;
 }
 
+//
+// 🔥 NEXTAUTH CONFIG
+//
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -45,7 +50,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           role: user.role || "USER",
-         projectId: user.projects?.[0]?.id || undefined,
+          projectId: user.projects?.[0]?.id,
         };
       },
     }),
@@ -56,15 +61,16 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    //
+    // 🔐 JWT
+    //
     async jwt({ token, user, trigger, session }) {
-      // 🔥 FIRST LOGIN
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.projectId = user.projectId;
       }
 
-      // 🔁 UPDATE PROJECT SWITCH
       if (trigger === "update" && session?.projectId) {
         token.projectId = session.projectId;
       }
@@ -72,6 +78,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
+    //
+    // 🔐 SESSION
+    //
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
@@ -83,35 +92,39 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
 
+    //
+    // 🔐 SIGN IN HOOK
+    //
     async signIn({ user }) {
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email! },
         include: { projects: true },
       });
-      
-if (!dbUser) return false;
 
-if (dbUser.isBanned) {
-  throw new Error("User is banned");
-}
+      if (!dbUser) return false;
 
-       if (!dbUser.workspaceId) {
-         const workspace = await prisma.workspace.create({
-    data: {
-      name: "My Workspace",
-    },
-  });
+      // 🚫 BAN CHECK
+      if (dbUser.isBanned) {
+        throw new Error("User is banned");
+      }
 
-  await prisma.user.update({
-    where: { id: dbUser.id },
-    data: {
-      workspaceId: workspace.id,
-    },
-  });
-}
+      // 🏢 CREATE WORKSPACE IF NOT EXISTS
+      if (!dbUser.workspaceId) {
+        const workspace = await prisma.workspace.create({
+          data: {
+            name: "My Workspace",
+          },
+        });
 
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: {
+            workspaceId: workspace.id,
+          },
+        });
+      }
 
-      // 🔥 AUTO CREATE PROJECT
+      // 🚀 AUTO CREATE PROJECT
       if (!dbUser.projects.length) {
         const product = await prisma.product.findFirst();
 

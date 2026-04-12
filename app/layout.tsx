@@ -13,8 +13,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
+          {/* GLOBAL NAVBAR */}
           <Navbar />
-          {children}
+
+          {/* PAGE CONTENT */}
+          <main>{children}</main>
         </Providers>
       </body>
     </html>

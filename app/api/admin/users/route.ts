@@ -4,6 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { canManageUsers } from "@/lib/permissions";
 
+
+export async function GET() {
+  const users = await prisma.user.findMany();
+
+  return Response.json(users);
+}
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 

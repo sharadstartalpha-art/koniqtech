@@ -3,21 +3,16 @@
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
-  const [products, setProducts] = useState<any[]>([]);
   const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
-  // 🔥 fetch products for navbar
-  useEffect(() => {
-    fetch("/api/admin/products")
-      .then((res) => res.json())
-      .then(setProducts);
-  }, []);
+  const isAdminPage = pathname.startsWith("/admin");
 
-  // 🔥 close dropdown on outside click
   useEffect(() => {
     function handleClick(e: any) {
       if (!ref.current?.contains(e.target)) {
@@ -31,53 +26,44 @@ export default function Navbar() {
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
 
-      {/* LOGO */}
       <Link href="/" className="font-bold text-lg">
         KoniqTech 🚀
       </Link>
 
-      {/* CENTER LINKS (PRODUCTS) */}
-      <div className="flex gap-4">
-        {products.map((p) => (
-          <Link key={p.id} href={`/${p.slug}`}>
-            {p.name}
-          </Link>
-        ))}
-      </div>
-
-      {/* RIGHT SIDE */}
       <div className="flex items-center gap-6 relative">
 
-        <Link href="/pricing">Pricing</Link>
+        {/* ❌ hide pricing in admin */}
+        {!isAdminPage && <Link href="/pricing">Pricing</Link>}
 
         {session ? (
           <>
-            {/* ROLE BASED */}
             {session.user.role === "ADMIN" ? (
               <Link href="/admin/dashboard">Admin</Link>
             ) : (
               <Link href="/dashboard">Dashboard</Link>
             )}
 
-            {/* DROPDOWN */}
+            {/* 🔥 DROPDOWN */}
             <div ref={ref} className="relative">
               <button
                 onClick={() => setOpen(!open)}
-                className="font-medium"
+                className="font-medium bg-gray-100 px-3 py-1 rounded-lg"
               >
                 {session.user.email}
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg p-3 z-50">
+                <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg p-3 z-50">
 
-                  <p className="text-sm text-gray-500 mb-2">
+                  {/* EMAIL */}
+                  <div className="mb-3 px-2 py-1 bg-gray-100 rounded text-sm">
                     {session.user.email}
-                  </p>
+                  </div>
 
+                  {/* LOGOUT BUTTON */}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full text-left text-red-500 hover:bg-gray-100 px-2 py-1 rounded"
+                    className="w-full bg-red-500 text-white py-2 rounded-lg hover:opacity-90"
                   >
                     Logout
                   </button>

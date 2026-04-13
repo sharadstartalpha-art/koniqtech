@@ -20,70 +20,66 @@ export default function UsersPage() {
     location.reload();
   }
 
+  async function addCredits(userId: string) {
+    await fetch("/api/admin/credits", {
+      method: "POST",
+      body: JSON.stringify({ userId, amount: 100 }),
+    });
+
+    location.reload();
+  }
+
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Users 👥</h1>
 
-      <div className="space-y-3">
-        {users.map((u) => (
-          <div
-            key={u.id}
-            className="border p-4 rounded-xl flex justify-between items-center"
-          >
-            <div>
-              <p>{u.email}</p>
-              <p className="text-sm text-gray-500">
-                {u.role} • {u.plan}
-              </p>
-            </div>
+      <table className="w-full border rounded-xl overflow-hidden">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-3 text-left">Email</th>
+            <th>Role</th>
+            <th>Plan</th>
+            <th>Credits</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
 
-            <div className="flex gap-2">
+        <tbody>
+          {users.map((u) => (
+            <tr key={u.id} className="border-t">
+              <td className="p-3">{u.email}</td>
+              <td>{u.role}</td>
+              <td>{u.plan}</td>
+              <td>{u.credits || 0}</td>
 
-              {/* BAN */}
-              <button
-                onClick={() => updateUser(u.id, u.isBanned ? "unban" : "ban")}
-                className="px-3 py-1 bg-red-500 text-white rounded"
-              >
-                {u.isBanned ? "Unban" : "Ban"}
-              </button>
+              <td className="flex gap-2 p-2">
 
+                <button
+                  onClick={() => addCredits(u.id)}
+                  className="bg-purple-500 text-white px-2 py-1 rounded"
+                >
+                  +100
+                </button>
 
-<button
-  onClick={() =>
-    fetch("/api/admin/credits", {
-      method: "POST",
-      body: JSON.stringify({
-        userId: u.id,
-        amount: 100,
-      }),
-    }).then(() => location.reload())
-  }
-  className="px-3 py-1 bg-purple-500 text-white rounded"
->
-  +100 Credits
-</button>
+                <button
+                  onClick={() => updateUser(u.id, "role", "ADMIN")}
+                  className="bg-blue-500 text-white px-2 py-1 rounded"
+                >
+                  Admin
+                </button>
 
+                <button
+                  onClick={() => updateUser(u.id, u.isBanned ? "unban" : "ban")}
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                >
+                  {u.isBanned ? "Unban" : "Ban"}
+                </button>
 
-              {/* ROLE */}
-              <button
-                onClick={() => updateUser(u.id, "role", "ADMIN")}
-                className="px-3 py-1 bg-blue-500 text-white rounded"
-              >
-                Make Admin
-              </button>
-
-              {/* PLAN */}
-              <button
-                onClick={() => updateUser(u.id, "plan", "PRO")}
-                className="px-3 py-1 bg-green-500 text-white rounded"
-              >
-                Upgrade
-              </button>
-
-            </div>
-          </div>
-        ))}
-      </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -4,18 +4,8 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const body = await req.json();
 
-  // ⚠️ In real PayPal → verify webhook signature
+  const { userId, plan, workspaceId, planId } = body;
 
-  const userId = body.userId;
-  const plan = body.plan;
-  // 🔥 extract from webhook / metadata
-const workspaceId = body.workspaceId;
-const planId = body.planId;
-
-// mock fallback (for now)
-const planCredits = 5000;
-
-  // plan config
   const PLAN_DATA: any = {
     PRO: { credits: 5000, price: 29 },
     ENTERPRISE: { credits: 20000, price: 99 },
@@ -27,16 +17,18 @@ const planCredits = 5000;
     return NextResponse.json({ error: "Invalid plan" });
   }
 
-  // ✅ 1. UPDATE USER PLAN
+  // ✅ USER UPDATE
   await prisma.user.update({
     where: { id: userId },
     data: {
       plan,
-      credits: selectedPlan.credits,
+      credits: {
+        increment: selectedPlan.credits,
+      },
     },
   });
 
-  // ✅ 2. CREATE PAYMENT (INVOICE)
+  // ✅ PAYMENT RECORD
   await prisma.payment.create({
     data: {
       userId,
@@ -45,41 +37,37 @@ const planCredits = 5000;
     },
   });
 
-
-await prisma.workspace.update({
-  where: { id: workspaceId },
-  data: {
-    credits: {
-      increment: planCredits, // 1000 / 5000 / etc
+  // ✅ TRANSACTION LOG
+  await prisma.transaction.create({
+    data: {
+      userId,
+      type: "PAYMENT",
+      amount: selectedPlan.credits,
     },
-  },
-});
+  });
 
-  await prisma.user.update({
-  where: { id: userId },
-  data: {
-    plan: "PRO",
-    credits: 5000,
-  },
-});
+  // ✅ WORKSPACE CREDITS
+  if (workspaceId) {
+    await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: {
+        credits: {
+          increment: selectedPlan.credits,
+        },
+      },
+    });
+  }
 
-  // ✅ 3. CREATE / UPDATE SUBSCRIPTION
+  // ✅ SUBSCRIPTION
   await prisma.subscription.upsert({
-  where: { userId },
-  update: {
-    status: "ACTIVE",
-  },
-  create: {
-    user: {
-      connect: { id: userId },
+    where: { userId },
+    update: { status: "ACTIVE" },
+    create: {
+      user: { connect: { id: userId } },
+      plan: { connect: { id: planId } },
+      status: "ACTIVE",
     },
-    plan: {
-      connect: { id: planId },
-    },
-    status: "ACTIVE",
-  },
-});
+  });
 
-   
   return NextResponse.json({ success: true });
 }

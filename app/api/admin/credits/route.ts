@@ -10,8 +10,17 @@ export async function POST(req: Request) {
     where: { id: userId },
     data: {
       credits: {
-        increment: amount,
+        decrement: 1,
       },
+    },
+  });
+
+
+ await prisma.transaction.create({
+    data: {
+      userId,
+      type: "USAGE",
+       amount: -1,
     },
   });
 

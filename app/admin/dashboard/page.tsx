@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 
 export default async function AdminDashboard() {
-  const totalUsers = await prisma.user.count();
+  const totalUsers = await prisma.user.count({
+  where: {
+    role: "USER",
+  },
+});
   const totalLeads = await prisma.lead.count();
 
   const revenueData = await prisma.payment.aggregate({

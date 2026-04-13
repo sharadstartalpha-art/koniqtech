@@ -60,6 +60,11 @@ export default function Navbar() {
                     {session.user.email}
                   </div>
 
+
+<Link href="/change-password" className="block px-2 py-1 hover:bg-gray-100">
+  Change Password
+</Link>
+
                   {/* LOGOUT BUTTON */}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}

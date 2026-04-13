@@ -4,39 +4,63 @@ import { useEffect, useState } from "react";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+
+  async function loadUsers() {
+    const res = await fetch("/api/admin/users");
+    const data = await res.json();
+    setUsers(data);
+  }
 
   useEffect(() => {
-    fetch("/api/admin/users")
-      .then((res) => res.json())
-      .then(setUsers);
+    loadUsers();
   }, []);
 
   async function updateUser(userId: string, action: string, value?: any) {
+    if (!confirm(`Are you sure to ${action}?`)) return;
+
     await fetch("/api/admin/user", {
       method: "POST",
       body: JSON.stringify({ userId, action, value }),
     });
 
-    location.reload();
+    alert("Updated successfully");
+    loadUsers();
   }
 
   async function addCredits(userId: string) {
+    if (!confirm("Add 100 credits?")) return;
+
     await fetch("/api/admin/credits", {
       method: "POST",
       body: JSON.stringify({ userId, amount: 100 }),
     });
 
-    location.reload();
+    alert("Credits added successfully");
+    loadUsers();
   }
+
+  const filtered = users.filter((u) =>
+    u.email.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Users 👥</h1>
 
+      {/* SEARCH */}
+      <input
+        placeholder="Search user..."
+        className="border px-3 py-2 mb-4 rounded"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
       <table className="w-full border rounded-xl overflow-hidden">
         <thead className="bg-gray-100">
           <tr>
-            <th className="p-3 text-left">Email</th>
+            <th className="p-3">#</th>
+            <th>Email</th>
             <th>Role</th>
             <th>Plan</th>
             <th>Credits</th>
@@ -45,14 +69,15 @@ export default function UsersPage() {
         </thead>
 
         <tbody>
-          {users.map((u) => (
-            <tr key={u.id} className="border-t">
-              <td className="p-3">{u.email}</td>
+          {filtered.map((u, i) => (
+            <tr key={u.id} className="border-t text-center">
+              <td>{i + 1}</td>
+              <td>{u.email}</td>
               <td>{u.role}</td>
               <td>{u.plan}</td>
               <td>{u.credits || 0}</td>
 
-              <td className="flex gap-2 p-2">
+              <td className="flex gap-2 justify-center p-2">
 
                 <button
                   onClick={() => addCredits(u.id)}
@@ -69,7 +94,9 @@ export default function UsersPage() {
                 </button>
 
                 <button
-                  onClick={() => updateUser(u.id, u.isBanned ? "unban" : "ban")}
+                  onClick={() =>
+                    updateUser(u.id, u.isBanned ? "unban" : "ban")
+                  }
                   className="bg-red-500 text-white px-2 py-1 rounded"
                 >
                   {u.isBanned ? "Unban" : "Ban"}

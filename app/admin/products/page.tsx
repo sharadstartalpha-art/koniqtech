@@ -1,53 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function ProductsPage() {
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [price, setPrice] = useState("");
+  const [products, setProducts] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
-  async function createProduct() {
-    await fetch("/api/admin/products", {
+  async function load() {
+    const res = await fetch("/api/admin/products");
+    const data = await res.json();
+    setProducts(data);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function deleteProduct(id: string) {
+    if (!confirm("Delete product?")) return;
+
+    await fetch("/api/admin/products/delete", {
       method: "POST",
-      body: JSON.stringify({
-        name,
-        slug,
-        price: Number(price),
-      }),
+      body: JSON.stringify({ id }),
     });
 
-    alert("Product created!");
+    alert("Deleted");
+    load();
   }
+
+  const filtered = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-4">Products 🚀</h1>
 
       <input
-        placeholder="Name"
-        className="border p-2 block mb-2"
-        onChange={(e) => setName(e.target.value)}
+        placeholder="Search..."
+        className="border px-3 py-2 mb-4"
+        onChange={(e) => setSearch(e.target.value)}
       />
 
-      <input
-        placeholder="Slug (test-1)"
-        className="border p-2 block mb-2"
-        onChange={(e) => setSlug(e.target.value)}
-      />
+      <table className="w-full border rounded-xl">
+        <thead>
+          <tr className="bg-gray-100">
+            <th>#</th>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
 
-      <input
-        placeholder="Price"
-        className="border p-2 block mb-2"
-        onChange={(e) => setPrice(e.target.value)}
-      />
+        <tbody>
+          {filtered.map((p, i) => (
+            <tr key={p.id} className="border-t text-center">
+              <td>{i + 1}</td>
+              <td>{p.name}</td>
+              <td>{p.slug}</td>
+              <td>${p.price}</td>
 
-      <button
-        onClick={createProduct}
-        className="bg-black text-white px-4 py-2"
-      >
-        Create Product
-      </button>
+              <td className="flex gap-2 justify-center p-2">
+                <button className="bg-blue-500 text-white px-2 py-1 rounded">
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => deleteProduct(p.id)}
+                  className="bg-red-500 text-white px-2 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

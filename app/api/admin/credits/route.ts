@@ -6,21 +6,22 @@ export async function POST(req: Request) {
 
   const { userId, amount } = await req.json();
 
+  // ✅ ADD credits (admin action)
   await prisma.user.update({
     where: { id: userId },
     data: {
       credits: {
-        decrement: 1,
+        increment: amount,
       },
     },
   });
 
-
- await prisma.transaction.create({
+  // ✅ TRANSACTION LOG
+  await prisma.transaction.create({
     data: {
       userId,
-      type: "USAGE",
-       amount: -1,
+      type: "CREDIT_ADD",
+      amount,
     },
   });
 

@@ -2,44 +2,52 @@
 
 import { useEffect, useState } from "react";
 import { useTeamStore } from "@/lib/teamStore";
+import { pusherClient } from "@/lib/pusherClient";
 
 export default function ActivityFeed() {
   const { activeTeamId } = useTeamStore();
   const [data, setData] = useState<any[]>([]);
 
-  const load = async () => {
+  // 🔥 1. LOAD INITIAL DATA
+  useEffect(() => {
     if (!activeTeamId) return;
 
-    const res = await fetch(`/api/activity?teamId=${activeTeamId}`);
-    const json = await res.json();
-    setData(json);
-  };
+    fetch(`/api/activity?teamId=${activeTeamId}`)
+      .then((res) => res.json())
+      .then((initialData) => setData(initialData))
+      .catch((err) => console.error("Fetch error:", err));
+  }, [activeTeamId]);
 
+  // ⚡ 2. REALTIME UPDATES (PUSHER)
   useEffect(() => {
-    load();
+    if (!activeTeamId) return;
 
-    const interval = setInterval(load, 5000); // 🔥 real-time feel
+    const channelName = `team-${activeTeamId}`;
+    const channel = pusherClient.subscribe(channelName);
 
-    return () => clearInterval(interval);
+    channel.bind("activity", (newActivity: any) => {
+      setData((prev) => [newActivity, ...prev]);
+    });
+
+    return () => {
+      pusherClient.unsubscribe(channelName);
+    };
   }, [activeTeamId]);
 
   return (
-    <div className="border rounded-xl p-4 space-y-3">
-      <h2 className="font-semibold">Activity 🔥</h2>
+    <div className="space-y-3">
+      <h2 className="font-semibold">Live Activity ⚡</h2>
 
-      {data.length === 0 && (
-        <p className="text-gray-500 text-sm">No activity yet</p>
+      {data.length === 0 ? (
+        <p className="text-sm text-gray-500">No activity yet</p>
+      ) : (
+        data.map((a) => (
+          <div key={a.id} className="border p-3 rounded">
+            <p className="text-sm font-medium">{a.user?.email}</p>
+            <p className="text-sm text-gray-600">{a.message}</p>
+          </div>
+        ))
       )}
-
-      {data.map((a) => (
-        <div key={a.id} className="text-sm border-b pb-2">
-          <p className="font-medium">{a.user.email}</p>
-          <p className="text-gray-600">{a.message}</p>
-          <p className="text-xs text-gray-400">
-            {new Date(a.createdAt).toLocaleString()}
-          </p>
-        </div>
-      ))}
     </div>
   );
 }

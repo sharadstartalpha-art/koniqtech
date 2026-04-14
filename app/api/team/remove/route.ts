@@ -6,6 +6,10 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { memberId } = await req.json();
 
   const member = await prisma.teamMember.findUnique({
@@ -14,11 +18,11 @@ export async function POST(req: Request) {
   });
 
   if (!member) {
-    return NextResponse.json({ error: "Not found" });
+    return NextResponse.json({ error: "Member not found" });
   }
 
-  // 🔥 CHECK OWNER
-  if (member.team.ownerId !== session?.user?.id) {
+  // 🔥 OWNER ONLY
+  if (member.team.ownerId !== session.user.id) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 

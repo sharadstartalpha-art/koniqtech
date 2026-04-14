@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 
-// GET → all products (for dropdown)
+// GET → all products
 export async function GET() {
-  const products = await prisma.product.findMany({
-    where: { active: true },
-  });
+  const products = await prisma.product.findMany();
 
   return NextResponse.json(products);
 }
 
-// POST → create product (ADMIN)
+// POST → create product
 export async function POST(req: Request) {
   const body = await req.json();
 

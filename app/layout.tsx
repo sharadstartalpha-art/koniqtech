@@ -1,6 +1,7 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import { Toaster } from "react-hot-toast";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +14,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
-          {/* GLOBAL NAVBAR */}
           <Navbar />
 
-          {/* PAGE CONTENT */}
+          {/* ✅ TOASTER GLOBAL */}
+          <Toaster position="top-right" />
+
           <main>{children}</main>
         </Providers>
       </body>

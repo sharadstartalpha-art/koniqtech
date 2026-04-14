@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import {prisma} from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -6,25 +6,30 @@ export default async function BillingPage() {
   const session = await getServerSession(authOptions);
 
   const user = await prisma.user.findUnique({
-    where: { email: session?.user?.email! },
+    where: { id: session?.user?.id },
+    include: {
+      teamMembers: {
+        include: {
+          team: true,
+        },
+      },
+    },
   });
 
-  const teamSize = await prisma.user.count({
-    where: { workspaceId: user?.workspaceId },
-  });
+  const team = user?.teamMembers[0]?.team;
 
-  const pricePerSeat = 10;
+  if (!team) {
+    return <div className="p-6">No team found</div>;
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Billing 💳</h1>
 
-      <h1 className="text-xl font-bold">Billing 💳</h1>
-
-      <div className="bg-white p-6 rounded-xl border">
-        <p>Seats: {teamSize}</p>
-        <p>Total: ${teamSize * pricePerSeat}/month</p>
+      <div className="border p-6 rounded-xl">
+        <p><strong>Team:</strong> {team.name}</p>
+        <p><strong>Credits:</strong> {team.credits}</p>
       </div>
-
     </div>
   );
 }

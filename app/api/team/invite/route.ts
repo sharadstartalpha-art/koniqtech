@@ -37,6 +37,17 @@ export async function POST(req: Request) {
     },
   });
 
+  const existing = await prisma.teamMember.findFirst({
+  where: {
+    teamId,
+    user: { email },
+  },
+});
+
+if (existing) {
+  return NextResponse.json({ error: "User already in team" }, { status: 400 });
+}
+
   // 🔥 TEMP: log instead of email
   console.log(`Invite link: https://koniqtech.com/invite/${token}`);
 

@@ -7,11 +7,20 @@ export default async function AnalyticsPage() {
   const revenue = await getRevenueSeries();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
 
-      <h1 className="text-2xl font-bold">
-        Analytics 📊
-      </h1>
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Analytics 📊</h1>
+
+        {/* ✅ EXPORT BUTTON HERE */}
+        <a
+          href="/api/admin/analytics/export"
+          className="bg-black text-white px-4 py-2 rounded-lg"
+        >
+          Export CSV
+        </a>
+      </div>
 
       {/* METRICS */}
       <div className="grid md:grid-cols-3 gap-4">

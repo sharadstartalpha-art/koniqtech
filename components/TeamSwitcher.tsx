@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTeamStore } from "@/lib/store/useTeam";
 
 export default function TeamSwitcher() {
-  const [teams, setTeams] = useState([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const { activeTeamId, setActiveTeam } = useTeamStore();
 
   useEffect(() => {
@@ -17,11 +17,11 @@ export default function TeamSwitcher() {
     <select
       value={activeTeamId || ""}
       onChange={(e) => setActiveTeam(e.target.value)}
-      className="border px-2 py-1 rounded"
+      className="border px-3 py-1 rounded"
     >
-      <option value="">Select Team</option>
+      <option value="">Personal</option>
 
-      {teams.map((t: any) => (
+      {teams.map((t) => (
         <option key={t.team.id} value={t.team.id}>
           {t.team.name}
         </option>

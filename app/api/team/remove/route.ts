@@ -21,8 +21,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Member not found" });
   }
 
-  // 🔥 OWNER ONLY
-  if (member.team.ownerId !== session.user.id) {
+  // ❌ prevent removing owner
+  if (member.role === "OWNER") {
+    return NextResponse.json({ error: "Cannot remove owner" });
+  }
+
+  // 🔐 only OWNER or ADMIN can remove
+  const currentUser = await prisma.teamMember.findFirst({
+    where: {
+      teamId: member.teamId,
+      userId: session.user.id,
+    },
+  });
+
+  if (!currentUser || !["OWNER", "ADMIN"].includes(currentUser.role)) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 

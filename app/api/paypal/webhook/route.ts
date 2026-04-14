@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     const teamId = resource?.invoice_id;
     const plan = resource?.plan_id || resource?.billing_plan_id;
 
-    // 🔥 PLAN CONFIG
     const PLAN_DATA: any = {
       STARTER: { credits: 1000, price: 10 },
       PRO: { credits: 5000, price: 29 },
@@ -21,15 +20,15 @@ export async function POST(req: Request) {
 
     const selectedPlan = PLAN_DATA[plan];
 
-    // ===============================
-    // ✅ ONE-TIME PAYMENT
-    // ===============================
+    // ============================
+    // 💳 ONE-TIME PAYMENT
+    // ============================
     if (eventType === "PAYMENT.SALE.COMPLETED") {
       if (!selectedPlan) {
         return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
       }
 
-      // 🔥 CREDIT LOGIC
+      // 🔥 CREDIT SYSTEM
       if (teamId) {
         await prisma.team.update({
           where: { id: teamId },
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
         });
       }
 
-      // ✅ PAYMENT LOG
+      // 🧾 PAYMENT LOG
       await prisma.payment.create({
         data: {
           userId,
@@ -55,7 +54,7 @@ export async function POST(req: Request) {
         },
       });
 
-      // ✅ TRANSACTION
+      // 📊 TRANSACTION LOG
       await prisma.transaction.create({
         data: {
           userId,
@@ -64,36 +63,32 @@ export async function POST(req: Request) {
         },
       });
 
-      // ✅ SUBSCRIPTION
+      // 🔁 SUBSCRIPTION
       await prisma.subscription.upsert({
-  where: { userId },
-  update: {
-    status: "ACTIVE",
-  },
-  create: {
-    user: {
-      connect: { id: userId },
-    },
-    plan: {
-      connect: { id: plan },
-    },
-    status: "ACTIVE",
-  },
-});
+        where: { userId },
+        update: { status: "ACTIVE" },
+        create: {
+          user: { connect: { id: userId } },
+          plan: { connect: { id: plan } }, // make sure plan exists
+          status: "ACTIVE",
+        },
+      });
     }
 
-    // ===============================
-    // 🔁 SUBSCRIPTION RENEWAL
-    // ===============================
+    // ============================
+    // 🔁 RENEWAL
+    // ============================
     if (eventType === "BILLING.SUBSCRIPTION.RENEWED") {
       if (!selectedPlan) return NextResponse.json({ received: true });
 
-      await prisma.team.update({
-        where: { id: teamId },
-        data: {
-          credits: { increment: selectedPlan.credits },
-        },
-      });
+      if (teamId) {
+        await prisma.team.update({
+          where: { id: teamId },
+          data: {
+            credits: { increment: selectedPlan.credits },
+          },
+        });
+      }
     }
 
     return NextResponse.json({ received: true });

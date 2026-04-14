@@ -15,8 +15,10 @@ enum Role {
 
 enum TeamRole {
   OWNER
+  ADMIN
   MEMBER
 }
+
 model User {
   id                 String               @id @default(cuid())
   email              String               @unique
@@ -378,12 +380,14 @@ model TeamInvite {
   id        String   @id @default(cuid())
   email     String
   teamId    String
-  role      TeamRole @default(MEMBER)
 
+  role      TeamRole @default(MEMBER)
   token     String   @unique
+
   expiresAt DateTime
 
   team      Team     @relation(fields: [teamId], references: [id])
 
   createdAt DateTime @default(now())
 }
+

@@ -2,49 +2,51 @@
 
 import { useEffect, useState } from "react";
 
-export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
+export default function AdminProductsPage() {
+  const [products, setProducts] = useState([]);
 
-  async function load() {
-    const res = await fetch("/api/admin/products");
+  const load = async () => {
+    const res = await fetch("/api/products");
     const data = await res.json();
     setProducts(data);
-  }
+  };
 
   useEffect(() => {
     load();
   }, []);
 
-  async function deleteProduct(id: string) {
-    if (!confirm("Delete product?")) return;
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this product?")) return;
 
-    await fetch("/api/admin/products/delete", {
+    await fetch("/api/products/delete", {
       method: "POST",
       body: JSON.stringify({ id }),
     });
 
-    alert("Deleted");
     load();
-  }
+  };
 
-  const filtered = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleEdit = async (id: string) => {
+    const name = prompt("New name:");
+    const price = prompt("New price:");
+
+    if (!name || !price) return;
+
+    await fetch("/api/products/update", {
+      method: "POST",
+      body: JSON.stringify({ id, name, price: Number(price) }),
+    });
+
+    load();
+  };
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-4">Products 🚀</h1>
+      <h1 className="text-2xl font-bold mb-4">Products 🚀</h1>
 
-      <input
-        placeholder="Search..."
-        className="border px-3 py-2 mb-4"
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      <table className="w-full border rounded-xl">
+      <table className="w-full border">
         <thead>
-          <tr className="bg-gray-100">
+          <tr className="border-b">
             <th>#</th>
             <th>Name</th>
             <th>Slug</th>
@@ -54,21 +56,23 @@ export default function ProductsPage() {
         </thead>
 
         <tbody>
-          {filtered.map((p, i) => (
-            <tr key={p.id} className="border-t text-center">
+          {products.map((p: any, i) => (
+            <tr key={p.id} className="border-b text-center">
               <td>{i + 1}</td>
               <td>{p.name}</td>
               <td>{p.slug}</td>
               <td>${p.price}</td>
-
-              <td className="flex gap-2 justify-center p-2">
-                <button className="bg-blue-500 text-white px-2 py-1 rounded">
+              <td className="space-x-2">
+                <button
+                  onClick={() => handleEdit(p.id)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
                   Edit
                 </button>
 
                 <button
-                  onClick={() => deleteProduct(p.id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
+                  onClick={() => handleDelete(p.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
                 >
                   Delete
                 </button>

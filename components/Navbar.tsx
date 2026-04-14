@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import TeamSwitcher from "@/components/TeamSwitcher";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -12,6 +13,7 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const isAdminPage = pathname.startsWith("/admin");
+  const isAdmin = session?.user?.role === "ADMIN";
 
   useEffect(() => {
     function handleClick(e: any) {
@@ -25,25 +27,25 @@ export default function Navbar() {
 
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
-
       <Link href="/" className="font-bold text-lg">
         KoniqTech 🚀
       </Link>
 
       <div className="flex items-center gap-6 relative">
 
-        {/* ❌ hide pricing in admin */}
+        {/* ✅ ONLY SHOW FOR USERS */}
+        {!isAdmin && session && <TeamSwitcher />}
+
         {!isAdminPage && <Link href="/pricing">Pricing</Link>}
 
         {session ? (
           <>
-            {session.user.role === "ADMIN" ? (
+            {isAdmin ? (
               <Link href="/admin/dashboard">Admin</Link>
             ) : (
               <Link href="/dashboard">Dashboard</Link>
             )}
 
-            {/* 🔥 DROPDOWN */}
             <div ref={ref} className="relative">
               <button
                 onClick={() => setOpen(!open)}
@@ -55,20 +57,17 @@ export default function Navbar() {
               {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg p-3 z-50">
 
-                  {/* EMAIL */}
                   <div className="mb-3 px-2 py-1 bg-gray-100 rounded text-sm">
                     {session.user.email}
                   </div>
 
+                  <Link href="/change-password" className="block px-2 py-1 hover:bg-gray-100">
+                    Change Password
+                  </Link>
 
-<Link href="/change-password" className="block px-2 py-1 hover:bg-gray-100">
-  Change Password
-</Link>
-
-                  {/* LOGOUT BUTTON */}
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full bg-red-500 text-white py-2 rounded-lg hover:opacity-90"
+                    className="w-full bg-red-500 text-white py-2 rounded-lg"
                   >
                     Logout
                   </button>
@@ -79,10 +78,7 @@ export default function Navbar() {
         ) : (
           <>
             <Link href="/login">Login</Link>
-            <Link
-              href="/register"
-              className="bg-black text-white px-4 py-2 rounded-lg"
-            >
+            <Link href="/register" className="bg-black text-white px-4 py-2 rounded-lg">
               Get Started
             </Link>
           </>

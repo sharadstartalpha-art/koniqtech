@@ -10,7 +10,6 @@ const links = [
   { name: "Revenue", href: "/admin/revenue" },
   { name: "Transactions", href: "/admin/transactions" },
   { name: "Products", href: "/admin/products" },
-  { name: "Teams", href: "/teams" },
   { name: "Reports", href: "/admin/reports" },
 ];
 

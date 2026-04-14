@@ -1,7 +1,8 @@
-import {prisma} from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { requireTeamMember } from "@/lib/teamGuard";
 
 export async function GET(
   req: Request,
@@ -15,13 +16,14 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // 🔐 SECURITY
+  await requireTeamMember(session.user.id, teamId);
+
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     include: {
       members: {
-        include: {
-          user: true,
-        },
+        include: { user: true },
       },
       invites: true,
     },

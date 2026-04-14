@@ -1,14 +1,27 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 
-export default function CreateProjectModal({ onClose, onCreated }: any) {
+export default function CreateProjectModal({
+  onClose,
+  onCreated,
+  activeTeamId,
+}: any) {
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const create = async () => {
-    const res = await fetch("/api/projects/create", {
+    if (!name) return;
+
+    setLoading(true);
+
+    const res = await apiFetch("/api/projects/create", {
       method: "POST",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({
+        name,
+        activeTeamId, // 🔥 IMPORTANT (multi-tenant)
+      }),
     });
 
     const project = await res.json();
@@ -22,7 +35,7 @@ export default function CreateProjectModal({ onClose, onCreated }: any) {
       <div className="bg-white p-6 rounded-xl w-[350px] shadow-xl">
 
         <h2 className="text-lg font-bold mb-4">
-          Create new workspace
+          Create new project
         </h2>
 
         <input
@@ -37,9 +50,10 @@ export default function CreateProjectModal({ onClose, onCreated }: any) {
 
           <button
             onClick={create}
+            disabled={loading}
             className="bg-blue-600 text-white px-4 py-2 rounded"
           >
-            Create
+            {loading ? "Creating..." : "Create"}
           </button>
         </div>
       </div>

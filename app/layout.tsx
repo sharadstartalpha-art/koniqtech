@@ -14,11 +14,13 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <Providers>
+          {/* 🔥 GLOBAL NAV */}
           <Navbar />
 
-          {/* ✅ TOASTER GLOBAL */}
+          {/* 🔔 TOAST SYSTEM */}
           <Toaster position="top-right" />
 
+          {/* 📦 MAIN */}
           <main>{children}</main>
         </Providers>
       </body>

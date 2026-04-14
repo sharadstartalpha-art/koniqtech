@@ -1,23 +1,40 @@
-export function isAdmin(user: any) {
-  return user?.role === "ADMIN";
+export const ROLES = {
+  OWNER: "OWNER",
+  ADMIN: "ADMIN",
+  MEMBER: "MEMBER",
+};
+
+/**
+ * 🔐 ROLE CHECK
+ */
+export function hasRole(userRole: string, allowed: string[]) {
+  return allowed.includes(userRole);
 }
 
-export function canManageUsers(role: string) {
-  return role === "ADMIN";
+/**
+ * 👑 OWNER ONLY
+ */
+export function isOwner(role: string) {
+  return role === ROLES.OWNER;
 }
 
-export function canManageTeam(userRole: string) {
-  return ["OWNER", "ADMIN"].includes(userRole);
+/**
+ * ⚙️ ADMIN ACCESS
+ */
+export function canManageTeam(role: string) {
+  return role === ROLES.OWNER || role === ROLES.ADMIN;
 }
 
-export function canInvite(userRole: string) {
-  return ["OWNER", "ADMIN"].includes(userRole);
+/**
+ * 👥 INVITE PERMISSION
+ */
+export function canInvite(role: string) {
+  return role === ROLES.OWNER || role === ROLES.ADMIN;
 }
 
-export function canRemoveMember(userRole: string) {
-  return userRole === "OWNER";
-}
-
-export function canChangeRole(userRole: string) {
-  return userRole === "OWNER";
+/**
+ * ❌ REMOVE MEMBER
+ */
+export function canRemove(role: string) {
+  return role === ROLES.OWNER;
 }

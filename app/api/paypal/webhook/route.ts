@@ -1,94 +1,132 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {prisma} from "@/lib/prisma";
 
-export async function POST(req: Request) {
+// 🔐 VERIFY PAYPAL WEBHOOK
+async function verifyWebhook(req: NextRequest, body: any) {
+  const res = await fetch(
+    "https://api-m.sandbox.paypal.com/v1/notifications/verify-webhook-signature",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.PAYPAL_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        transmission_id: req.headers.get("paypal-transmission-id"),
+        transmission_time: req.headers.get("paypal-transmission-time"),
+        cert_url: req.headers.get("paypal-cert-url"),
+        auth_algo: req.headers.get("paypal-auth-algo"),
+        transmission_sig: req.headers.get("paypal-transmission-sig"),
+        webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+        webhook_event: body,
+      }),
+    }
+  );
+
+  const data = await res.json();
+
+  return data.verification_status === "SUCCESS";
+}
+
+export async function POST(req: NextRequest) {
   const body = await req.json();
+
+  // 🔐 VERIFY
+  const isValid = await verifyWebhook(req, body);
+
+  if (!isValid) {
+    return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
+  }
 
   try {
     const eventType = body.event_type;
     const resource = body.resource;
 
-    const userId = resource?.custom_id;
-    const teamId = resource?.invoice_id;
-    const plan = resource?.plan_id || resource?.billing_plan_id;
+    const userId = resource.custom_id; // from PayPal
+    const teamId = resource.invoice_id;
 
+    // 🔥 PLAN CONFIG
     const PLAN_DATA: any = {
-      STARTER: { credits: 1000, price: 10 },
-      PRO: { credits: 5000, price: 29 },
-      ENTERPRISE: { credits: 20000, price: 99 },
+      STARTER: { credits: 1000 },
+      PRO: { credits: 5000 },
+      ENTERPRISE: { credits: 20000 },
     };
+
+    const plan = resource.plan_id || "PRO"; // fallback
 
     const selectedPlan = PLAN_DATA[plan];
 
-    // ============================
-    // 💳 ONE-TIME PAYMENT
-    // ============================
+    // =============================
+    // ✅ PAYMENT SUCCESS
+    // =============================
     if (eventType === "PAYMENT.SALE.COMPLETED") {
-      if (!selectedPlan) {
-        return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-      }
-
-      // 🔥 CREDIT SYSTEM
       if (teamId) {
         await prisma.team.update({
           where: { id: teamId },
           data: {
-            credits: { increment: selectedPlan.credits },
+            credits: {
+              increment: selectedPlan.credits,
+            },
           },
         });
       } else {
         await prisma.user.update({
           where: { id: userId },
           data: {
-            credits: { increment: selectedPlan.credits },
+            credits: {
+              increment: selectedPlan.credits,
+            },
           },
         });
       }
 
-      // 🧾 PAYMENT LOG
       await prisma.payment.create({
         data: {
           userId,
-          amount: selectedPlan.price,
+          amount: Number(resource.amount?.total || 0),
           status: "PAID",
-        },
-      });
-
-      // 📊 TRANSACTION LOG
-      await prisma.transaction.create({
-        data: {
-          userId,
-          type: "PAYMENT",
-          amount: selectedPlan.credits,
-        },
-      });
-
-      // 🔁 SUBSCRIPTION
-      await prisma.subscription.upsert({
-        where: { userId },
-        update: { status: "ACTIVE" },
-        create: {
-          user: { connect: { id: userId } },
-          plan: { connect: { id: plan } }, // make sure plan exists
-          status: "ACTIVE",
         },
       });
     }
 
-    // ============================
-    // 🔁 RENEWAL
-    // ============================
+    // =============================
+    // 🔁 SUBSCRIPTION RENEWAL
+    // =============================
     if (eventType === "BILLING.SUBSCRIPTION.RENEWED") {
-      if (!selectedPlan) return NextResponse.json({ received: true });
-
       if (teamId) {
         await prisma.team.update({
           where: { id: teamId },
           data: {
-            credits: { increment: selectedPlan.credits },
+            credits: {
+              increment: selectedPlan.credits,
+            },
           },
         });
       }
+    }
+
+    // =============================
+    // ❌ PAYMENT FAILED
+    // =============================
+    if (eventType === "PAYMENT.SALE.DENIED") {
+      await prisma.subscription.updateMany({
+        where: { userId },
+        data: {
+          status: "PAST_DUE",
+        },
+      });
+    }
+
+    // =============================
+    // ❌ CANCELLED
+    // =============================
+    if (eventType === "BILLING.SUBSCRIPTION.CANCELLED") {
+      await prisma.subscription.updateMany({
+        where: { userId },
+        data: {
+          status: "CANCELLED",
+        },
+      });
     }
 
     return NextResponse.json({ received: true });

@@ -3,55 +3,81 @@ import { prisma } from "@/lib/prisma";
 export async function deductCredits(
   userId: string,
   amount: number,
-  action: string
+  action: string,
+  teamId?: string
 ) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { workspace: true },
-  });
+  if (teamId) {
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+    });
 
-  if (!user || !user.workspace) {
-    throw new Error("Workspace not found");
-  }
+    if (!team || team.credits < amount) {
+      throw new Error("NO_TEAM_CREDITS");
+    }
 
-  const workspace = user.workspace;
-
-  if (workspace.credits < amount) {
-    throw new Error("NO_CREDITS");
-  }
-
-  // ✅ deduct from workspace
-  await prisma.workspace.update({
-    where: { id: workspace.id },
-    data: {
-      credits: {
-        decrement: amount,
+    await prisma.team.update({
+      where: { id: teamId },
+      data: {
+        credits: { decrement: amount },
       },
-    },
-  });
+    });
 
-  // ✅ track usage
-  await prisma.usage.create({
-    data: {
-      userId,
-      workspaceId: workspace.id,
-      action,
-      credits: amount,
-    },
-  });
+    await prisma.usage.create({
+      data: {
+        userId,
+        teamId, // ✅ now valid
+        action,
+        credits: amount,
+      },
+    });
+
+  } else {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || user.credits < amount) {
+      throw new Error("NO_CREDITS");
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        credits: { decrement: amount },
+      },
+    });
+
+    await prisma.usage.create({
+      data: {
+        userId,
+        action,
+        credits: amount,
+      },
+    });
+  }
 }
 
-/* CHECK ONLY */
-export async function checkUsage(userId: string, cost: number) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+export async function checkUsage(
+  userId: string,
+  cost: number,
+  teamId?: string
+) {
+  if (teamId) {
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+    });
 
-  const workspace = await prisma.workspace.findUnique({
-    where: { id: user?.workspaceId! },
-  });
+    if (!team || team.credits < cost) {
+      throw new Error("NO_TEAM_CREDITS");
+    }
 
-  if ((workspace?.credits || 0) < cost) {
-    throw new Error("NO_CREDITS");
+  } else {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || user.credits < cost) {
+      throw new Error("NO_CREDITS");
+    }
   }
 }

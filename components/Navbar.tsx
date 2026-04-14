@@ -5,6 +5,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import TeamSwitcher from "@/components/TeamSwitcher";
+import NotificationBell from "@/components/NotificationBell";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -15,37 +16,48 @@ export default function Navbar() {
   const isAdminPage = pathname.startsWith("/admin");
   const isAdmin = session?.user?.role === "ADMIN";
 
+  // ✅ Close dropdown on outside click
   useEffect(() => {
-    function handleClick(e: any) {
-      if (!ref.current?.contains(e.target)) {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
+
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
   return (
     <div className="w-full border-b bg-white px-6 py-4 flex justify-between items-center">
+      {/* Logo */}
       <Link href="/" className="font-bold text-lg">
         KoniqTech 🚀
       </Link>
 
       <div className="flex items-center gap-6 relative">
 
-        {/* ✅ ONLY SHOW FOR USERS */}
+        {/* ✅ Team switcher (only for users) */}
         {!isAdmin && session && <TeamSwitcher />}
 
+        {/* Pricing */}
         {!isAdminPage && <Link href="/pricing">Pricing</Link>}
 
         {session ? (
           <>
+            {/* Dashboard / Admin */}
             {isAdmin ? (
               <Link href="/admin/dashboard">Admin</Link>
             ) : (
               <Link href="/dashboard">Dashboard</Link>
             )}
 
+            {/* 🔔 Notification Bell (SAFE) */}
+            {session.user?.id && (
+              <NotificationBell userId={session.user.id} />
+            )}
+
+            {/* Profile dropdown */}
             <div ref={ref} className="relative">
               <button
                 onClick={() => setOpen(!open)}
@@ -61,13 +73,16 @@ export default function Navbar() {
                     {session.user.email}
                   </div>
 
-                  <Link href="/change-password" className="block px-2 py-1 hover:bg-gray-100">
+                  <Link
+                    href="/change-password"
+                    className="block px-2 py-1 hover:bg-gray-100"
+                  >
                     Change Password
                   </Link>
 
                   <button
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="w-full bg-red-500 text-white py-2 rounded-lg"
+                    className="w-full mt-2 bg-red-500 text-white py-2 rounded-lg"
                   >
                     Logout
                   </button>
@@ -78,7 +93,10 @@ export default function Navbar() {
         ) : (
           <>
             <Link href="/login">Login</Link>
-            <Link href="/register" className="bg-black text-white px-4 py-2 rounded-lg">
+            <Link
+              href="/register"
+              className="bg-black text-white px-4 py-2 rounded-lg"
+            >
               Get Started
             </Link>
           </>

@@ -1,15 +1,23 @@
-export function canAccessAdmin(user: any) {
+export function isAdmin(user: any) {
   return user?.role === "ADMIN";
-}
-
-export function canManageWorkspace(user: any) {
-  return user?.role === "ADMIN" || user?.role === "TEAM";
 }
 
 export function canManageUsers(role: string) {
   return role === "ADMIN";
 }
 
-export function canInvite(role: string) {
-  return role === "ADMIN" || role === "TEAM";
+export function canManageTeam(userRole: string) {
+  return ["OWNER", "ADMIN"].includes(userRole);
+}
+
+export function canInvite(userRole: string) {
+  return ["OWNER", "ADMIN"].includes(userRole);
+}
+
+export function canRemoveMember(userRole: string) {
+  return userRole === "OWNER";
+}
+
+export function canChangeRole(userRole: string) {
+  return userRole === "OWNER";
 }

@@ -12,7 +12,7 @@ export async function GET() {
   },
 });
 
-  return Response.json(users);
+  return NextResponse.json(users);
 }
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);

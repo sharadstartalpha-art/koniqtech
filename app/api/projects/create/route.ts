@@ -16,7 +16,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Name required" }, { status: 400 });
   }
 
-  // ✅ get user
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
   });
@@ -25,14 +24,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "User not found" });
   }
 
-  // ✅ get product (or pass from frontend later)
   const product = await prisma.product.findFirst();
 
   if (!product) {
     return NextResponse.json({ error: "No product found" });
   }
 
-  // 🔥 CREDIT CHECK + DEDUCTION
+  // 🔥 CREDIT SYSTEM (MULTI-TENANT READY)
   if (activeTeamId) {
     const team = await prisma.team.findUnique({
       where: { id: activeTeamId },
@@ -61,7 +59,6 @@ export async function POST(req: Request) {
     });
   }
 
-  // ✅ CREATE PROJECT
   const project = await prisma.project.create({
     data: {
       name,

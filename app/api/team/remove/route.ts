@@ -1,7 +1,7 @@
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import {prisma} from "@/lib/prisma";
-import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -14,19 +14,12 @@ export async function POST(req: Request) {
 
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
-    include: { team: true },
   });
 
   if (!member) {
     return NextResponse.json({ error: "Member not found" });
   }
 
-  // ❌ prevent removing owner
-  if (member.role === "OWNER") {
-    return NextResponse.json({ error: "Cannot remove owner" });
-  }
-
-  // 🔐 only OWNER or ADMIN can remove
   const currentUser = await prisma.teamMember.findFirst({
     where: {
       teamId: member.teamId,
@@ -36,6 +29,10 @@ export async function POST(req: Request) {
 
   if (!currentUser || !["OWNER", "ADMIN"].includes(currentUser.role)) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
+  }
+
+  if (member.role === "OWNER") {
+    return NextResponse.json({ error: "Cannot remove owner" });
   }
 
   await prisma.teamMember.delete({

@@ -1,18 +1,29 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+export const config = {
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
+};
+
 export async function middleware(req: any) {
   const token = await getToken({ req });
 
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+  const url = req.nextUrl.pathname;
 
-  if (!token && req.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // 🔐 PROTECT DASHBOARD
+  if (url.startsWith("/dashboard")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+  // 🔐 PROTECT ADMIN
+  if (url.startsWith("/admin")) {
+    if (!token || token.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
 
   return NextResponse.next();
 }
+

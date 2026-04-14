@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { canManageUsers } from "@/lib/permissions";
+import { hasRole, ROLES } from "@/lib/permissions";
 
 
 export async function GET() {
@@ -17,9 +17,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  if (!session || !canManageUsers(session.user.role)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+ if (!session || !hasRole(session.user.role, [ROLES.OWNER, ROLES.ADMIN])) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+}
 
   const { userId, action, value } = await req.json();
 

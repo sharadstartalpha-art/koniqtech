@@ -1,8 +1,7 @@
-import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { getServerSession } from "next-auth";
 
 //
 // 🔐 ADMIN GUARD
@@ -18,7 +17,7 @@ export async function requireAdmin() {
 }
 
 //
-// 🔥 NEXTAUTH CONFIG
+// 🔥 NEXTAUTH CONFIG (TEAM-BASED)
 //
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -34,7 +33,12 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { projects: true },
+          include: {
+            projects: true,
+            teamMembers: {
+              include: { team: true },
+            },
+          },
         });
 
         if (!user || !user.password) return null;
@@ -50,7 +54,6 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           role: user.role || "USER",
-          projectId: user.projects?.[0]?.id,
         };
       },
     }),
@@ -64,15 +67,10 @@ export const authOptions: NextAuthOptions = {
     //
     // 🔐 JWT
     //
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.projectId = user.projectId;
-      }
-
-      if (trigger === "update" && session?.projectId) {
-        token.projectId = session.projectId;
       }
 
       return token;
@@ -87,8 +85,6 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string;
       }
 
-      session.projectId = token.projectId as string | undefined;
-
       return session;
     },
 
@@ -98,7 +94,10 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user }) {
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email! },
-        include: { projects: true },
+        include: {
+          teamMembers: true,
+          projects: true,
+        },
       });
 
       if (!dbUser) return false;
@@ -108,18 +107,18 @@ export const authOptions: NextAuthOptions = {
         throw new Error("User is banned");
       }
 
-      // 🏢 CREATE WORKSPACE IF NOT EXISTS
-      if (!dbUser.workspaceId) {
-        const workspace = await prisma.workspace.create({
+      // 🔥 CREATE TEAM IF NONE
+      if (!dbUser.teamMembers.length) {
+        const team = await prisma.team.create({
           data: {
-            name: "My Workspace",
-          },
-        });
-
-        await prisma.user.update({
-          where: { id: dbUser.id },
-          data: {
-            workspaceId: workspace.id,
+            name: "My Team",
+            ownerId: dbUser.id,
+            members: {
+              create: {
+                userId: dbUser.id,
+                role: "OWNER",
+              },
+            },
           },
         });
       }

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 
 export default function NewProjectPage() {
@@ -8,7 +9,7 @@ export default function NewProjectPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    await fetch("/api/projects/create", {
+    await apiFetch("/api/projects/create", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

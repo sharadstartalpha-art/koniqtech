@@ -5,7 +5,14 @@ interface TeamState {
   setActiveTeam: (id: string) => void;
 }
 
-export const useTeamStore = create<TeamState>((set: any) => ({
-  activeTeamId: null,
-  setActiveTeam: (id: string) => set({ activeTeamId: id }),
+export const useTeamStore = create<TeamState>((set) => ({
+  activeTeamId:
+    typeof window !== "undefined"
+      ? localStorage.getItem("teamId")
+      : null,
+
+  setActiveTeam: (id) => {
+    localStorage.setItem("teamId", id);
+    set({ activeTeamId: id });
+  },
 }));

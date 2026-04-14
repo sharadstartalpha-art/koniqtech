@@ -45,10 +45,9 @@ model User {
   plan               String               @default("FREE")
   unsubscribed       Boolean              @default(false)
   dailyLimit         Int                  @default(20)
-  workspaceId        String?
-   teamsOwned   Team[]        @relation("TeamOwner")
-  teamMembers  TeamMember[]
-  workspace          Workspace?           @relation(fields: [workspaceId], references: [id])
+  activities         Activity[]
+  teamsOwned         Team[]               @relation("TeamOwner")
+  teamMembers        TeamMember[]
 }
 
 model Company {
@@ -81,13 +80,18 @@ model Project {
   id        String   @id @default(cuid())
   name      String
   createdAt DateTime @default(now())
-  chats     Chat[]
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   productId String
   product   Product @relation(fields: [productId], references: [id])
 
+  // 🔥 TEAM RELATION
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  chats Chat[]
   leads Lead[]
 }
 
@@ -210,9 +214,9 @@ model Subscription {
   planId    String
   status    String
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-  plan Plan @relation(fields: [planId], references: [id])
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  plan      Plan     @relation(fields: [planId], references: [id])
 
   @@unique([userId, planId])
 }
@@ -309,67 +313,52 @@ model EmailQueue {
   stopped     Boolean  @default(false)
 }
 
-
-
 model Invite {
-  id          String @id @default(cuid())
-  email       String
-  workspaceId String
-  role        Role
+  id    String @id @default(cuid())
+  email String
 
-  createdAt DateTime @default(now())
-}
-
-
-
-
-model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  credits   Int      @default(0)
-
-  users     User[]
-  usages    Usage[]
+  role Role
 
   createdAt DateTime @default(now())
 }
 
 model Usage {
-  id          String   @id @default(cuid())
-  userId      String
-  workspaceId String
-  action      String
-  credits     Int
-  createdAt   DateTime @default(now())
-   meta      Json?
-  user       User      @relation(fields: [userId], references: [id])
-  workspace  Workspace @relation(fields: [workspaceId], references: [id])
+  id     String @id @default(cuid())
+  userId String
+
+  action    String
+  credits   Int
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+  meta      Json?
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-
 model Team {
-  id          String   @id @default(cuid())
-  name        String
-  ownerId     String
-  owner       User     @relation("TeamOwner", fields: [ownerId], references: [id])
-
-  members     TeamMember[]
-  invites     TeamInvite[]
-
-  credits     Int      @default(0)
-
-  createdAt   DateTime @default(now())
+  id           String            @id @default(cuid())
+  name         String
+  ownerId      String
+  owner        User              @relation("TeamOwner", fields: [ownerId], references: [id])
+  usages       Usage[]
+  members      TeamMember[]
+  invites      TeamInvite[]
+  projects     Project[]
+  activities   Activity[]
+  credits      Int               @default(0)
+  subscription TeamSubscription?
+  createdAt    DateTime          @default(now())
 }
 
 model TeamMember {
-  id       String   @id @default(cuid())
-  userId   String
-  teamId   String
+  id     String @id @default(cuid())
+  userId String
+  teamId String
 
-  role     TeamRole @default(MEMBER)
+  role TeamRole @default(MEMBER)
 
-  user     User     @relation(fields: [userId], references: [id])
-  team     Team     @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -377,17 +366,70 @@ model TeamMember {
 }
 
 model TeamInvite {
-  id        String   @id @default(cuid())
-  email     String
-  teamId    String
+  id     String @id @default(cuid())
+  email  String
+  teamId String
 
-  role      TeamRole @default(MEMBER)
-  token     String   @unique
+  role  TeamRole @default(MEMBER)
+  token String   @unique
 
   expiresAt DateTime
 
-  team      Team     @relation(fields: [teamId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
 
   createdAt DateTime @default(now())
 }
 
+model TeamSubscription {
+  id     String @id @default(cuid())
+  teamId String @unique
+
+  plan   String
+  status String
+
+  seats Int @default(1) // 👈 seat billing
+  price Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id])
+}
+
+model AuditLog {
+  id     String  @id @default(cuid())
+  userId String
+  teamId String?
+
+  action String
+  meta   Json?
+
+  createdAt DateTime @default(now())
+}
+
+model Activity {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id]) // ✅ FIX
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  message String
+  type    String
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+
+  title   String
+  message String
+
+  read Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}

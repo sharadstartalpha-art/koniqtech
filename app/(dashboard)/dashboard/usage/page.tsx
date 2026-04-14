@@ -6,27 +6,37 @@ import { redirect } from "next/navigation";
 export default async function UsagePage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // ✅ FETCH USER FIRST
+  // 🔥 Get user with team
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { id: session.user.id },
+    include: {
+      teamMembers: {
+        include: {
+          team: true,
+        },
+      },
+    },
   });
 
-  if (!user?.workspaceId) {
-    return <div>No workspace found</div>;
+  const activeTeam = user?.teamMembers?.[0]?.team;
+
+  if (!activeTeam) {
+    return <div className="p-6">No team found</div>;
   }
 
-  // ✅ NOW SAFE
+  // ✅ TEAM-BASED USAGE
   const usage = await prisma.usage.findMany({
-    where: { userId: user.id }, // 🔥 FIXED (no workspaceId needed)
+    where: { teamId: activeTeam.id },
     include: { user: true },
+    orderBy: { createdAt: "desc" },
   });
 
   return (
-    <div className="space-y-4">
+    <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold">Usage 📊</h1>
 
       {usage.map((u) => (

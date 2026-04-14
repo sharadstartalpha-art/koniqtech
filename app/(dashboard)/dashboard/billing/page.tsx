@@ -1,30 +1,53 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function UsagePage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) return null;
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
 
+  // ✅ get user with team
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
+    include: {
+      teamMembers: {
+        include: {
+          team: true,
+        },
+      },
+    },
   });
 
-  if (!user?.workspaceId) return null;
+  const activeTeam = user?.teamMembers?.[0]?.team;
 
+  if (!activeTeam) {
+    return <div className="p-6">No team found</div>;
+  }
+
+  // ✅ TEAM-BASED USAGE
   const usage = await prisma.usage.findMany({
-    where: { workspaceId: user.workspaceId },
-    include: { user: true }, // ✅ IMPORTANT
+    where: { teamId: activeTeam.id },
+    include: { user: true },
     orderBy: { createdAt: "desc" },
   });
 
   return (
-    <div className="space-y-4">
+    <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold">Usage 📊</h1>
 
+      {usage.length === 0 && (
+        <p className="text-gray-500">No usage yet</p>
+      )}
+
       {usage.map((u) => (
-        <div key={u.id} className="flex justify-between">
+        <div
+          key={u.id}
+          className="flex justify-between border p-3 rounded"
+        >
           <span>{u.user.email}</span>
           <span>{u.action}</span>
           <span>-{u.credits}</span>

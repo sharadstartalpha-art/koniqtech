@@ -17,15 +17,21 @@ export async function POST(req: Request) {
   });
 
   if (!invite || invite.expiresAt < new Date()) {
-    return NextResponse.json({ error: "Invalid or expired invite" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid or expired invite" },
+      { status: 400 }
+    );
   }
 
-  // 🔥 IMPORTANT FIX: email must match
+  // 🔐 email match check
   if (invite.email !== session.user.email) {
-    return NextResponse.json({ error: "This invite is not for your account" }, { status: 403 });
+    return NextResponse.json(
+      { error: "This invite is not for your account" },
+      { status: 403 }
+    );
   }
 
-  // ✅ prevent duplicate join
+  // ✅ prevent duplicate
   const existing = await prisma.teamMember.findFirst({
     where: {
       userId: session.user.id,
@@ -43,9 +49,13 @@ export async function POST(req: Request) {
     });
   }
 
+  // 🗑 delete invite
   await prisma.teamInvite.delete({
     where: { id: invite.id },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    teamId: invite.teamId, // 🔥 IMPORTANT
+  });
 }

@@ -18,6 +18,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { teamId } = body;
 
+    // 🔥 DEBUG LOGS
+    console.log("TEAM ID:", teamId);
+    console.log("APOLLO KEY:", process.env.APOLLO_API_KEY);
+
     if (!teamId) {
       return NextResponse.json(
         { error: "No team selected" },
@@ -44,6 +48,8 @@ export async function POST(req: Request) {
     );
 
     const apolloData = await response.json();
+
+    // 🔥 DEBUG RESPONSE
     console.log("APOLLO RESPONSE:", apolloData);
 
     const people = apolloData.people || [];

@@ -75,17 +75,20 @@ export default function TeamPage() {
       <h1 className="text-2xl font-bold">{team.name}</h1>
 
       {/* INVITE */}
-      <div className="flex gap-2">
-        <input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border px-3 py-2 rounded"
-        />
-        <button onClick={invite} className="bg-black text-white px-4 rounded">
-          Invite
-        </button>
-      </div>
+    <div className="flex gap-2 items-center bg-gray-100 p-3 rounded-lg">
+  <input
+    placeholder="Enter email..."
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    className="flex-1 bg-white border px-3 py-2 rounded outline-none"
+  />
+  <button
+    onClick={invite}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+  >
+    Invite 🚀
+  </button>
+</div>
 
       {/* MEMBERS */}
       <div>

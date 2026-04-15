@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
+import { sendInviteEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
-  // ✅ DUPLICATE MEMBER CHECK
+  // ✅ MEMBER CHECK
   const existingMember = await prisma.teamMember.findFirst({
     where: {
       teamId,
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ DUPLICATE INVITE CHECK
+  // ✅ INVITE CHECK
   const existingInvite = await prisma.teamInvite.findFirst({
     where: { email, teamId },
   });
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
   // 🔐 TOKEN
   const token = randomBytes(32).toString("hex");
 
-  const invite = await prisma.teamInvite.create({
+  await prisma.teamInvite.create({
     data: {
       email,
       teamId,
@@ -65,8 +66,10 @@ export async function POST(req: Request) {
     },
   });
 
-  // 🚀 TODO: SEND EMAIL (Resend)
-  console.log(`Invite link: https://koniqtech.com/invite/${token}`);
+  // 🔥 REAL EMAIL SEND
+  const link = `https://koniqtech.com/invite/${token}`;
 
-  return NextResponse.json(invite);
+  await sendInviteEmail(email, link);
+
+  return NextResponse.json({ success: true });
 }

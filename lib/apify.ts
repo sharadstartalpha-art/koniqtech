@@ -6,15 +6,14 @@ export async function scrapeLinkedInApify({
   maxItems?: number;
 }) {
   const res = await fetch(
-    `https://api.apify.com/v2/acts/harvestapi~linkedin-profile-search/run-sync-get-dataset-items?token=${process.env.APIFY_API_TOKEN}`,
+    `https://api.apify.com/v2/acts/apify~linkedin-people-search/run-sync-get-dataset-items?token=${process.env.APIFY_API_TOKEN}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        searchKeywords: keywords || "founder",
-        locations: ["United States"], // 🔥 ADD THIS (VERY IMPORTANT)
+        keywords: keywords || "founder",
         maxItems,
       }),
     }
@@ -28,13 +27,17 @@ export async function scrapeLinkedInApify({
 
   const data = await res.json();
 
-  console.log("APIFY DATA:", data); // 👈 DEBUG
+  console.log("RAW APIFY COUNT:", data.length);
 
- return (data || []).map((p: any) => ({
-  name: `${p.firstName || ""} ${p.lastName || ""}`.trim(), // ✅ FIX
-  title: p.headline || "",
-  company: "",
-  profileUrl: p.linkedinUrl || "", // ✅ FIX
-  email: null,
-}));
+  // ✅ NORMALIZE HERE (THIS IS YOUR CODE)
+  const people = (data || []).map((p: any) => ({
+    name: `${p.firstName || ""} ${p.lastName || ""}`.trim(),
+    title: p.headline || "",
+    profileUrl: p.linkedinUrl || "",
+    email: null,
+  }));
+
+  console.log("NORMALIZED PEOPLE:", people.length);
+
+  return people;
 }

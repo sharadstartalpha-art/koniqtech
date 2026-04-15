@@ -8,7 +8,7 @@ export default function LeadsPage() {
   const { activeTeamId } = useTeamStore();
 
   const [leads, setLeads] = useState<any[]>([]);
-  const [email, setEmail] = useState("");
+  const [query, setQuery] = useState(""); // ✅ NEW
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
@@ -23,28 +23,6 @@ export default function LeadsPage() {
     load();
   }, [activeTeamId]);
 
-  const createLead = async () => {
-    if (!email) return;
-
-    const res = await fetch("/api/leads", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        teamId: activeTeamId,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      toast.error(data.error);
-    } else {
-      toast.success("Lead added 🚀");
-      setEmail("");
-      load();
-    }
-  };
-
   const generateLeads = async () => {
     if (!activeTeamId) {
       toast.error("Select a team first");
@@ -57,6 +35,7 @@ export default function LeadsPage() {
       method: "POST",
       body: JSON.stringify({
         teamId: activeTeamId,
+        query, // 🔥 ADDED
       }),
     });
 
@@ -66,6 +45,7 @@ export default function LeadsPage() {
       toast.error(data.error);
     } else {
       toast.success(`Generated ${data.count} leads 🚀`);
+      setQuery(""); // optional reset
       load();
     }
 
@@ -77,21 +57,13 @@ export default function LeadsPage() {
 
       <h1 className="text-2xl font-bold">Leads 🚀</h1>
 
-      {/* ADD LEAD */}
-      <div className="flex gap-2">
-        <input
-          placeholder="Enter email..."
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border px-3 py-2 rounded w-full"
-        />
-        <button
-          onClick={createLead}
-          className="bg-blue-600 text-white px-4 rounded"
-        >
-          Add
-        </button>
-      </div>
+      {/* 🔥 SEARCH INPUT */}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search leads (e.g. SaaS founder USA)"
+        className="border p-2 w-full rounded"
+      />
 
       {/* GENERATE */}
       <button

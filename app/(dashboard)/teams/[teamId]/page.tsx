@@ -144,12 +144,16 @@ export default function TeamPage() {
                   <option value="MEMBER">MEMBER</option>
                 </select>
 
-                <button
-                  onClick={() => remove(m.id)}
-                  className="text-red-500 hover:underline"
-                >
-                  Remove
-                </button>
+                {m.role !== "OWNER" ? (
+  <button
+    onClick={() => remove(m.id)}
+    className="text-red-500 hover:underline"
+  >
+    Remove
+  </button>
+) : (
+  <span className="text-gray-400 text-sm">Owner</span>
+)}
 
               </div>
             </div>

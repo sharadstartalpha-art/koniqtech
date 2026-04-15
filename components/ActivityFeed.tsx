@@ -2,37 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { useTeamStore } from "@/lib/teamStore";
-import { pusherClient } from "@/lib/pusherClient";
+import { getPusherClient } from "@/lib/pusherClient";
 
 export default function ActivityFeed() {
   const { activeTeamId } = useTeamStore();
   const [data, setData] = useState<any[]>([]);
 
   // 🔥 1. LOAD INITIAL DATA
-  useEffect(() => {
-    if (!activeTeamId) return;
+ useEffect(() => {
+  let pusher: any;
+  let channel: any;
 
-    fetch(`/api/activity?teamId=${activeTeamId}`)
-      .then((res) => res.json())
-      .then((initialData) => setData(initialData))
-      .catch((err) => console.error("Fetch error:", err));
-  }, [activeTeamId]);
+  const init = async () => {
+    pusher = await getPusherClient();
+    channel = pusher.subscribe(`team-${activeTeamId}`);
 
-  // ⚡ 2. REALTIME UPDATES (PUSHER)
-  useEffect(() => {
-    if (!activeTeamId) return;
-
-    const channelName = `team-${activeTeamId}`;
-    const channel = pusherClient.subscribe(channelName);
-
-    channel.bind("activity", (newActivity: any) => {
-      setData((prev) => [newActivity, ...prev]);
+    channel.bind("activity", (data: any) => {
+      console.log(data);
     });
+  };
 
-    return () => {
-      pusherClient.unsubscribe(channelName);
-    };
-  }, [activeTeamId]);
+  init();
+
+  return () => {
+    if (pusher && channel) {
+      pusher.unsubscribe(`team-${activeTeamId}`);
+    }
+  };
+}, [activeTeamId]);
 
   return (
     <div className="space-y-3">

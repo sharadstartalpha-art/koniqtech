@@ -109,10 +109,11 @@ model Lead {
   source       String? // ✅ ADD THIS
   contactEmail String?
   userId       String
+  title     String?
   projectId    String
   sequences    LeadSequence[]
   createdAt    DateTime       @default(now())
-
+  teamId    String
   user       User        @relation(fields: [userId], references: [id])
   project    Project     @relation(fields: [projectId], references: [id])
   LeadStatus LeadStatus?
@@ -461,4 +462,17 @@ model Task {
   status      String   @default("TODO")
 
   createdAt   DateTime @default(now())
+}
+
+
+model Deal {
+  id       String @id @default(cuid())
+  title    String
+  value    Int
+  stage    String // "NEW", "CONTACTED", "CLOSED"
+
+  teamId   String
+  leadId   String
+
+  createdAt DateTime @default(now())
 }

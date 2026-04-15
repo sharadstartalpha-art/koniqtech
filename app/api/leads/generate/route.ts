@@ -14,13 +14,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Parse request body ONCE
+    // ✅ Parse body once
     const body = await req.json();
     const { teamId } = body;
 
-    // 🔥 DEBUG LOGS
     console.log("TEAM ID:", teamId);
-    console.log("APOLLO KEY:", process.env.APOLLO_API_KEY);
 
     if (!teamId) {
       return NextResponse.json(
@@ -29,45 +27,44 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 APOLLO API CALL
-    const response = await fetch(
-      "https://api.apollo.io/v1/mixed_people/search",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.APOLLO_API_KEY!,
-        },
-        body: JSON.stringify({
-          page: 1,
-          per_page: 10,
-          person_titles: ["founder", "ceo", "cto"],
-          locations: ["United States"],
-        }),
-      }
-    );
-
-    const apolloData = await response.json();
-
-    // 🔥 DEBUG RESPONSE
-    console.log("APOLLO RESPONSE:", apolloData);
-
+    // 🔥 TEMP TEST DATA
     const people = [
-  { email: "test1@gmail.com", name: "Test User" },
-  { email: "test2@gmail.com", name: "Test User 2" },
-];
+      { email: "test1@gmail.com", name: "Test User" },
+      { email: "test2@gmail.com", name: "Test User 2" },
+    ];
 
     if (people.length === 0) {
       return NextResponse.json({ error: "No leads found" });
     }
 
-    // 🔥 FIND TEAM PROJECT
-    const project = await prisma.project.findFirst({
+    // 🔥 FIND OR CREATE PROJECT
+    let project = await prisma.project.findFirst({
       where: { teamId },
     });
 
     if (!project) {
-      return NextResponse.json({ error: "No project for team" });
+      // ⚠️ You MUST provide productId
+      // 👉 Replace this with a real product lookup if needed
+      const product = await prisma.product.findFirst({
+        where: { teamId },
+      });
+
+      if (!product) {
+        return NextResponse.json({
+          error: "No product found for team",
+        });
+      }
+
+      project = await prisma.project.create({
+        data: {
+          name: "Default Project",
+          teamId,
+          userId: session.user.id,
+          productId: product.id, // ✅ FIX
+        },
+      });
+
+      console.log("Created project:", project.id);
     }
 
     // 🔥 SAVE LEADS
@@ -89,7 +86,6 @@ export async function POST(req: Request) {
         data: {
           email: p.email,
           name: p.name,
-          
           userId: session.user.id,
           projectId: project.id,
           teamId,
@@ -106,10 +102,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("APOLLO ERROR:", err);
+    console.error("ERROR:", err);
 
     return NextResponse.json(
-      { error: "Apollo fetch failed" },
+      { error: "Something went wrong" },
       { status: 500 }
     );
   }

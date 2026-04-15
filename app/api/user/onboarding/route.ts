@@ -6,9 +6,9 @@ import { prisma } from "@/lib/prisma";
 export async function POST() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email || !session.projectId) {
+  if (!session?.user?.email || !session.projectId || !session.teamId) {
     return NextResponse.json(
-      { error: "Unauthorized or no project selected" },
+      { error: "Unauthorized or missing team/project" },
       { status: 401 }
     );
   }
@@ -18,18 +18,26 @@ export async function POST() {
   });
 
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "User not found" },
+      { status: 404 }
+    );
   }
 
-  // ✅ Generate starter lead
+  // ✅ CREATE SAMPLE LEAD
   await prisma.lead.createMany({
     data: [
       {
-        userId: user.id,
-        projectId: session.projectId, // ✅ FIXED
+        email: "lead@example.com", // ✅ FIXED
         name: "Sample Lead",
-        contactEmail: "lead@example.com",
         company: "Demo Inc",
+        title: "Founder",
+
+        userId: user.id,
+        projectId: session.projectId,
+        teamId: session.teamId, // ✅ REQUIRED FIX
+
+        source: "onboarding",
       },
     ],
   });

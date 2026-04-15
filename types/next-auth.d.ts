@@ -8,6 +8,7 @@ declare module "next-auth" {
       role: string;
     };
     projectId?: string;
+    teamId?: string;
   }
 
   interface User {

@@ -1,10 +1,10 @@
-"use client";
+export async function getPusherClient() {
+  const Pusher = (await import("pusher-js")).default;
 
-import Pusher from "pusher-js";
-
-export const pusherClient = new Pusher(
-  process.env.NEXT_PUBLIC_PUSHER_KEY!,
-  {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-  }
-);
+  return new Pusher(
+    process.env.NEXT_PUBLIC_PUSHER_KEY!,
+    {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    }
+  );
+}

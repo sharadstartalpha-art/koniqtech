@@ -52,7 +52,10 @@ export async function POST(req: Request) {
     // 🔥 DEBUG RESPONSE
     console.log("APOLLO RESPONSE:", apolloData);
 
-    const people = apolloData.people || [];
+    const people = [
+  { email: "test1@gmail.com", name: "Test User" },
+  { email: "test2@gmail.com", name: "Test User 2" },
+];
 
     if (people.length === 0) {
       return NextResponse.json({ error: "No leads found" });
@@ -86,9 +89,7 @@ export async function POST(req: Request) {
         data: {
           email: p.email,
           name: p.name,
-          company: p.organization?.name || "",
-          title: p.title || "",
-          source: "apollo",
+          
           userId: session.user.id,
           projectId: project.id,
           teamId,

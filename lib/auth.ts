@@ -79,14 +79,14 @@ export const authOptions: NextAuthOptions = {
     //
     // 🔐 SESSION
     //
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-      }
+   async session({ session, token }) {
+  if (session.user) {
+    session.user.id = token.sub as string; // ✅ FIXED
+    session.user.role = token.role as string;
+  }
 
-      return session;
-    },
+  return session;
+},
 
     //
     // 🔐 SIGN IN HOOK

@@ -1,30 +1,55 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import {prisma} from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+// ✅ GET TEAMS
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) return NextResponse.json([]);
+
+  const teams = await prisma.team.findMany({
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        {
+          members: {
+            some: {
+              userId: session.user.id,
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  return NextResponse.json(teams);
+}
+
+// ✅ CREATE TEAM
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
 
-  const { memberId } = await req.json();
-
-  const member = await prisma.teamMember.findUnique({
-    where: { id: memberId },
-    include: { team: true },
-  });
-
-  if (!member) {
-    return NextResponse.json({ error: "Not found" });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 🔥 CHECK OWNER
-  if (member.team.ownerId !== session?.user?.id) {
-    return NextResponse.json({ error: "Not allowed" }, { status: 403 });
-  }
+  const { name } = await req.json();
 
-  await prisma.teamMember.delete({
-    where: { id: memberId },
+  const team = await prisma.team.create({
+    data: {
+      name,
+      ownerId: session.user.id,
+
+      members: {
+        create: {
+          userId: session.user.id,
+          role: "OWNER",
+        },
+      },
+    },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json(team);
 }

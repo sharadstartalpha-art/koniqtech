@@ -13,7 +13,8 @@ export async function scrapeLinkedInApify({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        searchKeywords: keywords || "founder", // ✅ FIXED FIELD
+        searchKeywords: keywords || "founder",
+        locations: ["United States"], // 🔥 ADD THIS (VERY IMPORTANT)
         maxItems,
       }),
     }
@@ -27,7 +28,8 @@ export async function scrapeLinkedInApify({
 
   const data = await res.json();
 
-  // ✅ Normalize output
+  console.log("APIFY DATA:", data); // 👈 DEBUG
+
   return (data || []).map((p: any) => ({
     name: p.fullName || "",
     title: p.headline || "",

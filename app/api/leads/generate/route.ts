@@ -3,110 +3,53 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
+import { scrapeLinkedIn } from "@/lib/linkedin";
+import { findEmail } from "@/lib/hunter";
+import { extractDomain } from "@/lib/utils";
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { teamId } = await req.json();
 
     if (!teamId) {
-      return NextResponse.json(
-        { error: "No team selected" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No team selected" });
     }
 
-    const userId = session.user.id;
+    // 🔥 1. SCRAPE LINKEDIN
+    const profiles = await scrapeLinkedIn();
 
-    // 🔥 APOLLO API CALL (UPDATED)
-    const response = await fetch(
-      "https://api.apollo.io/v1/mixed_people/search",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.APOLLO_API_KEY!,
-        },
-        body: JSON.stringify({
-          page: 1,
-          per_page: 10,
-          person_titles: ["Founder", "CEO", "CTO"],
-          organization_locations: ["United States"],
-          contact_email_status: ["verified"],
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const text = await response.text();
-      console.error("APOLLO ERROR:", text);
-      throw new Error("Apollo failed");
+    if (!profiles.length) {
+      return NextResponse.json({ error: "No LinkedIn leads" });
     }
 
-    const apolloData = await response.json();
-
-    console.log("APOLLO RESPONSE:", apolloData);
-
-    const people = (apolloData.people || []).filter(
-      (p: any) => p.email
-    );
-
-    if (people.length === 0) {
-      return NextResponse.json({ error: "No leads found" });
-    }
-
-    // ✅ GET ANY PRODUCT
-    let product = await prisma.product.findFirst();
-
-    if (!product) {
-      product = await prisma.product.create({
-        data: {
-          name: "Lead Finder",
-          slug: "lead-finder",
-          price: 0,
-        },
-      });
-    }
-
-    // 🔥 FIND OR CREATE PROJECT
-    let project = await prisma.project.findFirst({
+    // 🔥 FIND PROJECT
+    const project = await prisma.project.findFirst({
       where: { teamId },
     });
 
     if (!project) {
-      project = await prisma.project.create({
-        data: {
-          name: "Default Project",
-
-          user: {
-            connect: { id: userId },
-          },
-
-          product: {
-            connect: { id: product.id },
-          },
-
-          team: {
-            connect: { id: teamId },
-          },
-        },
-      });
+      return NextResponse.json({ error: "No project found" });
     }
 
-    // 🔥 SAVE LEADS
     const created = [];
 
-    for (const p of people) {
+    // 🔥 2. ENRICH WITH HUNTER
+    for (const p of profiles.slice(0, 10)) {
+      const domain = extractDomain(p.title || "company");
+
+      const email = await findEmail(domain, p.name);
+
+      if (!email) continue;
+
       const exists = await prisma.lead.findFirst({
         where: {
-          email: p.email,
+          email,
           projectId: project.id,
         },
       });
@@ -115,10 +58,10 @@ export async function POST(req: Request) {
 
       const lead = await prisma.lead.create({
         data: {
-          email: p.email,
-          name: p.name || "",
-          source: "apollo",
-          userId,
+          email,
+          name: p.name,
+          source: "linkedin",
+          userId: session.user.id,
           projectId: project.id,
           teamId,
         },
@@ -134,10 +77,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("FULL ERROR:", err);
+    console.error("HYBRID ERROR:", err);
 
     return NextResponse.json(
-      { error: String(err) }, // 👈 DEBUG MODE
+      { error: "Hybrid generation failed" },
       { status: 500 }
     );
   }

@@ -14,11 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Parse body once
-    const body = await req.json();
-    const { teamId } = body;
-
-    console.log("TEAM ID:", teamId);
+    const { teamId } = await req.json();
 
     if (!teamId) {
       return NextResponse.json(
@@ -27,14 +23,25 @@ export async function POST(req: Request) {
       );
     }
 
+    const userId = session.user.id;
+
     // 🔥 TEMP TEST DATA
     const people = [
       { email: "test1@gmail.com", name: "Test User" },
       { email: "test2@gmail.com", name: "Test User 2" },
     ];
 
-    if (people.length === 0) {
-      return NextResponse.json({ error: "No leads found" });
+    // ✅ GET ANY PRODUCT (NO userId filter ❌)
+    let product = await prisma.product.findFirst();
+
+    if (!product) {
+      product = await prisma.product.create({
+        data: {
+          name: "Lead Finder",
+          slug: "lead-finder",
+          price: 0,
+        },
+      });
     }
 
     // 🔥 FIND OR CREATE PROJECT
@@ -43,28 +50,18 @@ export async function POST(req: Request) {
     });
 
     if (!project) {
-      // ⚠️ You MUST provide productId
-      // 👉 Replace this with a real product lookup if needed
-      const product = await prisma.product.findFirst({
-        where: { teamId },
-      });
-
-      if (!product) {
-        return NextResponse.json({
-          error: "No product found for team",
-        });
-      }
-
       project = await prisma.project.create({
         data: {
           name: "Default Project",
           teamId,
-          userId: session.user.id,
-          productId: product.id, // ✅ FIX
+          user: {
+            connect: { id: userId },
+          },
+          product: {
+            connect: { id: product.id },
+          },
         },
       });
-
-      console.log("Created project:", project.id);
     }
 
     // 🔥 SAVE LEADS
@@ -85,8 +82,9 @@ export async function POST(req: Request) {
       const lead = await prisma.lead.create({
         data: {
           email: p.email,
-          name: p.name,
-          userId: session.user.id,
+          name: p.name || "",
+          source: "manual",
+          userId,
           projectId: project.id,
           teamId,
         },
@@ -105,7 +103,7 @@ export async function POST(req: Request) {
     console.error("ERROR:", err);
 
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Failed to generate leads" },
       { status: 500 }
     );
   }

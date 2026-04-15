@@ -18,38 +18,25 @@ export async function POST(req: Request) {
 
   try {
     // 🔥 APOLLO API CALL
-    const response = await fetch("https://api.apollo.io/v1/mixed_people/search", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": process.env.APOLLO_API_KEY!,
-      },
-      body: JSON.stringify({
-        page: 1,
-        per_page: 10,
+   const response = await fetch("https://api.apollo.io/v1/mixed_people/search", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": process.env.APOLLO_API_KEY!,
+  },
+  body: JSON.stringify({
+    page: 1,
+    per_page: 10,
 
-        // 🎯 HIGH-CONVERTING FILTERS (USA/EU SaaS)
-        person_titles: [
-          "CEO",
-          "CTO",
-          "Founder",
-          "Co-Founder",
-          "VP Engineering",
-          "Head of Engineering"
-        ],
+    // 🔥 RELAX FILTERS (VERY IMPORTANT)
+    person_titles: ["founder", "ceo", "cto"],
+    locations: ["United States"],
 
-        person_locations: [
-          "United States",
-          "United Kingdom",
-          "Germany",
-          "Netherlands"
-        ],
-
-        organization_num_employees_ranges: ["11-50", "51-200"],
-
-        q_organization_keywords: "saas software startup",
-      }),
-    });
+    // ❌ REMOVE strict filters for now
+    // organization_num_employees_ranges
+    // seniority filters (optional)
+  }),
+});
 
     const data = await response.json();
 

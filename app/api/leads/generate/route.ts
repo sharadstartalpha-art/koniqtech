@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     // 🔥 1. SCRAPE LINKEDIN (pass query)
-    const profiles = await scrapeLinkedIn(query || "founder");
+   const profiles = await scrapeLinkedIn(query);
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No LinkedIn leads" });

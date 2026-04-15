@@ -2,13 +2,12 @@ import { scrapeLinkedInApify } from "@/lib/apify";
 
 export async function scrapeLinkedIn(query: string = "founder") {
   try {
-    const people = await scrapeLinkedInApify({
-      keywords: query || "founder",
+    const data = await scrapeLinkedInApify({
+      keywords: query,
       maxItems: 20,
     });
 
-    return people;
-
+    return data;
   } catch (err) {
     console.error("LINKEDIN SCRAPE ERROR:", err);
     return [];

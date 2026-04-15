@@ -18,15 +18,22 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Extract query
+    // ✅ Parse body safely
     const { teamId, query } = await req.json();
 
     if (!teamId) {
       return NextResponse.json({ error: "No team selected" });
     }
 
-    // 🔥 1. SCRAPE LINKEDIN (pass query)
-   const profiles = await scrapeLinkedIn(query);
+    const userId = session.user.id;
+
+    console.log("TEAM:", teamId);
+    console.log("QUERY:", query);
+
+    // 🔥 1. SCRAPE LINKEDIN
+    const profiles = await scrapeLinkedIn(query || "founder");
+
+    console.log("SCRAPED PROFILES:", profiles.length);
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No LinkedIn leads" });
@@ -41,37 +48,55 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No project found" });
     }
 
-    const created = [];
+    const created: any[] = [];
 
-    // 🔥 2. ENRICH WITH HUNTER
-    for (const p of profiles.slice(0, 20)) { // ✅ increased limit
-      const domain = extractDomain(p.title || "company");
+    // 🔥 2. PROCESS LEADS SAFELY
+    for (const p of profiles.slice(0, 10)) {
+      try {
+        if (!p?.name) continue;
 
-      const email = await findEmail(domain, p.name);
+        // ✅ SAFE DOMAIN EXTRACTION
+        const domain = extractDomain(p.title || "company");
 
-      if (!email) continue;
+        // ✅ SAFE EMAIL FETCH
+        let email = null;
 
-      const exists = await prisma.lead.findFirst({
-        where: {
-          email,
-          projectId: project.id,
-        },
-      });
+        try {
+          email = await findEmail(domain, p.name);
+        } catch (e) {
+          console.error("HUNTER ERROR:", e);
+        }
 
-      if (exists) continue;
+        if (!email) continue;
 
-      const lead = await prisma.lead.create({
-        data: {
-          email,
-          name: p.name,
-          source: "linkedin",
-          userId: session.user.id,
-          projectId: project.id,
-          teamId,
-        },
-      });
+        // ✅ CHECK DUPLICATE
+        const exists = await prisma.lead.findFirst({
+          where: {
+            email,
+            projectId: project.id,
+          },
+        });
 
-      created.push(lead);
+        if (exists) continue;
+
+        // ✅ CREATE LEAD
+        const lead = await prisma.lead.create({
+          data: {
+            email,
+            name: p.name,
+            source: "linkedin",
+            userId,
+            projectId: project.id,
+            teamId,
+          },
+        });
+
+        created.push(lead);
+
+      } catch (innerErr) {
+        console.error("LEAD ERROR:", innerErr);
+        continue;
+      }
     }
 
     return NextResponse.json({
@@ -81,10 +106,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("HYBRID ERROR:", err);
+    console.error("FULL ERROR:", err);
 
     return NextResponse.json(
-      { error: "Hybrid generation failed" },
+      { error: String(err) }, // 🔥 shows real error
       { status: 500 }
     );
   }

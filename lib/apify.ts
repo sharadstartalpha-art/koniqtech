@@ -6,14 +6,15 @@ export async function scrapeLinkedInApify({
   maxItems?: number;
 }) {
   const res = await fetch(
-    `https://api.apify.com/v2/acts/apify~linkedin-people-search/run-sync-get-dataset-items?token=${process.env.APIFY_API_TOKEN}`,
+    `https://api.apify.com/v2/acts/harvestapi~linkedin-profile-search/run-sync-get-dataset-items?token=${process.env.APIFY_API_TOKEN}`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        keywords: keywords || "founder",
+        searchKeywords: keywords || "founder", // ✅ correct field
+        locations: ["United States"],          // ✅ improves results
         maxItems,
       }),
     }
@@ -27,17 +28,10 @@ export async function scrapeLinkedInApify({
 
   const data = await res.json();
 
-  console.log("RAW APIFY COUNT:", data.length);
-
-  // ✅ NORMALIZE HERE (THIS IS YOUR CODE)
-  const people = (data || []).map((p: any) => ({
+  return (data || []).map((p: any) => ({
     name: `${p.firstName || ""} ${p.lastName || ""}`.trim(),
     title: p.headline || "",
     profileUrl: p.linkedinUrl || "",
     email: null,
   }));
-
-  console.log("NORMALIZED PEOPLE:", people.length);
-
-  return people;
 }

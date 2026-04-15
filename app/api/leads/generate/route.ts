@@ -67,7 +67,23 @@ export async function POST(req: Request) {
           console.error("HUNTER ERROR:", e);
         }
 
-        if (!email) continue;
+       if (!email) {
+  console.log("NO EMAIL, saving anyway:", p.name);
+
+  const lead = await prisma.lead.create({
+    data: {
+      email: `${p.name.replace(/\s+/g, "").toLowerCase()}@noemail.com`, // temp fake
+      name: p.name,
+      source: "linkedin",
+      userId,
+      projectId: project.id,
+      teamId,
+    },
+  });
+
+  created.push(lead);
+  continue;
+}
 
         // ✅ CHECK DUPLICATE
         const exists = await prisma.lead.findFirst({

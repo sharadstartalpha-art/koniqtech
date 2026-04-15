@@ -49,6 +49,8 @@ model User {
   activities         Activity[]
   teamsOwned         Team[]               @relation("TeamOwner")
   teamMembers        TeamMember[]
+  tasksCreated Task[] @relation("TaskCreator")
+tasksAssigned Task[] @relation("TaskAssignee")
 }
 
 model Company {
@@ -344,6 +346,8 @@ model Team {
   usages       Usage[]
   members      TeamMember[]
   invites      TeamInvite[]
+   tasks Task[]
+
   notifications Notification[]
   projects     Project[]
   activities   Activity[]
@@ -437,4 +441,24 @@ model Notification {
   team      Team?    @relation(fields: [teamId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model Task {
+  id          String   @id @default(cuid())
+
+  title       String
+  description String?
+
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id])
+
+  createdById String
+  createdBy   User     @relation("TaskCreator", fields: [createdById], references: [id])
+
+  assignedToId String?
+  assignedTo   User?    @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  status      String   @default("TODO")
+
+  createdAt   DateTime @default(now())
 }

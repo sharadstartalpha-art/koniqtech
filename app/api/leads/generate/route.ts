@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-import { scrapeLinkedIn } from "@/lib/linkedin"; // ✅ correct import
+import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
 import { extractDomain } from "@/lib/utils";
 
@@ -18,14 +18,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const { teamId } = await req.json();
+    // ✅ Extract query
+    const { teamId, query } = await req.json();
 
     if (!teamId) {
       return NextResponse.json({ error: "No team selected" });
     }
 
-    // 🔥 1. SCRAPE LINKEDIN
-    const profiles = await scrapeLinkedIn(); // ✅ FIXED
+    // 🔥 1. SCRAPE LINKEDIN (pass query)
+    const profiles = await scrapeLinkedIn(query || "founder");
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No LinkedIn leads" });
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
     const created = [];
 
     // 🔥 2. ENRICH WITH HUNTER
-    for (const p of profiles.slice(0, 10)) {
+    for (const p of profiles.slice(0, 20)) { // ✅ increased limit
       const domain = extractDomain(p.title || "company");
 
       const email = await findEmail(domain, p.name);

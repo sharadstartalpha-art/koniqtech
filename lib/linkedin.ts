@@ -1,17 +1,11 @@
 import { scrapeLinkedInApify } from "@/lib/apify";
 
-export async function scrapeLinkedIn() {
+export async function scrapeLinkedIn(query: string = "founder") {
   try {
-    // 🔥 Call Apify (no arguments)
-    const data = await scrapeLinkedInApify();
-
-    // ✅ Normalize data
-    const people = (data || []).map((p: any) => ({
-      name: p.fullName || "",
-      title: p.headline || "",
-      profileUrl: p.profileUrl || "",
-      email: p.email || null,
-    }));
+    const people = await scrapeLinkedInApify({
+      keywords: query || "founder",
+      maxItems: 20,
+    });
 
     return people;
 

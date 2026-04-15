@@ -30,11 +30,11 @@ export async function scrapeLinkedInApify({
 
   console.log("APIFY DATA:", data); // 👈 DEBUG
 
-  return (data || []).map((p: any) => ({
-    name: p.fullName || "",
-    title: p.headline || "",
-    company: p.companyName || "",
-    profileUrl: p.profileUrl || "",
-    email: p.email || null,
-  }));
+ return (data || []).map((p: any) => ({
+  name: `${p.firstName || ""} ${p.lastName || ""}`.trim(), // ✅ FIX
+  title: p.headline || "",
+  company: "",
+  profileUrl: p.linkedinUrl || "", // ✅ FIX
+  email: null,
+}));
 }

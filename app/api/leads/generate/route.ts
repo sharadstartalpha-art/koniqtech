@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       { email: "test2@gmail.com", name: "Test User 2" },
     ];
 
-    // ✅ GET ANY PRODUCT (NO userId filter ❌)
+    // ✅ GET ANY PRODUCT
     let product = await prisma.product.findFirst();
 
     if (!product) {
@@ -53,12 +53,17 @@ export async function POST(req: Request) {
       project = await prisma.project.create({
         data: {
           name: "Default Project",
-          teamId,
+
           user: {
             connect: { id: userId },
           },
+
           product: {
             connect: { id: product.id },
+          },
+
+          team: {
+            connect: { id: teamId }, // ✅ FIX
           },
         },
       });
@@ -103,7 +108,7 @@ export async function POST(req: Request) {
     console.error("FULL ERROR:", err);
 
     return NextResponse.json(
-      { error: String(err) }, // 👈 SHOW REAL ERROR
+      { error: String(err) }, // 👈 DEBUG MODE
       { status: 500 }
     );
   }

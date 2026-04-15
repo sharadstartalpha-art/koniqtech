@@ -10,7 +10,9 @@ export default function TeamPage() {
 
   const [team, setTeam] = useState<any>(null);
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // 🔄 LOAD TEAM
   const load = async () => {
     try {
       const res = await fetch(`/api/team/${teamId}`);
@@ -18,6 +20,7 @@ export default function TeamPage() {
       setTeam(data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load team");
     }
   };
 
@@ -27,6 +30,10 @@ export default function TeamPage() {
 
   // ✅ INVITE
   const invite = async () => {
+    if (!email) return toast.error("Enter email");
+
+    setLoading(true);
+
     const res = await fetch("/api/team/invite", {
       method: "POST",
       body: JSON.stringify({ email, teamId }),
@@ -41,6 +48,8 @@ export default function TeamPage() {
       setEmail("");
       load();
     }
+
+    setLoading(false);
   };
 
   // ✅ REMOVE MEMBER
@@ -67,49 +76,68 @@ export default function TeamPage() {
     load();
   };
 
+  // ✅ REMOVE INVITE
+  const removeInvite = async (inviteId: string) => {
+    if (!confirm("Delete this invite?")) return;
+
+    await fetch("/api/team/invite/delete", {
+      method: "DELETE",
+      body: JSON.stringify({ inviteId }),
+    });
+
+    toast.success("Invite removed");
+    load();
+  };
+
   if (!team) return <div className="p-6">Loading...</div>;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 max-w-3xl mx-auto space-y-8">
 
-      <h1 className="text-2xl font-bold">{team.name}</h1>
+      {/* HEADER */}
+      <div>
+        <h1 className="text-3xl font-bold">{team.name} 🚀</h1>
+        <p className="text-gray-500 text-sm">Manage your team members</p>
+      </div>
 
-      {/* INVITE */}
-    <div className="flex gap-2 items-center bg-gray-100 p-3 rounded-lg">
-  <input
-    placeholder="Enter email..."
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-    className="flex-1 bg-white border px-3 py-2 rounded outline-none"
-  />
-  <button
-    onClick={invite}
-    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-  >
-    Invite 🚀
-  </button>
-</div>
+      {/* INVITE BOX */}
+      <div className="flex gap-2 items-center bg-gray-100 p-3 rounded-xl shadow-sm">
+        <input
+          placeholder="Enter email..."
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="flex-1 bg-white border px-3 py-2 rounded outline-none"
+        />
+        <button
+          onClick={invite}
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          {loading ? "Sending..." : "Invite 🚀"}
+        </button>
+      </div>
 
       {/* MEMBERS */}
       <div>
-        <h2 className="font-semibold mb-2">Members</h2>
+        <h2 className="font-semibold mb-3 text-lg">Members</h2>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {team.members.map((m: any) => (
             <div
               key={m.id}
-              className="border p-3 rounded flex justify-between items-center"
+              className="border p-4 rounded-xl flex justify-between items-center shadow-sm"
             >
               <div>
-                {m.user.email} ({m.role})
+                <p className="font-medium">{m.user.email}</p>
+                <p className="text-xs text-gray-500">{m.role}</p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
 
                 <select
                   value={m.role}
                   onChange={(e) => changeRole(m.id, e.target.value)}
-                  className="border px-2 py-1"
+                  className="border px-2 py-1 rounded"
                 >
                   <option value="OWNER">OWNER</option>
                   <option value="ADMIN">ADMIN</option>
@@ -118,7 +146,7 @@ export default function TeamPage() {
 
                 <button
                   onClick={() => remove(m.id)}
-                  className="text-red-500"
+                  className="text-red-500 hover:underline"
                 >
                   Remove
                 </button>
@@ -131,17 +159,29 @@ export default function TeamPage() {
 
       {/* INVITES */}
       <div>
-        <h2 className="font-semibold mb-2">Pending Invites</h2>
+        <h2 className="font-semibold mb-3 text-lg">Pending Invites</h2>
 
         {team.invites.length === 0 && (
           <p className="text-gray-500">No pending invites</p>
         )}
 
-        {team.invites.map((i: any) => (
-          <div key={i.id} className="border p-2 rounded">
-            {i.email}
-          </div>
-        ))}
+        <div className="space-y-2">
+          {team.invites.map((i: any) => (
+            <div
+              key={i.id}
+              className="border p-3 rounded-xl flex justify-between items-center shadow-sm"
+            >
+              <span>{i.email}</span>
+
+              <button
+                onClick={() => removeInvite(i.id)}
+                className="text-red-500 hover:underline"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
     </div>

@@ -25,11 +25,42 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // 🔥 TEMP TEST DATA
-    const people = [
-      { email: "test1@gmail.com", name: "Test User" },
-      { email: "test2@gmail.com", name: "Test User 2" },
-    ];
+    // 🔥 APOLLO API CALL (UPDATED)
+    const response = await fetch(
+      "https://api.apollo.io/v1/mixed_people/search",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.APOLLO_API_KEY!,
+        },
+        body: JSON.stringify({
+          page: 1,
+          per_page: 10,
+          person_titles: ["Founder", "CEO", "CTO"],
+          organization_locations: ["United States"],
+          contact_email_status: ["verified"],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("APOLLO ERROR:", text);
+      throw new Error("Apollo failed");
+    }
+
+    const apolloData = await response.json();
+
+    console.log("APOLLO RESPONSE:", apolloData);
+
+    const people = (apolloData.people || []).filter(
+      (p: any) => p.email
+    );
+
+    if (people.length === 0) {
+      return NextResponse.json({ error: "No leads found" });
+    }
 
     // ✅ GET ANY PRODUCT
     let product = await prisma.product.findFirst();
@@ -63,7 +94,7 @@ export async function POST(req: Request) {
           },
 
           team: {
-            connect: { id: teamId }, // ✅ FIX
+            connect: { id: teamId },
           },
         },
       });
@@ -73,8 +104,6 @@ export async function POST(req: Request) {
     const created = [];
 
     for (const p of people) {
-      if (!p.email) continue;
-
       const exists = await prisma.lead.findFirst({
         where: {
           email: p.email,
@@ -88,7 +117,7 @@ export async function POST(req: Request) {
         data: {
           email: p.email,
           name: p.name || "",
-          source: "manual",
+          source: "apollo",
           userId,
           projectId: project.id,
           teamId,

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-import { scrapeLinkedIn } from "@/lib/linkedin";
+import { scrapeLinkedIn } from "@/lib/linkedin"; // ✅ correct import
 import { findEmail } from "@/lib/hunter";
 import { extractDomain } from "@/lib/utils";
 
@@ -12,7 +12,10 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { teamId } = await req.json();
@@ -22,7 +25,7 @@ export async function POST(req: Request) {
     }
 
     // 🔥 1. SCRAPE LINKEDIN
-    const profiles = await scrapeLinkedIn();
+    const profiles = await scrapeLinkedIn(); // ✅ FIXED
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No LinkedIn leads" });

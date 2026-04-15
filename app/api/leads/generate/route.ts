@@ -100,10 +100,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("ERROR:", err);
+    console.error("FULL ERROR:", err);
 
     return NextResponse.json(
-      { error: "Failed to generate leads" },
+      { error: String(err) }, // 👈 SHOW REAL ERROR
       { status: 500 }
     );
   }

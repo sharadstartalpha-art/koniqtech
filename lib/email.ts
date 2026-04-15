@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
+
 // ✅ Generic email sender (reuse everywhere)
 export async function sendEmail({
   to,
@@ -33,4 +34,6 @@ export async function sendInviteEmail(email: string, link: string) {
       </a>
     `,
   });
+
+
 }

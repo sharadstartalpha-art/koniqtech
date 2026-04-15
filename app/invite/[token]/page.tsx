@@ -25,8 +25,8 @@ export default function InvitePage() {
       return;
     }
 
-    // ✅ redirect after success
-    window.location.href = "/teams";
+    // ✅ REDIRECT TO TEAM PAGE
+    window.location.href = `/teams/${data.teamId}`;
   };
 
   return (

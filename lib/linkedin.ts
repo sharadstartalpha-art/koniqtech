@@ -1,43 +1,22 @@
-import puppeteer from "puppeteer";
+import { scrapeLinkedInApify } from "@/lib/apify";
 
 export async function scrapeLinkedIn() {
-  const browser = await puppeteer.launch({
-    headless: true,
-  });
+  try {
+    // 🔥 Call Apify (no arguments)
+    const data = await scrapeLinkedInApify();
 
-  const page = await browser.newPage();
+    // ✅ Normalize data
+    const people = (data || []).map((p: any) => ({
+      name: p.fullName || "",
+      title: p.headline || "",
+      profileUrl: p.profileUrl || "",
+      email: p.email || null,
+    }));
 
-  // 🔐 OPTIONAL: login (recommended later)
-  // await page.goto("https://linkedin.com/login");
+    return people;
 
-  await page.goto(
-    "https://www.linkedin.com/search/results/people/?keywords=founder",
-    { waitUntil: "domcontentloaded" }
-  );
-
-  // ✅ FIX: replace waitForTimeout
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  const people = await page.evaluate(() => {
-    const results: any[] = [];
-
-    document.querySelectorAll(".entity-result").forEach((el: any) => {
-      const name =
-        el.querySelector(".entity-result__title-text")?.innerText || "";
-
-      const title =
-        el.querySelector(".entity-result__primary-subtitle")?.innerText || "";
-
-      const profileUrl =
-        el.querySelector("a.app-aware-link")?.href || "";
-
-      results.push({ name, title, profileUrl });
-    });
-
-    return results;
-  });
-
-  await browser.close();
-
-  return people;
+  } catch (err) {
+    console.error("LINKEDIN SCRAPE ERROR:", err);
+    return [];
+  }
 }

@@ -5,20 +5,27 @@ import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
 
 export default function TeamPage() {
-  const { teamId } = useParams();
+  const params = useParams();
+  const teamId = params?.teamId as string;
+
   const [team, setTeam] = useState<any>(null);
   const [email, setEmail] = useState("");
 
-  const load = () => {
-    fetch(`/api/team/${teamId}`)
-      .then((res) => res.json())
-      .then(setTeam);
+  const load = async () => {
+    try {
+      const res = await fetch(`/api/team/${teamId}`);
+      const data = await res.json();
+      setTeam(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
-    load();
-  }, []);
+    if (teamId) load();
+  }, [teamId]);
 
+  // ✅ INVITE
   const invite = async () => {
     const res = await fetch("/api/team/invite", {
       method: "POST",
@@ -31,29 +38,29 @@ export default function TeamPage() {
       toast.error(data.error);
     } else {
       toast.success("Invite sent 🚀");
+      setEmail("");
+      load();
     }
-
-    setEmail("");
-    load();
   };
 
-  const remove = async (id: string) => {
-    const ok = confirm("Remove this member?");
-    if (!ok) return;
+  // ✅ REMOVE MEMBER
+  const remove = async (memberId: string) => {
+    if (!confirm("Remove this member?")) return;
 
-    await fetch("/api/team/remove", {
-      method: "POST",
-      body: JSON.stringify({ memberId: id }),
+    await fetch("/api/team/member", {
+      method: "DELETE",
+      body: JSON.stringify({ memberId }),
     });
 
     toast.success("Member removed");
     load();
   };
 
-  const changeRole = async (id: string, role: string) => {
+  // ✅ CHANGE ROLE
+  const changeRole = async (memberId: string, role: string) => {
     await fetch("/api/team/role", {
       method: "POST",
-      body: JSON.stringify({ memberId: id, role }),
+      body: JSON.stringify({ memberId, role }),
     });
 
     toast.success("Role updated");

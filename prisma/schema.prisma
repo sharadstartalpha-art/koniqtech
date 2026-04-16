@@ -536,3 +536,9 @@ model CampaignRecipient {
   createdAt DateTime @default(now())
   @@index([campaignId])
 }
+
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

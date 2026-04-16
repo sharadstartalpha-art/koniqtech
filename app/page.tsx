@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { fadeUp, stagger } from "@/lib/animations";
+import WaitlistForm from "@/components/WaitlistForm";
 
 export default function LandingPage() {
   const features = [
@@ -15,7 +16,7 @@ export default function LandingPage() {
   return (
     <div className="bg-black text-white min-h-screen relative overflow-hidden">
 
-      {/* 🌌 BACKGROUND GRADIENT */}
+      {/* 🌌 BACKGROUND */}
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.2),transparent)]" />
 
       {/* 🚀 HERO */}
@@ -32,28 +33,22 @@ export default function LandingPage() {
           Generate Leads & Send Cold Emails Automatically
         </h1>
 
+        {/* 🔥 SOCIAL PROOF TEXT */}
         <p className="mt-6 text-gray-400 max-w-2xl mx-auto">
-          Find verified leads, send smart sequences, and close deals —
-          all from one platform.
+          Join 100+ founders building outbound systems 🚀
         </p>
 
-        {/* CTA */}
-        <div className="mt-8 flex justify-center gap-4">
-          <Link href="/register">
-            <button className="relative overflow-hidden bg-blue-600 px-6 py-3 rounded-lg group">
-              <span className="relative z-10">Start Free Trial 🚀</span>
-              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition" />
-            </button>
-          </Link>
+        {/* ⚡ URGENCY */}
+        <p className="mt-2 text-sm text-yellow-400">
+          Limited early access spots
+        </p>
 
-          <Link href="/dashboard">
-            <button className="border border-gray-600 px-6 py-3 rounded-lg text-lg hover:bg-white/10 transition">
-              View Demo
-            </button>
-          </Link>
+        {/* 📝 WAITLIST */}
+        <div className="mt-8 flex justify-center">
+          <WaitlistForm />
         </div>
 
-        {/* 📊 Dashboard Image */}
+        {/* 📊 Dashboard */}
         <div className="mt-16 max-w-5xl mx-auto">
           <motion.img
             src="/dashboard.png"
@@ -97,7 +92,7 @@ export default function LandingPage() {
         ))}
       </motion.div>
 
-      {/* ✨ FEATURES (STAGGER) */}
+      {/* ✨ FEATURES */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -171,11 +166,20 @@ export default function LandingPage() {
           Start generating leads in 60 seconds 🚀
         </h2>
 
-        <Link href="/register">
-          <button className="mt-6 bg-green-600 hover:bg-green-700 px-8 py-3 rounded-lg text-lg transition">
-            Get Started
-          </button>
-        </Link>
+        {/* 🔥 SOCIAL PROOF */}
+        <p className="mt-4 text-gray-400">
+          Join 100+ founders building outbound systems 🚀
+        </p>
+
+        {/* ⚡ URGENCY */}
+        <p className="text-sm text-yellow-400 mt-2">
+          Limited early access spots
+        </p>
+
+        {/* 📝 WAITLIST */}
+        <div className="mt-6 flex justify-center">
+          <WaitlistForm />
+        </div>
       </motion.div>
 
       {/* 🧾 FOOTER */}

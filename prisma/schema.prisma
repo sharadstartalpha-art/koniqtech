@@ -236,19 +236,6 @@ model Payment {
   user User @relation(fields: [userId], references: [id])
 }
 
-model CampaignStep {
-  id         String @id @default(cuid())
-  campaignId String
- subject   String  // ✅ add this
-  body      String  // ✅ add this
-  name  String
-  order Int
-  delay Int // minutes or hours
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
 
 model EmailLog {
   id          String    @id @default(cuid())
@@ -520,4 +507,27 @@ model CampaignRecipient {
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+
+
+model CampaignStep {
+  id         String   @id @default(cuid())
+  campaignId String
+
+  // 📧 Email content
+  subject    String
+  body       String
+
+  // 🧠 Step info
+  name       String
+  order      Int
+  delay      Int   // in seconds
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@index([campaignId])
+  @@index([order])
 }

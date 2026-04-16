@@ -6,24 +6,18 @@ export async function POST(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // ✅ FIX: await params
+    // ✅ Next.js 15 fix
     const { id } = await context.params;
 
-    await campaignQueue.add(
-      "send-campaign",
-      { campaignId: id },
-      {
-        attempts: 3,
-        backoff: {
-          type: "exponential",
-          delay: 5000,
-        },
-      }
-    );
+    await campaignQueue.add("send-campaign", {
+      campaignId: id,
+    });
 
     return NextResponse.json({
+      success: true,
       message: "Campaign queued successfully 🚀",
     });
+
   } catch (error) {
     console.error("QUEUE ERROR:", error);
 

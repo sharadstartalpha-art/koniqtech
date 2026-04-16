@@ -1,57 +1,80 @@
+import { Worker } from "bullmq";
+import { redis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
-import { generateOTP } from "@/lib/otp";
 import { sendEmail } from "@/lib/mail";
-import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-export async function POST(req: Request) {
-  try {
-    const { email } = await req.json();
+// 🚫 prevent running during Next.js build
+if (process.env.NODE_ENV !== "production") {
+  console.log("🚀 Campaign Worker Started");
 
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email required" },
-        { status: 400 }
-      );
+  new Worker(
+    "campaign-queue",
+    async (job) => {
+      const { campaignId } = job.data;
+
+      const campaign = await prisma.campaign.findUnique({
+        where: { id: campaignId },
+        include: {
+          steps: { orderBy: { order: "asc" } },
+          recipients: true,
+        },
+      });
+
+      if (!campaign) throw new Error("Campaign not found");
+
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { status: "SENDING" },
+      });
+
+      let totalSent = 0;
+
+      for (const step of campaign.steps) {
+        if (step.delay > 0) {
+          await wait(step.delay * 1000);
+        }
+
+        await Promise.all(
+          campaign.recipients.map(async (recipient) => {
+            try {
+              await sendEmail({
+                to: recipient.email,
+                subject: campaign.subject,
+                html: campaign.content,
+              });
+
+              await prisma.campaignRecipient.update({
+                where: { id: recipient.id },
+                data: { status: "SENT" },
+              });
+
+              totalSent++;
+            } catch {
+              await prisma.campaignRecipient.update({
+                where: { id: recipient.id },
+                data: { status: "FAILED" },
+              });
+            }
+          })
+        );
+      }
+
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: {
+          status: "SENT",
+          sentAt: new Date(),
+          totalSent,
+        },
+      });
+
+      return true;
+    },
+    {
+      connection: redis,
+      concurrency: 5,
     }
-
-    // ✅ CHECK USER FIRST (FIXED)
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
-      );
-    }
-
-    const otp = generateOTP();
-
-    await prisma.verificationToken.create({
-      data: {
-        email,
-        token: otp,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      },
-    });
-
-    await sendEmail(
-      email,
-      "Your OTP Code",
-      `<h2>Your OTP is: ${otp}</h2>`
-    );
-
-    return NextResponse.json({ success: true });
-
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { error: "Failed to send OTP" },
-      { status: 500 }
-    );
-  }
+  );
 }

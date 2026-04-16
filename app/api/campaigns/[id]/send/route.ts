@@ -1,27 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runCampaign } from "@/lib/campaignSender";
+import { campaignQueue } from "@/lib/queue";
 
 export async function POST(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> } // ✅ FIXED
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params; // ✅ IMPORTANT
+    // ✅ FIX: await params
+    const { id } = await context.params;
 
-    // 🚀 fire and forget (non-blocking)
-    runCampaign(id).catch((err) => {
-      console.error("BACKGROUND CAMPAIGN ERROR:", err);
-    });
+    await campaignQueue.add(
+      "send-campaign",
+      { campaignId: id },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 5000,
+        },
+      }
+    );
 
     return NextResponse.json({
-      message: "Campaign started",
+      message: "Campaign queued successfully 🚀",
     });
-
   } catch (error) {
-    console.error("SEND CAMPAIGN ERROR:", error);
+    console.error("QUEUE ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to start campaign" },
+      { error: "Failed to queue campaign" },
       { status: 500 }
     );
   }

@@ -28,7 +28,8 @@ model User {
   createdAt          DateTime             @default(now())
   resetTokens        PasswordResetToken[]
   verificationTokens VerificationToken[]
-  notifications Notification[]
+  campaigns          Campaign[]
+  notifications      Notification[]
   // ✅ COMPANY RELATION (FIXED)
   companyId          String?
   company            Company?             @relation("CompanyUsers", fields: [companyId], references: [id])
@@ -49,8 +50,8 @@ model User {
   activities         Activity[]
   teamsOwned         Team[]               @relation("TeamOwner")
   teamMembers        TeamMember[]
-  tasksCreated Task[] @relation("TaskCreator")
-tasksAssigned Task[] @relation("TaskAssignee")
+  tasksCreated       Task[]               @relation("TaskCreator")
+  tasksAssigned      Task[]               @relation("TaskAssignee")
 }
 
 model Company {
@@ -109,14 +110,14 @@ model Lead {
   source       String? // ✅ ADD THIS
   contactEmail String?
   userId       String
-  title     String?
+  title        String?
   projectId    String
   sequences    LeadSequence[]
   createdAt    DateTime       @default(now())
-  teamId    String
-  user       User        @relation(fields: [userId], references: [id])
-  project    Project     @relation(fields: [projectId], references: [id])
-  LeadStatus LeadStatus?
+  teamId       String
+  user         User           @relation(fields: [userId], references: [id])
+  project      Project        @relation(fields: [projectId], references: [id])
+  LeadStatus   LeadStatus?
 }
 
 model Balance {
@@ -235,23 +236,18 @@ model Payment {
   user User @relation(fields: [userId], references: [id])
 }
 
-model Campaign {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String
-  createdAt DateTime @default(now())
-
-  steps CampaignStep[]
-}
-
 model CampaignStep {
   id         String @id @default(cuid())
   campaignId String
-  subject    String
-  content    String
-  delay      Int // hours
+ subject   String  // ✅ add this
+  body      String  // ✅ add this
+  name  String
+  order Int
+  delay Int // minutes or hours
 
-  campaign Campaign @relation(fields: [campaignId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 model EmailLog {
@@ -340,21 +336,21 @@ model Usage {
 }
 
 model Team {
-  id           String            @id @default(cuid())
-  name         String
-  ownerId      String
-  owner        User              @relation("TeamOwner", fields: [ownerId], references: [id])
-  usages       Usage[]
-  members      TeamMember[]
-  invites      TeamInvite[]
-   tasks Task[]
+  id      String       @id @default(cuid())
+  name    String
+  ownerId String
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
+  usages  Usage[]
+  members TeamMember[]
+  invites TeamInvite[]
+  tasks   Task[]
 
   notifications Notification[]
-  projects     Project[]
-  activities   Activity[]
-  credits      Int               @default(0)
-  subscription TeamSubscription?
-  createdAt    DateTime          @default(now())
+  projects      Project[]
+  activities    Activity[]
+  credits       Int               @default(0)
+  subscription  TeamSubscription?
+  createdAt     DateTime          @default(now())
 }
 
 model TeamMember {
@@ -430,49 +426,98 @@ model Activity {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  message   String
-  read      Boolean  @default(false)
+  message String
+  read    Boolean @default(false)
 
-  teamId    String?
-  team      Team?    @relation(fields: [teamId], references: [id])
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
 
   createdAt DateTime @default(now())
 }
 
 model Task {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   title       String
   description String?
 
-  teamId      String
-  team        Team     @relation(fields: [teamId], references: [id])
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id])
 
   createdById String
-  createdBy   User     @relation("TaskCreator", fields: [createdById], references: [id])
+  createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
 
   assignedToId String?
-  assignedTo   User?    @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  assignedTo   User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
 
-  status      String   @default("TODO")
+  status String @default("TODO")
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
-
 model Deal {
-  id       String @id @default(cuid())
-  title    String
-  value    Int
-  stage    String // "NEW", "CONTACTED", "CLOSED"
+  id    String @id @default(cuid())
+  title String
+  value Int
+  stage String // "NEW", "CONTACTED", "CLOSED"
 
-  teamId   String
-  leadId   String
+  teamId String
+  leadId String
+
+  createdAt DateTime @default(now())
+}
+
+model Campaign {
+  id      String         @id @default(cuid())
+  name    String
+  subject String
+  content String
+  status  CampaignStatus @default(DRAFT)
+
+  scheduledAt DateTime?
+  sentAt      DateTime?
+
+  totalSent Int @default(0)
+  opens     Int @default(0)
+  clicks    Int @default(0)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ✅ ADD THESE (fix errors)
+  steps      CampaignStep[]
+  recipients CampaignRecipient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+model CampaignRecipient {
+  id         String @id @default(cuid())
+  campaignId String
+  email      String
+
+  status    String
+  openedAt  DateTime?
+  clickedAt DateTime?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }

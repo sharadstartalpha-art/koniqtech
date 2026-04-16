@@ -32,16 +32,25 @@ export async function GET(
       return NextResponse.json({ error: "Invite expired" });
     }
 
-    // ✅ add user to team
-    await prisma.teamMember.create({
-      data: {
+    // ✅ prevent duplicate
+    const exists = await prisma.teamMember.findFirst({
+      where: {
         teamId: invite.teamId,
         userId: session.user.id,
-        role: "MEMBER",
       },
     });
 
-    // ✅ mark invite accepted
+    if (!exists) {
+      await prisma.teamMember.create({
+        data: {
+          teamId: invite.teamId,
+          userId: session.user.id,
+          role: "MEMBER",
+        },
+      });
+    }
+
+    // ✅ mark accepted
     await prisma.teamInvite.update({
       where: { id: invite.id },
       data: { accepted: true },
@@ -53,10 +62,9 @@ export async function GET(
     });
 
   } catch (err) {
-    console.error("INVITE ERROR:", err);
-
+    console.error("INVITE ERROR FULL:", err);
     return NextResponse.json(
-      { error: "Server error" },
+      { error: String(err) },
       { status: 500 }
     );
   }

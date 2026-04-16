@@ -2,21 +2,25 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ✅ GENERIC EMAIL (for OTP, system emails)
-export async function sendEmail(
-  to: string,
-  subject: string,
-  html: string
-) {
+// ✅ GENERIC EMAIL
+export async function sendEmail({
+  to,
+  subject,
+  html,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
   return await resend.emails.send({
-    from: "KoniqTech <onboarding@resend.dev>", // ⚠️ use resend.dev or verified domain
+    from: "KoniqTech <onboarding@resend.dev>",
     to,
     subject,
     html,
   });
 }
 
-// ✅ COLD EMAIL (for campaigns)
+// ✅ COLD EMAIL
 export async function sendColdEmail(to: string, name?: string) {
   return await resend.emails.send({
     from: "KoniqTech <onboarding@resend.dev>",

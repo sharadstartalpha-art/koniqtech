@@ -30,30 +30,32 @@ export async function runCampaign(campaignId: string) {
       await wait(step.delay * 1000);
     }
 
-    for (const recipient of campaign.recipients) {
-      try {
-        // ✅ FIXED HERE
-        await sendEmail(
-          recipient.email,
-          campaign.subject,
-          campaign.content
-        );
+    // 🚀 PARALLEL sending (better performance)
+    await Promise.all(
+      campaign.recipients.map(async (recipient) => {
+        try {
+          await sendEmail({
+            to: recipient.email,
+            subject: campaign.subject,
+            html: campaign.content,
+          });
 
-        await prisma.campaignRecipient.update({
-          where: { id: recipient.id },
-          data: { status: "SENT" },
-        });
+          await prisma.campaignRecipient.update({
+            where: { id: recipient.id },
+            data: { status: "SENT" },
+          });
 
-        totalSent++;
-      } catch (err) {
-        console.error("Email failed:", recipient.email);
+          totalSent++;
+        } catch (err) {
+          console.error("Email failed:", recipient.email);
 
-        await prisma.campaignRecipient.update({
-          where: { id: recipient.id },
-          data: { status: "FAILED" },
-        });
-      }
-    }
+          await prisma.campaignRecipient.update({
+            where: { id: recipient.id },
+            data: { status: "FAILED" },
+          });
+        }
+      })
+    );
   }
 
   await prisma.campaign.update({

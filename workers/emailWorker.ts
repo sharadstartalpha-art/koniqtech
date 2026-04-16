@@ -1,43 +1,58 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
-import { redis } from "@/lib/redis";
-import {prisma} from "@/lib/prisma";
-import { sendEmail } from "@/lib/mail";
+import { redis } from "../lib/redis";
+import { prisma } from "../lib/prisma";
+import { sendEmail } from "../lib/mail";
+import { personalize } from "../lib/personalize";
+
+console.log("📧 Email Worker Started");
 
 new Worker(
   "email-queue",
   async (job) => {
     const { campaignId, stepId, recipientId } = job.data;
 
-    const recipient = await prisma.campaignRecipient.findUnique({
-      where: { id: recipientId },
-    });
+    // 🔥 Fetch all required data
+    const [recipient, campaign, step] = await Promise.all([
+      prisma.campaignRecipient.findUnique({
+        where: { id: recipientId },
+      }),
+      prisma.campaign.findUnique({
+        where: { id: campaignId },
+      }),
+      prisma.campaignStep.findUnique({
+        where: { id: stepId },
+      }),
+    ]);
 
-    const campaign = await prisma.campaign.findUnique({
-      where: { id: campaignId },
-    });
-
-    if (!recipient || !campaign) throw new Error("Data missing");
+    if (!recipient || !campaign || !step) {
+      throw new Error("Missing data");
+    }
 
     // 🚫 Skip if already sent
     if (recipient.status === "SENT") return;
 
     try {
+      // ✅ PERSONALIZATION (correct field)
+      const html = personalize(step.body, recipient);
+
+      // 📡 Tracking pixel
       const trackingPixel = `<img src="https://koniqtech.com/api/track/open?rid=${recipient.id}" width="1" height="1" />`;
 
+      // 📧 Send email
       await sendEmail({
         to: recipient.email,
-        subject: campaign.subject,
-        html: campaign.content + trackingPixel,
+        subject: step.subject,
+        html: html + trackingPixel,
       });
 
+      // ✅ Update recipient
       await prisma.campaignRecipient.update({
         where: { id: recipient.id },
-        data: {
-          status: "SENT",
-        },
+        data: { status: "SENT" },
       });
 
-      // 🔥 Increment campaign metrics
+      // 📊 Increment campaign stats
       await prisma.campaign.update({
         where: { id: campaignId },
         data: {
@@ -48,11 +63,11 @@ new Worker(
       });
 
     } catch (err) {
+      console.error("EMAIL FAILED:", recipient.email);
+
       await prisma.campaignRecipient.update({
         where: { id: recipient.id },
-        data: {
-          status: "FAILED",
-        },
+        data: { status: "FAILED" },
       });
 
       throw err; // 🔁 retry
@@ -61,7 +76,7 @@ new Worker(
   {
     connection: redis,
 
-    concurrency: 10, // 🔥 scale here
+    concurrency: 10,
 
     limiter: {
       max: 20,

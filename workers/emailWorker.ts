@@ -12,7 +12,6 @@ new Worker(
   async (job) => {
     const { campaignId, stepId, recipientId } = job.data;
 
-    // 🔥 Fetch all required data
     const [recipient, campaign, step] = await Promise.all([
       prisma.campaignRecipient.findUnique({
         where: { id: recipientId },
@@ -29,17 +28,43 @@ new Worker(
       throw new Error("Missing data");
     }
 
-    // 🚫 Skip if already sent
-    if (recipient.status === "SENT") return;
+    // 🚫 Skip unsubscribed
+    if (recipient.unsubscribed) {
+      console.log("🚫 Skipping unsubscribed:", recipient.email);
+      return;
+    }
+
+    // 🚫 Skip already handled
+    if (["SENT", "REPLIED"].includes(recipient.status)) {
+      console.log("Skipping:", recipient.email, recipient.status);
+      return;
+    }
 
     try {
-      // ✅ PERSONALIZATION (correct field)
+      // 🔥 SAFE daily limit check
+      const currentCampaign = await prisma.campaign.findUnique({
+        where: { id: campaignId },
+        select: { totalSent: true },
+      });
+
+      const dailyLimit = 50;
+
+      if (currentCampaign && currentCampaign.totalSent >= dailyLimit) {
+        console.log("🚫 Daily limit reached");
+        return;
+      }
+
+      // ✅ Personalize
       const html = personalize(step.body, recipient);
 
-      // 📡 Tracking pixel
+      // 📡 Tracking
       const trackingPixel = `<img src="https://koniqtech.com/api/track/open?rid=${recipient.id}" width="1" height="1" />`;
 
-      // 📧 Send email
+      // ⏱ Anti-spam delay
+      const randomDelay = Math.floor(Math.random() * 5000);
+      await new Promise((res) => setTimeout(res, randomDelay));
+
+      // 📧 Send
       await sendEmail({
         to: recipient.email,
         subject: step.subject,
@@ -52,7 +77,7 @@ new Worker(
         data: { status: "SENT" },
       });
 
-      // 📊 Increment campaign stats
+      // 📊 Increment safely
       await prisma.campaign.update({
         where: { id: campaignId },
         data: {
@@ -70,14 +95,12 @@ new Worker(
         data: { status: "FAILED" },
       });
 
-      throw err; // 🔁 retry
+      throw err;
     }
   },
   {
     connection: redis,
-
     concurrency: 10,
-
     limiter: {
       max: 20,
       duration: 1000,

@@ -495,19 +495,7 @@ enum CampaignStatus {
   FAILED
 }
 
-model CampaignRecipient {
-  id         String @id @default(cuid())
-  campaignId String
-  email      String
 
-  status    String
-  openedAt  DateTime?
-  clickedAt DateTime?
-
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-}
 
 
 
@@ -530,4 +518,21 @@ model CampaignStep {
 
   @@index([campaignId])
   @@index([order])
+}
+
+
+model CampaignRecipient {
+  id         String @id @default(cuid())
+  campaignId String
+  email      String
+
+  status    String
+  openedAt  DateTime?
+  clickedAt DateTime?
+  repliedAt   DateTime? 
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  unsubscribed Boolean @default(false)
+   unsubscribedAt  DateTime?
+  createdAt DateTime @default(now())
+  @@index([campaignId])
 }

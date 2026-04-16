@@ -8,8 +8,9 @@ export default function LeadsPage() {
   const { activeTeamId } = useTeamStore();
 
   const [leads, setLeads] = useState<any[]>([]);
-  const [query, setQuery] = useState(""); // ✅ NEW
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false); // ✅ NEW
 
   const load = async () => {
     if (!activeTeamId) return;
@@ -35,7 +36,7 @@ export default function LeadsPage() {
       method: "POST",
       body: JSON.stringify({
         teamId: activeTeamId,
-        query, // 🔥 ADDED
+        query,
       }),
     });
 
@@ -45,11 +46,30 @@ export default function LeadsPage() {
       toast.error(data.error);
     } else {
       toast.success(`Generated ${data.count} leads 🚀`);
-      setQuery(""); // optional reset
+      setQuery("");
       load();
     }
 
     setLoading(false);
+  };
+
+  // ✅ SEND CAMPAIGN
+  const sendCampaign = async () => {
+    setSending(true);
+
+    const res = await fetch("/api/campaign/send", {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      toast.error(data.error);
+    } else {
+      toast.success("Emails sent 🚀");
+    }
+
+    setSending(false);
   };
 
   return (
@@ -65,13 +85,22 @@ export default function LeadsPage() {
         className="border p-2 w-full rounded"
       />
 
-      {/* GENERATE */}
-      <button
-        onClick={generateLeads}
-        className="bg-purple-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? "Generating..." : "Generate Leads 🤖"}
-      </button>
+      {/* BUTTONS */}
+      <div className="flex gap-3">
+        <button
+          onClick={generateLeads}
+          className="bg-purple-600 text-white px-4 py-2 rounded"
+        >
+          {loading ? "Generating..." : "Generate Leads 🤖"}
+        </button>
+
+        <button
+          onClick={sendCampaign}
+          className="bg-green-600 text-white px-4 py-2 rounded"
+        >
+          {sending ? "Sending..." : "Send Campaign 📧"}
+        </button>
+      </div>
 
       {/* LIST */}
       <div className="space-y-2">

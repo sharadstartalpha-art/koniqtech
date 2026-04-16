@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 
 import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
-import { extractDomain } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +17,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Parse body safely
     const { teamId, query } = await req.json();
 
     if (!teamId) {
@@ -50,40 +48,40 @@ export async function POST(req: Request) {
 
     const created: any[] = [];
 
-    // 🔥 2. PROCESS LEADS SAFELY
-    for (const p of profiles.slice(0, 10)) {
+    // 🔥 2. PROCESS LEADS
+    for (const p of profiles.slice(0, 50)) {
       try {
         if (!p?.name) continue;
 
-        // ✅ SAFE DOMAIN EXTRACTION
-        const domain = extractDomain(p.title || "company");
+        // ✅ SPLIT NAME
+        const nameParts = p.name.split(" ");
+        const firstName = nameParts[0] || "";
+        const lastName = nameParts[1] || "";
 
-        // ✅ SAFE EMAIL FETCH
-        let email = null;
+        // ✅ DOMAIN (fallback safe)
+        const domain =
+          p.companyWebsite ||
+          p.company?.website ||
+          "";
+
+        let email: string | null = null;
 
         try {
-          email = await findEmail(domain, p.name);
+          email = await findEmail({
+            domain,
+            firstName,
+            lastName,
+          });
         } catch (e) {
           console.error("HUNTER ERROR:", e);
         }
 
-       if (!email) {
-  console.log("NO EMAIL, saving anyway:", p.name);
+        // ✅ FALLBACK (so UI still works)
+        if (!email) {
+          console.log("NO EMAIL, saving fallback:", p.name);
 
-  const lead = await prisma.lead.create({
-    data: {
-      email: `${p.name.replace(/\s+/g, "").toLowerCase()}@noemail.com`, // temp fake
-      name: p.name,
-      source: "linkedin",
-      userId,
-      projectId: project.id,
-      teamId,
-    },
-  });
-
-  created.push(lead);
-  continue;
-}
+          email = `${p.name.replace(/\s+/g, "").toLowerCase()}@noemail.com`;
+        }
 
         // ✅ CHECK DUPLICATE
         const exists = await prisma.lead.findFirst({
@@ -99,8 +97,11 @@ export async function POST(req: Request) {
         const lead = await prisma.lead.create({
           data: {
             email,
-            name: p.name,
-            source: "linkedin",
+            name: p.name || "",
+            company: p.company || "",
+            source: email.includes("noemail")
+              ? "linkedin"
+              : "linkedin+hunter",
             userId,
             projectId: project.id,
             teamId,
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
     console.error("FULL ERROR:", err);
 
     return NextResponse.json(
-      { error: String(err) }, // 🔥 shows real error
+      { error: String(err) },
       { status: 500 }
     );
   }

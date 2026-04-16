@@ -1,8 +1,8 @@
 export async function scrapeLinkedInApify({
-  keywords,
-  maxItems = 20,
+  query,
+  maxItems = 100,
 }: {
-  keywords: string;
+  query: string;
   maxItems?: number;
 }) {
   const res = await fetch(
@@ -13,9 +13,8 @@ export async function scrapeLinkedInApify({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        searchKeywords: keywords || "founder", // ✅ correct field
-        locations: ["United States"],          // ✅ improves results
-        maxItems,
+        search: query || "founder", // 🔥 UPDATED
+        maxItems, // 🔥 100 results
       }),
     }
   );
@@ -28,10 +27,14 @@ export async function scrapeLinkedInApify({
 
   const data = await res.json();
 
+  console.log("RAW APIFY:", data.length);
+
   return (data || []).map((p: any) => ({
     name: `${p.firstName || ""} ${p.lastName || ""}`.trim(),
     title: p.headline || "",
     profileUrl: p.linkedinUrl || "",
+    company: p.companyName || "",
+    companyWebsite: p.companyWebsite || "",
     email: null,
   }));
 }

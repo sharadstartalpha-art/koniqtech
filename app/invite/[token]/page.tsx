@@ -1,33 +1,37 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function InvitePage() {
   const { token } = useParams();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const acceptInvite = async () => {
-    setLoading(true);
-    setError("");
+  useEffect(() => {
+    const acceptInvite = async () => {
+      try {
+        const res = await fetch(`/api/invite/${token}`);
+        const data = await res.json();
 
-    const res = await fetch("/api/team/accept", {
-      method: "POST",
-      body: JSON.stringify({ token }),
-    });
+        if (data.error) {
+          setError(data.error);
+          setLoading(false);
+          return;
+        }
 
-    const data = await res.json();
+        // ✅ redirect after success
+        window.location.href = "/dashboard";
 
-    if (data.error) {
-      setError(data.error);
-      setLoading(false);
-      return;
-    }
+      } catch (err) {
+        console.error(err);
+        setError("Something went wrong");
+        setLoading(false);
+      }
+    };
 
-    // ✅ REDIRECT TO TEAM PAGE
-    window.location.href = `/teams/${data.teamId}`;
-  };
+    acceptInvite();
+  }, [token]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-4">
@@ -36,11 +40,10 @@ export default function InvitePage() {
       {error && <p className="text-red-500">{error}</p>}
 
       <button
-        onClick={acceptInvite}
-        disabled={loading}
+        disabled
         className="bg-black text-white px-6 py-2 rounded"
       >
-        {loading ? "Joining..." : "Accept Invite"}
+        {loading ? "Joining..." : "Failed"}
       </button>
     </div>
   );

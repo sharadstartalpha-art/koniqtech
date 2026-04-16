@@ -379,7 +379,7 @@ model TeamInvite {
   expiresAt DateTime
 
   team Team @relation(fields: [teamId], references: [id])
-
+accepted  Boolean  @default(false) // ✅ ADD THIS
   createdAt DateTime @default(now())
 }
 

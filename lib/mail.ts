@@ -9,7 +9,7 @@ export async function sendEmail(
   html: string
 ) {
   return await resend.emails.send({
-    from: "KoniqTech <onboarding@koniqtech.com>", // ⚠️ use resend.dev or verified domain
+    from: "KoniqTech <onboarding@resend.dev>", // ⚠️ use resend.dev or verified domain
     to,
     subject,
     html,

@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -15,29 +15,73 @@ export async function POST() {
       );
     }
 
-    const leads = await prisma.lead.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      take: 20, // 🔥 batch send
-    });
+    const { campaignId } = await req.json();
 
-    for (const lead of leads) {
-      if (!lead.email) continue;
-
-      await sendColdEmail(
-        lead.email,
-        lead.name || "there" // ✅ FIXED
-      );
+    if (!campaignId) {
+      return NextResponse.json({ error: "Campaign ID required" });
     }
 
-    return NextResponse.json({ success: true });
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      include: {
+        steps: true,
+        recipients: true,
+      },
+    });
+
+    if (!campaign) {
+      return NextResponse.json({ error: "Campaign not found" });
+    }
+
+    const step = campaign.steps.sort((a, b) => a.order - b.order)[0];
+
+    if (!step) {
+      return NextResponse.json({ error: "No campaign steps found" });
+    }
+
+    let sent = 0;
+
+    for (const r of campaign.recipients) {
+      if (!r.email || r.unsubscribed) continue;
+
+      try {
+        // ✅ FIXED: match your existing function
+        await sendColdEmail(
+          r.email,
+          r.email.split("@")[0] // name fallback
+        );
+
+        await prisma.campaignRecipient.update({
+          where: { id: r.id },
+          data: { status: "SENT" },
+        });
+
+        sent++;
+
+      } catch (err) {
+        console.error("EMAIL FAIL:", r.email);
+      }
+    }
+
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: {
+        status: "SENT",
+        totalSent: sent,
+        sentAt: new Date(),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      sent,
+    });
 
   } catch (err) {
     console.error("CAMPAIGN ERROR:", err);
 
     return NextResponse.json(
-      { error: "Failed to send emails" },
+      { error: "Failed to send campaign" },
       { status: 500 }
     );
   }

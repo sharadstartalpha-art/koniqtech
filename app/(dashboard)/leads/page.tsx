@@ -14,6 +14,7 @@ export default function LeadsPage() {
   const [sending, setSending] = useState(false);
   const [projectId, setProjectId] = useState("");
 
+  // 🔥 LOAD LEADS
   const load = async () => {
     if (!activeTeamId) return;
 
@@ -26,9 +27,15 @@ export default function LeadsPage() {
     load();
   }, [activeTeamId]);
 
+  // 🔥 GENERATE LEADS
   const generateLeads = async () => {
     if (!activeTeamId) {
       toast.error("Select a team first");
+      return;
+    }
+
+    if (!projectId) {
+      toast.error("Select or create a project first");
       return;
     }
 
@@ -59,6 +66,7 @@ export default function LeadsPage() {
     setLoading(false);
   };
 
+  // 🔥 SEND CAMPAIGN
   const sendCampaign = async () => {
     setSending(true);
 
@@ -82,8 +90,10 @@ export default function LeadsPage() {
 
       <h1 className="text-2xl font-bold">Leads 🚀</h1>
 
+      {/* 🔥 PROJECT SELECTOR */}
       <ProjectSwitcher onChange={(id) => setProjectId(id)} />
 
+      {/* 🔍 SEARCH */}
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -91,6 +101,7 @@ export default function LeadsPage() {
         className="border p-2 w-full rounded"
       />
 
+      {/* ACTIONS */}
       <div className="flex gap-3">
         <button
           onClick={generateLeads}
@@ -107,6 +118,7 @@ export default function LeadsPage() {
         </button>
       </div>
 
+      {/* LIST */}
       <div className="space-y-2">
         {leads.map((lead) => (
           <div key={lead.id} className="border p-3 rounded">

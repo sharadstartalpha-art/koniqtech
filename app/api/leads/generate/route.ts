@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { teamId, query } = await req.json();
+    const { teamId, projectId, query } = await req.json();
 
     if (!teamId) {
       return NextResponse.json({ error: "No team selected" });
@@ -25,43 +25,51 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    console.log("TEAM:", teamId);
-    console.log("QUERY:", query);
-
-    // 🔥 1. SCRAPE LINKEDIN
+    // 🔥 1. SCRAPE
     const profiles = await scrapeLinkedIn(query || "founder");
-
-    console.log("SCRAPED PROFILES:", profiles.length);
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No LinkedIn leads" });
     }
 
-    // 🔥 FIND PROJECT
-    const project = await prisma.project.findFirst({
-      where: { teamId },
-    });
+    // 🔥 2. GET OR CREATE PROJECT
+    let project;
+
+    if (projectId) {
+      project = await prisma.project.findUnique({
+        where: { id: projectId },
+      });
+    }
 
     if (!project) {
-      return NextResponse.json({ error: "No project found" });
+      const product = await prisma.product.findFirst();
+
+      if (!product) {
+        return NextResponse.json({ error: "No product found" });
+      }
+
+      project = await prisma.project.create({
+        data: {
+          name: "Default Project",
+          teamId,
+          userId,
+          productId: product.id, // ✅ FIXED
+        },
+      });
     }
 
     const created: any[] = [];
 
-    // 🔥 2. PROCESS LEADS
+    // 🔥 3. PROCESS LEADS
     for (const p of profiles.slice(0, 50)) {
       try {
         if (!p?.name) continue;
 
-        // ✅ SPLIT NAME
-        const nameParts = p.name.split(" ");
-        const firstName = nameParts[0] || "";
-        const lastName = nameParts[1] || "";
+        const [firstName = "", lastName = ""] = p.name.split(" ");
 
-        // ✅ DOMAIN (fallback safe)
         const domain =
-         // p.companyWebsite ||
-          p.company?.website ||
+          (p as any).companyWebsite ||
+          (p as any).company?.website ||
           "";
 
         let email: string | null = null;
@@ -76,14 +84,10 @@ export async function POST(req: Request) {
           console.error("HUNTER ERROR:", e);
         }
 
-        // ✅ FALLBACK (so UI still works)
         if (!email) {
-          console.log("NO EMAIL, saving fallback:", p.name);
-
           email = `${p.name.replace(/\s+/g, "").toLowerCase()}@noemail.com`;
         }
 
-        // ✅ CHECK DUPLICATE
         const exists = await prisma.lead.findFirst({
           where: {
             email,
@@ -93,11 +97,10 @@ export async function POST(req: Request) {
 
         if (exists) continue;
 
-        // ✅ CREATE LEAD
         const lead = await prisma.lead.create({
           data: {
             email,
-            name: p.name || "",
+            name: p.name,
             company: p.company || "",
             source: email.includes("noemail")
               ? "linkedin"
@@ -110,9 +113,8 @@ export async function POST(req: Request) {
 
         created.push(lead);
 
-      } catch (innerErr) {
-        console.error("LEAD ERROR:", innerErr);
-        continue;
+      } catch (err) {
+        console.error("LEAD ERROR:", err);
       }
     }
 

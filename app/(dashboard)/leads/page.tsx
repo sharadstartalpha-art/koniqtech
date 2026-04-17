@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTeamStore } from "@/lib/teamStore";
 import toast from "react-hot-toast";
+import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 export default function LeadsPage() {
   const { activeTeamId } = useTeamStore();
@@ -10,7 +11,8 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false); // ✅ NEW
+  const [sending, setSending] = useState(false);
+  const [projectId, setProjectId] = useState("");
 
   const load = async () => {
     if (!activeTeamId) return;
@@ -34,8 +36,12 @@ export default function LeadsPage() {
 
     const res = await fetch("/api/leads/generate", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         teamId: activeTeamId,
+        projectId,
         query,
       }),
     });
@@ -53,7 +59,6 @@ export default function LeadsPage() {
     setLoading(false);
   };
 
-  // ✅ SEND CAMPAIGN
   const sendCampaign = async () => {
     setSending(true);
 
@@ -77,7 +82,8 @@ export default function LeadsPage() {
 
       <h1 className="text-2xl font-bold">Leads 🚀</h1>
 
-      {/* 🔥 SEARCH INPUT */}
+      <ProjectSwitcher onChange={(id) => setProjectId(id)} />
+
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -85,7 +91,6 @@ export default function LeadsPage() {
         className="border p-2 w-full rounded"
       />
 
-      {/* BUTTONS */}
       <div className="flex gap-3">
         <button
           onClick={generateLeads}
@@ -102,7 +107,6 @@ export default function LeadsPage() {
         </button>
       </div>
 
-      {/* LIST */}
       <div className="space-y-2">
         {leads.map((lead) => (
           <div key={lead.id} className="border p-3 rounded">

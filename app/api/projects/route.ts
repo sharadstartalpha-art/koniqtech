@@ -6,31 +6,35 @@ import { NextResponse } from "next/server";
 export async function GET() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json([]);
   }
 
-  let user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    include: { projects: true },
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    include: {
+      projects: true,
+    },
   });
 
-  // ✅ SAFETY: create project if none
-  if (user && user.projects.length === 0) {
+  if (!user) return NextResponse.json([]);
+
+  // ✅ AUTO CREATE PROJECT
+  if (user.projects.length === 0) {
     const product = await prisma.product.findFirst();
 
-    if (product) {
-      const newProject = await prisma.project.create({
-        data: {
-          name: "My First Project",
-          userId: user.id,
-          productId: product.id,
-        },
-      });
+    if (!product) return NextResponse.json([]);
 
-      return NextResponse.json([newProject]);
-    }
+    const project = await prisma.project.create({
+      data: {
+        name: "My First Project",
+        userId: user.id,
+        productId: product.id,
+      },
+    });
+
+    return NextResponse.json([project]);
   }
 
-  return NextResponse.json(user?.projects || []);
+  return NextResponse.json(user.projects);
 }

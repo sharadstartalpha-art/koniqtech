@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     });
 
     // 📩 Send email
-    const link = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
+    const link = `${process.env.NEXT_PUBLIC_BASE_URL}/invite/${token}`;
 
     await sendInviteEmail(email, link);
 

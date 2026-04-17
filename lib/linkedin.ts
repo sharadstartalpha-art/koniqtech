@@ -7,13 +7,20 @@ export async function scrapeLinkedIn(query: string = "founder") {
       maxItems: 100,
     });
 
-    // 🔥 LIMIT INITIAL SET
+    if (!Array.isArray(leads) || leads.length === 0) {
+      console.warn("⚠️ No leads returned from Apify");
+      return [];
+    }
+
+    // 🔥 LIMIT INITIAL SET (for performance)
     const people = leads.slice(0, 25);
+
+    console.log("✅ LinkedIn leads fetched:", people.length);
 
     return people;
 
   } catch (err) {
-    console.error("LINKEDIN SCRAPE ERROR:", err);
+    console.error("❌ LINKEDIN SCRAPE ERROR:", err);
     return [];
   }
 }

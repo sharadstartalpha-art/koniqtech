@@ -1,50 +1,57 @@
-"use client";
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+export default async function InvitePage({
+  params,
+}: {
+  params: { token: string };
+}) {
+  const session = await getServerSession(authOptions);
 
-export default function InvitePage() {
-  const { token } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
 
-  useEffect(() => {
-    const acceptInvite = async () => {
-      try {
-        const res = await fetch(`/api/invite/${token}`);
-        const data = await res.json();
+  const invite = await prisma.teamInvite.findUnique({
+    where: { token: params.token },
+  });
 
-        if (data.error) {
-          setError(data.error);
-          setLoading(false);
-          return;
-        }
+  if (!invite || invite.expiresAt < new Date()) {
+    return <p className="p-10">Invalid or expired invite</p>;
+  }
 
-        // ✅ redirect after success
-        window.location.href = "/dashboard";
+  // ✅ GET USER BY EMAIL (IMPORTANT FIX)
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
 
-      } catch (err) {
-        console.error(err);
-        setError("Something went wrong");
-        setLoading(false);
-      }
-    };
+  if (!user) {
+    return <p className="p-10">User not found</p>;
+  }
 
-    acceptInvite();
-  }, [token]);
+  // ✅ prevent duplicate join
+  const alreadyMember = await prisma.teamMember.findFirst({
+    where: {
+      teamId: invite.teamId,
+      userId: user.id,
+    },
+  });
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen gap-4">
-      <h1 className="text-2xl font-bold">Join Team 🚀</h1>
+  if (!alreadyMember) {
+    await prisma.teamMember.create({
+      data: {
+        teamId: invite.teamId,
+        userId: user.id,
+        role: "MEMBER",
+      },
+    });
+  }
 
-      {error && <p className="text-red-500">{error}</p>}
+  await prisma.teamInvite.delete({
+    where: { id: invite.id },
+  });
 
-      <button
-        disabled
-        className="bg-black text-white px-6 py-2 rounded"
-      >
-        {loading ? "Joining..." : "Failed"}
-      </button>
-    </div>
-  );
+  redirect(`/teams/${invite.teamId}`);
 }

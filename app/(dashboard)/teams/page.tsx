@@ -28,9 +28,12 @@ export default function TeamsPage() {
     if (!name) return;
 
     await fetch("/api/team", {
-      method: "POST",
-      body: JSON.stringify({ name }),
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ name }),
+});
 
     setName("");
     loadTeams();
@@ -102,10 +105,13 @@ export default function TeamsPage() {
                       const newName = prompt("New name:", team.name);
                       if (!newName) return;
 
-                      fetch(`/api/team/${team.id}`, {
-                        method: "PUT",
-                        body: JSON.stringify({ name: newName }),
-                      }).then(loadTeams);
+                     fetch(`/api/team/${team.id}`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ name: newName }),
+}).then(loadTeams);
                     }}
                     className="px-3 py-1 border rounded"
                   >

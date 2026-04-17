@@ -60,7 +60,7 @@ export async function POST(req: Request) {
 
         // ✅ DOMAIN (fallback safe)
         const domain =
-          p.companyWebsite ||
+         // p.companyWebsite ||
           p.company?.website ||
           "";
 

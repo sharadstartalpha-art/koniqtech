@@ -13,7 +13,7 @@ export async function sendEmail({
 }) {
   try {
     return await resend.emails.send({
-      from: "KoniqTech <noreply@koniqtech.com>",
+      from: "KoniqTech <info@koniqtech.com>",
       to,
       subject,
       html,
@@ -26,7 +26,7 @@ export async function sendEmail({
 
 export async function sendColdEmail(to: string, name?: string) {
   return await resend.emails.send({
-    from: "KoniqTech <noreply@koniqtech.com>",
+    from: "KoniqTech <info@koniqtech.com>",
     to,
     subject: "Quick question 👀",
     html: `

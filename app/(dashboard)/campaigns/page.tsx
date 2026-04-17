@@ -1,57 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTeamStore } from "@/lib/teamStore";
+import toast from "react-hot-toast";
 
-export default function CampaignPage() {
-  const [name, setName] = useState("");
-  const [subject, setSubject] = useState("");
-  const [content, setContent] = useState("");
+export default function CampaignsPage() {
+  const { activeTeamId } = useTeamStore();
+  const [campaigns, setCampaigns] = useState<any[]>([]);
 
-  const createCampaign = async () => {
-    await fetch("/api/campaigns/create", {
+  const load = async () => {
+    const res = await fetch(`/api/campaign?teamId=${activeTeamId}`);
+    const data = await res.json();
+    setCampaigns(data);
+  };
+
+  useEffect(() => {
+    if (activeTeamId) load();
+  }, [activeTeamId]);
+
+  const sendCampaign = async (id: string) => {
+    const res = await fetch("/api/campaign/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, subject, content }),
+      body: JSON.stringify({ campaignId: id }),
     });
 
-    alert("Campaign created 🚀");
+    const data = await res.json();
+
+    if (data.error) {
+      toast.error(data.error);
+    } else {
+      toast.success(`Sent ${data.sent} emails 🚀`);
+      load();
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 space-y-4">
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">Campaigns 📧</h1>
 
-      <h1 className="text-2xl font-bold">Email Campaigns 📬</h1>
+      {campaigns.length === 0 ? (
+        <p>No campaigns yet</p>
+      ) : (
+        campaigns.map((c) => (
+          <div key={c.id} className="border p-4 rounded">
+            <div className="font-bold">{c.name}</div>
+            <div className="text-sm text-gray-500">
+              {c.subject}
+            </div>
+            
 
-      <input
-        placeholder="Campaign name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border p-2 w-full rounded"
-      />
-
-      <input
-        placeholder="Subject"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        className="border p-2 w-full rounded"
-      />
-
-      <textarea
-        placeholder="Email content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="border p-2 w-full rounded h-32"
-      />
-
-      <button
-        onClick={createCampaign}
-        className="bg-black text-white px-4 py-2 rounded-lg w-full"
-      >
-        Create Campaign
-      </button>
-
+            <button
+              onClick={() => sendCampaign(c.id)}
+              className="mt-2 bg-green-600 text-white px-3 py-1 rounded"
+            >
+              Send 🚀
+            </button>
+          </div>
+        ))
+      )}
     </div>
   );
 }

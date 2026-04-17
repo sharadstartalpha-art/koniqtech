@@ -2,6 +2,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// ✅ Generic email (used by campaigns)
 export async function sendEmail({
   to,
   subject,
@@ -24,6 +25,7 @@ export async function sendEmail({
   }
 }
 
+// ⚠️ Keep this only for quick testing
 export async function sendColdEmail(to: string, name?: string) {
   return await resend.emails.send({
     from: "KoniqTech <info@koniqtech.com>",

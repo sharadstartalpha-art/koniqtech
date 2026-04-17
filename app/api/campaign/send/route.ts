@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sendColdEmail } from "@/lib/mail";
+import { sendEmail } from "@/lib/mail";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -45,11 +45,21 @@ export async function POST(req: Request) {
       if (!r.email || r.unsubscribed) continue;
 
       try {
-        // ✅ FIXED: match your existing function
-        await sendColdEmail(
-          r.email,
-          r.email.split("@")[0] // name fallback
-        );
+        const name = r.email.split("@")[0];
+
+        // ✅ TRACKING PIXEL
+        const trackingPixel = `
+          <img src="${process.env.NEXT_PUBLIC_APP_URL}/api/track/open?rid=${r.id}" width="1" height="1" />
+        `;
+
+        const html = step.body
+          .replace("{{name}}", name) + trackingPixel;
+
+        await sendEmail({
+          to: r.email,
+          subject: step.subject,
+          html,
+        });
 
         await prisma.campaignRecipient.update({
           where: { id: r.id },

@@ -9,7 +9,7 @@ export async function scrapeLinkedIn(query: string = "founder") {
 
     if (!Array.isArray(leads) || leads.length === 0) {
       console.warn("⚠️ No leads returned from Apify");
-      return [];
+      return [ { name: "Test Lead", company: "Demo", email: null }];
     }
 
     // 🔥 LIMIT INITIAL SET (for performance)

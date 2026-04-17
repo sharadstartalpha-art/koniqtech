@@ -104,6 +104,7 @@ model Lead {
   name         String?
   email        String?
   company      String?
+  profileUrl  String?
   website      String?
   phone        String? // ✅ ADD
   location     String? // ✅ ADD

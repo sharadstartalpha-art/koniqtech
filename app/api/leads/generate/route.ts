@@ -11,10 +11,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { teamId, projectId, query } = await req.json();
@@ -33,7 +30,7 @@ export async function POST(req: Request) {
     }
 
     // 🔥 2. GET OR CREATE PROJECT
-    let project;
+    let project = null;
 
     if (projectId) {
       project = await prisma.project.findUnique({
@@ -53,7 +50,7 @@ export async function POST(req: Request) {
           name: "Default Project",
           teamId,
           userId,
-          productId: product.id, // ✅ FIXED
+          productId: product.id,
         },
       });
     }
@@ -63,13 +60,21 @@ export async function POST(req: Request) {
     // 🔥 3. PROCESS LEADS
     for (const p of profiles.slice(0, 50)) {
       try {
-        if (!p?.name) continue;
+        if (!p?.name || !p.company) continue;
+
+        // 🎯 FILTER (only decision makers)
+        if (
+          !p.title?.toLowerCase().includes("founder") &&
+          !p.title?.toLowerCase().includes("ceo")
+        ) {
+          continue;
+        }
 
         const [firstName = "", lastName = ""] = p.name.split(" ");
 
         const domain =
-          (p as any).companyWebsite ||
-          (p as any).company?.website ||
+          p.companyWebsite ||
+          p.company?.website ||
           "";
 
         let email: string | null = null;
@@ -84,14 +89,24 @@ export async function POST(req: Request) {
           console.error("HUNTER ERROR:", e);
         }
 
+        // ✅ smarter fallback
         if (!email) {
-          email = `${p.name.replace(/\s+/g, "").toLowerCase()}@noemail.com`;
+          const safe = p.name.replace(/\s+/g, "").toLowerCase();
+
+          if (domain) {
+            email = `${safe}@${domain.replace("https://", "").replace("www.", "")}`;
+          } else {
+            email = `${safe}@gmail.com`;
+          }
         }
 
+        // 🚫 duplicate check
         const exists = await prisma.lead.findFirst({
           where: {
-            email,
-            projectId: project.id,
+            OR: [
+              { email },
+              { profileUrl: p.profileUrl },
+            ],
           },
         });
 
@@ -102,12 +117,11 @@ export async function POST(req: Request) {
             email,
             name: p.name,
             company: p.company || "",
-            source: email.includes("noemail")
-              ? "linkedin"
-              : "linkedin+hunter",
+            source: "linkedin",
             userId,
             projectId: project.id,
             teamId,
+            profileUrl: p.profileUrl || "",
           },
         });
 

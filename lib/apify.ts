@@ -39,19 +39,24 @@ export async function scrapeLinkedInApify({
       return [];
     }
 
-    console.log("📦 RAW APIFY RESULTS:", data.length);
+    console.log("📦 APIFY RESULTS:", data.length);
 
-    // 🔥 CLEAN + SAFE MAP
     return data.map((p: any) => {
       const firstName = p.firstName || "";
       const lastName = p.lastName || "";
 
       return {
-        name: `${firstName} ${lastName}`.trim() || "Unknown",
+        name: `${firstName} ${lastName}`.trim(),
+        firstName,
+        lastName,
         title: p.headline || "",
         profileUrl: p.linkedinUrl || "",
         company: p.companyName || "",
-        companyWebsite: p.companyWebsite || "",
+        companyWebsite:
+          p.companyWebsite ||
+          p.company?.website ||
+          "",
+        location: p.location || "",
         email: null,
       };
     });

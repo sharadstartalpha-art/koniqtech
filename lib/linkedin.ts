@@ -9,10 +9,10 @@ export async function scrapeLinkedIn(query: string = "founder") {
 
     if (!Array.isArray(leads) || leads.length === 0) {
       console.warn("⚠️ No leads returned from Apify");
-      return [ { name: "Test Lead", company: "Demo", email: null }];
+      return [];
     }
 
-    // 🔥 LIMIT INITIAL SET (for performance)
+    // ✅ limit for performance
     const people = leads.slice(0, 25);
 
     console.log("✅ LinkedIn leads fetched:", people.length);

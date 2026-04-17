@@ -88,7 +88,7 @@ export default function LeadsPage() {
   return (
     <div className="p-6 space-y-6">
 
-      <h1 className="text-2xl font-bold">Leads 🚀</h1>
+      <h1 className="text-2xl font-bold">Lead Engine 🚀</h1>
 
       {/* 🔥 PROJECT SELECTOR */}
       <ProjectSwitcher onChange={(id) => setProjectId(id)} />

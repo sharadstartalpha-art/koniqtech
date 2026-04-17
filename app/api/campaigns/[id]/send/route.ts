@@ -1,14 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
+import { NextRequest } from "next/server";
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export async function POST(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const campaignId = params.id;
+    // ✅ FIX: await params
+    const { id: campaignId } = await params;
 
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },

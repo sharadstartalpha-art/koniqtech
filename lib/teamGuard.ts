@@ -1,18 +1,26 @@
-import {prisma} from "@/lib/prisma";
+import { prisma } from "./prisma";
 
 export async function requireTeamMember(
-  userId: string,
+  userEmail: string,
   teamId: string
 ) {
+  const user = await prisma.user.findUnique({
+    where: { email: userEmail },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   const member = await prisma.teamMember.findFirst({
     where: {
       teamId,
-      userId,
+      userId: user.id,
     },
   });
 
   if (!member) {
-    throw new Error("NOT_IN_TEAM");
+    throw new Error("Not a team member");
   }
 
   return member;

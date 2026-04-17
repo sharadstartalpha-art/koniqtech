@@ -1,57 +1,54 @@
-import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+"use client";
 
-export default async function InvitePage({
-  params,
-}: {
-  params: { token: string };
-}) {
-  const session = await getServerSession(authOptions);
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 
-  if (!session?.user?.email) {
-    redirect("/login");
-  }
+export default function InvitePage() {
+  const { token } = useParams();
+  const router = useRouter();
 
-  const invite = await prisma.teamInvite.findUnique({
-    where: { token: params.token },
-  });
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  if (!invite || invite.expiresAt < new Date()) {
-    return <p className="p-10">Invalid or expired invite</p>;
-  }
+  const acceptInvite = async () => {
+    setLoading(true);
+    setMessage("");
 
-  // ✅ GET USER BY EMAIL (IMPORTANT FIX)
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  });
-
-  if (!user) {
-    return <p className="p-10">User not found</p>;
-  }
-
-  // ✅ prevent duplicate join
-  const alreadyMember = await prisma.teamMember.findFirst({
-    where: {
-      teamId: invite.teamId,
-      userId: user.id,
-    },
-  });
-
-  if (!alreadyMember) {
-    await prisma.teamMember.create({
-      data: {
-        teamId: invite.teamId,
-        userId: user.id,
-        role: "MEMBER",
-      },
+    const res = await fetch(`/api/invite/${token}`, {
+      method: "POST",
     });
-  }
 
-  await prisma.teamInvite.delete({
-    where: { id: invite.id },
-  });
+    const data = await res.json();
 
-  redirect(`/teams/${invite.teamId}`);
+    if (!res.ok) {
+      setMessage(data.error || "Failed");
+    } else {
+      setMessage("✅ Joined successfully!");
+      setTimeout(() => {
+        router.push("/teams");
+      }, 1500);
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex items-center justify-center h-[80vh]">
+      <div className="bg-white p-8 rounded-xl shadow text-center space-y-4">
+        <h1 className="text-2xl font-bold">Join Team 🚀</h1>
+
+        {message && (
+          <p className="text-sm text-red-500">{message}</p>
+        )}
+
+        <button
+          onClick={acceptInvite}
+          disabled={loading}
+          className="bg-black text-white px-6 py-2 rounded"
+        >
+          {loading ? "Joining..." : "Accept Invite"}
+        </button>
+      </div>
+    </div>
+  );
 }

@@ -41,9 +41,32 @@ export default function ProjectSwitcher({
         ))}
       </select>
 
-      <a href="/projects" className="text-blue-600 text-sm">
-        + New
-      </a>
+      <button
+  onClick={async () => {
+    const name = prompt("Project name");
+    if (!name) return;
+
+    const res = await fetch("/api/projects/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      alert(data.error);
+    } else {
+      alert("Project created 🚀");
+      window.location.reload();
+    }
+  }}
+  className="text-blue-600 text-sm"
+>
+  + New
+</button>
 
     </div>
   );

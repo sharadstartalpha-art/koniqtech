@@ -3,23 +3,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    return NextResponse.json([]);
+    if (!session?.user?.id) {
+      return NextResponse.json([]);
+    }
+
+    const campaigns = await prisma.campaign.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return NextResponse.json(campaigns);
+
+  } catch (err) {
+    console.error("GET CAMPAIGNS ERROR:", err);
+
+    return NextResponse.json(
+      { error: "Failed to fetch campaigns" },
+      { status: 500 }
+    );
   }
-
-  const { searchParams } = new URL(req.url);
-  const teamId = searchParams.get("teamId");
-
-  const campaigns = await prisma.campaign.findMany({
-    where: {
-      userId: session.user.id,
-      ...(teamId ? { teamId } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json(campaigns);
 }

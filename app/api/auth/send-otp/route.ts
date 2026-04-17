@@ -6,7 +6,7 @@ import { sendEmail } from "@/lib/mail";
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 // 🚫 prevent running during Next.js build
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV === "production")  {
   console.log("🚀 Campaign Worker Started");
 
   new Worker(

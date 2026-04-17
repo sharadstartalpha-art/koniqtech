@@ -7,39 +7,45 @@ import { requireTeamMember } from "@/lib/teamGuard";
 import { logActivity } from "@/lib/activity";
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { name, activeTeamId } = await req.json();
-
-  if (!name) {
-    return NextResponse.json({ error: "Name required" }, { status: 400 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" });
-  }
-
-  const product = await prisma.product.findFirst();
-
-  if (!product) {
-    return NextResponse.json({ error: "No product found" });
-  }
-
   try {
-    // 🔐 TEAM ACCESS CHECK (only if team used)
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { name, activeTeamId } = await req.json();
+
+    if (!name) {
+      return NextResponse.json(
+        { error: "Name required" },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" });
+    }
+
+    const product = await prisma.product.findFirst();
+
+    if (!product) {
+      return NextResponse.json({ error: "No product found" });
+    }
+
+    // 🔐 TEAM ACCESS
     if (activeTeamId) {
       await requireTeamMember(user.id, activeTeamId);
     }
 
-    // 🔥 CHECK CREDITS
+    // 💳 CHECK CREDITS
     await checkUsage(user.id, 1, activeTeamId);
 
     // 🚀 CREATE PROJECT
@@ -48,14 +54,14 @@ export async function POST(req: Request) {
         name,
         userId: user.id,
         productId: product.id,
-        teamId: activeTeamId || null, // 🔥 multi-tenant support
+        teamId: activeTeamId || null,
       },
     });
 
-    // 💳 DEDUCT CREDITS
+    // 💰 DEDUCT
     await deductCredits(user.id, 1, "PROJECT_CREATE", activeTeamId);
 
-    // 📊 ACTIVITY LOG
+    // 📊 LOG
     await logActivity(
       user.id,
       "PROJECT_CREATED",
@@ -64,7 +70,10 @@ export async function POST(req: Request) {
     );
 
     return NextResponse.json(project);
+
   } catch (err: any) {
+    console.error("PROJECT CREATE ERROR:", err);
+
     return NextResponse.json(
       { error: err.message || "Something went wrong" },
       { status: 400 }

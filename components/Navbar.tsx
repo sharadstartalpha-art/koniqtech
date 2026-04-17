@@ -34,15 +34,19 @@ export default function Navbar() {
         KoniqTech 🚀
       </Link>
 
-      <div className="flex items-center gap-6 relative">
+      <div className="flex items-center gap-5">
 
         {!isAdmin && session && <TeamSwitcher />}
 
-        {!isAdminPage && <Link href="/pricing">Pricing</Link>}
+        {!isAdminPage && (
+          <Link href="/pricing" className="text-sm hover:text-gray-600">
+            Pricing
+          </Link>
+        )}
 
         {session ? (
           <>
-            <Link href={isAdmin ? "/admin/dashboard" : "/dashboard"}>
+            <Link href="/dashboard" className="text-sm">
               Dashboard
             </Link>
 
@@ -85,9 +89,10 @@ export default function Navbar() {
         ) : (
           <>
             <Link href="/login">Login</Link>
+
             <Link
               href="/register"
-              className="bg-black text-white px-4 py-2 rounded-lg"
+              className="bg-black text-white px-5 py-2 rounded-lg whitespace-nowrap"
             >
               Get Started
             </Link>

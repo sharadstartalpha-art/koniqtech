@@ -24,19 +24,27 @@ export default function ProjectSwitcher({
   }, []);
 
   return (
-    <select
-      value={active}
-      onChange={(e) => {
-        setActive(e.target.value);
-        onChange(e.target.value);
-      }}
-      className="border px-3 py-2 rounded"
-    >
-      {projects.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.name}
-        </option>
-      ))}
-    </select>
+    <div className="flex items-center gap-2">
+
+      <select
+        value={active}
+        onChange={(e) => {
+          setActive(e.target.value);
+          onChange(e.target.value);
+        }}
+        className="border px-3 py-2 rounded"
+      >
+        {projects.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}
+          </option>
+        ))}
+      </select>
+
+      <a href="/projects" className="text-blue-600 text-sm">
+        + New
+      </a>
+
+    </div>
   );
 }

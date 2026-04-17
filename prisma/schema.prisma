@@ -466,7 +466,7 @@ model Campaign {
   subject String
   content String
   status  CampaignStatus @default(DRAFT)
-
+teamId String?
   scheduledAt DateTime?
   sentAt      DateTime?
 

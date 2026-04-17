@@ -2,7 +2,6 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ✅ GENERIC EMAIL
 export async function sendEmail({
   to,
   subject,
@@ -12,18 +11,22 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
-  return await resend.emails.send({
-    from: "KoniqTech <onboarding@resend.dev>",
-    to,
-    subject,
-    html,
-  });
+  try {
+    return await resend.emails.send({
+      from: "KoniqTech <noreply@koniqtech.com>",
+      to,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error("❌ Email send failed:", err);
+    throw err;
+  }
 }
 
-// ✅ COLD EMAIL
 export async function sendColdEmail(to: string, name?: string) {
   return await resend.emails.send({
-    from: "KoniqTech <onboarding@resend.dev>",
+    from: "KoniqTech <noreply@koniqtech.com>",
     to,
     subject: "Quick question 👀",
     html: `

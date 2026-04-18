@@ -35,6 +35,8 @@ export async function POST(req: Request) {
     // 🔥 1. FETCH LEADS
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
+    console.log("APOLLO RESPONSE:", profiles); // ✅ added log
+
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
     }
@@ -72,14 +74,13 @@ export async function POST(req: Request) {
       try {
         if (!p?.name || !p.company) continue;
 
-        // 🎯 FILTER (safe now)
-        const title = p.title?.toLowerCase() || "";
+        // 🎯 FILTER (safe + optional)
+        if (p.title) {
+          const title = p.title.toLowerCase();
 
-        if (
-          !title.includes("founder") &&
-          !title.includes("ceo")
-        ) {
-          continue;
+          if (!title.includes("founder") && !title.includes("ceo")) {
+            continue;
+          }
         }
 
         const [firstName = "", lastName = ""] = p.name.split(" ");
@@ -105,19 +106,21 @@ export async function POST(req: Request) {
         }
 
         // ⚡ Smart fallback
-        if (!email) {
+        if (!email && domain) {
           const safe = p.name.replace(/\s+/g, "").toLowerCase();
 
-          if (domain) {
-            const cleanDomain = domain
-              .replace(/^https?:\/\//, "")
-              .replace(/^www\./, "");
+          const cleanDomain = domain
+            .replace(/^https?:\/\//, "")
+            .replace(/^www\./, "");
 
-            email = `${safe}@${cleanDomain}`;
-          } else {
-            email = `${safe}@gmail.com`;
-          }
+          email = `${safe}@${cleanDomain}`;
         }
+
+        // ❌ Still no email → skip
+        if (!email) continue;
+
+        // ✅ Validate email format (your requirement)
+        if (!email.includes("@")) continue;
 
         // 🚫 Duplicate check
         const exists = await prisma.lead.findFirst({

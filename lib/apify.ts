@@ -22,13 +22,17 @@ export async function scrapeLinkedInApify({
       }
     );
 
-    const data = await res.json();
+    const raw = await res.json();
 
-    console.log("📦 GOOGLE RAW:", data.length);
+    console.log("📦 RAW TYPE:", typeof raw);
+    console.log("📦 RAW:", raw);
 
-    // 🔥 Extract LinkedIn profiles
-    return data
-      .flatMap((item: any) => item.organicResults || [])
+    // ✅ Normalize response
+    const items = Array.isArray(raw) ? raw : [raw];
+
+    const results = items
+      .map((item: any) => item.organicResults || [])
+      .flat()
       .filter((r: any) => r.url?.includes("linkedin.com/in"))
       .slice(0, maxItems)
       .map((r: any) => ({
@@ -40,8 +44,12 @@ export async function scrapeLinkedInApify({
         email: null,
       }));
 
+    console.log("✅ FINAL LEADS:", results.length);
+
+    return results;
+
   } catch (err) {
-    console.error("SCRAPER ERROR:", err);
+    console.error("❌ SCRAPER ERROR:", err);
     return [];
   }
 }

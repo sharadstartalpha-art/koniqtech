@@ -12,7 +12,6 @@ type Profile = {
   company?: string;
   title?: string;
   domain?: string;
-  companyWebsite?: string;
   profileUrl?: string;
 };
 
@@ -32,10 +31,10 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // 🔥 1. FETCH LEADS
+    // 🔥 1. SCRAPE (Apify only)
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
-    console.log("APOLLO RESPONSE:", profiles); // ✅ added log
+    console.log("APIFY RESPONSE:", profiles);
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
@@ -74,29 +73,23 @@ export async function POST(req: Request) {
       try {
         if (!p?.name || !p.company) continue;
 
-        // 🎯 FILTER (safe + optional)
+        // 🎯 OPTIONAL FILTER
         if (p.title) {
-          const title = p.title.toLowerCase();
-
-          if (!title.includes("founder") && !title.includes("ceo")) {
+          const t = p.title.toLowerCase();
+          if (!t.includes("founder") && !t.includes("ceo")) {
             continue;
           }
         }
 
         const [firstName = "", lastName = ""] = p.name.split(" ");
 
-        const domain =
-          p.domain ||
-          p.companyWebsite ||
-          "";
-
         let email: string | null = p.email || null;
 
-        // 🔥 Try Hunter if missing
-        if (!email && domain && firstName && lastName) {
+        // 🔥 Try Hunter
+        if (!email && p.domain && firstName && lastName) {
           try {
             email = await findEmail({
-              domain,
+              domain: p.domain,
               firstName,
               lastName,
             });
@@ -105,21 +98,21 @@ export async function POST(req: Request) {
           }
         }
 
-        // ⚡ Smart fallback
-        if (!email && domain) {
+        // ⚡ Fallback email guess
+        if (!email && p.domain) {
           const safe = p.name.replace(/\s+/g, "").toLowerCase();
 
-          const cleanDomain = domain
+          const cleanDomain = p.domain
             .replace(/^https?:\/\//, "")
             .replace(/^www\./, "");
 
           email = `${safe}@${cleanDomain}`;
         }
 
-        // ❌ Still no email → skip
+        // ❌ Still no email
         if (!email) continue;
 
-        // ✅ Validate email format (your requirement)
+        // ✅ Basic validation
         if (!email.includes("@")) continue;
 
         // 🚫 Duplicate check

@@ -8,6 +8,11 @@ export async function scrapeLinkedInApify({
   try {
     const token = process.env.APIFY_API_TOKEN;
 
+    if (!token) {
+      console.error("❌ Missing APIFY_API_TOKEN");
+      return [];
+    }
+
     const res = await fetch(
       `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${token}`,
       {
@@ -16,31 +21,44 @@ export async function scrapeLinkedInApify({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: `site:linkedin.com/in ${query}`, // ✅ FIXED
+          queries: `site:linkedin.com/in ${query}`,
           maxPagesPerQuery: 1,
         }),
       }
     );
 
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("❌ APIFY ERROR:", res.status, text);
+      return [];
+    }
+
     const raw = await res.json();
 
-    console.log("📦 RAW:", raw);
+    console.log("📦 RAW:", JSON.stringify(raw).slice(0, 500));
 
     const items = Array.isArray(raw) ? raw : [raw];
 
-   const results = items
-  .map((item: any) => item.organicResults || [])
-  .flat()
-  .filter((r: any) => r.link?.includes("linkedin.com/in"))
-  .slice(0, maxItems)
-  .map((r: any) => ({
-    name: r.title?.split(" - ")[0] || "",
-    title: r.title || "",
-    profileUrl: r.link, // ✅ FIXED
-    company: "",
-    domain: "",
-    email: null,
-  }));
+    const results = items
+      .flatMap((item: any) => item.organicResults || [])
+      .map((r: any) => {
+        // 🔥 handle both possible fields
+        const link = r.link || r.url || "";
+
+        return {
+          name: (r.title || "").split(" - ")[0] || "",
+          title: r.title || "",
+          profileUrl: link,
+          company: "",
+          domain: "",
+          email: null,
+        };
+      })
+      .filter((p: any) =>
+        p.profileUrl.includes("linkedin.com/in")
+      )
+      .slice(0, maxItems);
+
     console.log("✅ FINAL LEADS:", results.length);
 
     return results;

@@ -5,32 +5,34 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    // ✅ FIX: get session
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { name, subject, content, teamId } = await req.json();
-
-    if (!name || !subject || !content) {
-      return NextResponse.json(
-        { error: "Missing fields" },
-        { status: 400 }
-      );
-    }
 
     const campaign = await prisma.campaign.create({
       data: {
         name,
         subject,
         content,
-        userId: session.user.id, // ✅ NOW WORKS
-        teamId: teamId || null,  // ✅ optional
+        userId: session.user.id,
+        teamId: teamId || null,
+
+        // ✅ CREATE DEFAULT STEP
+        steps: {
+          create: [
+            {
+              name: "Step 1",
+              subject: subject || "Quick question 👀",
+              body: content || "Hi {{name}}, let's connect!",
+              order: 1,
+              delay: 0,
+            },
+          ],
+        },
       },
     });
 

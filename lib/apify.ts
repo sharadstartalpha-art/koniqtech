@@ -28,20 +28,19 @@ export async function scrapeLinkedInApify({
 
     const items = Array.isArray(raw) ? raw : [raw];
 
-    const results = items
-      .map((item: any) => item.organicResults || [])
-      .flat()
-      .filter((r: any) => r.url?.includes("linkedin.com/in"))
-      .slice(0, maxItems)
-      .map((r: any) => ({
-        name: r.title?.split(" - ")[0] || "",
-        title: r.title || "",
-        profileUrl: r.url,
-        company: "",
-        domain: "",
-        email: null,
-      }));
-
+   const results = items
+  .map((item: any) => item.organicResults || [])
+  .flat()
+  .filter((r: any) => r.link?.includes("linkedin.com/in"))
+  .slice(0, maxItems)
+  .map((r: any) => ({
+    name: r.title?.split(" - ")[0] || "",
+    title: r.title || "",
+    profileUrl: r.link, // ✅ FIXED
+    company: "",
+    domain: "",
+    email: null,
+  }));
     console.log("✅ FINAL LEADS:", results.length);
 
     return results;

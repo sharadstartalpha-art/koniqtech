@@ -11,6 +11,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState("");
 
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,9 +80,9 @@ export default function LeadsPage() {
       return toast.error("Select leads first");
     }
 
-    const campaignId = prompt("Enter Campaign ID");
-
-    if (!campaignId) return;
+    if (!selectedCampaign) {
+      return toast.error("Select a campaign");
+    }
 
     const res = await fetch("/api/campaign/add-leads", {
       method: "POST",
@@ -89,7 +90,7 @@ export default function LeadsPage() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        campaignId,
+        campaignId: selectedCampaign,
         leadIds: selected,
       }),
     });
@@ -101,6 +102,7 @@ export default function LeadsPage() {
     } else {
       toast.success("Leads added to campaign 🚀");
       setSelected([]);
+      setSelectedCampaign("");
     }
   };
 
@@ -134,13 +136,28 @@ export default function LeadsPage() {
       {/* ACTION BAR */}
       <div className="flex justify-between items-center">
 
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+
           <button
             onClick={generateLeads}
             className="bg-purple-600 text-white px-4 py-2 rounded"
           >
             {loading ? "Generating..." : "Generate Leads 🤖"}
           </button>
+
+          {/* 🎯 CAMPAIGN SELECT */}
+          <select
+            value={selectedCampaign}
+            onChange={(e) => setSelectedCampaign(e.target.value)}
+            className="border px-3 py-2 rounded"
+          >
+            <option value="">Select Campaign</option>
+            {campaigns.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
 
           <button
             onClick={addToCampaign}
@@ -150,7 +167,7 @@ export default function LeadsPage() {
           </button>
         </div>
 
-        {/* ✅ SEARCH RIGHT SIDE */}
+        {/* 🔍 SEARCH */}
         <input
           type="text"
           placeholder="Search in leads..."

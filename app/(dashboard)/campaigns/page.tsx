@@ -154,6 +154,7 @@ export default function CampaignsPage() {
                 <th className="p-3">#</th>
                 <th className="text-left p-3">Name</th>
                 <th className="text-left p-3">Status</th>
+                <th className="p-3 text-left">Leads</th>
                 <th className="text-left p-3">Sent</th>
                 <th className="text-left p-3">Actions</th>
               </tr>
@@ -166,13 +167,13 @@ export default function CampaignsPage() {
                   <td className="p-3">{start + i + 1}</td>
 
                   <td className="p-3 font-medium">{c.name}</td>
-
+                  
                   <td className="p-3">
                     <span className="text-xs px-2 py-1 bg-gray-200 rounded">
                       {c.status}
                     </span>
                   </td>
-
+                    <td className="p-3"> {c._count?.recipients || 0} leads</td>
                   <td className="p-3">{c.totalSent || 0}</td>
 
                   <td className="p-3 flex gap-2">

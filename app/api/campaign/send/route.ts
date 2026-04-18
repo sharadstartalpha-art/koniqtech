@@ -8,6 +8,7 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
+    // 🔒 Auth check
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -18,9 +19,13 @@ export async function POST(req: Request) {
     const { campaignId } = await req.json();
 
     if (!campaignId) {
-      return NextResponse.json({ error: "Campaign ID required" });
+      return NextResponse.json(
+        { error: "Campaign ID required" },
+        { status: 400 }
+      );
     }
 
+    // 📦 Fetch campaign
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
@@ -30,30 +35,46 @@ export async function POST(req: Request) {
     });
 
     if (!campaign) {
-      return NextResponse.json({ error: "Campaign not found" });
+      return NextResponse.json(
+        { error: "Campaign not found" },
+        { status: 404 }
+      );
     }
 
+    // 🚫 Block if no recipients
+    if (!campaign.recipients.length) {
+      return NextResponse.json(
+        { error: "No leads added to this campaign" },
+        { status: 400 }
+      );
+    }
+
+    // 📩 Get first step
     const step = campaign.steps.sort((a, b) => a.order - b.order)[0];
 
     if (!step) {
-      return NextResponse.json({ error: "No campaign steps found" });
+      return NextResponse.json(
+        { error: "No campaign steps found" },
+        { status: 400 }
+      );
     }
 
     let sent = 0;
 
+    // 🚀 Send emails
     for (const r of campaign.recipients) {
       if (!r.email || r.unsubscribed) continue;
 
       try {
         const name = r.email.split("@")[0];
 
-        // ✅ TRACKING PIXEL
+        // 📡 Tracking pixel
         const trackingPixel = `
           <img src="${process.env.NEXT_PUBLIC_APP_URL}/api/track/open?rid=${r.id}" width="1" height="1" />
         `;
 
-        const html = step.body
-          .replace("{{name}}", name) + trackingPixel;
+        const html =
+          step.body.replace("{{name}}", name) + trackingPixel;
 
         await sendEmail({
           to: r.email,
@@ -67,16 +88,16 @@ export async function POST(req: Request) {
         });
 
         sent++;
-
       } catch (err) {
         console.error("EMAIL FAIL:", r.email);
       }
     }
 
+    // 📝 Update campaign
     await prisma.campaign.update({
       where: { id: campaignId },
       data: {
-        status: "SENT",
+        status: sent > 0 ? "SENT" : "FAILED",
         totalSent: sent,
         sentAt: new Date(),
       },
@@ -93,9 +114,6 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "Failed to send campaign" },
       { status: 500 }
-      
     );
-    
   }
-  
 }

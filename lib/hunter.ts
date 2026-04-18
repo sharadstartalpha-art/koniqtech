@@ -6,17 +6,27 @@ export async function findEmail({
   domain: string;
   firstName: string;
   lastName: string;
-}) {
-  if (!domain) return null;
+}): Promise<string | null> {
+  if (!domain || !firstName || !lastName) return null;
 
   try {
-    const res = await fetch(
-      `https://api.hunter.io/v2/email-finder?domain=${domain}&first_name=${firstName}&last_name=${lastName}&api_key=${process.env.HUNTER_API_KEY}`
-    );
+    const url = new URL("https://api.hunter.io/v2/email-finder");
+
+    url.searchParams.append("domain", domain);
+    url.searchParams.append("first_name", firstName);
+    url.searchParams.append("last_name", lastName);
+    url.searchParams.append("api_key", process.env.HUNTER_API_KEY || "");
+
+    const res = await fetch(url.toString());
+
+    if (!res.ok) {
+      console.error("Hunter API error:", res.status);
+      return null;
+    }
 
     const data = await res.json();
 
-    return data?.data?.email || null;
+    return data?.data?.email ?? null;
   } catch (err) {
     console.error("Hunter error:", err);
     return null;

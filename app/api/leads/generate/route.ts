@@ -6,6 +6,16 @@ import { NextResponse } from "next/server";
 import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
 
+type Profile = {
+  name: string;
+  email?: string | null;
+  company?: string;
+  title?: string;
+  domain?: string;
+  companyWebsite?: string;
+  profileUrl?: string;
+};
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,11 +32,11 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // 🔥 1. SCRAPE
-    const profiles = await scrapeLinkedIn(query || "founder");
+    // 🔥 1. FETCH LEADS
+    const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
     if (!profiles.length) {
-      return NextResponse.json({ error: "No LinkedIn leads" });
+      return NextResponse.json({ error: "No leads found" });
     }
 
     // 🔥 2. GET OR CREATE PROJECT
@@ -62,10 +72,12 @@ export async function POST(req: Request) {
       try {
         if (!p?.name || !p.company) continue;
 
-        // 🎯 FILTER (only decision makers)
+        // 🎯 FILTER (safe now)
+        const title = p.title?.toLowerCase() || "";
+
         if (
-          !p.title?.toLowerCase().includes("founder") &&
-          !p.title?.toLowerCase().includes("ceo")
+          !title.includes("founder") &&
+          !title.includes("ceo")
         ) {
           continue;
         }
@@ -73,39 +85,46 @@ export async function POST(req: Request) {
         const [firstName = "", lastName = ""] = p.name.split(" ");
 
         const domain =
+          p.domain ||
           p.companyWebsite ||
-          p.company?.website ||
           "";
 
-        let email: string | null = null;
+        let email: string | null = p.email || null;
 
-        try {
-          email = await findEmail({
-            domain,
-            firstName,
-            lastName,
-          });
-        } catch (e) {
-          console.error("HUNTER ERROR:", e);
+        // 🔥 Try Hunter if missing
+        if (!email && domain && firstName && lastName) {
+          try {
+            email = await findEmail({
+              domain,
+              firstName,
+              lastName,
+            });
+          } catch (e) {
+            console.error("HUNTER ERROR:", e);
+          }
         }
 
-        // ✅ smarter fallback
+        // ⚡ Smart fallback
         if (!email) {
           const safe = p.name.replace(/\s+/g, "").toLowerCase();
 
           if (domain) {
-            email = `${safe}@${domain.replace("https://", "").replace("www.", "")}`;
+            const cleanDomain = domain
+              .replace(/^https?:\/\//, "")
+              .replace(/^www\./, "");
+
+            email = `${safe}@${cleanDomain}`;
           } else {
             email = `${safe}@gmail.com`;
           }
         }
 
-        // 🚫 duplicate check
+        // 🚫 Duplicate check
         const exists = await prisma.lead.findFirst({
           where: {
             OR: [
               { email },
-              { profileUrl: p.profileUrl },
+              { profileUrl: p.profileUrl || "" },
             ],
           },
         });

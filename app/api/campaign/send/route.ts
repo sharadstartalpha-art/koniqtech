@@ -8,12 +8,8 @@ export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    // 🔒 Auth check
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { campaignId } = await req.json();
@@ -25,7 +21,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 📦 Fetch campaign
+    // ✅ NO RELATIONS (your schema doesn't support it)
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
@@ -41,16 +37,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🚫 Block if no recipients
     if (!campaign.recipients.length) {
       return NextResponse.json(
-        { error: "No leads added to this campaign" },
+        { error: "No leads in campaign" },
         { status: 400 }
       );
     }
 
-    // 📩 Get first step
-    const step = campaign.steps.sort((a, b) => a.order - b.order)[0];
+    const step = campaign.steps.sort(
+      (a: any, b: any) => a.order - b.order
+    )[0];
 
     if (!step) {
       return NextResponse.json(
@@ -61,20 +57,18 @@ export async function POST(req: Request) {
 
     let sent = 0;
 
-    // 🚀 Send emails
     for (const r of campaign.recipients) {
       if (!r.email || r.unsubscribed) continue;
 
       try {
         const name = r.email.split("@")[0];
 
-        // 📡 Tracking pixel
         const trackingPixel = `
           <img src="${process.env.NEXT_PUBLIC_APP_URL}/api/track/open?rid=${r.id}" width="1" height="1" />
         `;
 
         const html =
-          step.body.replace("{{name}}", name) + trackingPixel;
+          step.body.replace(/{{name}}/g, name) + trackingPixel;
 
         await sendEmail({
           to: r.email,
@@ -84,16 +78,23 @@ export async function POST(req: Request) {
 
         await prisma.campaignRecipient.update({
           where: { id: r.id },
-          data: { status: "SENT" },
+          data: {
+            status: "SENT",
+            sentAt: new Date(),
+          },
         });
 
         sent++;
       } catch (err) {
         console.error("EMAIL FAIL:", r.email);
+
+        await prisma.campaignRecipient.update({
+          where: { id: r.id },
+          data: { status: "FAILED" },
+        });
       }
     }
 
-    // 📝 Update campaign
     await prisma.campaign.update({
       where: { id: campaignId },
       data: {
@@ -103,10 +104,7 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      sent,
-    });
+    return NextResponse.json({ success: true, sent });
 
   } catch (err) {
     console.error("CAMPAIGN ERROR:", err);

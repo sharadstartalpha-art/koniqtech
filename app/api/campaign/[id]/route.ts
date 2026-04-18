@@ -1,28 +1,93 @@
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server";
 
-/**
- * 🗑 DELETE /api/campaign/:id
- */
-export async function DELETE(
+// ✅ GET CAMPAIGN
+export async function GET(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> } // ✅ FIXED
 ) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params; // ✅ IMPORTANT
+
+    const campaign = await prisma.campaign.findUnique({
+      where: { id },
+      include: {
+        steps: true,
+        recipients: true,
+      },
+    });
+
+    if (!campaign) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        { error: "Campaign not found" },
+        { status: 404 }
       );
     }
 
-    // ✅ IMPORTANT FIX
-    const { id } = await context.params;
+    return NextResponse.json(campaign);
+
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch campaign" },
+      { status: 500 }
+    );
+  }
+}
+
+// ✅ UPDATE CAMPAIGN
+export async function PUT(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> } // ✅ FIXED
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params; // ✅ IMPORTANT
+    const body = await req.json();
+
+    const campaign = await prisma.campaign.update({
+      where: { id },
+      data: {
+        name: body.name,
+        status: body.status,
+      },
+    });
+
+    return NextResponse.json(campaign);
+
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update campaign" },
+      { status: 500 }
+    );
+  }
+}
+
+// ✅ DELETE CAMPAIGN
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> } // ✅ FIXED
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params; // ✅ IMPORTANT
 
     const campaign = await prisma.campaign.findUnique({
       where: { id },
@@ -41,11 +106,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
 
-  } catch (err) {
-    console.error("DELETE CAMPAIGN ERROR:", err);
-
+  } catch (error) {
     return NextResponse.json(
-      { error: "Delete failed" },
+      { error: "Failed to delete campaign" },
       { status: 500 }
     );
   }

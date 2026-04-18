@@ -19,7 +19,7 @@ type Profile = {
 };
 
 /* ============================= */
-/* 🧠 Extract Company            */
+/* HELPERS                       */
 /* ============================= */
 function extractCompany(title?: string): string {
   if (!title) return "";
@@ -37,69 +37,14 @@ function extractCompany(title?: string): string {
   return "";
 }
 
-/* ============================= */
-/* 🌐 Find Company Domain        */
-/* ============================= */
-async function findCompanyDomain(company: string): Promise<string> {
-  try {
-    const token = process.env.APIFY_API_TOKEN;
-    if (!token) return "";
-
-    const res = await fetch(
-      `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${token}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          queries: `${company} official website`,
-          maxPagesPerQuery: 1,
-        }),
-      }
-    );
-
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : [data];
-
-    const results = items[0]?.organicResults || [];
-    const first = results.find((r: any) => r.link);
-
-    if (!first?.link) return "";
-
-    const url = new URL(first.link);
-    return url.hostname.replace("www.", "");
-  } catch (err) {
-    console.error("DOMAIN ERROR:", err);
-    return "";
-  }
-}
-
-/* ============================= */
-/* 📧 Email Generator            */
-/* ============================= */
 function generateEmail(first: string, last: string, domain: string) {
-  const f = first.toLowerCase();
-  const l = last.toLowerCase();
-
-  const patterns = [
-    `${f}@${domain}`,
-    `${f}.${l}@${domain}`,
-    `${f}${l}@${domain}`,
-    `${f[0]}${l}@${domain}`,
-  ];
-
-  return patterns[0];
+  return `${first.toLowerCase()}@${domain}`;
 }
 
-/* ============================= */
-/* ✅ Email Validation           */
-/* ============================= */
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/* ============================= */
-/* 🎯 ICP FILTER                 */
-/* ============================= */
 function isGoodLead(p: Profile) {
   const text = `${p.title} ${p.company}`.toLowerCase();
 
@@ -110,7 +55,7 @@ function isGoodLead(p: Profile) {
 }
 
 /* ============================= */
-/* 🚀 API ROUTE                  */
+/* ROUTE                         */
 /* ============================= */
 export async function POST(req: Request) {
   try {
@@ -128,18 +73,14 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    /* ============================= */
-    /* 🔥 1. SCRAPE                 */
-    /* ============================= */
+    /* 🔥 SCRAPE */
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
     }
 
-    /* ============================= */
-    /* 📁 2. PROJECT                */
-    /* ============================= */
+    /* 📁 PROJECT */
     let project = projectId
       ? await prisma.project.findUnique({ where: { id: projectId } })
       : null;
@@ -160,46 +101,32 @@ export async function POST(req: Request) {
       });
     }
 
-    /* ============================= */
-    /* ⚡ 3. PROCESS (PARALLEL)     */
-    /* ============================= */
+    /* ⚡ PROCESS (FAST) */
     const leads = await Promise.all(
       profiles.slice(0, 50).map(async (p) => {
         try {
           if (!p?.name) return null;
           if (!isGoodLead(p)) return null;
 
-          /* 🧠 Company */
-          let company = p.company || extractCompany(p.title);
+          const company = p.company || extractCompany(p.title);
 
-          /* 🌐 Domain */
-          let domain = p.domain || "";
-          if (!domain && company) {
-            domain = await findCompanyDomain(company);
-          }
-
-          /* 🧠 Name */
           const parts = p.name.trim().split(" ");
           const firstName = parts[0] || "";
           const lastName = parts.slice(1).join(" ") || "";
 
           let email: string | null = p.email || null;
 
-          /* 🔥 Hunter */
-          if (!email && domain && firstName && lastName) {
-            try {
-              email = await findEmail({
-                domain,
-                firstName,
-                lastName,
-              });
-            } catch {}
+          if (!email && p.domain && firstName && lastName) {
+            email = await findEmail({
+              domain: p.domain,
+              firstName,
+              lastName,
+            });
           }
 
-          /* ⚡ Fallback */
           if (!email) {
-            email = domain
-              ? generateEmail(firstName, lastName, domain)
+            email = p.domain
+              ? generateEmail(firstName, lastName, p.domain)
               : `${firstName}${lastName}@linkedin-lead.com`;
           }
 
@@ -212,8 +139,7 @@ export async function POST(req: Request) {
             profileUrl: p.profileUrl || "",
           };
 
-        } catch (err) {
-          console.error("LEAD ERROR:", err);
+        } catch {
           return null;
         }
       })
@@ -225,9 +151,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No valid leads" });
     }
 
-    /* ============================= */
-    /* 🚀 4. BULK INSERT            */
-    /* ============================= */
+    /* 🚀 SAVE */
     await prisma.lead.createMany({
       data: cleanLeads.map((l) => ({
         email: l.email,
@@ -242,9 +166,6 @@ export async function POST(req: Request) {
       skipDuplicates: true,
     });
 
-    /* ============================= */
-    /* 📤 RESPONSE                  */
-    /* ============================= */
     return NextResponse.json({
       success: true,
       count: cleanLeads.length,
@@ -252,10 +173,10 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("FULL ERROR:", err);
+    console.error("ERROR:", err);
 
     return NextResponse.json(
-      { error: String(err) },
+      { error: "Failed to generate leads" },
       { status: 500 }
     );
   }

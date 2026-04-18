@@ -14,8 +14,13 @@ export async function GET() {
   });
 
   const csv = [
-    ["Name", "Email", "Company"],
-    ...leads.map((l) => [l.name, l.email, l.company || ""]),
+    ["Name", "Email", "Company", "Profile"],
+    ...leads.map((l) => [
+      l.name,
+      l.email,
+      l.company || "",
+      l.profileUrl || "",
+    ]),
   ]
     .map((row) => row.join(","))
     .join("\n");

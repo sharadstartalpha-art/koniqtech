@@ -16,7 +16,7 @@ export async function scrapeLinkedInApify({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: [`site:linkedin.com/in ${query}`],
+          queries: `site:linkedin.com/in ${query}`, // ✅ FIXED
           maxPagesPerQuery: 1,
         }),
       }

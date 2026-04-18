@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // 🔥 1. SCRAPE (Apify only)
+    // 🔥 1. SCRAPE LEADS
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
     console.log("APIFY RESPONSE:", profiles);
@@ -71,9 +71,9 @@ export async function POST(req: Request) {
     // 🔥 3. PROCESS LEADS
     for (const p of profiles.slice(0, 50)) {
       try {
-        if (!p?.name || !p.company) continue;
+        if (!p?.name) continue;
 
-        // 🎯 OPTIONAL FILTER
+        // 🎯 FILTER (optional)
         if (p.title) {
           const t = p.title.toLowerCase();
           if (!t.includes("founder") && !t.includes("ceo")) {
@@ -81,11 +81,14 @@ export async function POST(req: Request) {
           }
         }
 
-        const [firstName = "", lastName = ""] = p.name.split(" ");
+        // 🧠 Name parsing
+        const parts = p.name.trim().split(" ");
+        const firstName = parts[0] || "";
+        const lastName = parts.slice(1).join(" ") || "";
 
         let email: string | null = p.email || null;
 
-        // 🔥 Try Hunter
+        // 🔥 Try Hunter (only if domain exists)
         if (!email && p.domain && firstName && lastName) {
           try {
             email = await findEmail({
@@ -98,21 +101,23 @@ export async function POST(req: Request) {
           }
         }
 
-        // ⚡ Fallback email guess
-        if (!email && p.domain) {
+        // ⚡ ALWAYS fallback email (important fix)
+        if (!email) {
           const safe = p.name.replace(/\s+/g, "").toLowerCase();
 
-          const cleanDomain = p.domain
-            .replace(/^https?:\/\//, "")
-            .replace(/^www\./, "");
+          if (p.domain) {
+            const cleanDomain = p.domain
+              .replace(/^https?:\/\//, "")
+              .replace(/^www\./, "");
 
-          email = `${safe}@${cleanDomain}`;
+            email = `${safe}@${cleanDomain}`;
+          } else {
+            // 🚀 fallback domain so leads are NOT skipped
+            email = `${safe}@linkedin-lead.com`;
+          }
         }
 
-        // ❌ Still no email
-        if (!email) continue;
-
-        // ✅ Basic validation
+        // ✅ Validate email
         if (!email.includes("@")) continue;
 
         // 🚫 Duplicate check
@@ -127,6 +132,7 @@ export async function POST(req: Request) {
 
         if (exists) continue;
 
+        // ✅ Save lead
         const lead = await prisma.lead.create({
           data: {
             email,

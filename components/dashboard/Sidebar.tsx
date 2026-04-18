@@ -16,8 +16,8 @@ import {
 const links = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Teams", href: "/teams", icon: Users },
-  { name: "Leads", href: "/leads", icon: Users },
   { name: "Campaigns", href: "/campaigns", icon: Mail },
+  { name: "Leads", href: "/leads", icon: Users },
   { name: "Inbox", href: "/inbox", icon: Inbox },
   { name: "Analytics", href: "/analytics", icon: BarChart },
   { name: "Revenue", href: "/revenue", icon: DollarSign },

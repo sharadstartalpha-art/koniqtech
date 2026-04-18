@@ -1,26 +1,57 @@
-import { scrapeLinkedInApify } from "@/lib/apify";
+import { searchApolloLeads } from "./apollo";
+import { findEmail } from "./hunter";
 
-export async function scrapeLinkedIn(query: string = "founder") {
+type Lead = {
+  name: string;
+  email: string;
+  company: string;
+};
+
+export async function scrapeLinkedIn(query: string): Promise<Lead[]> {
+  if (!query) return [];
+
   try {
-    const leads = await scrapeLinkedInApify({
-      query,
-      maxItems: 100,
-    });
+    // ✅ Step 1: Fetch people from Apollo
+    const people = await searchApolloLeads(query);
 
-    if (!Array.isArray(leads) || leads.length === 0) {
-      console.warn("⚠️ No leads returned from Apify");
+    if (!people.length) {
+      console.warn("⚠️ No people found from Apollo");
       return [];
     }
 
-    // ✅ limit for performance
-    const people = leads.slice(0, 25);
+    const enriched: Lead[] = [];
 
-    console.log("✅ LinkedIn leads fetched:", people.length);
+    // ✅ Step 2: Enrich with emails
+    for (const p of people) {
+      let email = p.email;
 
-    return people;
+      if (!email && p.domain && p.name) {
+        const [firstName, lastName] = p.name.split(" ");
 
+        if (firstName && lastName) {
+          email = await findEmail({
+            domain: p.domain,
+            firstName,
+            lastName,
+          });
+        }
+      }
+
+      // ❌ Skip if still no email
+      if (!email) continue;
+
+      enriched.push({
+        name: p.name,
+        email,
+        company: p.company,
+      });
+    }
+
+    console.log("🔥 Enriched Leads:", enriched.length);
+
+    return enriched;
   } catch (err) {
-    console.error("❌ LINKEDIN SCRAPE ERROR:", err);
+    console.error("❌ Lead pipeline error:", err);
     return [];
   }
 }

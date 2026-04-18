@@ -74,14 +74,14 @@ export default function LeadsPage() {
     );
   };
 
-  // 🚀 ADD TO CAMPAIGN
+  // 🚀 ADD TO CAMPAIGN (FINAL FIXED)
   const addToCampaign = async () => {
-    if (selected.length === 0) {
-      return toast.error("Select leads first");
-    }
-
     if (!selectedCampaign) {
       return toast.error("Select a campaign");
+    }
+
+    if (selected.length === 0) {
+      return toast.error("Select leads first");
     }
 
     const res = await fetch("/api/campaign/add-leads", {
@@ -100,9 +100,8 @@ export default function LeadsPage() {
     if (data.error) {
       toast.error(data.error);
     } else {
-      toast.success("Leads added to campaign 🚀");
+      toast.success("Leads added 🚀");
       setSelected([]);
-      setSelectedCampaign("");
     }
   };
 
@@ -145,7 +144,7 @@ export default function LeadsPage() {
             {loading ? "Generating..." : "Generate Leads 🤖"}
           </button>
 
-          {/* 🎯 CAMPAIGN SELECT */}
+          {/* 🎯 CAMPAIGN DROPDOWN */}
           <select
             value={selectedCampaign}
             onChange={(e) => setSelectedCampaign(e.target.value)}
@@ -159,6 +158,7 @@ export default function LeadsPage() {
             ))}
           </select>
 
+          {/* ✅ UPDATED BUTTON */}
           <button
             onClick={addToCampaign}
             className="bg-blue-600 text-white px-4 py-2 rounded"

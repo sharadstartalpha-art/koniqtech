@@ -93,33 +93,48 @@ export default function CampaignsPage() {
       </div>
 
       {campaigns.length === 0 ? (
-        <div className="text-center text-gray-500 mt-10">
-          No campaigns yet
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {campaigns.map((c) => (
-            <div
-              key={c.id}
-              className="border p-4 rounded flex justify-between items-center"
-            >
-              <div>
-                <p className="font-semibold">{c.name}</p>
-                <p className="text-sm text-gray-500">
-                  Sent: {c.totalSent || 0}
-                </p>
-              </div>
+  <div className="text-center text-gray-500 mt-10">
+    No campaigns yet
+  </div>
+) : (
+  <div className="border rounded overflow-hidden">
+    <table className="w-full text-sm">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="text-left p-3">Name</th>
+          <th className="text-left p-3">Status</th>
+          <th className="text-left p-3">Sent</th>
+          <th className="text-left p-3">Actions</th>
+        </tr>
+      </thead>
 
+      <tbody>
+        {campaigns.map((c) => (
+          <tr key={c.id} className="border-t">
+            <td className="p-3 font-medium">{c.name}</td>
+
+            <td className="p-3">
+              <span className="text-xs px-2 py-1 bg-gray-200 rounded">
+                {c.status}
+              </span>
+            </td>
+
+            <td className="p-3">{c.totalSent || 0}</td>
+
+            <td className="p-3">
               <button
                 onClick={() => sendCampaign(c.id)}
-                className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                className="bg-green-600 text-white px-3 py-1 rounded"
               >
                 {loadingId === c.id ? "Sending..." : "Send"}
               </button>
-            </div>
-          ))}
-        </div>
-      )}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
     </div>
   );
 }

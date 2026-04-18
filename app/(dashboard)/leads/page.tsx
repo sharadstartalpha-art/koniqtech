@@ -6,236 +6,289 @@ import toast from "react-hot-toast";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 
 export default function LeadsPage() {
-  const { activeTeamId } = useTeamStore();
+const { activeTeamId } = useTeamStore();
 
-  const [leads, setLeads] = useState<any[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [selectedCampaign, setSelectedCampaign] = useState("");
+const [leads, setLeads] = useState<any[]>([]);
+const [selected, setSelected] = useState<string[]>([]);
+const [campaigns, setCampaigns] = useState<any[]>([]);
+const [selectedCampaign, setSelectedCampaign] = useState("");
 
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [projectId, setProjectId] = useState("");
+const [query, setQuery] = useState("");
+const [loading, setLoading] = useState(false);
+const [projectId, setProjectId] = useState("");
 
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+const [search, setSearch] = useState("");
+const [page, setPage] = useState(1);
 
-  const PAGE_SIZE = 5;
+const PAGE_SIZE = 5;
 
-  // 🔄 LOAD
-  const load = async () => {
-    if (!activeTeamId) return;
+// 🔄 LOAD DATA
+const load = async () => {
+if (!activeTeamId) return;
 
-    const [leadRes, campRes] = await Promise.all([
-      fetch(`/api/leads?teamId=${activeTeamId}`),
-      fetch(`/api/campaign`),
-    ]);
 
-    setLeads(await leadRes.json());
-    setCampaigns(await campRes.json());
-  };
+const [leadRes, campRes] = await Promise.all([
+  fetch(`/api/leads?teamId=${activeTeamId}`),
+  fetch(`/api/campaign`),
+]);
 
-  useEffect(() => {
-    load();
-  }, [activeTeamId]);
+setLeads(await leadRes.json());
+setCampaigns(await campRes.json());
 
-  // 🚀 GENERATE
-  const generateLeads = async () => {
-    if (!projectId) return toast.error("Select project");
 
-    setLoading(true);
+};
 
-    const res = await fetch("/api/leads/generate", {
-      method: "POST",
-      body: JSON.stringify({
-        teamId: activeTeamId,
-        projectId,
-        query,
-      }),
-    });
+useEffect(() => {
+load();
+}, [activeTeamId]);
 
-    const data = await res.json();
+// 🚀 GENERATE LEADS
+const generateLeads = async () => {
+if (!projectId) return toast.error("Select project");
 
-    if (data.error) toast.error(data.error);
-    else {
-      toast.success(`Generated ${data.count}`);
-      load();
-    }
 
-    setLoading(false);
-  };
+setLoading(true);
 
-  // ✅ SELECT
-  const toggleSelect = (id: string) => {
-    setSelected((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
-  };
+const res = await fetch("/api/leads/generate", {
+  method: "POST",
+  body: JSON.stringify({
+    teamId: activeTeamId,
+    projectId,
+    query,
+  }),
+});
 
-  // 🚀 ADD TO CAMPAIGN (FINAL FIXED)
-  const addToCampaign = async () => {
-    if (!selectedCampaign) {
-      return toast.error("Select a campaign");
-    }
+const data = await res.json();
 
-    if (selected.length === 0) {
-      return toast.error("Select leads first");
-    }
+if (data.error) toast.error(data.error);
+else {
+  toast.success(`Generated ${data.count}`);
+  load();
+}
 
-    const res = await fetch("/api/campaign/add-leads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        campaignId: selectedCampaign,
-        leadIds: selected,
-      }),
-    });
+setLoading(false);
 
-    const data = await res.json();
 
-    if (data.error) {
-      toast.error(data.error);
-    } else {
-      toast.success("Leads added 🚀");
-      setSelected([]);
-    }
-  };
+};
 
-  // 🔍 FILTER
-  const filtered = leads.filter((l) =>
-    `${l.email} ${l.company || ""}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+// ✅ SELECT
+const toggleSelect = (id: string) => {
+setSelected((prev) =>
+prev.includes(id)
+? prev.filter((x) => x !== id)
+: [...prev, id]
+);
+};
 
-  // 📄 PAGINATION
-  const start = (page - 1) * PAGE_SIZE;
-  const paginated = filtered.slice(start, start + PAGE_SIZE);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+// 📩 ADD TO CAMPAIGN
+const addToCampaign = async () => {
+if (!selectedCampaign) return toast.error("Select campaign");
+if (!selected.length) return toast.error("Select leads");
 
-  return (
-    <div className="p-6 space-y-6">
 
-      <h1 className="text-2xl font-bold">Lead Engine 🚀</h1>
+const res = await fetch("/api/campaign/add-leads", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    campaignId: selectedCampaign,
+    leadIds: selected,
+  }),
+});
 
-      <ProjectSwitcher onChange={setProjectId} />
+const data = await res.json();
 
-      {/* INPUT */}
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search leads (e.g. SaaS founder USA)"
-        className="border p-2 w-full rounded"
-      />
+if (data.error) toast.error(data.error);
+else {
+  toast.success("Leads added 🚀");
+  setSelected([]);
+}
 
-      {/* ACTION BAR */}
-      <div className="flex justify-between items-center">
 
-        <div className="flex gap-3 items-center">
+};
 
-          <button
-            onClick={generateLeads}
-            className="bg-purple-600 text-white px-4 py-2 rounded"
-          >
-            {loading ? "Generating..." : "Generate Leads 🤖"}
-          </button>
+// 📥 EXPORT (ALL TYPES)
+const exportLeads = async (type: "selected" | "campaign" | "filtered") => {
+let url = "/api/leads/export?format=xlsx";
 
-          {/* 🎯 CAMPAIGN DROPDOWN */}
-          <select
-            value={selectedCampaign}
-            onChange={(e) => setSelectedCampaign(e.target.value)}
-            className="border px-3 py-2 rounded"
-          >
-            <option value="">Select Campaign</option>
-            {campaigns.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
 
-          {/* ✅ UPDATED BUTTON */}
-          <button
-            onClick={addToCampaign}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Add to Campaign 📥
-          </button>
-        </div>
+if (type === "selected") {
+  if (!selected.length) return toast.error("Select leads");
+  url += `&ids=${selected.join(",")}`;
+}
 
-        {/* 🔍 SEARCH */}
-        <input
-          type="text"
-          placeholder="Search in leads..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="border px-3 py-2 rounded w-64"
-        />
+if (type === "campaign") {
+  if (!selectedCampaign) return toast.error("Select campaign");
+  url += `&campaignId=${selectedCampaign}`;
+}
 
-      </div>
+if (type === "filtered") {
+  url += `&search=${encodeURIComponent(search)}`;
+}
 
-      {/* TABLE */}
-      <div className="border rounded overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3"></th>
-              <th className="p-3">#</th>
-              <th className="p-3 text-left">Email</th>
-              <th className="p-3 text-left">Company</th>
-            </tr>
-          </thead>
+window.open(url, "_blank");
 
-          <tbody>
-            {paginated.map((lead, i) => (
-              <tr key={lead.id} className="border-t">
-                <td className="p-3">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(lead.id)}
-                    onChange={() => toggleSelect(lead.id)}
-                  />
-                </td>
 
-                <td className="p-3">{start + i + 1}</td>
-                <td className="p-3">{lead.email}</td>
-                <td className="p-3">{lead.company || "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+};
 
-      {/* PAGINATION */}
-      <div className="flex gap-2">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1 border rounded"
-        >
-          Prev
-        </button>
+// 🔍 FILTER
+const filtered = leads.filter((l) =>
+`${l.email} ${l.company || ""}`
+.toLowerCase()
+.includes(search.toLowerCase())
+);
 
-        <span>
-          Page {page} / {totalPages || 1}
-        </span>
+// 📄 PAGINATION
+const start = (page - 1) * PAGE_SIZE;
+const paginated = filtered.slice(start, start + PAGE_SIZE);
+const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1 border rounded"
-        >
-          Next
-        </button>
-      </div>
+return ( <div className="p-6 space-y-6">
+
+
+  <h1 className="text-2xl font-bold">Lead Engine 🚀</h1>
+
+  <ProjectSwitcher onChange={setProjectId} />
+
+  {/* SEARCH INPUT */}
+  <input
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    placeholder="Search leads (e.g. SaaS founder USA)"
+    className="border p-2 w-full rounded"
+  />
+
+  {/* ACTION BAR */}
+  <div className="flex justify-between items-center">
+
+    <div className="flex gap-3 items-center flex-wrap">
+
+      {/* GENERATE */}
+      <button
+        onClick={generateLeads}
+        className="bg-purple-600 text-white px-4 py-2 rounded"
+      >
+        {loading ? "Generating..." : "Generate Leads 🤖"}
+      </button>
+
+      {/* CAMPAIGN SELECT */}
+      <select
+        value={selectedCampaign}
+        onChange={(e) => setSelectedCampaign(e.target.value)}
+        className="border px-3 py-2 rounded"
+      >
+        <option value="">Select Campaign</option>
+        {campaigns.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+
+      {/* ADD TO CAMPAIGN */}
+      <button
+        onClick={addToCampaign}
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Add to Campaign 📩
+      </button>
+
+      {/* EXPORT BUTTONS */}
+      <button
+        onClick={() => exportLeads("selected")}
+        className="bg-green-600 text-white px-3 py-2 rounded"
+      >
+        Export Selected
+      </button>
+
+      <button
+        onClick={() => exportLeads("campaign")}
+        className="bg-green-700 text-white px-3 py-2 rounded"
+      >
+        Export Campaign
+      </button>
+
+      <button
+        onClick={() => exportLeads("filtered")}
+        className="bg-green-800 text-white px-3 py-2 rounded"
+      >
+        Export Filtered
+      </button>
 
     </div>
-  );
+
+    {/* SEARCH */}
+    <input
+      type="text"
+      placeholder="Search in leads..."
+      value={search}
+      onChange={(e) => {
+        setSearch(e.target.value);
+        setPage(1);
+      }}
+      className="border px-3 py-2 rounded w-64"
+    />
+
+  </div>
+
+  {/* TABLE */}
+  <div className="border rounded overflow-hidden">
+    <table className="w-full text-sm">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="p-3"></th>
+          <th className="p-3">#</th>
+          <th className="p-3 text-left">Email</th>
+          <th className="p-3 text-left">Company</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {paginated.map((lead, i) => (
+          <tr key={lead.id} className="border-t">
+            <td className="p-3">
+              <input
+                type="checkbox"
+                checked={selected.includes(lead.id)}
+                onChange={() => toggleSelect(lead.id)}
+              />
+            </td>
+
+            <td className="p-3">{start + i + 1}</td>
+            <td className="p-3">{lead.email}</td>
+            <td className="p-3">{lead.company || "-"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* PAGINATION */}
+  <div className="flex gap-2">
+    <button
+      disabled={page === 1}
+      onClick={() => setPage(page - 1)}
+      className="px-3 py-1 border rounded"
+    >
+      Prev
+    </button>
+
+    <span>
+      Page {page} / {totalPages || 1}
+    </span>
+
+    <button
+      disabled={page === totalPages}
+      onClick={() => setPage(page + 1)}
+      className="px-3 py-1 border rounded"
+    >
+      Next
+    </button>
+  </div>
+
+</div>
+
+
+);
 }

@@ -9,7 +9,7 @@ export async function scrapeLinkedInApify({
     const token = process.env.APIFY_API_TOKEN;
 
     const res = await fetch(
-      `https://api.apify.com/v2/acts/apify/google-search-results-scraper/run-sync-get-dataset-items?token=XXXX`,
+      `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${token}`,
       {
         method: "POST",
         headers: {
@@ -24,10 +24,8 @@ export async function scrapeLinkedInApify({
 
     const raw = await res.json();
 
-    console.log("📦 RAW TYPE:", typeof raw);
     console.log("📦 RAW:", raw);
 
-    // ✅ Normalize response
     const items = Array.isArray(raw) ? raw : [raw];
 
     const results = items

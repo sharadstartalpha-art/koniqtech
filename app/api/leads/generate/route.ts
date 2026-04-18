@@ -15,6 +15,66 @@ type Profile = {
   profileUrl?: string;
 };
 
+/* ============================= */
+/* 🧠 Extract Company from Title */
+/* ============================= */
+function extractCompany(title?: string): string {
+  if (!title) return "";
+
+  const lower = title.toLowerCase();
+
+  const patterns = [" at ", "@", "founder of", "ceo of", "co-founder of"];
+
+  for (const p of patterns) {
+    const idx = lower.indexOf(p);
+    if (idx !== -1) {
+      return title.slice(idx + p.length).trim();
+    }
+  }
+
+  return "";
+}
+
+/* ============================= */
+/* 🌐 Find Company Domain        */
+/* ============================= */
+async function findCompanyDomain(company: string): Promise<string> {
+  try {
+    const token = process.env.APIFY_API_TOKEN;
+
+    if (!token) return "";
+
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${token}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          queries: `${company} official website`,
+          maxPagesPerQuery: 1,
+        }),
+      }
+    );
+
+    const data = await res.json();
+    const items = Array.isArray(data) ? data : [data];
+
+    const results = items[0]?.organicResults || [];
+    const first = results.find((r: any) => r.link);
+
+    if (!first?.link) return "";
+
+    const url = new URL(first.link);
+    return url.hostname.replace("www.", "");
+
+  } catch (err) {
+    console.error("DOMAIN ERROR:", err);
+    return "";
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -31,7 +91,9 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    // 🔥 1. SCRAPE LEADS
+    /* ============================= */
+    /* 🔥 1. SCRAPE LEADS            */
+    /* ============================= */
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
 
     console.log("APIFY RESPONSE:", profiles);
@@ -40,7 +102,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No leads found" });
     }
 
-    // 🔥 2. GET OR CREATE PROJECT
+    /* ============================= */
+    /* 📁 2. PROJECT SETUP           */
+    /* ============================= */
     let project = null;
 
     if (projectId) {
@@ -68,12 +132,14 @@ export async function POST(req: Request) {
 
     const created: any[] = [];
 
-    // 🔥 3. PROCESS LEADS
+    /* ============================= */
+    /* 🚀 3. PROCESS LEADS           */
+    /* ============================= */
     for (const p of profiles.slice(0, 50)) {
       try {
         if (!p?.name) continue;
 
-        // 🎯 FILTER (optional)
+        // 🎯 Filter
         if (p.title) {
           const t = p.title.toLowerCase();
           if (!t.includes("founder") && !t.includes("ceo")) {
@@ -81,18 +147,28 @@ export async function POST(req: Request) {
           }
         }
 
-        // 🧠 Name parsing
+        /* 🧠 Extract company */
+        let company = p.company || extractCompany(p.title);
+
+        /* 🌐 Find domain */
+        let domain = p.domain || "";
+
+        if (!domain && company) {
+          domain = await findCompanyDomain(company);
+        }
+
+        /* 🧠 Name parsing */
         const parts = p.name.trim().split(" ");
         const firstName = parts[0] || "";
         const lastName = parts.slice(1).join(" ") || "";
 
         let email: string | null = p.email || null;
 
-        // 🔥 Try Hunter (only if domain exists)
-        if (!email && p.domain && firstName && lastName) {
+        /* 🔥 Hunter (real emails) */
+        if (!email && domain && firstName && lastName) {
           try {
             email = await findEmail({
-              domain: p.domain,
+              domain,
               firstName,
               lastName,
             });
@@ -101,26 +177,19 @@ export async function POST(req: Request) {
           }
         }
 
-        // ⚡ ALWAYS fallback email (important fix)
+        /* ⚡ Fallback email */
         if (!email) {
           const safe = p.name.replace(/\s+/g, "").toLowerCase();
 
-          if (p.domain) {
-            const cleanDomain = p.domain
-              .replace(/^https?:\/\//, "")
-              .replace(/^www\./, "");
-
-            email = `${safe}@${cleanDomain}`;
-          } else {
-            // 🚀 fallback domain so leads are NOT skipped
-            email = `${safe}@linkedin-lead.com`;
-          }
+          email = domain
+            ? `${safe}@${domain}`
+            : `${safe}@linkedin-lead.com`;
         }
 
-        // ✅ Validate email
+        /* ✅ Validate */
         if (!email.includes("@")) continue;
 
-        // 🚫 Duplicate check
+        /* 🚫 Duplicate check */
         const exists = await prisma.lead.findFirst({
           where: {
             OR: [
@@ -132,12 +201,12 @@ export async function POST(req: Request) {
 
         if (exists) continue;
 
-        // ✅ Save lead
+        /* 💾 Save */
         const lead = await prisma.lead.create({
           data: {
             email,
             name: p.name,
-            company: p.company || "",
+            company: company || "",
             source: "linkedin",
             userId,
             projectId: project.id,
@@ -153,6 +222,9 @@ export async function POST(req: Request) {
       }
     }
 
+    /* ============================= */
+    /* ✅ RESPONSE                   */
+    /* ============================= */
     return NextResponse.json({
       success: true,
       count: created.length,

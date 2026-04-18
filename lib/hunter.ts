@@ -19,16 +19,12 @@ export async function findEmail({
 
     const res = await fetch(url.toString());
 
-    if (!res.ok) {
-      console.error("Hunter API error:", res.status);
-      return null;
-    }
+    if (!res.ok) return null;
 
     const data = await res.json();
 
     return data?.data?.email ?? null;
-  } catch (err) {
-    console.error("Hunter error:", err);
+  } catch {
     return null;
   }
 }

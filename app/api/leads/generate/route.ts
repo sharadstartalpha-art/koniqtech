@@ -6,6 +6,9 @@ import { NextResponse } from "next/server";
 import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
 
+/* ============================= */
+/* TYPES                         */
+/* ============================= */
 type Profile = {
   name: string;
   email?: string | null;
@@ -16,13 +19,12 @@ type Profile = {
 };
 
 /* ============================= */
-/* 🧠 Extract Company from Title */
+/* 🧠 Extract Company            */
 /* ============================= */
 function extractCompany(title?: string): string {
   if (!title) return "";
 
   const lower = title.toLowerCase();
-
   const patterns = [" at ", "@", "founder of", "ceo of", "co-founder of"];
 
   for (const p of patterns) {
@@ -41,16 +43,13 @@ function extractCompany(title?: string): string {
 async function findCompanyDomain(company: string): Promise<string> {
   try {
     const token = process.env.APIFY_API_TOKEN;
-
     if (!token) return "";
 
     const res = await fetch(
       `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${token}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           queries: `${company} official website`,
           maxPagesPerQuery: 1,
@@ -68,13 +67,51 @@ async function findCompanyDomain(company: string): Promise<string> {
 
     const url = new URL(first.link);
     return url.hostname.replace("www.", "");
-
   } catch (err) {
     console.error("DOMAIN ERROR:", err);
     return "";
   }
 }
 
+/* ============================= */
+/* 📧 Email Generator            */
+/* ============================= */
+function generateEmail(first: string, last: string, domain: string) {
+  const f = first.toLowerCase();
+  const l = last.toLowerCase();
+
+  const patterns = [
+    `${f}@${domain}`,
+    `${f}.${l}@${domain}`,
+    `${f}${l}@${domain}`,
+    `${f[0]}${l}@${domain}`,
+  ];
+
+  return patterns[0];
+}
+
+/* ============================= */
+/* ✅ Email Validation           */
+/* ============================= */
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/* ============================= */
+/* 🎯 ICP FILTER                 */
+/* ============================= */
+function isGoodLead(p: Profile) {
+  const text = `${p.title} ${p.company}`.toLowerCase();
+
+  return (
+    (text.includes("founder") || text.includes("ceo")) &&
+    (text.includes("saas") || text.includes("startup"))
+  );
+}
+
+/* ============================= */
+/* 🚀 API ROUTE                  */
+/* ============================= */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -92,30 +129,23 @@ export async function POST(req: Request) {
     const userId = session.user.id;
 
     /* ============================= */
-    /* 🔥 1. SCRAPE LEADS            */
+    /* 🔥 1. SCRAPE                 */
     /* ============================= */
     const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
-
-    console.log("APIFY RESPONSE:", profiles);
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
     }
 
     /* ============================= */
-    /* 📁 2. PROJECT SETUP           */
+    /* 📁 2. PROJECT                */
     /* ============================= */
-    let project = null;
-
-    if (projectId) {
-      project = await prisma.project.findUnique({
-        where: { id: projectId },
-      });
-    }
+    let project = projectId
+      ? await prisma.project.findUnique({ where: { id: projectId } })
+      : null;
 
     if (!project) {
       const product = await prisma.product.findFirst();
-
       if (!product) {
         return NextResponse.json({ error: "No product found" });
       }
@@ -130,105 +160,95 @@ export async function POST(req: Request) {
       });
     }
 
-    const created: any[] = [];
-
     /* ============================= */
-    /* 🚀 3. PROCESS LEADS           */
+    /* ⚡ 3. PROCESS (PARALLEL)     */
     /* ============================= */
-    for (const p of profiles.slice(0, 50)) {
-      try {
-        if (!p?.name) continue;
+    const leads = await Promise.all(
+      profiles.slice(0, 50).map(async (p) => {
+        try {
+          if (!p?.name) return null;
+          if (!isGoodLead(p)) return null;
 
-        // 🎯 Filter
-        if (p.title) {
-          const t = p.title.toLowerCase();
-          if (!t.includes("founder") && !t.includes("ceo")) {
-            continue;
+          /* 🧠 Company */
+          let company = p.company || extractCompany(p.title);
+
+          /* 🌐 Domain */
+          let domain = p.domain || "";
+          if (!domain && company) {
+            domain = await findCompanyDomain(company);
           }
-        }
 
-        /* 🧠 Extract company */
-        let company = p.company || extractCompany(p.title);
+          /* 🧠 Name */
+          const parts = p.name.trim().split(" ");
+          const firstName = parts[0] || "";
+          const lastName = parts.slice(1).join(" ") || "";
 
-        /* 🌐 Find domain */
-        let domain = p.domain || "";
+          let email: string | null = p.email || null;
 
-        if (!domain && company) {
-          domain = await findCompanyDomain(company);
-        }
-
-        /* 🧠 Name parsing */
-        const parts = p.name.trim().split(" ");
-        const firstName = parts[0] || "";
-        const lastName = parts.slice(1).join(" ") || "";
-
-        let email: string | null = p.email || null;
-
-        /* 🔥 Hunter (real emails) */
-        if (!email && domain && firstName && lastName) {
-          try {
-            email = await findEmail({
-              domain,
-              firstName,
-              lastName,
-            });
-          } catch (e) {
-            console.error("HUNTER ERROR:", e);
+          /* 🔥 Hunter */
+          if (!email && domain && firstName && lastName) {
+            try {
+              email = await findEmail({
+                domain,
+                firstName,
+                lastName,
+              });
+            } catch {}
           }
-        }
 
-        /* ⚡ Fallback email */
-        if (!email) {
-          const safe = p.name.replace(/\s+/g, "").toLowerCase();
+          /* ⚡ Fallback */
+          if (!email) {
+            email = domain
+              ? generateEmail(firstName, lastName, domain)
+              : `${firstName}${lastName}@linkedin-lead.com`;
+          }
 
-          email = domain
-            ? `${safe}@${domain}`
-            : `${safe}@linkedin-lead.com`;
-        }
+          if (!email || !isValidEmail(email)) return null;
 
-        /* ✅ Validate */
-        if (!email.includes("@")) continue;
-
-        /* 🚫 Duplicate check */
-        const exists = await prisma.lead.findFirst({
-          where: {
-            OR: [
-              { email },
-              { profileUrl: p.profileUrl || "" },
-            ],
-          },
-        });
-
-        if (exists) continue;
-
-        /* 💾 Save */
-        const lead = await prisma.lead.create({
-          data: {
+          return {
             email,
             name: p.name,
             company: company || "",
-            source: "linkedin",
-            userId,
-            projectId: project.id,
-            teamId,
             profileUrl: p.profileUrl || "",
-          },
-        });
+          };
 
-        created.push(lead);
+        } catch (err) {
+          console.error("LEAD ERROR:", err);
+          return null;
+        }
+      })
+    );
 
-      } catch (err) {
-        console.error("LEAD ERROR:", err);
-      }
+    const cleanLeads = leads.filter(Boolean) as any[];
+
+    if (!cleanLeads.length) {
+      return NextResponse.json({ error: "No valid leads" });
     }
 
     /* ============================= */
-    /* ✅ RESPONSE                   */
+    /* 🚀 4. BULK INSERT            */
+    /* ============================= */
+    await prisma.lead.createMany({
+      data: cleanLeads.map((l) => ({
+        email: l.email,
+        name: l.name,
+        company: l.company,
+        source: "linkedin",
+        userId,
+        projectId: project!.id,
+        teamId,
+        profileUrl: l.profileUrl,
+      })),
+      skipDuplicates: true,
+    });
+
+    /* ============================= */
+    /* 📤 RESPONSE                  */
     /* ============================= */
     return NextResponse.json({
       success: true,
-      count: created.length,
-      leads: created,
+      count: cleanLeads.length,
+      leads: cleanLeads,
     });
 
   } catch (err) {

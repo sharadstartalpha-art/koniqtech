@@ -1,6 +1,6 @@
 export async function scrapeLinkedInApify({
   query,
-  maxItems = 100,
+  maxItems = 50,
 }: {
   query: string;
   maxItems?: number;
@@ -12,6 +12,13 @@ export async function scrapeLinkedInApify({
       throw new Error("Missing APIFY_API_TOKEN");
     }
 
+    // 🔥 Improve query (VERY IMPORTANT)
+    const formattedQuery = query
+      ? `${query} founder OR ceo`
+      : "startup founder";
+
+    console.log("🚀 APIFY QUERY:", formattedQuery);
+
     const res = await fetch(
       `https://api.apify.com/v2/acts/harvestapi~linkedin-profile-search/run-sync-get-dataset-items?token=${token}`,
       {
@@ -20,7 +27,7 @@ export async function scrapeLinkedInApify({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          search: query || "founder",
+          search: formattedQuery, // ✅ correct param
           maxItems,
         }),
       }
@@ -28,8 +35,8 @@ export async function scrapeLinkedInApify({
 
     if (!res.ok) {
       const text = await res.text();
-      console.error("❌ APIFY ERROR:", text);
-      throw new Error("Apify request failed");
+      console.error("❌ APIFY ERROR:", res.status, text);
+      return [];
     }
 
     const data = await res.json();
@@ -41,23 +48,42 @@ export async function scrapeLinkedInApify({
 
     console.log("📦 APIFY RESULTS:", data.length);
 
+    if (data.length === 0) {
+      console.warn("⚠️ No leads from Apify");
+      return [];
+    }
+
     return data.map((p: any) => {
       const firstName = p.firstName || "";
       const lastName = p.lastName || "";
 
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      // 🔥 Clean domain
+      let domain = "";
+      if (p.companyWebsite) {
+        domain = p.companyWebsite;
+      } else if (p.company?.website) {
+        domain = p.company.website;
+      }
+
+      if (domain) {
+        domain = domain
+          .replace(/^https?:\/\//, "")
+          .replace(/^www\./, "")
+          .split("/")[0];
+      }
+
       return {
-        name: `${firstName} ${lastName}`.trim(),
+        name: fullName,
         firstName,
         lastName,
         title: p.headline || "",
         profileUrl: p.linkedinUrl || "",
-        company: p.companyName || "",
-        companyWebsite:
-          p.companyWebsite ||
-          p.company?.website ||
-          "",
+        company: p.companyName || p.company?.name || "",
+        domain,
         location: p.location || "",
-        email: null,
+        email: null, // will enrich later
       };
     });
 

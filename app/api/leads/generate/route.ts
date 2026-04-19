@@ -21,14 +21,15 @@ type Profile = {
 };
 
 /* ============================= */
-/* FILTER                        */
+/* FILTER (LESS STRICT 🚀)       */
 /* ============================= */
 function isGoodLead(p: Profile) {
   const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
   return (
-    (text.includes("founder") || text.includes("ceo")) &&
-    (text.includes("saas") || text.includes("startup"))
+    text.includes("founder") ||
+    text.includes("ceo") ||
+    text.includes("co-founder")
   );
 }
 
@@ -51,8 +52,10 @@ export async function POST(req: Request) {
 
     const userId = session.user.id;
 
-    /* 🔥 SCRAPE */
-    const profiles: Profile[] = await scrapeLinkedIn(query || "founder");
+    /* 🔥 SCRAPE MORE (IMPORTANT) */
+    const profiles: Profile[] = await scrapeLinkedIn(
+      query || "saas founder USA"
+    );
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
@@ -81,7 +84,7 @@ export async function POST(req: Request) {
     }
 
     /* 🚀 TASKS */
-    const tasks = profiles.slice(0, 50).map((p) => async () => {
+    const tasks = profiles.slice(0, 100).map((p) => async () => {
       try {
         if (!p?.name) return null;
         if (!isGoodLead(p)) return null;
@@ -90,40 +93,55 @@ export async function POST(req: Request) {
         const first = parts[0] || "";
         const last = parts.slice(1).join(" ") || "";
 
+        if (!first) return null;
+
         /* 🧠 DOMAIN */
         let domain: string | undefined = p.domain ?? undefined;
 
         if (!domain && p.company) {
-          const result = await getDomain(p.company);
-          domain = result ?? undefined; // ✅ FIX (null → undefined)
+          try {
+            const d = await getDomain(p.company);
+            domain = d ?? undefined;
+          } catch {}
         }
 
         if (!domain) return null;
 
-        /* 🔍 PROVIDER 1: HUNTER */
-        let email = await findEmail({
-          domain,
-          firstName: first,
-          lastName: last,
-        });
+        let email: string | null = null;
 
-        /* 🔁 PROVIDER 2: PATTERN FALLBACK */
+        /* 🔍 PROVIDER 1: HUNTER */
+        try {
+          email = await findEmail({
+            domain,
+            firstName: first,
+            lastName: last,
+          });
+        } catch {}
+
+        /* 🔁 PROVIDER 2: PATTERN (FAST LIMIT) */
         if (!email) {
           const patterns = generateEmailPatterns(first, last, domain);
 
-          for (const e of patterns) {
-            const ok = await verifyEmail(e);
-            if (ok) {
-              email = e;
-              break;
-            }
+          for (const e of patterns.slice(0, 3)) {
+            try {
+              const ok = await verifyEmail(e);
+              if (ok) {
+                email = e;
+                break;
+              }
+            } catch {}
           }
         }
 
+        /* ❌ NO EMAIL → SKIP (QUALITY RULE) */
         if (!email) return null;
 
-        /* ✅ FINAL VERIFY */
-        const valid = await verifyEmail(email);
+        /* ⚡ FINAL VERIFY (LIGHT — only once) */
+        let valid = false;
+        try {
+          valid = await verifyEmail(email);
+        } catch {}
+
         if (!valid) return null;
 
         /* 🚫 DUPLICATE CHECK */
@@ -158,8 +176,8 @@ export async function POST(req: Request) {
       }
     });
 
-    /* ⚡ RUN WITH CONTROLLED CONCURRENCY */
-    const results = await runWithConcurrency(tasks, 6);
+    /* ⚡ HIGHER CONCURRENCY (FASTER 🚀) */
+    const results = await runWithConcurrency(tasks, 10);
 
     const created = results.filter(Boolean);
 

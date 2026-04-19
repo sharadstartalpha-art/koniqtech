@@ -27,9 +27,8 @@ function isGoodLead(p: Profile) {
   const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
   return (
-    text.includes("founder") ||
-    text.includes("ceo") ||
-    text.includes("co-founder")
+    (text.includes("founder") || text.includes("ceo")) &&
+    (text.includes("saas") || text.includes("startup"))
   );
 }
 
@@ -82,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     /* 🚀 TASKS */
-    const tasks = profiles.slice(0, 80).map((p) => async () => {
+    const tasks = profiles.slice(0, 50).map((p) => async () => {
       try {
         if (!p?.name) return null;
         if (!isGoodLead(p)) return null;
@@ -95,71 +94,57 @@ export async function POST(req: Request) {
         let domain: string | undefined = p.domain ?? undefined;
 
         if (!domain && p.company) {
-          try {
-            const d = await getDomain(p.company);
-            domain = d ?? undefined;
-          } catch {}
+          const result = await getDomain(p.company);
+          domain = result ?? undefined; // ✅ FIX (null → undefined)
         }
 
-        /* 🔍 EMAIL */
-        let email: string | null = null;
+        if (!domain) return null;
 
-        if (domain && first) {
-          try {
-            email = await findEmail({
-              domain,
-              firstName: first,
-              lastName: last,
-            });
-          } catch {}
-        }
+        /* 🔍 PROVIDER 1: HUNTER */
+        let email = await findEmail({
+          domain,
+          firstName: first,
+          lastName: last,
+        });
 
-        if (!email && domain && first) {
+        /* 🔁 PROVIDER 2: PATTERN FALLBACK */
+        if (!email) {
           const patterns = generateEmailPatterns(first, last, domain);
-          email = patterns[0] || patterns[1] || null;
+
+          for (const e of patterns) {
+            const ok = await verifyEmail(e);
+            if (ok) {
+              email = e;
+              break;
+            }
+          }
         }
 
-        /* ✅ VERIFY */
-        let isValid = false;
+        if (!email) return null;
 
-        if (email) {
-          try {
-            isValid = await verifyEmail(email);
-          } catch {}
-        }
+        /* ✅ FINAL VERIFY */
+        const valid = await verifyEmail(email);
+        if (!valid) return null;
 
-        if (!email && !p.profileUrl) return null;
-
-        /* 🚫 DUPLICATE CHECK (FIXED) */
-        const orConditions: any[] = [];
-
-        if (email) {
-          orConditions.push({ email });
-        }
-
-        if (p.profileUrl) {
-          orConditions.push({ profileUrl: p.profileUrl });
-        }
-
-        let exists = null;
-
-        if (orConditions.length > 0) {
-          exists = await prisma.lead.findFirst({
-            where: {
-              OR: orConditions,
-            },
-          });
-        }
+        /* 🚫 DUPLICATE CHECK */
+        const exists = await prisma.lead.findFirst({
+          where: {
+            OR: [
+              { email },
+              { profileUrl: p.profileUrl || "" },
+            ],
+          },
+        });
 
         if (exists) return null;
 
         /* 💾 SAVE */
         return await prisma.lead.create({
           data: {
-            email: email || `noemail_${Date.now()}@placeholder.com`,
+            email,
             name: p.name,
             company: p.company || "",
-            source: isValid ? "verified" : "linkedin",
+            source: "linkedin",
             userId,
             projectId: project!.id,
             teamId,
@@ -173,13 +158,10 @@ export async function POST(req: Request) {
       }
     });
 
-    /* ⚡ RUN */
-    const results = await runWithConcurrency(tasks, 8);
+    /* ⚡ RUN WITH CONTROLLED CONCURRENCY */
+    const results = await runWithConcurrency(tasks, 6);
 
     const created = results.filter(Boolean);
-
-    console.log("✅ CREATED:", created.length);
-    console.log("❌ SKIPPED:", profiles.length - created.length);
 
     return NextResponse.json({
       success: true,

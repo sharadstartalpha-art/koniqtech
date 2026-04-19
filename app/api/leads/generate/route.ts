@@ -6,13 +6,14 @@ import { NextResponse } from "next/server";
 import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
 import { getDomain, verifyEmail } from "@/lib/enrich";
+import { generateEmailPatterns } from "@/lib/email";
+import { runWithConcurrency } from "@/lib/utils";
 
 /* ============================= */
 /* TYPES                         */
 /* ============================= */
 type Profile = {
   name: string;
-  email?: string | null;
   company?: string;
   title?: string;
   domain?: string;
@@ -20,24 +21,8 @@ type Profile = {
 };
 
 /* ============================= */
-/* HELPERS                       */
+/* FILTER                        */
 /* ============================= */
-function extractCompany(title?: string): string {
-  if (!title) return "";
-
-  const lower = title.toLowerCase();
-  const patterns = [" at ", "@", "founder of", "ceo of", "co-founder of"];
-
-  for (const p of patterns) {
-    const idx = lower.indexOf(p);
-    if (idx !== -1) {
-      return title.slice(idx + p.length).trim();
-    }
-  }
-
-  return "";
-}
-
 function isGoodLead(p: Profile) {
   const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
@@ -95,83 +80,88 @@ export async function POST(req: Request) {
       });
     }
 
-    /* 🚀 ENRICH + SAVE */
-    const created: any[] = [];
+    /* 🚀 TASKS */
+    const tasks = profiles.slice(0, 50).map((p) => async () => {
+      try {
+        if (!p?.name) return null;
+        if (!isGoodLead(p)) return null;
 
-    await Promise.all(
-      profiles.slice(0, 50).map(async (p) => {
-        try {
-          if (!p?.name) return;
-          if (!isGoodLead(p)) return;
+        const parts = p.name.trim().split(" ");
+        const first = parts[0] || "";
+        const last = parts.slice(1).join(" ") || "";
 
-          const company = p.company || extractCompany(p.title);
+        /* 🧠 DOMAIN */
+        let domain: string | undefined = p.domain ?? undefined;
 
-          const parts = p.name.trim().split(" ");
-          const firstName = parts[0] || "";
-          const lastName = parts.slice(1).join(" ") || "";
-
-          /* 🧠 STEP 1: GET DOMAIN */
-          let domain: string | undefined = p.domain ?? undefined;
-
-          if (!domain && company) {
-            const result = await getDomain(company);
-            domain = result ?? undefined; // 🔥 FIX HERE
-          }
-
-          if (!domain) return;
-
-          /* 🔍 STEP 2: FIND EMAIL */
-          const email = await findEmail({
-            domain,
-            firstName,
-            lastName,
-          });
-
-          if (!email) return;
-
-          /* ✅ STEP 3: VERIFY EMAIL */
-          const valid = await verifyEmail(email);
-          if (!valid) return;
-
-          /* 🚫 DUPLICATE CHECK */
-          const exists = await prisma.lead.findFirst({
-            where: {
-              OR: [
-                { email },
-                { profileUrl: p.profileUrl || "" },
-              ],
-            },
-          });
-
-          if (exists) return;
-
-          /* 💾 SAVE */
-          const lead = await prisma.lead.create({
-            data: {
-              email,
-              name: p.name,
-              company: company || "",
-              source: "linkedin",
-              userId,
-              projectId: project!.id,
-              teamId,
-              profileUrl: p.profileUrl || "",
-            },
-          });
-
-          created.push(lead);
-
-        } catch (err) {
-          console.error("LEAD ERROR:", err);
+        if (!domain && p.company) {
+          const result = await getDomain(p.company);
+          domain = result ?? undefined; // ✅ FIX (null → undefined)
         }
-      })
-    );
 
-    if (!created.length) {
-      return NextResponse.json({
-        error: "No valid leads (all emails failed verification)",
-      });
-    }
+        if (!domain) return null;
+
+        /* 🔍 PROVIDER 1: HUNTER */
+        let email = await findEmail({
+          domain,
+          firstName: first,
+          lastName: last,
+        });
+
+        /* 🔁 PROVIDER 2: PATTERN FALLBACK */
+        if (!email) {
+          const patterns = generateEmailPatterns(first, last, domain);
+
+          for (const e of patterns) {
+            const ok = await verifyEmail(e);
+            if (ok) {
+              email = e;
+              break;
+            }
+          }
+        }
+
+        if (!email) return null;
+
+        /* ✅ FINAL VERIFY */
+        const valid = await verifyEmail(email);
+        if (!valid) return null;
+
+        /* 🚫 DUPLICATE CHECK */
+        const exists = await prisma.lead.findFirst({
+          where: {
+            OR: [
+              { email },
+              { profileUrl: p.profileUrl || "" },
+            ],
+          },
+        });
+
+        if (exists) return null;
+
+        /* 💾 SAVE */
+        return await prisma.lead.create({
+          data: {
+            email,
+            name: p.name,
+            company: p.company || "",
+            source: "linkedin",
+            userId,
+            projectId: project!.id,
+            teamId,
+            profileUrl: p.profileUrl || "",
+          },
+        });
+
+      } catch (err) {
+        console.error("TASK ERROR:", err);
+        return null;
+      }
+    });
+
+    /* ⚡ RUN WITH CONTROLLED CONCURRENCY */
+    const results = await runWithConcurrency(tasks, 6);
+
+    const created = results.filter(Boolean);
 
     return NextResponse.json({
       success: true,
@@ -180,7 +170,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("ERROR:", err);
+    console.error("ROUTE ERROR:", err);
 
     return NextResponse.json(
       { error: "Failed to generate leads" },

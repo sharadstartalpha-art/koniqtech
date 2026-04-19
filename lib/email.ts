@@ -1,9 +1,13 @@
 import { Resend } from "resend";
 
+/* ============================= */
+/* RESEND CLIENT                 */
+/* ============================= */
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
-
-// ✅ Generic email sender (reuse everywhere)
+/* ============================= */
+/* GENERIC EMAIL SENDER          */
+/* ============================= */
 export async function sendEmail({
   to,
   subject,
@@ -21,7 +25,9 @@ export async function sendEmail({
   });
 }
 
-// ✅ Invite-specific helper
+/* ============================= */
+/* INVITE EMAIL                  */
+/* ============================= */
 export async function sendInviteEmail(email: string, link: string) {
   return sendEmail({
     to: email,
@@ -29,11 +35,32 @@ export async function sendInviteEmail(email: string, link: string) {
     html: `
       <h2>You’ve been invited!</h2>
       <p>Click below to join the team:</p>
-      <a href="${link}" style="padding:10px 20px;background:black;color:white;text-decoration:none;border-radius:5px;">
+      <a href="${link}" 
+         style="padding:10px 20px;background:black;color:white;text-decoration:none;border-radius:5px;">
         Accept Invite
       </a>
     `,
   });
+}
 
+/* ============================= */
+/* EMAIL PATTERN GENERATOR       */
+/* ============================= */
+export function generateEmailPatterns(
+  first: string,
+  last: string,
+  domain: string
+): string[] {
+  if (!first || !last || !domain) return [];
 
+  const f = first.toLowerCase();
+  const l = last.toLowerCase();
+
+  return [
+    `${f}@${domain}`,
+    `${f}.${l}@${domain}`,
+    `${f}${l}@${domain}`,
+    `${f[0]}${l}@${domain}`,
+    `${f}${l[0]}@${domain}`,
+  ];
 }

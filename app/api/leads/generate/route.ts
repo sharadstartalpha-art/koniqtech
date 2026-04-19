@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 import { scrapeLinkedIn } from "@/lib/linkedin";
 import { findEmail } from "@/lib/hunter";
+import { getDomain, verifyEmail } from "@/lib/enrich";
 
 /* ============================= */
 /* TYPES                         */
@@ -37,16 +38,8 @@ function extractCompany(title?: string): string {
   return "";
 }
 
-function generateEmail(first: string, last: string, domain: string) {
-  return `${first.toLowerCase()}@${domain}`;
-}
-
-function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 function isGoodLead(p: Profile) {
-  const text = `${p.title} ${p.company}`.toLowerCase();
+  const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
   return (
     (text.includes("founder") || text.includes("ceo")) &&
@@ -87,6 +80,7 @@ export async function POST(req: Request) {
 
     if (!project) {
       const product = await prisma.product.findFirst();
+
       if (!product) {
         return NextResponse.json({ error: "No product found" });
       }
@@ -101,12 +95,14 @@ export async function POST(req: Request) {
       });
     }
 
-    /* ⚡ PROCESS (FAST) */
-    const leads = await Promise.all(
+    /* 🚀 ENRICH + SAVE */
+    const created: any[] = [];
+
+    await Promise.all(
       profiles.slice(0, 50).map(async (p) => {
         try {
-          if (!p?.name) return null;
-          if (!isGoodLead(p)) return null;
+          if (!p?.name) return;
+          if (!isGoodLead(p)) return;
 
           const company = p.company || extractCompany(p.title);
 
@@ -114,62 +110,73 @@ export async function POST(req: Request) {
           const firstName = parts[0] || "";
           const lastName = parts.slice(1).join(" ") || "";
 
-          let email: string | null = p.email || null;
+          /* 🧠 STEP 1: GET DOMAIN */
+          let domain: string | undefined = p.domain ?? undefined;
 
-          if (!email && p.domain && firstName && lastName) {
-            email = await findEmail({
-              domain: p.domain,
-              firstName,
-              lastName,
-            });
+          if (!domain && company) {
+            const result = await getDomain(company);
+            domain = result ?? undefined; // 🔥 FIX HERE
           }
 
-          if (!email) {
-            email = p.domain
-              ? generateEmail(firstName, lastName, p.domain)
-              : `${firstName}${lastName}@linkedin-lead.com`;
-          }
+          if (!domain) return;
 
-          if (!email || !isValidEmail(email)) return null;
+          /* 🔍 STEP 2: FIND EMAIL */
+          const email = await findEmail({
+            domain,
+            firstName,
+            lastName,
+          });
 
-          return {
-            email,
-            name: p.name,
-            company: company || "",
-            profileUrl: p.profileUrl || "",
-          };
+          if (!email) return;
 
-        } catch {
-          return null;
+          /* ✅ STEP 3: VERIFY EMAIL */
+          const valid = await verifyEmail(email);
+          if (!valid) return;
+
+          /* 🚫 DUPLICATE CHECK */
+          const exists = await prisma.lead.findFirst({
+            where: {
+              OR: [
+                { email },
+                { profileUrl: p.profileUrl || "" },
+              ],
+            },
+          });
+
+          if (exists) return;
+
+          /* 💾 SAVE */
+          const lead = await prisma.lead.create({
+            data: {
+              email,
+              name: p.name,
+              company: company || "",
+              source: "linkedin",
+              userId,
+              projectId: project!.id,
+              teamId,
+              profileUrl: p.profileUrl || "",
+            },
+          });
+
+          created.push(lead);
+
+        } catch (err) {
+          console.error("LEAD ERROR:", err);
         }
       })
     );
 
-    const cleanLeads = leads.filter(Boolean) as any[];
-
-    if (!cleanLeads.length) {
-      return NextResponse.json({ error: "No valid leads" });
+    if (!created.length) {
+      return NextResponse.json({
+        error: "No valid leads (all emails failed verification)",
+      });
     }
-
-    /* 🚀 SAVE */
-    await prisma.lead.createMany({
-      data: cleanLeads.map((l) => ({
-        email: l.email,
-        name: l.name,
-        company: l.company,
-        source: "linkedin",
-        userId,
-        projectId: project!.id,
-        teamId,
-        profileUrl: l.profileUrl,
-      })),
-      skipDuplicates: true,
-    });
 
     return NextResponse.json({
       success: true,
-      count: cleanLeads.length,
-      leads: cleanLeads,
+      count: created.length,
+      leads: created,
     });
 
   } catch (err) {

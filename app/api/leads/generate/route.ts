@@ -11,19 +11,6 @@ import { runWithConcurrency } from "@/lib/utils";
 import { findEmailMulti } from "@/lib/emailProviders";
 import { enrichCompany } from "@/lib/companyEnrich";
 
-/* ============================= */
-/* FILTER (LOOSE = MORE LEADS)   */
-/* ============================= */
-function isGoodLead(p: any) {
-  const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
-
-  return (
-    text.includes("founder") ||
-    text.includes("ceo") ||
-    text.includes("co-founder")
-  );
-}
-
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,7 +22,6 @@ export async function POST(req: Request) {
     const { teamId, projectId, query } = await req.json();
     const userId = session.user.id;
 
-    /* 🔥 SCRAPE MORE */
     const profiles = await scrapeLinkedIn(query || "saas founder USA");
 
     if (!profiles.length) {
@@ -62,15 +48,12 @@ export async function POST(req: Request) {
     }
 
     /* 🚀 TASKS */
-    const tasks = profiles.slice(0, 120).map((p: any) => async () => {
+    const tasks = profiles.slice(0, 150).map((p: any) => async () => {
       try {
         if (!p?.name) return null;
-        if (!isGoodLead(p)) return null;
 
         const [first, ...rest] = p.name.split(" ");
         const last = rest.join(" ");
-
-        if (!first) return null;
 
         /* 🧠 DOMAIN */
         let domain = p.domain;
@@ -79,20 +62,22 @@ export async function POST(req: Request) {
           domain = await getDomain(p.company);
         }
 
-        if (!domain) return null;
+        /* 🔍 EMAIL */
+        let email: string | null = null;
 
-        /* 🔍 MULTI EMAIL */
-        let email = await findEmailMulti({
-          domain,
-          first,
-          last,
-        });
+        if (domain) {
+          email = await findEmailMulti({
+            domain,
+            first,
+            last,
+          });
+        }
 
-        /* 🔁 PATTERN FALLBACK */
-        if (!email) {
+        /* 🔁 FALLBACK */
+        if (!email && domain) {
           const patterns = generateEmailPatterns(first, last, domain);
 
-          for (const e of patterns.slice(0, 3)) {
+          for (const e of patterns.slice(0, 2)) {
             const ok = await verifyEmail(e);
             if (ok) {
               email = e;
@@ -101,29 +86,40 @@ export async function POST(req: Request) {
           }
         }
 
-        if (!email) return null;
-
-        /* ⚡ VERIFY */
-        const valid = await verifyEmail(email);
-        if (!valid) return null;
-
         /* 🏢 COMPANY ENRICH */
-        const companyData = await enrichCompany(domain);
+        const companyData = domain
+          ? await enrichCompany(domain)
+          : null;
 
-        /* 🚫 DUPLICATE */
-        const exists = await prisma.lead.findFirst({
-          where: { email },
-        });
+        /* 🚫 DUPLICATE (CLEAN VERSION) */
+        const conditions: any[] = [];
+
+        if (email) {
+          conditions.push({ email });
+        }
+
+        if (p.profileUrl) {
+          conditions.push({ profileUrl: p.profileUrl });
+        }
+
+        const exists =
+          conditions.length > 0
+            ? await prisma.lead.findFirst({
+                where: { OR: conditions },
+              })
+            : null;
 
         if (exists) return null;
 
-        /* 💾 SAVE */
+        /* 💾 SAVE (ALLOW PARTIAL LEADS) */
         return await prisma.lead.create({
           data: {
-            email,
+            email:
+              email ||
+              `noemail_${Date.now()}_${Math.random()}@placeholder.com`,
             name: p.name,
             company: companyData?.name || p.company || "",
-            source: "enriched",
+            source: email ? "enriched" : "linkedin",
             userId,
             projectId: project!.id,
             teamId,
@@ -137,9 +133,7 @@ export async function POST(req: Request) {
       }
     });
 
-    /* ⚡ HIGH PARALLEL */
     const results = await runWithConcurrency(tasks, 12);
-
     const created = results.filter(Boolean);
 
     return NextResponse.json({

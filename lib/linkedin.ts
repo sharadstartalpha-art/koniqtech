@@ -1,6 +1,52 @@
 import axios from "axios";
 
 /* ============================= */
+/* QUERY EXPANSION (APOLLO STYLE) */
+/* ============================= */
+function buildQueries(input: string) {
+  const roles = [
+    "founder",
+    "co founder",
+    "ceo",
+    "co-founder",
+    "owner",
+    "director",
+  ];
+
+  const industries = [
+    "saas",
+    "b2b saas",
+    "startup",
+    "software",
+    "ai startup",
+  ];
+
+  const locations = [
+    "United States",
+    "USA",
+    "California",
+    "New York",
+    "Texas",
+  ];
+
+  const queries: string[] = [];
+
+  for (const r of roles) {
+    for (const i of industries) {
+      for (const l of locations) {
+        queries.push(`${r} ${i} ${l}`);
+        queries.push(`"${r}" "${i}" "${l}"`);
+        queries.push(`${r} of ${i} company ${l}`);
+      }
+    }
+  }
+
+  queries.push(input);
+
+  return queries;
+}
+
+/* ============================= */
 /* MAIN FUNCTION                 */
 /* ============================= */
 export async function scrapeLinkedIn(query: string) {
@@ -10,20 +56,15 @@ export async function scrapeLinkedIn(query: string) {
     throw new Error("Missing SERP_API_KEY");
   }
 
-  const queries = [
-    `${query}`,
-    `${query} founder`,
-    `${query} CEO`,
-    `${query} startup`,
-  ];
+  const queries = buildQueries(query);
 
   let results: any[] = [];
 
-  for (const q of queries) {
-    for (let page = 0; page < 5; page++) {
+  for (const q of queries.slice(0, 20)) { // 🔥 limit queries for speed
+    for (let page = 0; page < 3; page++) {
       const start = page * 10;
 
-      const url = `https://serpapi.com/search.json?q=site:linkedin.com/in ${encodeURIComponent(
+      const url = `https://serpapi.com/search.json?q=(site:linkedin.com/in OR site:linkedin.com/pub) ${encodeURIComponent(
         q
       )}&start=${start}&engine=google&api_key=${apiKey}`;
 
@@ -59,7 +100,7 @@ export async function scrapeLinkedIn(query: string) {
 
   console.log("🔥 SERP TOTAL PROFILES:", unique.length);
 
-  return unique.slice(0, 200);
+  return unique.slice(0, 500); // 🔥 increase pool
 }
 
 /* ============================= */

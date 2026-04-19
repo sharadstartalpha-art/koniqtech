@@ -4,26 +4,17 @@ import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 import { scrapeLinkedIn } from "@/lib/linkedin";
-import { findEmail } from "@/lib/hunter";
 import { getDomain, verifyEmail } from "@/lib/enrich";
 import { generateEmailPatterns } from "@/lib/email";
 import { runWithConcurrency } from "@/lib/utils";
 
-/* ============================= */
-/* TYPES                         */
-/* ============================= */
-type Profile = {
-  name: string;
-  company?: string;
-  title?: string;
-  domain?: string;
-  profileUrl?: string;
-};
+import { findEmailMulti } from "@/lib/emailProviders";
+import { enrichCompany } from "@/lib/companyEnrich";
 
 /* ============================= */
-/* FILTER (LESS STRICT 🚀)       */
+/* FILTER (LOOSE = MORE LEADS)   */
 /* ============================= */
-function isGoodLead(p: Profile) {
+function isGoodLead(p: any) {
   const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
   return (
@@ -33,9 +24,6 @@ function isGoodLead(p: Profile) {
   );
 }
 
-/* ============================= */
-/* ROUTE                         */
-/* ============================= */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -45,17 +33,10 @@ export async function POST(req: Request) {
     }
 
     const { teamId, projectId, query } = await req.json();
-
-    if (!teamId) {
-      return NextResponse.json({ error: "No team selected" });
-    }
-
     const userId = session.user.id;
 
-    /* 🔥 SCRAPE MORE (IMPORTANT) */
-    const profiles: Profile[] = await scrapeLinkedIn(
-      query || "saas founder USA"
-    );
+    /* 🔥 SCRAPE MORE */
+    const profiles = await scrapeLinkedIn(query || "saas founder USA");
 
     if (!profiles.length) {
       return NextResponse.json({ error: "No leads found" });
@@ -68,10 +49,7 @@ export async function POST(req: Request) {
 
     if (!project) {
       const product = await prisma.product.findFirst();
-
-      if (!product) {
-        return NextResponse.json({ error: "No product found" });
-      }
+      if (!product) return NextResponse.json({ error: "No product" });
 
       project = await prisma.project.create({
         data: {
@@ -84,74 +62,57 @@ export async function POST(req: Request) {
     }
 
     /* 🚀 TASKS */
-    const tasks = profiles.slice(0, 100).map((p) => async () => {
+    const tasks = profiles.slice(0, 120).map((p: any) => async () => {
       try {
         if (!p?.name) return null;
         if (!isGoodLead(p)) return null;
 
-        const parts = p.name.trim().split(" ");
-        const first = parts[0] || "";
-        const last = parts.slice(1).join(" ") || "";
+        const [first, ...rest] = p.name.split(" ");
+        const last = rest.join(" ");
 
         if (!first) return null;
 
         /* 🧠 DOMAIN */
-        let domain: string | undefined = p.domain ?? undefined;
+        let domain = p.domain;
 
         if (!domain && p.company) {
-          try {
-            const d = await getDomain(p.company);
-            domain = d ?? undefined;
-          } catch {}
+          domain = await getDomain(p.company);
         }
 
         if (!domain) return null;
 
-        let email: string | null = null;
+        /* 🔍 MULTI EMAIL */
+        let email = await findEmailMulti({
+          domain,
+          first,
+          last,
+        });
 
-        /* 🔍 PROVIDER 1: HUNTER */
-        try {
-          email = await findEmail({
-            domain,
-            firstName: first,
-            lastName: last,
-          });
-        } catch {}
-
-        /* 🔁 PROVIDER 2: PATTERN (FAST LIMIT) */
+        /* 🔁 PATTERN FALLBACK */
         if (!email) {
           const patterns = generateEmailPatterns(first, last, domain);
 
           for (const e of patterns.slice(0, 3)) {
-            try {
-              const ok = await verifyEmail(e);
-              if (ok) {
-                email = e;
-                break;
-              }
-            } catch {}
+            const ok = await verifyEmail(e);
+            if (ok) {
+              email = e;
+              break;
+            }
           }
         }
 
-        /* ❌ NO EMAIL → SKIP (QUALITY RULE) */
         if (!email) return null;
 
-        /* ⚡ FINAL VERIFY (LIGHT — only once) */
-        let valid = false;
-        try {
-          valid = await verifyEmail(email);
-        } catch {}
-
+        /* ⚡ VERIFY */
+        const valid = await verifyEmail(email);
         if (!valid) return null;
 
-        /* 🚫 DUPLICATE CHECK */
+        /* 🏢 COMPANY ENRICH */
+        const companyData = await enrichCompany(domain);
+
+        /* 🚫 DUPLICATE */
         const exists = await prisma.lead.findFirst({
-          where: {
-            OR: [
-              { email },
-              { profileUrl: p.profileUrl || "" },
-            ],
-          },
+          where: { email },
         });
 
         if (exists) return null;
@@ -161,8 +122,8 @@ export async function POST(req: Request) {
           data: {
             email,
             name: p.name,
-            company: p.company || "",
-            source: "linkedin",
+            company: companyData?.name || p.company || "",
+            source: "enriched",
             userId,
             projectId: project!.id,
             teamId,
@@ -176,8 +137,8 @@ export async function POST(req: Request) {
       }
     });
 
-    /* ⚡ HIGHER CONCURRENCY (FASTER 🚀) */
-    const results = await runWithConcurrency(tasks, 10);
+    /* ⚡ HIGH PARALLEL */
+    const results = await runWithConcurrency(tasks, 12);
 
     const created = results.filter(Boolean);
 
@@ -188,7 +149,7 @@ export async function POST(req: Request) {
     });
 
   } catch (err) {
-    console.error("ROUTE ERROR:", err);
+    console.error("ERROR:", err);
 
     return NextResponse.json(
       { error: "Failed to generate leads" },

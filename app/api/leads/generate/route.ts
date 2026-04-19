@@ -27,8 +27,9 @@ function isGoodLead(p: Profile) {
   const text = `${p.title ?? ""} ${p.company ?? ""}`.toLowerCase();
 
   return (
-    (text.includes("founder") || text.includes("ceo")) &&
-    (text.includes("saas") || text.includes("startup"))
+    text.includes("founder") ||
+    text.includes("ceo") ||
+    text.includes("co-founder")
   );
 }
 
@@ -81,7 +82,7 @@ export async function POST(req: Request) {
     }
 
     /* 🚀 TASKS */
-    const tasks = profiles.slice(0, 50).map((p) => async () => {
+    const tasks = profiles.slice(0, 80).map((p) => async () => {
       try {
         if (!p?.name) return null;
         if (!isGoodLead(p)) return null;
@@ -94,57 +95,71 @@ export async function POST(req: Request) {
         let domain: string | undefined = p.domain ?? undefined;
 
         if (!domain && p.company) {
-          const result = await getDomain(p.company);
-          domain = result ?? undefined; // ✅ FIX (null → undefined)
+          try {
+            const d = await getDomain(p.company);
+            domain = d ?? undefined;
+          } catch {}
         }
 
-        if (!domain) return null;
+        /* 🔍 EMAIL */
+        let email: string | null = null;
 
-        /* 🔍 PROVIDER 1: HUNTER */
-        let email = await findEmail({
-          domain,
-          firstName: first,
-          lastName: last,
-        });
+        if (domain && first) {
+          try {
+            email = await findEmail({
+              domain,
+              firstName: first,
+              lastName: last,
+            });
+          } catch {}
+        }
 
-        /* 🔁 PROVIDER 2: PATTERN FALLBACK */
-        if (!email) {
+        if (!email && domain && first) {
           const patterns = generateEmailPatterns(first, last, domain);
-
-          for (const e of patterns) {
-            const ok = await verifyEmail(e);
-            if (ok) {
-              email = e;
-              break;
-            }
-          }
+          email = patterns[0] || patterns[1] || null;
         }
 
-        if (!email) return null;
+        /* ✅ VERIFY */
+        let isValid = false;
 
-        /* ✅ FINAL VERIFY */
-        const valid = await verifyEmail(email);
-        if (!valid) return null;
+        if (email) {
+          try {
+            isValid = await verifyEmail(email);
+          } catch {}
+        }
 
-        /* 🚫 DUPLICATE CHECK */
-        const exists = await prisma.lead.findFirst({
-          where: {
-            OR: [
-              { email },
-              { profileUrl: p.profileUrl || "" },
-            ],
-          },
-        });
+        if (!email && !p.profileUrl) return null;
+
+        /* 🚫 DUPLICATE CHECK (FIXED) */
+        const orConditions: any[] = [];
+
+        if (email) {
+          orConditions.push({ email });
+        }
+
+        if (p.profileUrl) {
+          orConditions.push({ profileUrl: p.profileUrl });
+        }
+
+        let exists = null;
+
+        if (orConditions.length > 0) {
+          exists = await prisma.lead.findFirst({
+            where: {
+              OR: orConditions,
+            },
+          });
+        }
 
         if (exists) return null;
 
         /* 💾 SAVE */
         return await prisma.lead.create({
           data: {
-            email,
+            email: email || `noemail_${Date.now()}@placeholder.com`,
             name: p.name,
             company: p.company || "",
-            source: "linkedin",
+            source: isValid ? "verified" : "linkedin",
             userId,
             projectId: project!.id,
             teamId,
@@ -158,10 +173,13 @@ export async function POST(req: Request) {
       }
     });
 
-    /* ⚡ RUN WITH CONTROLLED CONCURRENCY */
-    const results = await runWithConcurrency(tasks, 6);
+    /* ⚡ RUN */
+    const results = await runWithConcurrency(tasks, 8);
 
     const created = results.filter(Boolean);
+
+    console.log("✅ CREATED:", created.length);
+    console.log("❌ SKIPPED:", profiles.length - created.length);
 
     return NextResponse.json({
       success: true,

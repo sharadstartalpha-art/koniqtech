@@ -1,50 +1,67 @@
-import { scrapeLinkedInApify } from "@/lib/apify";
+import axios from "axios";
 
-type Lead = {
-  name: string;
-  title?: string;
-  company?: string;
-  domain?: string;
-  profileUrl?: string;
-  email?: string | null;
-};
+export async function scrapeLinkedIn(query: string) {
+  const queries = [
+    `${query}`,
+    `${query} founder`,
+    `${query} CEO`,
+    `${query} startup`,
+  ];
 
-// Helper to extract company from title string
-function extractCompany(title: string): string {
-  if (!title) return "";
+  let results: any[] = [];
 
-  const parts = title.split(" at ");
-  if (parts.length > 1) return parts[1].trim();
+  for (const q of queries) {
+    for (let page = 0; page < 5; page++) { // 🔥 5 pages each
+      const start = page * 10;
 
-  return "";
+      const url = `https://www.google.com/search?q=site:linkedin.com/in ${encodeURIComponent(
+        q
+      )}&start=${start}`;
+
+      try {
+        const res = await axios.get(url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          },
+        });
+
+        const html = res.data;
+
+        const matches =
+          html.match(/https:\/\/www\.linkedin\.com\/in\/[^"&]+/g) || [];
+
+        results.push(
+          ...matches.map((link: string) => ({
+            name: extractName(link),
+            profileUrl: link,
+            title: q,
+          }))
+        );
+
+      } catch (err) {
+        console.error("SCRAPE ERROR:", err);
+      }
+    }
+  }
+
+  // ✅ remove duplicates
+  const unique = Array.from(
+    new Map(results.map((r) => [r.profileUrl, r])).values()
+  );
+
+  console.log("🔥 TOTAL PROFILES:", unique.length);
+
+  return unique.slice(0, 200); // 🚀 BIG LIMIT
 }
 
-export async function scrapeLinkedIn(query: string): Promise<Lead[]> {
-  try {
-    const leads = await scrapeLinkedInApify({
-      query,
-      maxItems: 50,
-    });
-
-    if (!Array.isArray(leads)) return [];
-
-    return leads.map((p: any) => {
-      const company =
-        p.companyName ||
-        extractCompany(p.title || "");
-
-      return {
-        name: p.name || "",
-        title: p.title || "",
-        company,
-        domain: "", // can enrich later
-        profileUrl: p.profileUrl || "",
-        email: null,
-      };
-    });
-
-  } catch (err) {
-    console.error("SCRAPE ERROR:", err);
-    return [];
-  }
+/* ============================= */
+/* SIMPLE NAME EXTRACTOR         */
+/* ============================= */
+function extractName(url: string) {
+  const slug = url.split("/in/")[1]?.split("/")[0] || "";
+  return slug
+    .replace(/-/g, " ")
+    .replace(/\d+/g, "")
+    .trim();
 }

@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { normalize } from "@/lib/utils";
 
+// ==============================
 // ✅ CREATE LEAD (NO DUPLICATES)
+// ==============================
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,23 +15,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email, name, company, profileUrl, teamId } =
-      await req.json();
+    const { email, name, company, profileUrl, teamId } = await req.json();
 
     if (!teamId) {
-      return NextResponse.json(
-        { error: "Missing teamId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing teamId" }, { status: 400 });
     }
 
+    // 🔍 Ensure project exists
     const project = await prisma.project.findFirst({
       where: { teamId },
     });
 
     if (!project) {
       return NextResponse.json(
-        { error: "No project found" },
+        { error: "No project found for this team" },
         { status: 400 }
       );
     }
@@ -39,7 +38,7 @@ export async function POST(req: Request) {
 
     let existing = null;
 
-    // 🔍 Dedup logic
+    // 🔍 Deduplication logic
     if (email) {
       existing = await prisma.lead.findUnique({ where: { email } });
     }
@@ -58,6 +57,7 @@ export async function POST(req: Request) {
 
     let lead;
 
+    // 🔄 Update existing lead
     if (existing) {
       lead = await prisma.lead.update({
         where: { id: existing.id },
@@ -65,10 +65,14 @@ export async function POST(req: Request) {
           email: email || existing.email,
           name: name || existing.name,
           company: company || existing.company,
+          nameKey,
           companyKey,
+          profileUrl: profileUrl || existing.profileUrl,
         },
       });
-    } else {
+    } 
+    // 🆕 Create new lead
+    else {
       lead = await prisma.lead.create({
         data: {
           email,
@@ -78,11 +82,9 @@ export async function POST(req: Request) {
           companyKey,
           profileUrl,
           teamId,
-
           user: {
             connect: { id: session.user.id },
           },
-
           project: {
             connect: { id: project.id },
           },
@@ -92,28 +94,51 @@ export async function POST(req: Request) {
 
     return NextResponse.json(lead);
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to create lead" });
+    console.error("POST /leads error:", err);
+    return NextResponse.json(
+      { error: "Failed to create lead" },
+      { status: 500 }
+    );
   }
 }
 
-// ✅ GET LEADS
+// ==============================
+// ✅ GET LEADS (SEARCH + PAGINATION)
+// ==============================
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const teamId = searchParams.get("teamId");
 
-    if (!teamId) return NextResponse.json([]);
+    const teamId = searchParams.get("teamId");
+    const page = Number(searchParams.get("page") || 1);
+    const q = searchParams.get("q") || "";
+
+    if (!teamId) {
+      return NextResponse.json([]);
+    }
+
+    const PAGE_SIZE = 10;
 
     const leads = await prisma.lead.findMany({
-      where: { teamId },
+      where: {
+        teamId,
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+          { company: { contains: q, mode: "insensitive" } },
+        ],
+      },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
     });
 
     return NextResponse.json(leads);
   } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Failed to fetch leads" });
+    console.error("GET /leads error:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch leads" },
+      { status: 500 }
+    );
   }
 }

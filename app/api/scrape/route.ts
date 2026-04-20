@@ -1,48 +1,36 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { scrapeQueue } from "@/lib/queue";
 
 // ==============================
-// 🚀 RUN SCRAPE JOB
+// 🚀 QUEUE SCRAPE JOB
 // ==============================
 export async function POST() {
   try {
-    // 🆕 Create job
+    // 🆕 Create DB job record
     const job = await prisma.job.create({
       data: {
         type: "scrape",
-        status: "running",
+        status: "queued",
       },
     });
 
-    try {
-      // 👉 YOUR SCRAPING LOGIC HERE
+    // 📥 Add to BullMQ queue
+    await scrapeQueue.add("scrape-job", {
+      jobId: job.id,
+      query: "saas founders usa", // 🔥 replace later with dynamic input
+    });
 
-      // ✅ Mark as done
-      await prisma.job.update({
-        where: { id: job.id },
-        data: { status: "done" },
-      });
-
-      return NextResponse.json({ success: true });
-    } catch (err) {
-      console.error("Scrape error:", err);
-
-      // ❌ Mark as failed
-      await prisma.job.update({
-        where: { id: job.id },
-        data: { status: "failed" },
-      });
-
-      return NextResponse.json(
-        { error: "Scrape failed" },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      jobId: job.id,
+      message: "Scrape job queued 🚀",
+    });
   } catch (err) {
-    console.error("Job creation error:", err);
+    console.error("Queue error:", err);
 
     return NextResponse.json(
-      { error: "Failed to start job" },
+      { error: "Failed to queue scrape job" },
       { status: 500 }
     );
   }

@@ -1,8 +1,6 @@
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { prisma } from "@/lib/prisma";
-
-const connection = new IORedis();
+import { connection } from "@/lib/redis";
 
 // ==============================
 // 🕷 SCRAPE WORKER
@@ -12,46 +10,97 @@ new Worker(
   async (job) => {
     const { jobId, query } = job.data;
 
-    console.log("Running scrape job:", job.data);
+    console.log("🕷 Running scrape job:", job.data);
 
     try {
       // 🔄 Mark job as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "running" },
+          data: {
+            status: "running",
+            progress: 10,
+            logs: "Starting scrape...",
+          },
         });
       }
 
-      // 👉 YOUR SCRAPING LOGIC HERE
-      // Example:
-      // const leads = await scrapeLinkedIn(query);
+      // ==============================
+      // 🔍 STEP 1: Scrape data
+      // ==============================
+      // 👉 Replace with real scraping logic
+      /*
+      const leads = await scrapeLinkedIn(query);
+      */
 
-      // 👉 Optionally save leads
-      // await prisma.lead.createMany({ data: leads });
-
-      // ✅ Mark job as done
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "done" },
+          data: {
+            progress: 50,
+            logs: "Scraping leads...",
+          },
+        });
+      }
+
+      // ==============================
+      // 💾 STEP 2: Save leads
+      // ==============================
+      /*
+      if (leads?.length) {
+        await prisma.lead.createMany({
+          data: leads,
+          skipDuplicates: true,
+        });
+      }
+      */
+
+      if (jobId) {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            progress: 80,
+            logs: "Saving leads...",
+          },
+        });
+      }
+
+      // ==============================
+      // ✅ FINAL STEP
+      // ==============================
+      if (jobId) {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            status: "done",
+            progress: 100,
+            logs: "Scrape completed ✅",
+          },
         });
       }
 
       return true;
     } catch (err) {
-      console.error("Scrape worker error:", err);
+      console.error("❌ Scrape worker error:", err);
 
       // ❌ Mark job as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "failed" },
+          data: {
+            status: "failed",
+            logs: "Scrape failed ❌",
+          },
         });
       }
 
-      throw err; // 🔥 enables retries in BullMQ
+      throw err; // 🔥 enables retries
     }
   },
-  { connection }
+  {
+    connection,
+
+    // ⚡ control parallel scraping jobs
+    concurrency: 2,
+  }
 );

@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
-import { redis } from "../lib/redis";
-import { prisma } from "../lib/prisma";
-import { sendEmail } from "../lib/mail";
+import { connection } from "@/lib/redis";
+import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/mail";
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
@@ -24,10 +24,11 @@ new Worker(
     if (!campaign) throw new Error("Campaign not found");
 
     // 🔥 DAILY LIMIT PROTECTION
-    if ((campaign.totalSent ?? 0) > 500) {
+    if ((campaign.totalSent ?? 0) >= 500) {
       throw new Error("Daily limit reached");
     }
 
+    // 🔄 Mark as sending
     await prisma.campaign.update({
       where: { id: campaignId },
       data: { status: "SENDING" },
@@ -35,24 +36,24 @@ new Worker(
 
     let totalSent = 0;
 
-    // 🔥 LIMIT RECIPIENTS PER RUN
+    // 🔥 Limit recipients per run
     const MAX_PER_RUN = 50;
     const recipients = campaign.recipients.slice(0, MAX_PER_RUN);
 
     for (const step of campaign.steps) {
       console.log("Running step:", step.name);
 
+      // ⏱ Delay between steps
       if (step.delay > 0) {
         await wait(step.delay * 1000);
       }
 
-      // 🔥 BATCH SYSTEM (NO Promise.all on full list)
       const batchSize = 5;
 
       for (let i = 0; i < recipients.length; i += batchSize) {
         const batch = recipients.slice(i, i + batchSize);
 
-        await Promise.all(
+        await Promise.allSettled(
           batch.map(async (recipient) => {
             try {
               const trackingPixel = `<img src="https://yourdomain.com/api/track/open?cid=${campaign.id}&rid=${recipient.id}" width="1" height="1" />`;
@@ -70,7 +71,7 @@ new Worker(
 
               totalSent++;
             } catch (err) {
-              console.error("Failed:", recipient.email);
+              console.error("❌ Failed:", recipient.email);
 
               await prisma.campaignRecipient.update({
                 where: { id: recipient.id },
@@ -80,11 +81,12 @@ new Worker(
           })
         );
 
-        // ⏱ WAIT BETWEEN BATCHES (rate control)
+        // ⏱ Wait between batches (rate control)
         await wait(2000);
       }
     }
 
+    // ✅ Final update
     await prisma.campaign.update({
       where: { id: campaignId },
       data: {
@@ -99,15 +101,15 @@ new Worker(
     return true;
   },
   {
-    connection: redis,
+    connection,
 
-    // 🔥 CONTROL PARALLEL JOBS
+    // 🔥 Parallel job control
     concurrency: 2,
 
-    // 🔥 RATE LIMIT (BullMQ level)
+    // 🔥 Rate limiting
     limiter: {
-      max: 10,        // max jobs
-      duration: 1000, // per second
+      max: 10,
+      duration: 1000,
     },
   }
 );

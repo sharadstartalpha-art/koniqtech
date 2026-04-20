@@ -581,7 +581,9 @@ model Waitlist {
 
 model Job {
   id        String   @id @default(cuid())
-  type      String   // scrape | enrich | dedup
-  status    String   // running | done
+  type      String
+  status    String
+  progress  Int      @default(0)
+  logs      String?
   createdAt DateTime @default(now())
 }

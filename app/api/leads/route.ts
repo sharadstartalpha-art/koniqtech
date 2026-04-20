@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -37,7 +38,6 @@ export async function POST(req: Request) {
 
     let existing = null;
 
-    // 🔍 Dedup logic
     if (email) {
       existing = await prisma.lead.findUnique({ where: { email } });
     }
@@ -99,33 +99,38 @@ export async function POST(req: Request) {
 }
 
 // ==============================
-// ✅ GET LEADS (SEARCH + PAGINATION)
+// ✅ GET LEADS (FIXED TYPES)
 // ==============================
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") || 1);
+    const limit = Number(searchParams.get("limit") || 20);
     const q = searchParams.get("q") || "";
 
-    const PAGE_SIZE = 10;
+    // ✅ Properly typed WHERE
+    const where: Prisma.LeadWhereInput = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+            { company: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {};
 
-    const leads = await prisma.lead.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-              { company: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {},
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    });
+    const [leads, total] = await Promise.all([
+      prisma.lead.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.lead.count({ where }),
+    ]);
 
-    return NextResponse.json(leads);
+    return NextResponse.json({ leads, total });
   } catch (err) {
     console.error("GET /leads error:", err);
     return NextResponse.json(

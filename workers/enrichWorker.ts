@@ -1,8 +1,6 @@
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { prisma } from "@/lib/prisma";
-
-const connection = new IORedis();
+import { connection } from "@/lib/redis";
 
 // ==============================
 // ✨ ENRICH WORKER
@@ -12,43 +10,89 @@ new Worker(
   async (job) => {
     const { jobId, data } = job.data;
 
-    console.log("Running enrich job:", job.data);
+    console.log("✨ Running enrich job:", job.data);
 
     try {
       // 🔄 Mark as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "running" },
+          data: {
+            status: "running",
+            progress: 10,
+            logs: "Starting enrichment...",
+          },
         });
       }
 
-      // 👉 YOUR ENRICH LOGIC HERE
-      // Example:
-      // await enrichLeads(data);
+      // ==============================
+      // 🔍 STEP 1: Find emails
+      // ==============================
+      // 👉 your logic here
+      // await findEmails(data);
 
-      // ✅ Mark as done
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "done" },
+          data: {
+            progress: 30,
+            logs: "Finding emails...",
+          },
+        });
+      }
+
+      // ==============================
+      // 📬 STEP 2: Verify emails
+      // ==============================
+      // 👉 your logic here
+      // await verifyEmails();
+
+      if (jobId) {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            progress: 70,
+            logs: "Verifying emails...",
+          },
+        });
+      }
+
+      // ==============================
+      // ✅ FINAL STEP
+      // ==============================
+      if (jobId) {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            status: "done",
+            progress: 100,
+            logs: "Completed ✅",
+          },
         });
       }
 
       return true;
     } catch (err) {
-      console.error("Enrich worker error:", err);
+      console.error("❌ Enrich worker error:", err);
 
       // ❌ Mark as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "failed" },
+          data: {
+            status: "failed",
+            logs: "Enrichment failed ❌",
+          },
         });
       }
 
-      throw err; // important for BullMQ retries
+      throw err; // 🔥 enables retries
     }
   },
-  { connection }
+  {
+    connection,
+
+    // ⚡ control parallel jobs
+    concurrency: 2,
+  }
 );

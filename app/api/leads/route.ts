@@ -21,7 +21,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing teamId" }, { status: 400 });
     }
 
-    // 🔍 Ensure project exists
     const project = await prisma.project.findFirst({
       where: { teamId },
     });
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
 
     let existing = null;
 
-    // 🔍 Deduplication logic
+    // 🔍 Dedup logic
     if (email) {
       existing = await prisma.lead.findUnique({ where: { email } });
     }
@@ -57,7 +56,6 @@ export async function POST(req: Request) {
 
     let lead;
 
-    // 🔄 Update existing lead
     if (existing) {
       lead = await prisma.lead.update({
         where: { id: existing.id },
@@ -70,9 +68,7 @@ export async function POST(req: Request) {
           profileUrl: profileUrl || existing.profileUrl,
         },
       });
-    } 
-    // 🆕 Create new lead
-    else {
+    } else {
       lead = await prisma.lead.create({
         data: {
           email,
@@ -109,25 +105,21 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const teamId = searchParams.get("teamId");
     const page = Number(searchParams.get("page") || 1);
     const q = searchParams.get("q") || "";
-
-    if (!teamId) {
-      return NextResponse.json([]);
-    }
 
     const PAGE_SIZE = 10;
 
     const leads = await prisma.lead.findMany({
-      where: {
-        teamId,
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { email: { contains: q, mode: "insensitive" } },
-          { company: { contains: q, mode: "insensitive" } },
-        ],
-      },
+      where: q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { email: { contains: q, mode: "insensitive" } },
+              { company: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {},
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,

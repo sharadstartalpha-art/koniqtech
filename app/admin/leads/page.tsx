@@ -8,12 +8,10 @@ export default function LeadsPage() {
   const [query, setQuery] = useState("");
 
   const fetchLeads = async () => {
-    const res = await fetch(
-      `/api/leads?teamId=YOUR_TEAM_ID&page=${page}&q=${query}`
-    );
-    const data = await res.json();
-    setLeads(data);
-  };
+  const res = await fetch(`/api/leads?page=${page}&q=${query}`);
+  const data = await res.json();
+  setLeads(data);
+};
 
   useEffect(() => {
     fetchLeads();

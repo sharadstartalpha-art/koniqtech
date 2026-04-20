@@ -1,18 +1,31 @@
 /* ============================= */
-/* DOMAIN EXTRACTION             */
+/* 🔤 NORMALIZE STRINGS          */
 /* ============================= */
-export function extractDomain(company: string): string {
+export function normalize(str?: string | null): string | null {
+  if (!str) return null;
+
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, "_");
+}
+
+/* ============================= */
+/* 🌐 DOMAIN EXTRACTION          */
+/* ============================= */
+export function extractDomain(company?: string | null): string {
   if (!company) return "";
 
   const clean = company
     .toLowerCase()
-    .replace(/[^a-z]/g, "");
+    .replace(/[^a-z0-9]/g, "");
 
   return clean ? `${clean}.com` : "";
 }
 
 /* ============================= */
-/* CONCURRENCY RUNNER            */
+/* ⚡ CONCURRENCY RUNNER          */
 /* ============================= */
 export async function runWithConcurrency<T>(
   tasks: (() => Promise<T>)[],
@@ -28,12 +41,10 @@ export async function runWithConcurrency<T>(
 
     executing.add(p);
 
-    // When limit reached, wait for one to finish
     if (executing.size >= limit) {
       await Promise.race(executing);
     }
 
-    // Cleanup finished promises
     p.finally(() => executing.delete(p));
   }
 

@@ -100,25 +100,58 @@ model Project {
 }
 
 model Lead {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
+
+  // 👤 identity
   name         String?
-  email        String?
+  nameKey      String?   // normalized
+  email        String?   @unique
+  profileUrl   String?   @unique
+
+  // 🏢 company
   company      String?
-  profileUrl  String?
+  companyKey   String?   // normalized
+  domain       String?
   website      String?
-  phone        String? // ✅ ADD
-  location     String? // ✅ ADD
-  source       String? // ✅ ADD THIS
+
+  // 📞 contact
+  phone        String?
   contactEmail String?
-  userId       String
+
+  // 🌍 geo + category
+  location     String?
+  country      String?
+  category     String?   // saas, restaurant
+
+  // 💼 job
   title        String?
+
+  // 📊 enrichment
+  employeeCount Int?
+  techStack     String[] // ["stripe", "aws"]
+  isHiring      Boolean  @default(false)
+  fundingStage  String?
+
+  // ⚙️ pipeline
+  status       String   @default("raw") // raw → enriched → verified
+  source       String?
+
+  // 🔗 relations
+  userId       String
   projectId    String
-  sequences    LeadSequence[]
-  createdAt    DateTime       @default(now())
   teamId       String
-  user         User           @relation(fields: [userId], references: [id])
-  project      Project        @relation(fields: [projectId], references: [id])
+
+  sequences    LeadSequence[]
   LeadStatus   LeadStatus?
+
+  user         User     @relation(fields: [userId], references: [id])
+  project      Project  @relation(fields: [projectId], references: [id])
+
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+  @@index([profileUrl])
+  @@index([companyKey, country])
 }
 
 model Balance {

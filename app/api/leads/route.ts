@@ -2,8 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { normalize } from "@/lib/utils";
 
-// ✅ CREATE LEAD (manual)
+// ✅ CREATE LEAD (NO DUPLICATES)
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -12,44 +13,82 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email, teamId } = await req.json();
+    const { email, name, company, profileUrl, teamId } =
+      await req.json();
 
-    if (!email || !teamId) {
+    if (!teamId) {
       return NextResponse.json(
-        { error: "Missing email or teamId" },
+        { error: "Missing teamId" },
         { status: 400 }
       );
     }
 
-// 🔥 FIND PROJECT FOR TEAM
-const project = await prisma.project.findFirst({
-  where: { teamId },
-});
+    const project = await prisma.project.findFirst({
+      where: { teamId },
+    });
 
-if (!project) {
-  return NextResponse.json(
-    { error: "No project found for this team" },
-    { status: 400 }
-  );
-}
+    if (!project) {
+      return NextResponse.json(
+        { error: "No project found" },
+        { status: 400 }
+      );
+    }
 
-   const lead = await prisma.lead.create({
-  data: {
-    email,
-    name: "",
-    company: "",
-    title: "",
-    teamId,
+    const nameKey = normalize(name);
+    const companyKey = normalize(company);
 
-    user: {
-      connect: { id: session.user.id },
-    },
+    let existing = null;
 
-    project: {
-      connect: { id: project.id },
-    },
-  },
-});
+    // 🔍 Dedup logic
+    if (email) {
+      existing = await prisma.lead.findUnique({ where: { email } });
+    }
+
+    if (!existing && profileUrl) {
+      existing = await prisma.lead.findUnique({
+        where: { profileUrl },
+      });
+    }
+
+    if (!existing && nameKey && companyKey) {
+      existing = await prisma.lead.findFirst({
+        where: { nameKey, companyKey },
+      });
+    }
+
+    let lead;
+
+    if (existing) {
+      lead = await prisma.lead.update({
+        where: { id: existing.id },
+        data: {
+          email: email || existing.email,
+          name: name || existing.name,
+          company: company || existing.company,
+          companyKey,
+        },
+      });
+    } else {
+      lead = await prisma.lead.create({
+        data: {
+          email,
+          name,
+          nameKey,
+          company,
+          companyKey,
+          profileUrl,
+          teamId,
+
+          user: {
+            connect: { id: session.user.id },
+          },
+
+          project: {
+            connect: { id: project.id },
+          },
+        },
+      });
+    }
 
     return NextResponse.json(lead);
   } catch (err) {
@@ -58,7 +97,7 @@ if (!project) {
   }
 }
 
-// ✅ GET LEADS (team scoped)
+// ✅ GET LEADS
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -69,6 +108,7 @@ export async function GET(req: Request) {
     const leads = await prisma.lead.findMany({
       where: { teamId },
       orderBy: { createdAt: "desc" },
+      take: 100,
     });
 
     return NextResponse.json(leads);

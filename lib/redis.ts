@@ -1,9 +1,10 @@
-import { Redis } from "ioredis";
+import IORedis from "ioredis";
 
-export const redis = new Redis(process.env.REDIS_URL!, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-
-  // ✅ ADD THIS FOR UPSTASH
-  tls: {},
+// 🔥 Single shared Redis connection (BullMQ compatible)
+export const connection = new IORedis(process.env.REDIS_URL!, {
+  maxRetriesPerRequest: null, // ✅ required for BullMQ
+  enableReadyCheck: false,    // ✅ recommended for Upstash
+  tls: process.env.REDIS_URL?.startsWith("rediss://")
+    ? {}
+    : undefined,              // ✅ only enable TLS when needed
 });

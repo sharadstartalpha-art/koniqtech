@@ -1,8 +1,6 @@
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { prisma } from "@/lib/prisma";
-
-const connection = new IORedis();
+import { connection } from "@/lib/redis";
 
 // ==============================
 // 🧹 DEDUP WORKER
@@ -12,54 +10,84 @@ new Worker(
   async (job) => {
     const { jobId } = job.data;
 
-    console.log("Running dedup job:", job.data);
+    console.log("🧹 Running dedup job:", job.data);
 
     try {
       // 🔄 Mark job as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "running" },
+          data: {
+            status: "running",
+            progress: 10,
+            logs: "Starting dedup...",
+          },
         });
       }
 
-      // 👉 YOUR DEDUP LOGIC HERE
-      // Example:
-      // 1. Find duplicate leads (same email OR same name+companyKey)
-      // 2. Keep one, remove others
-
+      // ==============================
+      // 🔍 STEP 1: Find duplicates
+      // ==============================
+      // 👉 Replace with real logic
       /*
       const duplicates = await prisma.lead.findMany({
         where: {
           email: { not: null },
         },
       });
-
-      // ⚠️ Replace with real dedup logic
       */
 
-      // ✅ Mark job as done
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "done" },
+          data: {
+            progress: 50,
+            logs: "Processing duplicates...",
+          },
+        });
+      }
+
+      // ==============================
+      // 🧹 STEP 2: Remove / merge duplicates
+      // 👉 Your logic here
+      // ==============================
+
+      // ==============================
+      // ✅ FINAL STEP
+      // ==============================
+      if (jobId) {
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            status: "done",
+            progress: 100,
+            logs: "Dedup completed ✅",
+          },
         });
       }
 
       return true;
     } catch (err) {
-      console.error("Dedup worker error:", err);
+      console.error("❌ Dedup worker error:", err);
 
       // ❌ Mark job as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: "failed" },
+          data: {
+            status: "failed",
+            logs: "Dedup failed ❌",
+          },
         });
       }
 
-      throw err; // 🔥 enables BullMQ retries
+      throw err; // 🔥 enables retries
     }
   },
-  { connection }
+  {
+    connection,
+
+    // ⚡ control parallel jobs
+    concurrency: 2,
+  }
 );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export default function CollectPage() {
   const [jobs, setJobs] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState({
     scrape: false,
     enrich: false,
@@ -14,9 +15,13 @@ export default function CollectPage() {
   // 📡 Fetch jobs
   // ==============================
   const fetchJobs = async () => {
-    const res = await fetch("/api/jobs");
-    const data = await res.json();
-    setJobs(data);
+    try {
+      const res = await fetch("/api/jobs");
+      const data = await res.json();
+      setJobs(data || []);
+    } catch (err) {
+      console.error("Failed to fetch jobs:", err);
+    }
   };
 
   useEffect(() => {
@@ -25,15 +30,26 @@ export default function CollectPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // 🔒 Disable all buttons if any job is running
+  const isRunning = jobs.some((j) => j.status === "running");
+
   // ==============================
   // 🚀 Run jobs
   // ==============================
   const runJob = async (type: "scrape" | "enrich" | "dedup") => {
+    if (isRunning) return;
+
     setLoading((s) => ({ ...s, [type]: true }));
 
-    await fetch(`/api/${type}`, { method: "POST" });
+    try {
+      await fetch(`/api/${type}`, {
+        method: "POST",
+        body: JSON.stringify(type === "scrape" ? { query } : {}),
+      });
+    } catch (err) {
+      console.error(`Failed to run ${type}:`, err);
+    }
 
-    // slight delay to let DB update
     setTimeout(() => {
       fetchJobs();
       setLoading((s) => ({ ...s, [type]: false }));
@@ -47,28 +63,36 @@ export default function CollectPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Collect Data 🚀</h1>
 
+      {/* 🔍 QUERY INPUT */}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="e.g. SaaS founders in Germany"
+        className="border p-2 w-full rounded"
+      />
+
       {/* ACTION BUTTONS */}
       <div className="flex gap-2">
         <button
-          disabled={loading.scrape}
+          disabled={loading.scrape || isRunning || !query}
           onClick={() => runJob("scrape")}
-          className="bg-black text-white px-4 py-2 rounded"
+          className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading.scrape ? "Running..." : "Run Scraper"}
         </button>
 
         <button
-          disabled={loading.enrich}
+          disabled={loading.enrich || isRunning}
           onClick={() => runJob("enrich")}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading.enrich ? "Running..." : "Run Enrichment"}
         </button>
 
         <button
-          disabled={loading.dedup}
+          disabled={loading.dedup || isRunning}
           onClick={() => runJob("dedup")}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading.dedup ? "Running..." : "Clean Duplicates"}
         </button>
@@ -83,23 +107,35 @@ export default function CollectPage() {
         )}
 
         {jobs.map((job) => (
-          <div
-            key={job.id}
-            className="border p-3 rounded mb-2 flex justify-between"
-          >
-            <span className="font-medium">{job.type}</span>
+          <div key={job.id} className="border p-3 rounded mb-3">
+            {/* STATUS */}
+            <p className="font-medium">
+              {job.type} →{" "}
+              <span
+                className={
+                  job.status === "running"
+                    ? "text-yellow-500"
+                    : job.status === "done"
+                    ? "text-green-600"
+                    : "text-red-500"
+                }
+              >
+                {job.status}
+              </span>
+            </p>
 
-            <span
-              className={
-                job.status === "running"
-                  ? "text-yellow-500"
-                  : job.status === "done"
-                  ? "text-green-600"
-                  : "text-red-500"
-              }
-            >
-              {job.status}
-            </span>
+            {/* 🔥 PROGRESS BAR */}
+            <div className="w-full bg-gray-200 h-2 mt-2 rounded">
+              <div
+                className="bg-green-500 h-2 rounded transition-all"
+                style={{ width: `${job.progress || 0}%` }}
+              />
+            </div>
+
+            {/* 🧠 LOG */}
+            <p className="text-sm mt-2 text-gray-600">
+              {job.logs || "Waiting..."}
+            </p>
           </div>
         ))}
       </div>

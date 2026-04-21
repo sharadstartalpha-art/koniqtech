@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
+import { enrichQueue } from "@/lib/queue";
 
 const connection = getRedis();
 
@@ -14,72 +15,43 @@ console.log("🕷 Scrape Worker Started");
 new Worker(
   "scrape",
   async (job) => {
-    const { jobId, query } = job.data;
+    const { queryId, text } = job.data;
 
-    console.log("🔥 JOB RECEIVED:", job.data);
+    console.log("🔥 SCRAPE JOB:", job.data);
 
     try {
-      // ==============================
-      // 🚀 STEP 1: START
-      // ==============================
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "running",
-            progress: 10,
-            logs: "Scraping started...",
-          },
-        });
-      }
+      // 🚀 mark running
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { scrapeStatus: "running" },
+      });
 
       // 🧪 simulate scraping
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, 3000));
 
-      // ==============================
-      // 🔍 STEP 2: PROCESS
-      // ==============================
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            progress: 60,
-            logs: "Processing profiles...",
-          },
-        });
+      // ✅ mark done
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { scrapeStatus: "done" },
+      });
+
+      console.log("✅ SCRAPE DONE:", queryId);
+
+      // 🔥 SAFE QUEUE CALL
+      if (enrichQueue) {
+        await enrichQueue.add("enrich-job", { queryId });
+      } else {
+        console.warn("⚠️ enrichQueue not available");
       }
-
-      await new Promise((r) => setTimeout(r, 2000));
-
-      // ==============================
-      // ✅ FINAL STEP
-      // ==============================
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "done",
-            progress: 100,
-            logs: "Scraping completed ✅",
-          },
-        });
-      }
-
-      console.log("✅ SCRAPE DONE:", jobId);
 
       return true;
     } catch (err) {
-      console.error("❌ Scrape worker error:", err);
+      console.error("❌ Scrape error:", err);
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "failed",
-            logs: "Scrape failed ❌",
-          },
-        });
-      }
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { scrapeStatus: "failed" },
+      });
 
       throw err;
     }

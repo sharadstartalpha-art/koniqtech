@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 }
 
 // ==============================
-// ✅ GET LEADS (FIXED TYPES)
+// ✅ GET LEADS (FIXED RELATION FILTER)
 // ==============================
 export async function GET(req: Request) {
   try {
@@ -109,13 +109,25 @@ export async function GET(req: Request) {
     const limit = Number(searchParams.get("limit") || 20);
     const q = searchParams.get("q") || "";
 
-    // ✅ Properly typed WHERE
+    // ✅ Proper WHERE
     const where: Prisma.LeadWhereInput = q
       ? {
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { email: { contains: q, mode: "insensitive" } },
             { company: { contains: q, mode: "insensitive" } },
+
+            // ✅ FIXED relation filter
+            {
+              query: {
+                is: {
+                  text: {
+                    contains: q,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
           ],
         }
       : {};
@@ -123,10 +135,14 @@ export async function GET(req: Request) {
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
         where,
+        include: {
+          query: true, // 🔥 required for UI
+        },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
+
       prisma.lead.count({ where }),
     ]);
 

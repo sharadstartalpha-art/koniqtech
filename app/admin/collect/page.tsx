@@ -8,6 +8,9 @@ export default function CollectPage() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  // ✅ track previous state (important)
+  const [prevStatus, setPrevStatus] = useState<Record<string, string>>({});
+
   // ==============================
   // 📡 Fetch Queries
   // ==============================
@@ -15,7 +18,27 @@ export default function CollectPage() {
     try {
       const res = await fetch(`/api/query/list?page=${page}`);
       const data = await res.json();
-      setQueries(data.queries || []);
+
+      const newQueries = data.queries || [];
+
+      // ✅ detect status change → DONE
+      newQueries.forEach((q: any) => {
+        const prev = prevStatus[q.id];
+
+        if (prev === "running" && q.scrapeStatus === "done") {
+          alert(`Scraping completed ✅ (${q.text})`);
+        }
+      });
+
+      // ✅ save current statuses
+      const map: Record<string, string> = {};
+      newQueries.forEach((q: any) => {
+        map[q.id] = q.scrapeStatus;
+      });
+
+      setPrevStatus(map);
+      setQueries(newQueries);
+
     } catch (err) {
       console.error("Failed to fetch queries:", err);
     }
@@ -54,7 +77,7 @@ export default function CollectPage() {
   };
 
   // ==============================
-  // 🚀 Run Scraper (per query)
+  // 🚀 Run Scraper
   // ==============================
   const runScrape = async (id: string) => {
     try {
@@ -65,6 +88,9 @@ export default function CollectPage() {
         },
         body: JSON.stringify({ queryId: id }),
       });
+
+      // ✅ START ALERT
+      alert("Scraping started 🚀");
 
       fetchQueries();
     } catch (err) {
@@ -124,7 +150,6 @@ export default function CollectPage() {
 
                   <td className="p-2 font-medium">{q.text}</td>
 
-                  {/* 🕷 SCRAPE */}
                   <td className="p-2">
                     <button
                       disabled={q.scrapeStatus === "running"}
@@ -141,34 +166,12 @@ export default function CollectPage() {
                     </button>
                   </td>
 
-                  {/* ✨ ENRICH */}
                   <td className="p-2">
-                    <span
-                      className={
-                        q.enrichStatus === "done"
-                          ? "text-green-600"
-                          : q.enrichStatus === "running"
-                          ? "text-yellow-500"
-                          : "text-gray-500"
-                      }
-                    >
-                      {q.enrichStatus || "idle"}
-                    </span>
+                    {q.enrichStatus || "idle"}
                   </td>
 
-                  {/* 🧹 DEDUP */}
                   <td className="p-2">
-                    <span
-                      className={
-                        q.dedupStatus === "done"
-                          ? "text-green-600"
-                          : q.dedupStatus === "running"
-                          ? "text-yellow-500"
-                          : "text-gray-500"
-                      }
-                    >
-                      {q.dedupStatus || "idle"}
-                    </span>
+                    {q.dedupStatus || "idle"}
                   </td>
                 </tr>
               ))

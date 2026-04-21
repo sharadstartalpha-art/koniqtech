@@ -144,6 +144,9 @@ model Lead {
   sequences    LeadSequence[]
   LeadStatus   LeadStatus?
 
+  queryId   String?
+  query     Query? @relation(fields: [queryId], references: [id])
+
   user         User     @relation(fields: [userId], references: [id])
   project      Project  @relation(fields: [projectId], references: [id])
 
@@ -594,7 +597,7 @@ model Query {
   text      String
   status    String   @default("idle") // idle | running | done
   createdAt DateTime @default(now())
-
+  leads     Lead[]
   scrapeStatus String @default("idle")
   enrichStatus String @default("idle")
   dedupStatus  String @default("idle")

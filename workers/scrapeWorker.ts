@@ -51,10 +51,8 @@ new Worker(
       console.log("📊 Total results:", results.length);
 
       // 🔥 filter LinkedIn only (FIXED TYPE)
-      const filtered = results.filter((r: LeadResult) =>
-        r.profileUrl?.includes("linkedin.com")
-      );
-
+     const filtered = results; // TEMP (to verify data is coming)
+     
       console.log("🎯 Filtered:", filtered.length);
 
       // 💾 save leads

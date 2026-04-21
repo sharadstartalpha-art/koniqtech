@@ -26,12 +26,23 @@ new Worker(
 
     console.log("🔥 SCRAPE JOB:", job.data);
 
-    // ❌ HARD STOP if missing userId
+    // ❌ HARD STOP
     if (!userId) {
       throw new Error("Missing userId in job");
     }
 
     try {
+      // ==============================
+      // 🔍 FETCH QUERY (for team/project)
+      // ==============================
+      const query = await prisma.query.findUnique({
+        where: { id: queryId },
+      });
+
+      if (!query) {
+        throw new Error("Query not found");
+      }
+
       // ==============================
       // 🚀 STEP 1: MARK RUNNING
       // ==============================
@@ -52,6 +63,13 @@ new Worker(
       // ==============================
       for (const lead of leads) {
         try {
+          // 🔥 DEBUG LOG (IMPORTANT)
+          console.log("💾 Inserting lead:", {
+            name: lead.name,
+            email: lead.email,
+            userId,
+          });
+
           await prisma.lead.create({
             data: {
               name: lead.name || "Unknown",
@@ -63,10 +81,8 @@ new Worker(
               // 🔥 RELATIONS
               queryId,
               userId,
-
-              // ⚠️ TEMP (replace later properly)
-              teamId: "default",
-              projectId: "default",
+              teamId: query.teamId,
+              projectId: query.projectId,
             },
           });
         } catch (err) {

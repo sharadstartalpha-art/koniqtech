@@ -3,6 +3,12 @@ import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 
+const connection = getRedis();
+
+if (!connection) {
+  throw new Error("❌ Redis not available");
+}
+
 console.log("🕷 Scrape Worker Started");
 
 new Worker(
@@ -10,54 +16,56 @@ new Worker(
   async (job) => {
     const { jobId, query } = job.data;
 
-    console.log("🕷 Running scrape job:", job.data);
+    console.log("🔥 JOB RECEIVED:", job.data);
 
     try {
+      // ==============================
+      // 🚀 STEP 1: START
+      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
           data: {
             status: "running",
             progress: 10,
-            logs: "Starting scrape...",
+            logs: "Scraping started...",
           },
         });
       }
 
-      // 👉 Step 1: Scrape data
+      // 🧪 simulate scraping
+      await new Promise((r) => setTimeout(r, 2000));
 
+      // ==============================
+      // 🔍 STEP 2: PROCESS
+      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
           data: {
-            progress: 50,
-            logs: "Scraping leads...",
+            progress: 60,
+            logs: "Processing profiles...",
           },
         });
       }
 
-      // 👉 Step 2: Save leads
+      await new Promise((r) => setTimeout(r, 2000));
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            progress: 80,
-            logs: "Saving leads...",
-          },
-        });
-      }
-
+      // ==============================
+      // ✅ FINAL STEP
+      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
           data: {
             status: "done",
             progress: 100,
-            logs: "Scrape completed ✅",
+            logs: "Scraping completed ✅",
           },
         });
       }
+
+      console.log("✅ SCRAPE DONE:", jobId);
 
       return true;
     } catch (err) {
@@ -77,7 +85,7 @@ new Worker(
     }
   },
   {
-    connection: getRedis()!, // ✅ FIXED
+    connection,
     concurrency: 2,
   }
 );

@@ -588,3 +588,14 @@ model Job {
   logs      String?
   createdAt DateTime @default(now())
 }
+
+model Query {
+  id        String   @id @default(cuid())
+  text      String
+  status    String   @default("idle") // idle | running | done
+  createdAt DateTime @default(now())
+
+  scrapeStatus String @default("idle")
+  enrichStatus String @default("idle")
+  dedupStatus  String @default("idle")
+}

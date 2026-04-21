@@ -3,59 +3,59 @@ import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 
+const connection = getRedis();
+
+if (!connection) {
+  throw new Error("❌ Redis not available");
+}
+
 console.log("🧹 Dedup Worker Started");
 
 new Worker(
   "dedup",
   async (job) => {
-    const { jobId } = job.data;
+    const { queryId } = job.data;
 
-    console.log("🧹 Running dedup job:", job.data);
+    console.log("🧹 DEDUP JOB:", job.data);
 
     try {
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "running",
-            progress: 10,
-            logs: "Starting dedup...",
-          },
-        });
-      }
+      // 🚀 mark running
+      await prisma.query.update({
+        where: { id: queryId },
+        data: {
+          dedupStatus: "running",
+        },
+      });
 
-      // 👉 Your dedup logic here
+      // 🧪 simulate dedup
+      await new Promise((r) => setTimeout(r, 2000));
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "done",
-            progress: 100,
-            logs: "Dedup completed ✅",
-          },
-        });
-      }
+      // ✅ mark done
+      await prisma.query.update({
+        where: { id: queryId },
+        data: {
+          dedupStatus: "done",
+        },
+      });
+
+      console.log("✅ DEDUP DONE:", queryId);
 
       return true;
     } catch (err) {
-      console.error("❌ Dedup worker error:", err);
+      console.error("❌ Dedup error:", err);
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "failed",
-            logs: "Dedup failed ❌",
-          },
-        });
-      }
+      await prisma.query.update({
+        where: { id: queryId },
+        data: {
+          dedupStatus: "failed",
+        },
+      });
 
       throw err;
     }
   },
   {
-    connection: getRedis()!, // ✅ FIXED
+    connection,
     concurrency: 2,
   }
 );

@@ -2,80 +2,62 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
+import { dedupQueue } from "@/lib/queue";
+
+const connection = getRedis();
+
+if (!connection) {
+  throw new Error("❌ Redis not available");
+}
 
 console.log("✨ Enrich Worker Started");
 
 new Worker(
   "enrich",
   async (job) => {
-    const { jobId, data } = job.data;
+    const { queryId } = job.data;
 
-    console.log("✨ Running enrich job:", job.data);
+    console.log("✨ ENRICH JOB:", job.data);
 
     try {
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "running",
-            progress: 10,
-            logs: "Starting enrichment...",
-          },
-        });
-      }
+      // 🚀 mark running
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { enrichStatus: "running" },
+      });
 
-      // 👉 Step 1: Find emails
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            progress: 30,
-            logs: "Finding emails...",
-          },
-        });
-      }
+      // 🧪 simulate enrichment
+      await new Promise((r) => setTimeout(r, 3000));
 
-      // 👉 Step 2: Verify emails
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            progress: 70,
-            logs: "Verifying emails...",
-          },
-        });
-      }
+      // ✅ mark done
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { enrichStatus: "done" },
+      });
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "done",
-            progress: 100,
-            logs: "Completed ✅",
-          },
-        });
+      console.log("✅ ENRICH DONE:", queryId);
+
+      // 🔥 SAFE QUEUE CALL
+      if (dedupQueue) {
+        await dedupQueue.add("dedup-job", { queryId });
+      } else {
+        console.warn("⚠️ dedupQueue not available");
       }
 
       return true;
     } catch (err) {
-      console.error("❌ Enrich worker error:", err);
+      console.error("❌ Enrich error:", err);
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: "failed",
-            logs: "Enrichment failed ❌",
-          },
-        });
-      }
+      await prisma.query.update({
+        where: { id: queryId },
+        data: { enrichStatus: "failed" },
+      });
 
       throw err;
     }
   },
   {
-    connection: getRedis()!, // ✅ FIXED
+    connection,
     concurrency: 2,
   }
 );

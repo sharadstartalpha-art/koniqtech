@@ -6,10 +6,13 @@ export default async function ProductPage({
 }: {
   params: { slug: string };
 }) {
-  const product = await prisma.product.findUnique({
+  const { slug } = params;
+
+  // ✅ FIX: use findFirst instead of findUnique
+  const product = await prisma.product.findFirst({
     where: {
-      slug: params.slug,
-      active: true, // ✅ important
+      slug,
+      active: true,
     },
   });
 

@@ -1,35 +1,39 @@
-import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import Link from "next/link"
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import Link from "next/link";
 
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params
+  const { slug } = await params;
 
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.email) {
-    return <div className="p-10">Not logged in</div>
+    return <div className="p-10">Not logged in</div>;
   }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-  })
+  });
 
   if (!user) {
-    return <div className="p-10">User not found</div>
+    return <div className="p-10">User not found</div>;
   }
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-  })
+  // ✅ FIXED: use findFirst + active filter
+  const product = await prisma.product.findFirst({
+    where: {
+      slug,
+      active: true,
+    },
+  });
 
   if (!product) {
-    return <div className="p-10">Product not found</div>
+    return <div className="p-10">Product not found</div>;
   }
 
   const projects = await prisma.project.findMany({
@@ -38,7 +42,7 @@ export default async function ProductPage({
       productId: product.id,
     },
     orderBy: { createdAt: "desc" },
-  })
+  });
 
   return (
     <div className="max-w-2xl">
@@ -51,7 +55,14 @@ export default async function ProductPage({
       </p>
 
       {/* CREATE PROJECT */}
-      <form onSubmit={(e) => { e.preventDefault(); }} action="/api/projects" method="POST" className="flex gap-2 mb-6">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
+        action="/api/projects"
+        method="POST"
+        className="flex gap-2 mb-6"
+      >
         <input
           name="name"
           placeholder="New project name"
@@ -59,7 +70,11 @@ export default async function ProductPage({
           required
         />
 
-        <input type="hidden" name="productSlug" value={product.slug} />
+        <input
+          type="hidden"
+          name="productSlug"
+          value={product.slug}
+        />
 
         <button className="bg-black text-white px-4 py-2 rounded">
           Create
@@ -78,7 +93,6 @@ export default async function ProductPage({
             className="border rounded p-3 flex justify-between"
           >
             <div>
-              {/* ✅ CLICKABLE */}
               <Link
                 href={`/project/${project.id}`}
                 className="font-medium hover:underline"
@@ -91,12 +105,17 @@ export default async function ProductPage({
               </p>
             </div>
 
-            <form action={`/api/projects/${project.id}`} method="POST">
-              <button className="text-red-500">Delete</button>
+            <form
+              action={`/api/projects/${project.id}`}
+              method="POST"
+            >
+              <button className="text-red-500">
+                Delete
+              </button>
             </form>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

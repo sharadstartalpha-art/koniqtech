@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 async function main() {
   const email = "admin@koniqtech.com";
-  const password = "admin123"; // ⚠️ change in production
+  const password = "admin123";
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  // ✅ Check if already exists
   const existing = await prisma.user.findUnique({
     where: { email },
   });
@@ -16,21 +17,25 @@ async function main() {
     return;
   }
 
-  await prisma.user.create({
+  // ✅ Create admin user
+  const user = await prisma.user.create({
     data: {
-      name: "Admin",
       email,
       password: hashedPassword,
-      role: "admin", // ✅ if you have role field
+
+      // 🔥 FIXED ENUM VALUE
+      role: "ADMIN",
     },
   });
 
-  console.log("✅ Admin user created");
+  console.log("✅ Admin created:", user.email);
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ Seed error:", e);
     process.exit(1);
   })
-  .finally(() => prisma.$disconnect());
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

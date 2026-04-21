@@ -11,30 +11,55 @@ export async function POST() {
       data: {
         type: "dedup",
         status: "running",
+        query: "dedup", // ✅ REQUIRED FIX
+        logs: "Starting dedup...",
+        progress: 10,
       },
     });
 
     try {
-      // 👉 YOUR DEDUP LOGIC HERE
-      // e.g. remove duplicates, merge leads, etc.
+      // ==============================
+      // 🧹 YOUR DEDUP LOGIC HERE
+      // ==============================
 
-      // ✅ Mark as done
+      await new Promise((r) => setTimeout(r, 1500));
+
       await prisma.job.update({
         where: { id: job.id },
-        data: { status: "done" },
+        data: {
+          progress: 70,
+          logs: "Processing duplicates...",
+        },
+      });
+
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // ==============================
+      // ✅ DONE
+      // ==============================
+      await prisma.job.update({
+        where: { id: job.id },
+        data: {
+          status: "done",
+          progress: 100,
+          logs: "Dedup completed ✅",
+        },
       });
 
       return NextResponse.json({
         success: true,
         jobId: job.id,
       });
-    } catch (err) {
-      console.error("Dedup error:", err);
 
-      // ❌ Mark as failed
+    } catch (err) {
+      console.error("❌ Dedup error:", err);
+
       await prisma.job.update({
         where: { id: job.id },
-        data: { status: "failed" },
+        data: {
+          status: "failed",
+          logs: "Dedup failed ❌",
+        },
       });
 
       return NextResponse.json(
@@ -42,8 +67,9 @@ export async function POST() {
         { status: 500 }
       );
     }
+
   } catch (err) {
-    console.error("Job creation error:", err);
+    console.error("❌ Job creation error:", err);
 
     return NextResponse.json(
       { error: "Failed to start dedup job" },

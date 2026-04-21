@@ -7,7 +7,6 @@ import { scrapeQueue } from "@/lib/queue";
 // ==============================
 export async function POST(req: Request) {
   try {
-    // ❌ Redis / Queue not available (build time / misconfig)
     if (!scrapeQueue) {
       return NextResponse.json(
         { error: "Queue not available (Redis missing)" },
@@ -19,7 +18,6 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => null);
     const query = body?.query?.trim();
 
-    // ❌ Validate input
     if (!query) {
       return NextResponse.json(
         { error: "Query is required" },
@@ -27,27 +25,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🆕 Create DB job record
+    // 🆕 Create DB job
     const job = await prisma.job.create({
       data: {
         type: "scrape",
         status: "queued",
+        query, // ✅ FIX
         logs: "Queued for scraping...",
+        progress: 0,
       },
     });
 
-    // 📥 Add to BullMQ queue
+    // 📥 Add to queue
     await scrapeQueue.add("scrape-job", {
       jobId: job.id,
       query,
     });
 
-    console.log("🚀 Scrape job queued:", job.id, query);
+    console.log("🚀 Scrape queued:", job.id, query);
 
     return NextResponse.json({
       success: true,
       jobId: job.id,
-      message: "Scrape job queued 🚀",
     });
 
   } catch (err) {

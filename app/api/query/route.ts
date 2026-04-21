@@ -2,71 +2,30 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// ==============================
-// 🚀 CREATE QUERY (ADMIN)
-// ==============================
 export async function POST(req: Request) {
   try {
-    // 🔐 AUTH
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
-      return Response.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    if (!session?.user?.id) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 🔍 Find real DB user
-    const dbUser = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        teamMembers: true, // adjust if your relation name differs
-      },
-    });
+    const body = await req.json();
+    const text = body?.text;
 
-    if (!dbUser) {
-      return Response.json(
-        { error: "User not found in DB" },
-        { status: 404 }
-      );
+    if (!text || !text.trim()) {
+      return Response.json({ error: "Text is required" }, { status: 400 });
     }
 
-    // 🧠 get team + project
-    const teamId = dbUser.teamMembers?.[0]?.teamId || "default";
-
-    const project = await prisma.project.findFirst({
-      where: { teamId },
-    });
-
-    if (!project) {
-      return Response.json(
-        { error: "No project found" },
-        { status: 400 }
-      );
-    }
-
-    // 📥 request body
-    const { query } = await req.json();
-
-    if (!query) {
-      return Response.json(
-        { error: "Query is required" },
-        { status: 400 }
-      );
-    }
-
-    // ==============================
-    // ✅ CREATE QUERY (FIXED)
-    // ==============================
-    const newQuery = await prisma.query.create({
+    // ✅ CREATE QUERY
+    const query = await prisma.query.create({
       data: {
-        text: query,
+        text,
 
-        // 🔥 REQUIRED FIELDS (THIS FIXES YOUR ERROR)
-        userId: dbUser.id,
-        teamId,
-        projectId: project.id,
+        // ✅ REQUIRED FIELDS (IMPORTANT)
+        userId: session.user.id,
+        teamId: "default",       // change later
+        projectId: "default",   // change later
 
         scrapeStatus: "idle",
         enrichStatus: "idle",
@@ -74,14 +33,12 @@ export async function POST(req: Request) {
       },
     });
 
-    return Response.json(newQuery);
+    console.log("✅ Query created:", query.id);
+
+    return Response.json({ query });
 
   } catch (err) {
     console.error("❌ Create query error:", err);
-
-    return Response.json(
-      { error: "Failed to create query" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to create query" }, { status: 500 });
   }
 }

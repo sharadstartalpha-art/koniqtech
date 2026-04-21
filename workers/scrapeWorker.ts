@@ -1,9 +1,8 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
-import { scrapeLinkedIn } from "@/lib/linkedin";
 import { getRedis } from "@/lib/redis";
-import { enrichQueue } from "@/lib/queue";
+import { searchLeads } from "@/lib/search";
 
 // ==============================
 // 🔌 REDIS CONNECTION
@@ -28,12 +27,12 @@ new Worker(
 
     // ❌ HARD STOP
     if (!userId) {
-      throw new Error("Missing userId in job");
+      throw new Error("Missing userId");
     }
 
     try {
       // ==============================
-      // 🔍 FETCH QUERY (for team/project)
+      // 🔍 FETCH QUERY (for relations)
       // ==============================
       const query = await prisma.query.findUnique({
         where: { id: queryId },
@@ -52,41 +51,43 @@ new Worker(
       });
 
       // ==============================
-      // 🕷 STEP 2: SCRAPE DATA
+      // 🔍 STEP 2: SEARCH LEADS
       // ==============================
-      const leads = await scrapeLinkedIn(text);
+      const results = await searchLeads(text);
 
-      console.log("📊 Profiles found:", leads.length);
+      console.log("📊 Total results:", results.length);
 
       // ==============================
       // 💾 STEP 3: SAVE LEADS
       // ==============================
-      for (const lead of leads) {
+      for (const item of results) {
         try {
-          // 🔥 DEBUG LOG (IMPORTANT)
           console.log("💾 Inserting lead:", {
-            name: lead.name,
-            email: lead.email,
+            name: item.name,
+            profileUrl: item.profileUrl,
             userId,
           });
 
           await prisma.lead.create({
             data: {
-              name: lead.name || "Unknown",
-              email: lead.email || null,
-              company: lead.company || null,
-              location: lead.location || null,
-              profileUrl: lead.profileUrl || null,
+              name: item.name || "Unknown",
+              profileUrl: item.profileUrl || null,
+              company: item.company || null,
+              location: item.location || null,
+              email: item.email || null,
 
-              // 🔥 RELATIONS
+              // 🔥 RELATIONS (REAL DATA)
               queryId,
               userId,
               teamId: query.teamId,
               projectId: query.projectId,
+
+              source: "search",
             },
           });
         } catch (err) {
-          console.error("❌ Lead insert error:", err);
+          // ⚠️ likely duplicate (unique constraint)
+          console.log("⚠️ Duplicate skipped");
         }
       }
 
@@ -100,19 +101,10 @@ new Worker(
 
       console.log("✅ SCRAPE DONE:", queryId);
 
-      // ==============================
-      // 🔥 STEP 5: TRIGGER ENRICH
-      // ==============================
-      if (enrichQueue) {
-        await enrichQueue.add("enrich-job", { queryId });
-        console.log("➡️ Enrich job queued");
-      } else {
-        console.warn("⚠️ enrichQueue not available");
-      }
-
       return true;
+
     } catch (err) {
-      console.error("❌ Scrape worker error:", err);
+      console.error("❌ Worker error:", err);
 
       await prisma.query.update({
         where: { id: queryId },
@@ -124,6 +116,6 @@ new Worker(
   },
   {
     connection,
-    concurrency: 2,
+    concurrency: 2, // 🔥 keep parallel jobs
   }
 );

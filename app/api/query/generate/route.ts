@@ -1,43 +1,42 @@
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { scrapeQueue } from "@/lib/queue";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const body = await req.json().catch(() => null);
+    const { queryId, text } = body || {};
 
-    if (!session?.user?.id) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    // ❌ Validate input
+    if (!queryId || !text) {
+      return Response.json(
+        { error: "Missing fields (queryId, text required)" },
+        { status: 400 }
+      );
     }
 
-    const body = await req.json();
-    const text = body?.text;
-
-    if (!text) {
-      return Response.json({ error: "Text required" }, { status: 400 });
+    // ❌ Queue not initialized (VERY IMPORTANT for build/runtime)
+    if (!scrapeQueue) {
+      return Response.json(
+        { error: "Queue not initialized (Redis missing)" },
+        { status: 500 }
+      );
     }
 
-    // ✅ CREATE QUERY
-    const query = await prisma.query.create({
-      data: {
-        text,
-        userId: session.user.id,
-
-        // ⚠️ TEMP SAFE VALUES (IMPORTANT)
-        teamId: "default",
-        projectId: "default",
-
-        scrapeStatus: "idle",
-        enrichStatus: "idle",
-        dedupStatus: "idle",
-      },
+    // 🚀 Push job to worker
+    await scrapeQueue.add("scrape", {
+      queryId,
+      text,
     });
 
-    console.log("✅ Query created:", query.id);
+    console.log("🕷 Scrape job added:", { queryId, text });
 
-    return Response.json(query);
+    return Response.json({ success: true });
+
   } catch (err) {
     console.error("❌ Generate error:", err);
-    return Response.json({ error: "Failed to create query" }, { status: 500 });
+
+    return Response.json(
+      { error: "Failed to generate" },
+      { status: 500 }
+    );
   }
 }

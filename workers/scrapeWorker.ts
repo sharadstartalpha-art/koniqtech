@@ -22,9 +22,14 @@ console.log("🕷 Scrape Worker Started");
 new Worker(
   "scrape",
   async (job) => {
-    const { queryId, text, userId } = job.data; // ✅ FIXED
+    const { queryId, text, userId } = job.data;
 
     console.log("🔥 SCRAPE JOB:", job.data);
+
+    // ❌ HARD STOP if missing userId
+    if (!userId) {
+      throw new Error("Missing userId in job");
+    }
 
     try {
       // ==============================
@@ -43,34 +48,23 @@ new Worker(
       console.log("📊 Profiles found:", leads.length);
 
       // ==============================
-      // 💾 STEP 3: SAVE LEADS (DEDUP SAFE)
+      // 💾 STEP 3: SAVE LEADS
       // ==============================
       for (const lead of leads) {
         try {
-          await prisma.lead.upsert({
-            where: {
-              profileUrl:
-                lead.profileUrl || `temp_${Math.random()}`,
-            },
-            update: {
-              name: lead.name || undefined,
-              company: lead.company || undefined,
-              location: lead.location || undefined,
-            },
-            create: {
+          await prisma.lead.create({
+            data: {
               name: lead.name || "Unknown",
               email: lead.email || "",
               company: lead.company || "",
               location: lead.location || "",
-              profileUrl: lead.profileUrl,
+              profileUrl: lead.profileUrl || null,
 
-              // 🔥 IMPORTANT RELATION
+              // 🔥 RELATIONS
               queryId,
-
-              // ✅ REAL USER
               userId,
 
-              // ⚠️ TEMP (replace later if needed)
+              // ⚠️ TEMP (replace later)
               teamId: "default",
               projectId: "default",
             },

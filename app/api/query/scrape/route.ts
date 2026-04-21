@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 // ==============================
 export async function POST(req: Request) {
   try {
-    // 🔐 AUTH (🔥 REQUIRED)
+    // 🔐 AUTH
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ❌ queue not available
+    // ❌ Queue not available
     if (!scrapeQueue) {
       return Response.json(
         { error: "Queue not available (Redis missing)" },
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // 📥 Parse body
     const body = await req.json().catch(() => null);
     const queryId = body?.queryId;
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔍 fetch query
+    // 🔍 Fetch query
     const query = await prisma.query.findUnique({
       where: { id: queryId },
     });
@@ -48,17 +49,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🚀 mark as running
+    // 🚀 Mark running
     await prisma.query.update({
       where: { id: queryId },
       data: { scrapeStatus: "running" },
     });
 
-    // 📥 add to queue (🔥 FIXED)
-    await scrapeQueue.add("scrape-job", {
-      queryId,
+    // 📥 Add to queue (✅ FIXED NAME + userId)
+    await scrapeQueue.add("scrape", {
+      queryId: query.id,
       text: query.text,
-      userId: session.user.id, // ✅ IMPORTANT FIX
+      userId: session.user.id, // ✅ REQUIRED
     });
 
     console.log("🕷 Scrape queued:", {

@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     // 🔐 AUTH
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
+    if (!session?.user?.email) {
       return Response.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -49,22 +49,38 @@ export async function POST(req: Request) {
       );
     }
 
+    // ==============================
+    // 🔥 GET REAL DB USER
+    // ==============================
+    const dbUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!dbUser) {
+      return Response.json(
+        { error: "User not found in DB" },
+        { status: 404 }
+      );
+    }
+
     // 🚀 Mark running
     await prisma.query.update({
       where: { id: queryId },
       data: { scrapeStatus: "running" },
     });
 
-    // 📥 Add to queue (✅ FIXED NAME + userId)
+    // ==============================
+    // 📥 ADD TO QUEUE
+    // ==============================
     await scrapeQueue.add("scrape", {
       queryId: query.id,
       text: query.text,
-      userId: session.user.id, // ✅ REQUIRED
+      userId: dbUser.id, // ✅ CORRECT USER ID
     });
 
     console.log("🕷 Scrape queued:", {
       queryId,
-      userId: session.user.id,
+      userId: dbUser.id,
     });
 
     return Response.json({ success: true });

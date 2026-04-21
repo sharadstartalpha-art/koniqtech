@@ -55,16 +55,16 @@ new Worker(
           await prisma.lead.create({
             data: {
               name: lead.name || "Unknown",
-              email: lead.email || "",
-              company: lead.company || "",
-              location: lead.location || "",
+              email: lead.email || null,
+              company: lead.company || null,
+              location: lead.location || null,
               profileUrl: lead.profileUrl || null,
 
               // 🔥 RELATIONS
               queryId,
               userId,
 
-              // ⚠️ TEMP (replace later)
+              // ⚠️ TEMP (replace later properly)
               teamId: "default",
               projectId: "default",
             },

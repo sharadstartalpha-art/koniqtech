@@ -7,8 +7,6 @@ export default function CollectPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  // ✅ track previous state (important)
   const [prevStatus, setPrevStatus] = useState<Record<string, string>>({});
 
   // ==============================
@@ -21,7 +19,7 @@ export default function CollectPage() {
 
       const newQueries = data.queries || [];
 
-      // ✅ detect status change → DONE
+      // ✅ detect status change
       newQueries.forEach((q: any) => {
         const prev = prevStatus[q.id];
 
@@ -30,7 +28,6 @@ export default function CollectPage() {
         }
       });
 
-      // ✅ save current statuses
       const map: Record<string, string> = {};
       newQueries.forEach((q: any) => {
         map[q.id] = q.scrapeStatus;
@@ -38,9 +35,8 @@ export default function CollectPage() {
 
       setPrevStatus(map);
       setQueries(newQueries);
-
     } catch (err) {
-      console.error("Failed to fetch queries:", err);
+      console.error("❌ Failed to fetch queries:", err);
     }
   };
 
@@ -51,7 +47,7 @@ export default function CollectPage() {
   }, [page]);
 
   // ==============================
-  // ➕ Create Query
+  // ➕ CREATE QUERY (FIXED)
   // ==============================
   const createQuery = async () => {
     if (!query.trim()) return;
@@ -59,29 +55,37 @@ export default function CollectPage() {
     setLoading(true);
 
     try {
-      await fetch("/api/query", {
+      const res = await fetch("/api/query", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
+        // ✅ FIX: backend expects "text"
+        body: JSON.stringify({ text: query }),
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("❌ Create query error:", err);
+        alert("Failed to create query");
+        return;
+      }
 
       setQuery("");
       fetchQueries();
     } catch (err) {
-      console.error("Failed to create query:", err);
+      console.error("❌ Failed to create query:", err);
     }
 
     setLoading(false);
   };
 
   // ==============================
-  // 🚀 Run Scraper
+  // 🚀 RUN SCRAPE
   // ==============================
   const runScrape = async (id: string) => {
     try {
-      await fetch("/api/query/scrape", {
+      const res = await fetch("/api/query/scrape", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,12 +93,15 @@ export default function CollectPage() {
         body: JSON.stringify({ queryId: id }),
       });
 
-      // ✅ START ALERT
-      alert("Scraping started 🚀");
+      if (!res.ok) {
+        alert("Failed to start scraping");
+        return;
+      }
 
+      alert("Scraping started 🚀");
       fetchQueries();
     } catch (err) {
-      console.error("Failed to run scrape:", err);
+      console.error("❌ Failed to run scrape:", err);
     }
   };
 
@@ -110,7 +117,7 @@ export default function CollectPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="e.g. SaaS founders in Germany"
+          placeholder="e.g. SaaS founders in UK"
           className="border p-2 w-full rounded"
         />
 

@@ -106,7 +106,7 @@ export default function CollectPage() {
               <th className="p-2">Query</th>
               <th className="p-2">Scrape</th>
               <th className="p-2">Enrich</th>
-              <th className="p-2">Dedup</th>
+              <th className="p-2">Dedup(final)</th>
             </tr>
           </thead>
 

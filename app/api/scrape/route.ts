@@ -7,6 +7,14 @@ import { scrapeQueue } from "@/lib/queue";
 // ==============================
 export async function POST() {
   try {
+    // ❌ Handle missing queue (build / no Redis)
+    if (!scrapeQueue) {
+      return NextResponse.json(
+        { error: "Queue not available (Redis missing)" },
+        { status: 503 }
+      );
+    }
+
     // 🆕 Create DB job record
     const job = await prisma.job.create({
       data: {
@@ -18,7 +26,7 @@ export async function POST() {
     // 📥 Add to BullMQ queue
     await scrapeQueue.add("scrape-job", {
       jobId: job.id,
-      query: "saas founders usa", // 🔥 replace later with dynamic input
+      query: "saas founders usa",
     });
 
     return NextResponse.json({
@@ -26,6 +34,7 @@ export async function POST() {
       jobId: job.id,
       message: "Scrape job queued 🚀",
     });
+
   } catch (err) {
     console.error("Queue error:", err);
 

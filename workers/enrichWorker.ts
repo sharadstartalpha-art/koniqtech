@@ -1,10 +1,10 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
-import { connection } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 
-// ==============================
-// ✨ ENRICH WORKER
-// ==============================
+console.log("✨ Enrich Worker Started");
+
 new Worker(
   "enrich",
   async (job) => {
@@ -13,7 +13,6 @@ new Worker(
     console.log("✨ Running enrich job:", job.data);
 
     try {
-      // 🔄 Mark as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -25,12 +24,7 @@ new Worker(
         });
       }
 
-      // ==============================
-      // 🔍 STEP 1: Find emails
-      // ==============================
-      // 👉 your logic here
-      // await findEmails(data);
-
+      // 👉 Step 1: Find emails
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -41,12 +35,7 @@ new Worker(
         });
       }
 
-      // ==============================
-      // 📬 STEP 2: Verify emails
-      // ==============================
-      // 👉 your logic here
-      // await verifyEmails();
-
+      // 👉 Step 2: Verify emails
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -57,9 +46,6 @@ new Worker(
         });
       }
 
-      // ==============================
-      // ✅ FINAL STEP
-      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -75,7 +61,6 @@ new Worker(
     } catch (err) {
       console.error("❌ Enrich worker error:", err);
 
-      // ❌ Mark as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -86,13 +71,11 @@ new Worker(
         });
       }
 
-      throw err; // 🔥 enables retries
+      throw err;
     }
   },
   {
-    connection,
-
-    // ⚡ control parallel jobs
+    connection: getRedis()!, // ✅ FIXED
     concurrency: 2,
   }
 );

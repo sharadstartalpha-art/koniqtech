@@ -1,10 +1,10 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
-import { connection } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 
-// ==============================
-// 🕷 SCRAPE WORKER
-// ==============================
+console.log("🕷 Scrape Worker Started");
+
 new Worker(
   "scrape",
   async (job) => {
@@ -13,7 +13,6 @@ new Worker(
     console.log("🕷 Running scrape job:", job.data);
 
     try {
-      // 🔄 Mark job as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -25,13 +24,7 @@ new Worker(
         });
       }
 
-      // ==============================
-      // 🔍 STEP 1: Scrape data
-      // ==============================
-      // 👉 Replace with real scraping logic
-      /*
-      const leads = await scrapeLinkedIn(query);
-      */
+      // 👉 Step 1: Scrape data
 
       if (jobId) {
         await prisma.job.update({
@@ -43,17 +36,7 @@ new Worker(
         });
       }
 
-      // ==============================
-      // 💾 STEP 2: Save leads
-      // ==============================
-      /*
-      if (leads?.length) {
-        await prisma.lead.createMany({
-          data: leads,
-          skipDuplicates: true,
-        });
-      }
-      */
+      // 👉 Step 2: Save leads
 
       if (jobId) {
         await prisma.job.update({
@@ -65,9 +48,6 @@ new Worker(
         });
       }
 
-      // ==============================
-      // ✅ FINAL STEP
-      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -83,7 +63,6 @@ new Worker(
     } catch (err) {
       console.error("❌ Scrape worker error:", err);
 
-      // ❌ Mark job as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -94,13 +73,11 @@ new Worker(
         });
       }
 
-      throw err; // 🔥 enables retries
+      throw err;
     }
   },
   {
-    connection,
-
-    // ⚡ control parallel scraping jobs
+    connection: getRedis()!, // ✅ FIXED
     concurrency: 2,
   }
 );

@@ -1,42 +1,14 @@
-import { headers } from "next/headers";
-import Stripe from "stripe";
-import { prisma } from "@/lib/prisma";
+export const dynamic = "force-dynamic";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  const body = await req.text();
-
-  // ✅ FIX HERE
-  const headerList = await headers();
-  const sig = headerList.get("stripe-signature")!;
-
-  let event;
-
+export async function POST(req: NextRequest) {
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    // your webhook logic here
+
+    return NextResponse.json({ received: true });
   } catch (err) {
-    return new Response("Webhook error", { status: 400 });
+    console.error("Webhook error:", err);
+    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
   }
-
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as any;
-
-    const userId = session.metadata.userId;
-
-    await prisma.balance.update({
-      where: { userId },
-      data: {
-        amount: {
-          increment: 500,
-        },
-      },
-    });
-  }
-
-  return new Response("OK");
 }

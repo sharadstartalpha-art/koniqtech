@@ -1,12 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { scrapeQueue } from "@/lib/queue";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // ==============================
 // 🚀 RUN SCRAPE FOR QUERY
 // ==============================
 export async function POST(req: Request) {
   try {
-    // ❌ queue not available (build / misconfig)
+    // 🔐 AUTH (🔥 REQUIRED)
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return Response.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // ❌ queue not available
     if (!scrapeQueue) {
       return Response.json(
         { error: "Queue not available (Redis missing)" },
@@ -42,13 +54,17 @@ export async function POST(req: Request) {
       data: { scrapeStatus: "running" },
     });
 
-    // 📥 add to queue
+    // 📥 add to queue (🔥 FIXED)
     await scrapeQueue.add("scrape-job", {
       queryId,
       text: query.text,
+      userId: session.user.id, // ✅ IMPORTANT FIX
     });
 
-    console.log("🕷 Scrape queued:", queryId);
+    console.log("🕷 Scrape queued:", {
+      queryId,
+      userId: session.user.id,
+    });
 
     return Response.json({ success: true });
 

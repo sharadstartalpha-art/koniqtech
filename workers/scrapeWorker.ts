@@ -22,7 +22,7 @@ console.log("🕷 Scrape Worker Started");
 new Worker(
   "scrape",
   async (job) => {
-    const { queryId, text } = job.data;
+    const { queryId, text, userId } = job.data; // ✅ FIXED
 
     console.log("🔥 SCRAPE JOB:", job.data);
 
@@ -53,7 +53,6 @@ new Worker(
                 lead.profileUrl || `temp_${Math.random()}`,
             },
             update: {
-              // optionally update existing fields
               name: lead.name || undefined,
               company: lead.company || undefined,
               location: lead.location || undefined,
@@ -65,11 +64,13 @@ new Worker(
               location: lead.location || "",
               profileUrl: lead.profileUrl,
 
-              // 🔥 VERY IMPORTANT
+              // 🔥 IMPORTANT RELATION
               queryId,
 
-              // ⚠️ TEMP (replace later)
-              userId: "admin",
+              // ✅ REAL USER
+              userId,
+
+              // ⚠️ TEMP (replace later if needed)
               teamId: "default",
               projectId: "default",
             },

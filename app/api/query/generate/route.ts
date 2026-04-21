@@ -17,14 +17,13 @@ export async function POST(req: Request) {
       return Response.json({ error: "Text required" }, { status: 400 });
     }
 
-    // ✅ CREATE QUERY IN DB
+    // ✅ CREATE QUERY
     const query = await prisma.query.create({
       data: {
         text,
-
         userId: session.user.id,
 
-        // ⚠️ TEMP (replace later with real)
+        // ⚠️ TEMP SAFE VALUES (IMPORTANT)
         teamId: "default",
         projectId: "default",
 
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
 
     return Response.json(query);
   } catch (err) {
-    console.error("❌ Generate query error:", err);
+    console.error("❌ Generate error:", err);
     return Response.json({ error: "Failed to create query" }, { status: 500 });
   }
 }

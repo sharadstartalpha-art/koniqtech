@@ -83,7 +83,7 @@ export default function LeadsPage() {
               <th className="p-2">Email</th>
               <th className="p-2">Company</th>
               <th className="p-2">Location</th>
-              <th className="p-2">Query</th> {/* ✅ NEW COLUMN */}
+              <th className="p-2">Query</th>
             </tr>
           </thead>
 
@@ -110,8 +110,10 @@ export default function LeadsPage() {
                   <td className="p-2">{lead.email}</td>
                   <td className="p-2">{lead.company}</td>
                   <td className="p-2">{lead.location}</td>
+
+                  {/* ✅ FIXED */}
                   <td className="p-2 text-gray-600">
-                    {lead.query || "-"}
+                    {lead.query?.text || "-"}
                   </td>
                 </tr>
               ))

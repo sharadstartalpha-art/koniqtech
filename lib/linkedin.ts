@@ -56,11 +56,17 @@ export async function scrapeLinkedIn(query: string) {
     throw new Error("Missing SERP_API_KEY");
   }
 
+  console.log("🔍 INPUT QUERY:", query);
+
   const queries = buildQueries(query);
+
+  console.log("🧠 Expanded Queries:", queries.length);
 
   let results: any[] = [];
 
-  for (const q of queries.slice(0, 20)) { // 🔥 limit queries for speed
+  for (const q of queries.slice(0, 20)) {
+    console.log("➡️ Running query:", q);
+
     for (let page = 0; page < 3; page++) {
       const start = page * 10;
 
@@ -73,11 +79,15 @@ export async function scrapeLinkedIn(query: string) {
 
         const organic = res.data?.organic_results || [];
 
+        console.log(`📄 Page ${page + 1} results:`, organic.length);
+
         const links = organic
           .map((r: any) => r.link)
           .filter((l: string) =>
             l.includes("linkedin.com/in/")
           );
+
+        console.log(`🔗 LinkedIn profiles found:`, links.length);
 
         results.push(
           ...links.map((url: string) => ({
@@ -88,19 +98,25 @@ export async function scrapeLinkedIn(query: string) {
         );
 
       } catch (err) {
-        console.error("SERP ERROR:", err);
+        console.error("❌ SERP ERROR:", err);
       }
     }
   }
 
-  // ✅ dedupe
+  // ==============================
+  // ✅ DEDUPE
+  // ==============================
   const unique = Array.from(
     new Map(results.map((r) => [r.profileUrl, r])).values()
   );
 
-  console.log("🔥 SERP TOTAL PROFILES:", unique.length);
+  console.log("🔥 TOTAL RAW RESULTS:", results.length);
+  console.log("✅ UNIQUE PROFILES:", unique.length);
 
-  return unique.slice(0, 500); // 🔥 increase pool
+  // 🔥 FINAL OUTPUT LOG
+  console.log("👥 FINAL PROFILES SAMPLE:", unique.slice(0, 5));
+
+  return unique.slice(0, 500);
 }
 
 /* ============================= */

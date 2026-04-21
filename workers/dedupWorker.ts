@@ -1,10 +1,10 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
-import { connection } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 
-// ==============================
-// 🧹 DEDUP WORKER
-// ==============================
+console.log("🧹 Dedup Worker Started");
+
 new Worker(
   "dedup",
   async (job) => {
@@ -13,7 +13,6 @@ new Worker(
     console.log("🧹 Running dedup job:", job.data);
 
     try {
-      // 🔄 Mark job as running
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -25,36 +24,8 @@ new Worker(
         });
       }
 
-      // ==============================
-      // 🔍 STEP 1: Find duplicates
-      // ==============================
-      // 👉 Replace with real logic
-      /*
-      const duplicates = await prisma.lead.findMany({
-        where: {
-          email: { not: null },
-        },
-      });
-      */
+      // 👉 Your dedup logic here
 
-      if (jobId) {
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            progress: 50,
-            logs: "Processing duplicates...",
-          },
-        });
-      }
-
-      // ==============================
-      // 🧹 STEP 2: Remove / merge duplicates
-      // 👉 Your logic here
-      // ==============================
-
-      // ==============================
-      // ✅ FINAL STEP
-      // ==============================
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -70,7 +41,6 @@ new Worker(
     } catch (err) {
       console.error("❌ Dedup worker error:", err);
 
-      // ❌ Mark job as failed
       if (jobId) {
         await prisma.job.update({
           where: { id: jobId },
@@ -81,13 +51,11 @@ new Worker(
         });
       }
 
-      throw err; // 🔥 enables retries
+      throw err;
     }
   },
   {
-    connection,
-
-    // ⚡ control parallel jobs
+    connection: getRedis()!, // ✅ FIXED
     concurrency: 2,
   }
 );

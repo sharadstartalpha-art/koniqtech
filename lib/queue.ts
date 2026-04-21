@@ -1,13 +1,5 @@
 import { Queue } from "bullmq";
-import IORedis from "ioredis";
-
-// ==============================
-// 🔌 REDIS CONNECTION
-// ==============================
-export const connection = new IORedis({
-  host: process.env.REDIS_HOST || "127.0.0.1",
-  port: Number(process.env.REDIS_PORT) || 6379,
-});
+import { getRedis } from "@/lib/redis";
 
 // ==============================
 // ⚙️ DEFAULT OPTIONS
@@ -23,41 +15,28 @@ const defaultJobOptions = {
 };
 
 // ==============================
-// 🚀 LEAD GENERATION QUEUE
+// 🔌 SAFE CONNECTION
 // ==============================
-export const leadQueue = new Queue("lead-queue", {
-  connection,
-  defaultJobOptions,
-});
+const connection = getRedis();
+
+// 👉 IMPORTANT: allow null during build
+function createQueue(name: string) {
+  if (!connection) {
+    console.warn(`⚠️ Queue "${name}" disabled (no Redis)`);
+    return null;
+  }
+
+  return new Queue(name, {
+    connection,
+    defaultJobOptions,
+  });
+}
 
 // ==============================
-// 📧 EMAIL QUEUE
+// 🚀 QUEUES
 // ==============================
-export const emailQueue = new Queue("email-queue", {
-  connection,
-  defaultJobOptions,
-});
-
-// ==============================
-// 🕷 SCRAPE QUEUE
-// ==============================
-export const scrapeQueue = new Queue("scrape", {
-  connection,
-  defaultJobOptions,
-});
-
-// ==============================
-// ✨ ENRICH QUEUE
-// ==============================
-export const enrichQueue = new Queue("enrich", {
-  connection,
-  defaultJobOptions,
-});
-
-// ==============================
-// 🧹 DEDUP QUEUE
-// ==============================
-export const dedupQueue = new Queue("dedup", {
-  connection,
-  defaultJobOptions,
-});
+export const leadQueue = createQueue("lead-queue");
+export const emailQueue = createQueue("email-queue");
+export const scrapeQueue = createQueue("scrape");
+export const enrichQueue = createQueue("enrich");
+export const dedupQueue = createQueue("dedup");

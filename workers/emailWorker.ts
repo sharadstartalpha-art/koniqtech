@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
-import { connection } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 import { personalize } from "@/lib/personalize";
@@ -12,7 +12,6 @@ new Worker(
   async (job) => {
     const { campaignId, stepId, recipientId } = job.data;
 
-    // 🔍 Fetch all required data
     const [recipient, campaign, step] = await Promise.all([
       prisma.campaignRecipient.findUnique({
         where: { id: recipientId },
@@ -30,20 +29,17 @@ new Worker(
       throw new Error("Missing data");
     }
 
-    // 🚫 Skip unsubscribed
     if (recipient.unsubscribed) {
       console.log("🚫 Unsubscribed:", recipient.email);
       return;
     }
 
-    // 🚫 Skip already processed
     if (["SENT", "REPLIED"].includes(recipient.status)) {
       console.log("⏭ Skipping:", recipient.email, recipient.status);
       return;
     }
 
     try {
-      // 🔥 Daily limit check
       const DAILY_LIMIT = 50;
 
       if ((campaign.totalSent ?? 0) >= DAILY_LIMIT) {
@@ -51,30 +47,24 @@ new Worker(
         return;
       }
 
-      // ✨ Personalize email
       const html = personalize(step.body, recipient);
 
-      // 📡 Tracking pixel
       const trackingPixel = `<img src="https://koniqtech.com/api/track/open?rid=${recipient.id}" width="1" height="1" />`;
 
-      // ⏱ Anti-spam delay (randomized)
       const delay = Math.floor(Math.random() * 5000);
       await new Promise((res) => setTimeout(res, delay));
 
-      // 📧 Send email
       await sendEmail({
         to: recipient.email,
         subject: step.subject,
         html: html + trackingPixel,
       });
 
-      // ✅ Mark as sent
       await prisma.campaignRecipient.update({
         where: { id: recipient.id },
         data: { status: "SENT" },
       });
 
-      // 📊 Increment campaign count
       await prisma.campaign.update({
         where: { id: campaignId },
         data: {
@@ -94,16 +84,12 @@ new Worker(
         data: { status: "FAILED" },
       });
 
-      throw err; // 🔥 allows BullMQ retry
+      throw err;
     }
   },
   {
-    connection,
-
-    // 🔥 Parallel processing
+    connection: getRedis()!, // ✅ FIXED
     concurrency: 10,
-
-    // 🔥 Rate limiting (BullMQ level)
     limiter: {
       max: 20,
       duration: 1000,

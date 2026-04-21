@@ -1,7 +1,12 @@
-import {prisma} from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { emailQueue } from "@/lib/queue";
 
 export async function dispatchCampaign(campaignId: string) {
+  // ❌ Handle missing queue (build / no Redis)
+  if (!emailQueue) {
+    throw new Error("Email queue not available (Redis missing)");
+  }
+
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
     include: {
@@ -12,7 +17,7 @@ export async function dispatchCampaign(campaignId: string) {
 
   if (!campaign) throw new Error("Campaign not found");
 
-  // update status
+  // 🔄 update status
   await prisma.campaign.update({
     where: { id: campaignId },
     data: { status: "SENDING" },
@@ -28,7 +33,7 @@ export async function dispatchCampaign(campaignId: string) {
           recipientId: recipient.id,
         },
         {
-          delay: step.delay * 1000, // 🔥 schedule per step
+          delay: step.delay * 1000, // ⏱ schedule per step
           attempts: 3,
         }
       );

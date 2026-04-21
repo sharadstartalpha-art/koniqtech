@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Worker } from "bullmq";
-import { connection } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 
@@ -81,7 +81,7 @@ new Worker(
           })
         );
 
-        // ⏱ Wait between batches (rate control)
+        // ⏱ Wait between batches
         await wait(2000);
       }
     }
@@ -101,12 +101,8 @@ new Worker(
     return true;
   },
   {
-    connection,
-
-    // 🔥 Parallel job control
+    connection: getRedis()!, // ✅ CORRECT (no top-level call)
     concurrency: 2,
-
-    // 🔥 Rate limiting
     limiter: {
       max: 10,
       duration: 1000,

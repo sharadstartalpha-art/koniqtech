@@ -6,21 +6,20 @@ import { apifySearch } from "./apify";
 export async function searchLeads(query: string) {
   console.log("🔍 Searching:", query);
 
-  let results = [];
+  // 1️⃣ Google first
+  const googleResults = await googleSearch(query);
 
-  // 1️⃣ Try Google
-  results = await googleSearch(query);
-
-  if (results.length > 0) {
-    console.log("✅ Google results:", results.length);
-    return results;
+  if (googleResults.length > 0) {
+    console.log("✅ Google results:", googleResults.length);
+    return googleResults;
   }
 
-  // 2️⃣ Fallback Apify
+  // 2️⃣ fallback Apify
   console.log("⚠️ Falling back to Apify...");
-  results = await apifySearch(query);
 
-  console.log("✅ Apify results:", results.length);
+  const apifyResults = await apifySearch(query);
 
-  return results;
+  console.log("✅ Apify results:", apifyResults.length);
+
+  return apifyResults;
 }

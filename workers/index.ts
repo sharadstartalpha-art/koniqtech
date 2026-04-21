@@ -1,9 +1,9 @@
 import "dotenv/config";
 
-// 👉 Import workers (this starts them)
 import "./scrapeWorker";
 import "./enrichWorker";
 import "./dedupWorker";
-import "./emailWorker"; // (if you have it)
+import "./emailWorker";
+import "./campaignWorker";
 
-console.log("🚀 Workers started...");
+console.log("🚀 Workers started and listening...");

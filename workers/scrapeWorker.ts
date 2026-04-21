@@ -38,32 +38,37 @@ new Worker(
       // ==============================
       // 🕷 STEP 2: SCRAPE DATA
       // ==============================
-      const profiles = await scrapeLinkedIn(text);
+      const leads = await scrapeLinkedIn(text);
 
-      console.log("📊 Profiles found:", profiles.length);
+      console.log("📊 Profiles found:", leads.length);
 
       // ==============================
-      // 💾 STEP 3: SAVE LEADS
+      // 💾 STEP 3: SAVE LEADS (DEDUP SAFE)
       // ==============================
-      for (const p of profiles) {
+      for (const lead of leads) {
         try {
           await prisma.lead.upsert({
             where: {
-              // fallback to avoid null crash
-              profileUrl: p.profileUrl || `temp_${Math.random()}`,
+              profileUrl:
+                lead.profileUrl || `temp_${Math.random()}`,
             },
-            update: {},
+            update: {
+              // optionally update existing fields
+              name: lead.name || undefined,
+              company: lead.company || undefined,
+              location: lead.location || undefined,
+            },
             create: {
-              name: p.name,
-              email: null,
-              company: p.company,
-              profileUrl: p.profileUrl,
-              location: p.location,
+              name: lead.name || "Unknown",
+              email: lead.email || "",
+              company: lead.company || "",
+              location: lead.location || "",
+              profileUrl: lead.profileUrl,
 
-              // 🔥 IMPORTANT RELATION
+              // 🔥 VERY IMPORTANT
               queryId,
 
-              // ⚠️ TEMP (replace later with auth)
+              // ⚠️ TEMP (replace later)
               userId: "admin",
               teamId: "default",
               projectId: "default",

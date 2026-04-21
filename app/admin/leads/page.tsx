@@ -50,7 +50,7 @@ export default function LeadsPage() {
         className="border p-2 w-full rounded"
         value={query}
         onChange={(e) => {
-          setPage(1); // reset page on search
+          setPage(1);
           setQuery(e.target.value);
         }}
       />
@@ -59,7 +59,6 @@ export default function LeadsPage() {
       <div className="flex justify-between items-center">
         <p className="text-gray-600">Total Leads: {total}</p>
 
-        {/* ⚙️ PAGE SIZE */}
         <select
           value={limit}
           onChange={(e) => {
@@ -75,7 +74,7 @@ export default function LeadsPage() {
       </div>
 
       {/* 📋 TABLE */}
-      <div className="border rounded overflow-hidden">
+      <div className="border rounded overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-100 text-left">
             <tr>
@@ -84,19 +83,20 @@ export default function LeadsPage() {
               <th className="p-2">Email</th>
               <th className="p-2">Company</th>
               <th className="p-2">Location</th>
+              <th className="p-2">Query</th> {/* ✅ NEW COLUMN */}
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="p-4 text-center">
+                <td colSpan={6} className="p-4 text-center">
                   Loading...
                 </td>
               </tr>
             ) : leads.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={6} className="p-4 text-center text-gray-500">
                   No leads found
                 </td>
               </tr>
@@ -110,6 +110,9 @@ export default function LeadsPage() {
                   <td className="p-2">{lead.email}</td>
                   <td className="p-2">{lead.company}</td>
                   <td className="p-2">{lead.location}</td>
+                  <td className="p-2 text-gray-600">
+                    {lead.query || "-"}
+                  </td>
                 </tr>
               ))
             )}

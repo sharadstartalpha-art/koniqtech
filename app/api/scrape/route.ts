@@ -5,13 +5,25 @@ import { scrapeQueue } from "@/lib/queue";
 // ==============================
 // 🚀 QUEUE SCRAPE JOB
 // ==============================
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    // ❌ Handle missing queue (build / no Redis)
+    // ❌ Redis / Queue not available (build time / misconfig)
     if (!scrapeQueue) {
       return NextResponse.json(
         { error: "Queue not available (Redis missing)" },
         { status: 503 }
+      );
+    }
+
+    // 📥 Parse body
+    const body = await req.json().catch(() => null);
+    const query = body?.query?.trim();
+
+    // ❌ Validate input
+    if (!query) {
+      return NextResponse.json(
+        { error: "Query is required" },
+        { status: 400 }
       );
     }
 
@@ -20,14 +32,17 @@ export async function POST() {
       data: {
         type: "scrape",
         status: "queued",
+        logs: "Queued for scraping...",
       },
     });
 
     // 📥 Add to BullMQ queue
     await scrapeQueue.add("scrape-job", {
       jobId: job.id,
-      query: "saas founders usa",
+      query,
     });
+
+    console.log("🚀 Scrape job queued:", job.id, query);
 
     return NextResponse.json({
       success: true,
@@ -36,7 +51,7 @@ export async function POST() {
     });
 
   } catch (err) {
-    console.error("Queue error:", err);
+    console.error("❌ Queue error:", err);
 
     return NextResponse.json(
       { error: "Failed to queue scrape job" },

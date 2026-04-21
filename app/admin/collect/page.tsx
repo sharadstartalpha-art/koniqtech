@@ -9,6 +9,7 @@ export default function CollectPage() {
     scrape: false,
     enrich: false,
     dedup: false,
+    generate: false, // ✅ NEW
   });
 
   // ==============================
@@ -34,6 +35,26 @@ export default function CollectPage() {
   const isRunning = jobs.some((j) => j.status === "running");
 
   // ==============================
+  // 🤖 Generate query (NEW)
+  // ==============================
+  const generateQuery = async () => {
+    setLoading((s) => ({ ...s, generate: true }));
+
+    try {
+      const res = await fetch("/api/generate-query");
+      const data = await res.json();
+
+      if (data?.query) {
+        setQuery(data.query);
+      }
+    } catch (err) {
+      console.error("Failed to generate query:", err);
+    }
+
+    setLoading((s) => ({ ...s, generate: false }));
+  };
+
+  // ==============================
   // 🚀 Run jobs
   // ==============================
   const runJob = async (type: "scrape" | "enrich" | "dedup") => {
@@ -44,6 +65,9 @@ export default function CollectPage() {
     try {
       await fetch(`/api/${type}`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(type === "scrape" ? { query } : {}),
       });
     } catch (err) {
@@ -63,13 +87,23 @@ export default function CollectPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Collect Data 🚀</h1>
 
-      {/* 🔍 QUERY INPUT */}
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="e.g. SaaS founders in Germany"
-        className="border p-2 w-full rounded"
-      />
+      {/* 🔍 QUERY INPUT + GENERATE */}
+      <div className="flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="e.g. SaaS founders in Germany"
+          className="border p-2 w-full rounded"
+        />
+
+        <button
+          onClick={generateQuery}
+          disabled={loading.generate}
+          className="bg-purple-600 text-white px-4 py-2 rounded disabled:opacity-50"
+        >
+          {loading.generate ? "..." : "✨ Generate"}
+        </button>
+      </div>
 
       {/* ACTION BUTTONS */}
       <div className="flex gap-2">

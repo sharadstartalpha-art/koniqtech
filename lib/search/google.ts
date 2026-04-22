@@ -1,18 +1,39 @@
 export async function googleSearch(query: string) {
-  const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
-    query
-  )}&key=${process.env.GOOGLE_API_KEY}&cx=${process.env.GOOGLE_CX}`;
+  try {
+    const API_KEY = process.env.GOOGLE_API_KEY!;
+    const CX = process.env.GOOGLE_CSE_ID!;
 
-  const res = await fetch(url);
-  const data = await res.json();
+    if (!API_KEY || !CX) {
+      console.error("❌ Missing Google API env");
+      return [];
+    }
 
-  console.log("GOOGLE RAW:", data);
+    const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(
+      query
+    )}&key=${API_KEY}&cx=${CX}`;
 
-  if (!data.items) return [];
+    const res = await fetch(url);
+    const json = await res.json();
 
-  return data.items.map((item: any) => ({
-    name: item.title,
-    profileUrl: item.link,
-    snippet: item.snippet,
-  }));
+    // 🚨 HANDLE ERROR
+    if (!json || json.error) {
+      console.error("❌ GOOGLE RAW:", json);
+      return [];
+    }
+
+    if (!Array.isArray(json.items)) {
+      console.log("⚠️ No Google results");
+      return [];
+    }
+
+    return json.items.map((item: any) => ({
+      name: item.title || "",
+      website: item.link || "",
+      snippet: item.snippet || "",
+      source: "google",
+    }));
+  } catch (err) {
+    console.error("❌ Google search failed:", err);
+    return [];
+  }
 }

@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             projectId,
           },
         });
-        console.log("💾 Query saved");
+        console.log("💾 New Query saved");
       }
 
       // 🔥 SAVE LEADS

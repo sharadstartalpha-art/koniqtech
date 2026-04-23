@@ -42,7 +42,7 @@ new Worker(
 
       for (const item of results) {
         try {
-          // ✅ SAFE DEDUP (ONLY IF WEBSITE EXISTS)
+          // ✅ DEDUP (website)
           if (item.website) {
             const exists = await prisma.lead.findFirst({
               where: { website: item.website },
@@ -65,12 +65,11 @@ new Worker(
 
               queryId,
               userId,
-              teamId: "default",
-              projectId: "default",
 
               source: "search",
             },
           });
+
         } catch (err) {
           console.log("⚠️ Lead skipped:", err);
         }
@@ -84,6 +83,7 @@ new Worker(
       console.log("✅ SCRAPE DONE:", queryId);
 
       return true;
+
     } catch (err) {
       console.error("❌ Worker error:", err);
 

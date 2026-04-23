@@ -6,7 +6,7 @@ export async function GET(req: Request) {
 
   const page = Number(searchParams.get("page") || 1);
   const limit = Number(searchParams.get("limit") || 10);
-  const q = searchParams.get("q") || "";
+  const q = (searchParams.get("q") || "").trim();
 
   // ✅ REQUIRED fields
   const userId = "demo-user";
@@ -16,13 +16,13 @@ export async function GET(req: Request) {
   console.log("🚀 API /query/list hit");
   console.log("🔎 Query:", q);
 
-  let freshResults: any[] = [];
   let queryRecord: any = null;
 
-  if (q) {
+  // 🔥 ONLY run when query exists
+  if (q.length > 0) {
     try {
       // 🔍 Fetch SERPER
-      freshResults = await searchLeads(q);
+      const freshResults = await searchLeads(q);
       console.log("✅ Fresh results:", freshResults.length);
 
       // ✅ Find or create query
@@ -39,23 +39,31 @@ export async function GET(req: Request) {
             projectId,
           },
         });
+        console.log("💾 Query saved");
       }
 
-      // 🔥 SAVE LEADS (FINAL FIX)
+      // 🔥 SAVE LEADS
       for (const item of freshResults) {
         try {
+          // ✅ Dedup by website (IMPORTANT)
+          if (!item.website) continue;
+
+          const exists = await prisma.lead.findFirst({
+            where: { website: item.website },
+          });
+
+          if (exists) continue;
+
           await prisma.lead.create({
             data: {
               name: item.name || "",
               company: item.name || "",
-              website: item.website || "",
+              website: item.website,
 
-              // ✅ REQUIRED fields
               userId,
               teamId,
               projectId,
 
-              // ✅ FK instead of relation
               queryId: queryRecord.id,
             },
           });
@@ -71,7 +79,12 @@ export async function GET(req: Request) {
     }
   }
 
-  // ✅ Fetch leads
+  // ✅ FETCH QUERIES (for /admin/collect)
+  const queries = await prisma.query.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  // ✅ FETCH LEADS (for /admin/leads)
   const [leads, total] = await Promise.all([
     prisma.lead.findMany({
       where: q
@@ -97,7 +110,8 @@ export async function GET(req: Request) {
   ]);
 
   return Response.json({
-    leads,
+    queries, // 🔥 for collect page
+    leads,   // 🔥 for leads page
     total,
   });
 }

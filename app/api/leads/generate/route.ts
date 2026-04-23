@@ -7,7 +7,6 @@ import { scrapeLinkedIn } from "@/lib/linkedin";
 import { getDomain, verifyEmail } from "@/lib/enrich";
 import { generateEmailPatterns } from "@/lib/email";
 import { runWithConcurrency } from "@/lib/utils";
-
 import { findEmailMulti } from "@/lib/emailProviders";
 import { enrichCompany } from "@/lib/companyEnrich";
 
@@ -28,26 +27,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No leads found" });
     }
 
-    /* 📁 PROJECT */
-    let project = projectId
-      ? await prisma.project.findUnique({ where: { id: projectId } })
-      : null;
+    // ✅ OPTIONAL PROJECT (only if provided)
+    let project = null;
 
-    if (!project) {
-      const product = await prisma.product.findFirst();
-      if (!product) return NextResponse.json({ error: "No product" });
-
-      project = await prisma.project.create({
-        data: {
-          name: "Default Project",
-          teamId,
-          userId,
-          productId: product.id,
-        },
+    if (projectId) {
+      project = await prisma.project.findUnique({
+        where: { id: projectId },
       });
     }
 
-    /* 🚀 TASKS */
+    // 🚀 TASKS
     const tasks = profiles.slice(0, 150).map((p: any) => async () => {
       try {
         if (!p?.name) return null;
@@ -55,25 +44,20 @@ export async function POST(req: Request) {
         const [first, ...rest] = p.name.split(" ");
         const last = rest.join(" ");
 
-        /* 🧠 DOMAIN */
+        // 🌐 DOMAIN
         let domain = p.domain;
-
         if (!domain && p.company) {
           domain = await getDomain(p.company);
         }
 
-        /* 🔍 EMAIL */
+        // 📧 EMAIL
         let email: string | null = null;
 
         if (domain) {
-          email = await findEmailMulti({
-            domain,
-            first,
-            last,
-          });
+          email = await findEmailMulti({ domain, first, last });
         }
 
-        /* 🔁 FALLBACK */
+        // 🔁 FALLBACK
         if (!email && domain) {
           const patterns = generateEmailPatterns(first, last, domain);
 
@@ -86,21 +70,16 @@ export async function POST(req: Request) {
           }
         }
 
-        /* 🏢 COMPANY ENRICH */
+        // 🏢 COMPANY ENRICH
         const companyData = domain
           ? await enrichCompany(domain)
           : null;
 
-        /* 🚫 DUPLICATE (CLEAN VERSION) */
+        // 🚫 DUPLICATE CHECK
         const conditions: any[] = [];
 
-        if (email) {
-          conditions.push({ email });
-        }
-
-        if (p.profileUrl) {
-          conditions.push({ profileUrl: p.profileUrl });
-        }
+        if (email) conditions.push({ email });
+        if (p.profileUrl) conditions.push({ profileUrl: p.profileUrl });
 
         const exists =
           conditions.length > 0
@@ -111,7 +90,7 @@ export async function POST(req: Request) {
 
         if (exists) return null;
 
-        /* 💾 SAVE (ALLOW PARTIAL LEADS) */
+        // 💾 SAVE (CLEAN)
         return await prisma.lead.create({
           data: {
             email:
@@ -119,11 +98,13 @@ export async function POST(req: Request) {
               `noemail_${Date.now()}_${Math.random()}@placeholder.com`,
             name: p.name,
             company: companyData?.name || p.company || "",
+            profileUrl: p.profileUrl || null,
             source: email ? "enriched" : "linkedin",
+
+            // ✅ OPTIONAL RELATIONS
             userId,
-            projectId: project!.id,
-            teamId,
-            profileUrl: p.profileUrl || "",
+            projectId: project?.id || null,
+            teamId: teamId || null,
           },
         });
 

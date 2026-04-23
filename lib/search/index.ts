@@ -6,6 +6,7 @@ export async function searchLeads(query: string) {
   console.log("🔍 Searching:", query);
 
   let results: any[] = [];
+  let serperData: any = null;
 
   try {
     // 1️⃣ Try SERPER (Google replacement)
@@ -21,7 +22,7 @@ export async function searchLeads(query: string) {
       }),
     });
 
-    const serperData = await serperRes.json();
+    serperData = await serperRes.json();
 
     if (serperData?.organic?.length) {
       results = serperData.organic.map((item: any) => ({
@@ -49,6 +50,11 @@ export async function searchLeads(query: string) {
   }
 
   console.log("📊 Total results:", results.length);
+
+  // Safe debug log (won’t crash if Serper failed)
+  if (serperData) {
+    console.log("SERPER RAW:", serperData);
+  }
 
   return results;
 }

@@ -1,25 +1,54 @@
 // lib/search/index.ts
 
-import { googleSearch } from "./google";
 import { apifySearch } from "./apify";
 
 export async function searchLeads(query: string) {
   console.log("🔍 Searching:", query);
 
-  // 1️⃣ Google first
-  const googleResults = await googleSearch(query);
+  let results: any[] = [];
 
-  if (googleResults.length > 0) {
-    console.log("✅ Google results:", googleResults.length);
-    return googleResults;
+  try {
+    // 1️⃣ Try SERPER (Google replacement)
+    const serperRes = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": process.env.SERPER_API_KEY!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        q: query,
+        num: 20,
+      }),
+    });
+
+    const serperData = await serperRes.json();
+
+    if (serperData?.organic?.length) {
+      results = serperData.organic.map((item: any) => ({
+        name: item.title || "",
+        website: item.link || "",
+        snippet: item.snippet || "",
+        source: "serper",
+      }));
+
+      console.log("✅ Serper results:", results.length);
+    }
+  } catch (err) {
+    console.error("❌ Serper failed:", err);
   }
 
-  // 2️⃣ fallback Apify
-  console.log("⚠️ Falling back to Apify...");
+  // 2️⃣ Fallback to Apify if empty
+  if (!results.length) {
+    console.log("⚠️ Falling back to Apify...");
 
-  const apifyResults = await apifySearch(query);
+    const apifyResults = await apifySearch(query);
 
-  console.log("✅ Apify results:", apifyResults.length);
+    console.log("✅ Apify results:", apifyResults.length);
 
-  return apifyResults;
+    results = apifyResults;
+  }
+
+  console.log("📊 Total results:", results.length);
+
+  return results;
 }

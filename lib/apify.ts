@@ -28,7 +28,7 @@ export async function apifySearch(query: string) {
       source: "apify",
     }));
   } catch (err) {
-    console.error("❌ Apify failed:", err);
+    console.error("❌ Apify failed Error:", err);
     return [];
   }
 }

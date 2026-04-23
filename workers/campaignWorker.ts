@@ -6,6 +6,9 @@ import { sendEmail } from "@/lib/mail";
 
 const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+const connection = getRedis();
+if (!connection) throw new Error("❌ Redis not available");
+
 console.log("🚀 Campaign Worker Started");
 
 new Worker(
@@ -36,6 +39,8 @@ new Worker(
       }
 
       for (const recipient of campaign.recipients) {
+        if (!recipient.email) continue;
+
         try {
           await sendEmail({
             to: recipient.email,
@@ -61,7 +66,7 @@ new Worker(
     return true;
   },
   {
-    connection: getRedis()!,
+    connection,
     concurrency: 2,
   }
 );

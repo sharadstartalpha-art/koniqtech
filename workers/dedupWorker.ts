@@ -4,10 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 
 const connection = getRedis();
-
-if (!connection) {
-  throw new Error("❌ Redis not available");
-}
+if (!connection) throw new Error("❌ Redis not available");
 
 console.log("🧹 Dedup Worker Started");
 
@@ -24,7 +21,7 @@ new Worker(
         data: { dedupStatus: "running" },
       });
 
-      // 🔥 OPTIONAL: real dedup later
+      // TODO: real dedup logic (email/profileUrl based)
 
       await new Promise((r) => setTimeout(r, 1000));
 

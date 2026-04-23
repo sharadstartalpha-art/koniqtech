@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/mail";
 import { personalize } from "@/lib/personalize";
 
+const connection = getRedis();
+if (!connection) throw new Error("❌ Redis not available");
+
 console.log("📧 Email Worker Started");
 
 new Worker(
@@ -16,7 +19,7 @@ new Worker(
       prisma.campaignRecipient.findUnique({ where: { id: recipientId } }),
       prisma.campaign.findUnique({
         where: { id: campaignId },
-        select: { id: true, totalSent: true },
+        select: { id: true },
       }),
       prisma.campaignStep.findUnique({ where: { id: stepId } }),
     ]);
@@ -62,7 +65,7 @@ new Worker(
     }
   },
   {
-    connection: getRedis()!,
+    connection,
     concurrency: 10,
   }
 );

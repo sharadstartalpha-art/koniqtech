@@ -19,23 +19,18 @@ new Worker(
     console.log("🧹 DEDUP JOB:", job.data);
 
     try {
-      // 🚀 mark running
       await prisma.query.update({
         where: { id: queryId },
-        data: {
-          dedupStatus: "running",
-        },
+        data: { dedupStatus: "running" },
       });
 
-      // 🧪 simulate dedup
-      await new Promise((r) => setTimeout(r, 2000));
+      // 🔥 OPTIONAL: real dedup later
 
-      // ✅ mark done
+      await new Promise((r) => setTimeout(r, 1000));
+
       await prisma.query.update({
         where: { id: queryId },
-        data: {
-          dedupStatus: "done",
-        },
+        data: { dedupStatus: "done" },
       });
 
       console.log("✅ DEDUP DONE:", queryId);
@@ -46,9 +41,7 @@ new Worker(
 
       await prisma.query.update({
         where: { id: queryId },
-        data: {
-          dedupStatus: "failed",
-        },
+        data: { dedupStatus: "failed" },
       });
 
       throw err;

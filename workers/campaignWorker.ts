@@ -23,12 +23,6 @@ new Worker(
 
     if (!campaign) throw new Error("Campaign not found");
 
-    // 🔥 DAILY LIMIT PROTECTION
-    if ((campaign.totalSent ?? 0) >= 500) {
-      throw new Error("Daily limit reached");
-    }
-
-    // 🔄 Mark as sending
     await prisma.campaign.update({
       where: { id: campaignId },
       data: { status: "SENDING" },
@@ -36,76 +30,38 @@ new Worker(
 
     let totalSent = 0;
 
-    // 🔥 Limit recipients per run
-    const MAX_PER_RUN = 50;
-    const recipients = campaign.recipients.slice(0, MAX_PER_RUN);
-
     for (const step of campaign.steps) {
-      console.log("Running step:", step.name);
-
-      // ⏱ Delay between steps
       if (step.delay > 0) {
         await wait(step.delay * 1000);
       }
 
-      const batchSize = 5;
+      for (const recipient of campaign.recipients) {
+        try {
+          await sendEmail({
+            to: recipient.email,
+            subject: campaign.subject,
+            html: campaign.content,
+          });
 
-      for (let i = 0; i < recipients.length; i += batchSize) {
-        const batch = recipients.slice(i, i + batchSize);
-
-        await Promise.allSettled(
-          batch.map(async (recipient) => {
-            try {
-              const trackingPixel = `<img src="https://yourdomain.com/api/track/open?cid=${campaign.id}&rid=${recipient.id}" width="1" height="1" />`;
-
-              await sendEmail({
-                to: recipient.email,
-                subject: campaign.subject,
-                html: campaign.content + trackingPixel,
-              });
-
-              await prisma.campaignRecipient.update({
-                where: { id: recipient.id },
-                data: { status: "SENT" },
-              });
-
-              totalSent++;
-            } catch (err) {
-              console.error("❌ Failed:", recipient.email);
-
-              await prisma.campaignRecipient.update({
-                where: { id: recipient.id },
-                data: { status: "FAILED" },
-              });
-            }
-          })
-        );
-
-        // ⏱ Wait between batches
-        await wait(2000);
+          totalSent++;
+        } catch (err) {
+          console.error("❌ Failed:", recipient.email);
+        }
       }
     }
 
-    // ✅ Final update
     await prisma.campaign.update({
       where: { id: campaignId },
       data: {
         status: "SENT",
-        sentAt: new Date(),
-        totalSent: {
-          increment: totalSent,
-        },
+        totalSent: { increment: totalSent },
       },
     });
 
     return true;
   },
   {
-    connection: getRedis()!, // ✅ CORRECT (no top-level call)
+    connection: getRedis()!,
     concurrency: 2,
-    limiter: {
-      max: 10,
-      duration: 1000,
-    },
   }
 );

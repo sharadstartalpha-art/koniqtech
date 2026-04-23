@@ -7,7 +7,6 @@ export default function CollectPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [prevStatus, setPrevStatus] = useState<Record<string, string>>({});
 
   // ==============================
   // 📡 Fetch Queries
@@ -16,25 +15,7 @@ export default function CollectPage() {
     try {
       const res = await fetch(`/api/query/list?page=${page}`);
       const data = await res.json();
-
-      const newQueries = data.queries || [];
-
-      // ✅ detect status change
-      newQueries.forEach((q: any) => {
-        const prev = prevStatus[q.id];
-
-        if (prev === "running" && q.scrapeStatus === "done") {
-          alert(`Scraping completed ✅ (${q.text})`);
-        }
-      });
-
-      const map: Record<string, string> = {};
-      newQueries.forEach((q: any) => {
-        map[q.id] = q.scrapeStatus;
-      });
-
-      setPrevStatus(map);
-      setQueries(newQueries);
+      setQueries(data.queries || []);
     } catch (err) {
       console.error("❌ Failed to fetch queries:", err);
     }
@@ -47,7 +28,7 @@ export default function CollectPage() {
   }, [page]);
 
   // ==============================
-  // ➕ CREATE QUERY (FIXED)
+  // ➕ CREATE QUERY
   // ==============================
   const createQuery = async () => {
     if (!query.trim()) return;
@@ -57,16 +38,11 @@ export default function CollectPage() {
     try {
       const res = await fetch("/api/query", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // ✅ FIX: backend expects "text"
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: query }),
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        console.error("❌ Create query error:", err);
         alert("Failed to create query");
         return;
       }
@@ -74,7 +50,7 @@ export default function CollectPage() {
       setQuery("");
       fetchQueries();
     } catch (err) {
-      console.error("❌ Failed to create query:", err);
+      console.error(err);
     }
 
     setLoading(false);
@@ -85,29 +61,19 @@ export default function CollectPage() {
   // ==============================
   const runScrape = async (id: string) => {
     try {
-      const res = await fetch("/api/query/scrape", {
+      await fetch("/api/query/scrape", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ queryId: id }),
       });
-
-      if (!res.ok) {
-        alert("Failed to start scraping");
-        return;
-      }
 
       alert("Scraping started 🚀");
       fetchQueries();
     } catch (err) {
-      console.error("❌ Failed to run scrape:", err);
+      console.error(err);
     }
   };
 
-  // ==============================
-  // 🎨 UI
-  // ==============================
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Collect Data 🚀</h1>
@@ -124,7 +90,7 @@ export default function CollectPage() {
         <button
           onClick={createQuery}
           disabled={loading || !query}
-          className="bg-purple-600 text-white px-4 py-2 rounded disabled:opacity-50"
+          className="bg-purple-600 text-white px-4 py-2 rounded"
         >
           {loading ? "..." : "Generate"}
         </button>
@@ -139,14 +105,14 @@ export default function CollectPage() {
               <th className="p-2">Query</th>
               <th className="p-2">Scrape</th>
               <th className="p-2">Enrich</th>
-              <th className="p-2">Dedup(final)</th>
+              <th className="p-2">Dedup</th>
             </tr>
           </thead>
 
           <tbody>
             {queries.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={5} className="p-4 text-center">
                   No queries yet
                 </td>
               </tr>
@@ -154,54 +120,24 @@ export default function CollectPage() {
               queries.map((q: any, i) => (
                 <tr key={q.id} className="border-t">
                   <td className="p-2">{(page - 1) * 10 + i + 1}</td>
-
-                  <td className="p-2 font-medium">{q.text}</td>
+                  <td className="p-2">{q.text}</td>
 
                   <td className="p-2">
                     <button
-                      disabled={q.scrapeStatus === "running"}
                       onClick={() => runScrape(q.id)}
-                      className={`px-3 py-1 rounded text-white ${
-                        q.scrapeStatus === "done"
-                          ? "bg-green-600"
-                          : q.scrapeStatus === "running"
-                          ? "bg-yellow-500"
-                          : "bg-black"
-                      }`}
+                      className="bg-black text-white px-2 py-1 rounded"
                     >
                       {q.scrapeStatus || "idle"}
                     </button>
                   </td>
 
-                  <td className="p-2">
-                    {q.enrichStatus || "idle"}
-                  </td>
-
-                  <td className="p-2">
-                    {q.dedupStatus || "idle"}
-                  </td>
+                  <td className="p-2">{q.enrichStatus || "idle"}</td>
+                  <td className="p-2">{q.dedupStatus || "idle"}</td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </div>
-
-      {/* PAGINATION */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="border px-3 py-1 rounded"
-        >
-          Prev
-        </button>
-
-        <button
-          onClick={() => setPage((p) => p + 1)}
-          className="border px-3 py-1 rounded"
-        >
-          Next
-        </button>
       </div>
     </div>
   );

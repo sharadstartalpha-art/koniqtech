@@ -101,41 +101,34 @@ model Project {
 model Lead {
   id           String   @id @default(cuid())
 
-  // 👤 identity
   name         String?
   nameKey      String?
   email        String?   @unique
   profileUrl   String?   @unique
 
-  // 🏢 company
   company      String?
   companyKey   String?
   domain       String?
   website      String?
 
-  // 📞 contact
   phone        String?
   contactEmail String?
 
-  // 🌍 geo + category
   location     String?
   country      String?
   category     String?
 
-  // 💼 job
   title        String?
 
-  // 📊 enrichment
   employeeCount Int?
   techStack     String[]
   isHiring      Boolean  @default(false)
   fundingStage  String?
 
-  // ⚙️ pipeline
   status       String   @default("raw")
-  source       String?  // "ADMIN" | "USER" | "IMPORT"
+  source       String?
 
-  // 🔗 RELATIONS (NOW OPTIONAL ✅)
+  // ✅ OPTIONAL RELATIONS (IMPORTANT)
   userId    String?
   user      User?     @relation(fields: [userId], references: [id])
 
@@ -145,15 +138,13 @@ model Lead {
   teamId    String?
   team      Team?     @relation(fields: [teamId], references: [id])
 
-  // 🧠 query origin
   queryId   String?
-  query     Query? @relation(fields: [queryId], references: [id])
+  query     Query?    @relation(fields: [queryId], references: [id])
 
-  // 📬 automation
-  sequences    LeadSequence[]
-  LeadStatus   LeadStatus?
+  sequences  LeadSequence[]
+  LeadStatus LeadStatus?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([email])
   @@index([profileUrl])

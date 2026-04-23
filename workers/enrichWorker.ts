@@ -20,29 +20,23 @@ new Worker(
     console.log("✨ ENRICH JOB:", job.data);
 
     try {
-      // 🚀 mark running
       await prisma.query.update({
         where: { id: queryId },
         data: { enrichStatus: "running" },
       });
 
-      // 🧪 simulate enrichment
-      await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 2000));
 
-      // ✅ mark done
       await prisma.query.update({
         where: { id: queryId },
         data: { enrichStatus: "done" },
       });
 
-      console.log("✅ ENRICH DONE:", queryId);
-
-      // 🔥 SAFE QUEUE CALL
       if (dedupQueue) {
         await dedupQueue.add("dedup-job", { queryId });
-      } else {
-        console.warn("⚠️ dedupQueue not available");
       }
+
+      console.log("✅ ENRICH DONE:", queryId);
 
       return true;
     } catch (err) {

@@ -8,75 +8,96 @@ export async function GET(req: Request) {
   const limit = Number(searchParams.get("limit") || 10);
   const q = searchParams.get("q") || "";
 
-  // ⚠️ TEMP: replace these with real values (from auth/session)
-  const userId = searchParams.get("userId") || null;
-  const teamId = searchParams.get("teamId") || null;
-  const projectId = searchParams.get("projectId") || null;
+  // ✅ REQUIRED fields
+  const userId = "demo-user";
+  const teamId = "demo-team";
+  const projectId = "demo-project";
 
   console.log("🚀 API /query/list hit");
   console.log("🔎 Query:", q);
 
   let freshResults: any[] = [];
+  let queryRecord: any = null;
 
   if (q) {
     try {
-      // ✅ Call SERPER
+      // 🔍 Fetch SERPER
       freshResults = await searchLeads(q);
       console.log("✅ Fresh results:", freshResults.length);
 
-      // ✅ Save ONLY if required fields exist
-      if (userId && teamId && projectId) {
-        const exists = await prisma.query.findFirst({
-          where: {
+      // ✅ Find or create query
+      queryRecord = await prisma.query.findFirst({
+        where: { text: q },
+      });
+
+      if (!queryRecord) {
+        queryRecord = await prisma.query.create({
+          data: {
             text: q,
             userId,
             teamId,
             projectId,
           },
         });
+      }
 
-        if (!exists) {
-          await prisma.query.create({
+      // 🔥 SAVE LEADS (FINAL FIX)
+      for (const item of freshResults) {
+        try {
+          await prisma.lead.create({
             data: {
-              text: q,
+              name: item.name || "",
+              company: item.name || "",
+              website: item.website || "",
+
+              // ✅ REQUIRED fields
               userId,
               teamId,
               projectId,
+
+              // ✅ FK instead of relation
+              queryId: queryRecord.id,
             },
           });
-          console.log("💾 Query saved to DB");
-        } else {
-          console.log("⚠️ Query already exists");
+        } catch {
+          console.log("⚠️ Lead skipped");
         }
-      } else {
-        console.log("⚠️ Missing IDs → skipping DB save");
       }
+
+      console.log("💾 Leads saved");
 
     } catch (err) {
       console.error("❌ searchLeads failed:", err);
     }
   }
 
-  // ✅ Fetch DB results
-  const [queries, total] = await Promise.all([
-    prisma.query.findMany({
-      where: {
-        text: { contains: q, mode: "insensitive" },
-      },
+  // ✅ Fetch leads
+  const [leads, total] = await Promise.all([
+    prisma.lead.findMany({
+      where: q
+        ? {
+            query: {
+              text: { contains: q, mode: "insensitive" },
+            },
+          }
+        : {},
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { createdAt: "desc" },
     }),
-    prisma.query.count({
-      where: {
-        text: { contains: q, mode: "insensitive" },
-      },
+    prisma.lead.count({
+      where: q
+        ? {
+            query: {
+              text: { contains: q, mode: "insensitive" },
+            },
+          }
+        : {},
     }),
   ]);
 
   return Response.json({
-    queries,
+    leads,
     total,
-    freshResults,
   });
 }

@@ -5,10 +5,7 @@ import { getRedis } from "@/lib/redis";
 import { dedupQueue } from "@/lib/queue";
 
 const connection = getRedis();
-
-if (!connection) {
-  throw new Error("❌ Redis not available");
-}
+if (!connection) throw new Error("❌ Redis not available");
 
 console.log("✨ Enrich Worker Started");
 
@@ -25,6 +22,8 @@ new Worker(
         data: { enrichStatus: "running" },
       });
 
+      // TODO: real enrichment (emails, domains, company data)
+
       await new Promise((r) => setTimeout(r, 2000));
 
       await prisma.query.update({
@@ -32,6 +31,7 @@ new Worker(
         data: { enrichStatus: "done" },
       });
 
+      // 🔥 trigger dedup
       if (dedupQueue) {
         await dedupQueue.add("dedup-job", { queryId });
       }

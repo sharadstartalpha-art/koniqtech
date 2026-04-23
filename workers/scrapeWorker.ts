@@ -3,6 +3,7 @@ import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 import { searchLeads } from "@/lib/search";
+import { enrichQueue } from "@/lib/queue";
 
 type LeadResult = {
   name?: string;
@@ -14,10 +15,7 @@ type LeadResult = {
 };
 
 const connection = getRedis();
-
-if (!connection) {
-  throw new Error("❌ Redis not available");
-}
+if (!connection) throw new Error("❌ Redis not available");
 
 console.log("🚀 Scrape Worker Started");
 
@@ -42,7 +40,6 @@ new Worker(
 
       for (const item of results) {
         try {
-          // ✅ DEDUP (website)
           if (item.website) {
             const exists = await prisma.lead.findFirst({
               where: { website: item.website },
@@ -62,14 +59,11 @@ new Worker(
               company: item.company || null,
               location: item.location || null,
               website: item.website || null,
-
               queryId,
               userId,
-
               source: "search",
             },
           });
-
         } catch (err) {
           console.log("⚠️ Lead skipped:", err);
         }
@@ -80,10 +74,14 @@ new Worker(
         data: { scrapeStatus: "done" },
       });
 
+      // 🔥 TRIGGER ENRICH (THIS FIXES YOUR IDLE ISSUE)
+      if (enrichQueue) {
+        await enrichQueue.add("enrich-job", { queryId });
+      }
+
       console.log("✅ SCRAPE DONE:", queryId);
 
       return true;
-
     } catch (err) {
       console.error("❌ Worker error:", err);
 

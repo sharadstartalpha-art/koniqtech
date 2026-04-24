@@ -3,6 +3,7 @@ import { Worker } from "bullmq";
 import { prisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 import { dedupQueue } from "@/lib/queue";
+import { scoreLead } from "@/lib/scoring";
 
 const connection = getRedis();
 
@@ -27,10 +28,32 @@ new Worker(
       });
 
       // =================================
-      // 🔬 ENRICH LOGIC (placeholder)
+      // 🔍 GET ALL LEADS FOR QUERY
       // =================================
-      // TODO: Add real enrichment (emails, domains, company data)
-      await new Promise((r) => setTimeout(r, 2000));
+      const leads = await prisma.lead.findMany({
+        where: { queryId },
+      });
+
+      // =================================
+      // 🔬 ENRICH + SCORE
+      // =================================
+      for (const lead of leads) {
+        try {
+          // 👉 (Future: add real enrichment here)
+
+          const score = scoreLead(lead);
+
+          await prisma.lead.update({
+            where: { id: lead.id },
+            data: {
+              score,
+              isContactable: !!lead.email,
+            },
+          });
+        } catch (err) {
+          console.log("⚠️ Enrich skipped:", err);
+        }
+      }
 
       // =================================
       // ✅ STATUS → DONE

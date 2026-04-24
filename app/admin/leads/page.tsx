@@ -5,20 +5,20 @@ import { useEffect, useState } from "react";
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20); // ✅ LIMIT STATE
+  const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
   // ==============================
-  // 📡 Fetch Leads
+  // 📡 Fetch Leads (UPDATED API)
   // ==============================
   const fetchLeads = async () => {
     setLoading(true);
 
     try {
       const res = await fetch(
-        `/api/leads?page=${page}&limit=${limit}&q=${query}` // ✅ UPDATED
+        `/api/leads/search?page=${page}&limit=${limit}&q=${query}`
       );
       const data = await res.json();
 
@@ -59,11 +59,10 @@ export default function LeadsPage() {
       <div className="flex justify-between items-center">
         <p className="text-gray-600">Total Leads: {total}</p>
 
-        {/* ✅ DROPDOWN */}
         <select
           value={limit}
           onChange={(e) => {
-            setPage(1); // reset page
+            setPage(1);
             setLimit(Number(e.target.value));
           }}
           className="border px-2 py-1 rounded"
@@ -113,7 +112,6 @@ export default function LeadsPage() {
                   <td className="p-2">{lead.email}</td>
                   <td className="p-2">{lead.company}</td>
                   <td className="p-2">{lead.location}</td>
-
                   <td className="p-2 text-gray-600">
                     {lead.query?.text || "-"}
                   </td>

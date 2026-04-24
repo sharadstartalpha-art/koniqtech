@@ -600,7 +600,7 @@ model Job {
 
 model Query {
   id        String   @id @default(cuid())
-  text      String
+  text String @unique  // 🔥 THIS STOPS DUPLICATES FOREVER
   status    String   @default("idle") // idle | running | done
   createdAt DateTime @default(now())
   leads     Lead[]

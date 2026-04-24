@@ -8,19 +8,19 @@ export type LeadResult = {
   location?: string;
   website?: string;
   title?: string;
+  fullName?: string;
+  username?: string;
 };
 
-// 🔥 NAME EXTRACTOR (clean + safe)
-function extractName(title?: string): string {
-  if (!title) return "Unknown";
-
-  // Example:
-  // "John Doe - CEO at XYZ | LinkedIn"
-  const name = title.split("-")[0].trim();
-
-  if (name.length < 3) return "Unknown";
-
-  return name;
+// 🔥 NAME EXTRACTOR (fallback-safe)
+function extractName(item: LeadResult): string {
+  return (
+    item.name ||
+    item.fullName ||
+    (item.title ? item.title.split("-")[0].trim() : undefined) ||
+    item.username ||
+    "Unknown"
+  );
 }
 
 // 🚀 MAIN SEARCH FUNCTION
@@ -47,6 +47,6 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
     })
     .map((item) => ({
       ...item,
-      name: extractName(item.title), // ✅ fixed name extraction
+      name: extractName(item), // ✅ robust name mapping
     }));
 }

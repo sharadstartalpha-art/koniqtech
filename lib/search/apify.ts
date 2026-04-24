@@ -7,8 +7,8 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    // 🔥 REAL LINKEDIN ACTOR
-    const ACTOR = "apify/linkedin-profile-scraper";
+    // ✅ REAL WORKING LINKEDIN ACTOR
+    const ACTOR = "apify/linkedin-people-search-scraper";
 
     const res = await fetch(
       `https://api.apify.com/v2/acts/${ACTOR}/run-sync-get-dataset-items?token=${TOKEN}`,
@@ -18,7 +18,7 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          search: query, // 🔥 THIS IS DIFFERENT FROM GOOGLE
+          keywords: query,        // ✅ IMPORTANT FIELD (NOT "search")
           maxItems: 20,
         }),
       }
@@ -39,10 +39,10 @@ export async function apifySearch(query: string) {
     return data.map((item: any) => ({
       name: item.fullName || undefined,
       profileUrl: item.profileUrl || undefined,
-      company: item.companyName || undefined,
+      company: item.currentCompanyName || undefined,
       location: item.location || undefined,
       title: item.headline || "",
-      website: item.companyUrl || undefined,
+      website: item.currentCompanyUrl || undefined,
     }));
   } catch (err) {
     console.error("❌ LinkedIn scrape failed:", err);

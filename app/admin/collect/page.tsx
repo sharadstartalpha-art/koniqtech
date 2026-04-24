@@ -7,8 +7,20 @@ export default function CollectPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ NEW STATES
+  const [toast, setToast] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const pageSize = 5;
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // ==============================
-  // 📡 Fetch Query Stats
+  // 📡 Fetch Data
   // ==============================
   const fetchData = async () => {
     try {
@@ -22,8 +34,6 @@ export default function CollectPage() {
 
   useEffect(() => {
     fetchData();
-
-    // 🔄 Auto refresh every 2s
     const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -44,12 +54,13 @@ export default function CollectPage() {
       });
 
       if (!res.ok) {
-        alert("Failed to create query");
+        showToast("❌ Failed to create query");
         return;
       }
 
       setQuery("");
       fetchData();
+      showToast("✅ Query created");
     } catch (err) {
       console.error(err);
     }
@@ -67,7 +78,7 @@ export default function CollectPage() {
       body: JSON.stringify({ queryId }),
     });
 
-    alert("Search triggered 🔄");
+    showToast("🔄 Search started");
     fetchData();
   };
 
@@ -81,9 +92,24 @@ export default function CollectPage() {
       body: JSON.stringify({ queryId }),
     });
 
-    alert("Enrich triggered ⚡");
+    showToast("⚡ Enrich started");
     fetchData();
   };
+
+  // ==============================
+  // 🔍 FILTER
+  // ==============================
+  const filtered = data.filter((q) =>
+    q.text.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // ==============================
+  // 📄 PAGINATION
+  // ==============================
+  const paginated = filtered.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
 
   return (
     <div className="space-y-6">
@@ -107,11 +133,25 @@ export default function CollectPage() {
         </button>
       </div>
 
+      {/* 🔍 SEARCH */}
+      <input
+        placeholder="Search query..."
+        className="border px-3 py-2"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
+      {/* 📊 TOTAL */}
+      <div className="flex gap-6">
+        <span>Total Queries: {filtered.length}</span>
+      </div>
+
       {/* TABLE */}
       <div className="border rounded overflow-hidden">
         <table className="w-full border text-left">
           <thead className="bg-gray-100">
             <tr>
+              <th className="p-2">#</th>
               <th className="p-2">Query</th>
               <th className="p-2">Total</th>
               <th className="p-2">Email</th>
@@ -123,48 +163,53 @@ export default function CollectPage() {
           </thead>
 
           <tbody>
-            {data.length === 0 ? (
+            {paginated.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-4 text-center">
-                  No data yet
+                <td colSpan={8} className="p-4 text-center">
+                  No data
                 </td>
               </tr>
             ) : (
-              data.map((q: any) => (
+              paginated.map((q: any, index) => (
                 <tr key={q.id} className="border-t">
+                  {/* 🔢 SL NO */}
+                  <td className="p-2">
+                    {(page - 1) * pageSize + index + 1}
+                  </td>
+
                   <td className="p-2">{q.text}</td>
                   <td className="p-2">{q.total}</td>
                   <td className="p-2">{q.withEmail}</td>
                   <td className="p-2">{q.withCompany}</td>
                   <td className="p-2">{q.finished}</td>
 
-                  {/* ✅ Progress */}
+                  {/* 📊 Progress */}
                   <td className="p-2">
-                    <div className="w-full bg-gray-200 h-2 rounded">
+                    <div className="w-32 bg-gray-200 rounded h-2">
                       <div
                         className="bg-green-500 h-2 rounded transition-all duration-300"
                         style={{ width: `${q.progress || 0}%` }}
                       />
                     </div>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs">
                       {q.progress || 0}%
                     </span>
                   </td>
 
-                  {/* ✅ Actions */}
+                  {/* ⚡ Actions */}
                   <td className="p-2 flex gap-2">
                     <button
                       onClick={() => searchAgain(q.id)}
                       className="bg-blue-500 text-white px-2 py-1 rounded"
                     >
-                      🔄 Search
+                      🔄
                     </button>
 
                     <button
                       onClick={() => filterAgain(q.id)}
                       className="bg-purple-500 text-white px-2 py-1 rounded"
                     >
-                      ⚡ Enrich
+                      ⚡
                     </button>
                   </td>
                 </tr>
@@ -173,6 +218,30 @@ export default function CollectPage() {
           </tbody>
         </table>
       </div>
+
+      {/* 📄 Pagination */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          className="border px-3 py-1 rounded"
+        >
+          Prev
+        </button>
+
+        <button
+          onClick={() => setPage((p) => p + 1)}
+          className="border px-3 py-1 rounded"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* 🔔 Toast */}
+      {toast && (
+        <div className="fixed bottom-5 right-5 bg-black text-white px-4 py-2 rounded shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

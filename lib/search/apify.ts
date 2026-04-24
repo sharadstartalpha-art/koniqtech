@@ -17,8 +17,7 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // ✅ MUST BE STRING (THIS FIXES YOUR ERROR)
-          queries: `site:linkedin.com/in ${query}`,
+          queries: `site:linkedin.com/in ${query}`, // ✅ STRING
           maxPagesPerQuery: 2,
         }),
       }
@@ -36,13 +35,30 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    return data.map((item: any) => ({
-      name: item.title || undefined,
-      profileUrl: item.url || undefined,
-      website: item.url || undefined,
-      title: item.title || "",
-      snippet: item.description || "",
-    }));
+    return data.map((item: any) => {
+      const title = item.title || "";
+      const url = item.url || "";
+
+      // 🔥 SMART PARSING
+      let name = "";
+      let company = "";
+
+      if (title.includes(" - ")) {
+        const parts = title.split(" - ");
+
+        name = parts[0]; // John Doe
+        company = parts[1]?.split("|")[0] || ""; // CEO at XYZ
+      }
+
+      return {
+        name: name || undefined,
+        profileUrl: url || undefined,
+        website: url || undefined,
+        title,
+        snippet: item.description || "",
+        company: company || undefined,
+      };
+    });
   } catch (err) {
     console.error("❌ Apify failed:", err);
     return [];

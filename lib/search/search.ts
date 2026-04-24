@@ -16,7 +16,7 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
 
   if (!results.length) {
     console.log("⚠️ No results from Apify");
-    return []; // ❌ NO DEMO DATA
+    return [];
   }
 
   const cleanResults: LeadResult[] = [];
@@ -24,7 +24,7 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
   for (const item of results) {
     const title = item.title?.toLowerCase() || "";
 
-    // 🚫 FILTER (keep light for now as you want)
+    // 🚫 LIGHT FILTER ONLY (keep results flowing)
     if (
       title.includes("youtube") ||
       title.includes("reddit")
@@ -32,7 +32,10 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
       continue;
     }
 
-    cleanResults.push(item);
+    cleanResults.push({
+      ...item,
+      name: item.name || item.title || "N/A", // ✅ FIX UNKNOWN
+    });
   }
 
   return cleanResults;

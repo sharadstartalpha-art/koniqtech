@@ -7,6 +7,7 @@ import { enrichQueue } from "@/lib/queue";
 
 type LeadResult = {
   name?: string;
+  title?: string; // ✅ FIX ADDED
   profileUrl?: string;
   email?: string;
   company?: string;
@@ -30,20 +31,25 @@ new Worker(
     if (!userId) throw new Error("Missing userId");
 
     try {
-      // 🔄 SET STATUS → RUNNING
+      // 🔄 STATUS → RUNNING
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "running" },
+        data: { scrapeStatus: "running", progress: 0 },
       });
 
-      // 🔥 SMART QUERY (better results)
+      // 🔥 LINKEDIN QUERY
       const smartQuery = `site:linkedin.com/in ${text}`;
 
       const results: LeadResult[] = await searchLeads(smartQuery);
 
       console.log("📊 Clean results:", results.length);
 
+      let processed = 0;
+      const total = results.length;
+
       for (const item of results) {
+        processed++;
+
         try {
           const conditions: any[] = [];
 
@@ -60,7 +66,6 @@ new Worker(
 
           if (exists) continue;
 
-          // 🧠 SCORE SYSTEM
           const score =
             (item.email ? 40 : 0) +
             (item.company ? 20 : 0) +
@@ -69,7 +74,7 @@ new Worker(
 
           await prisma.lead.create({
             data: {
-              name: item.name || "Unknown",
+              name: item.name || item.title || "N/A", // ✅ now valid
               profileUrl: item.profileUrl || null,
               email: item.email || null,
               company: item.company || null,
@@ -87,16 +92,26 @@ new Worker(
         } catch (err) {
           console.log("⚠️ Lead skipped:", err);
         }
+
+        // ✅ PROGRESS UPDATE
+        await prisma.query.update({
+          where: { id: queryId },
+          data: {
+            progress: total
+              ? Math.floor((processed / total) * 100)
+              : 100,
+          },
+        });
       }
 
       // ✅ DONE
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "done" },
+        data: { scrapeStatus: "done", progress: 100 },
       });
 
-      // 🚀 TRIGGER ENRICH (SAFE)
-      if (enrichQueue) {
+      // 🚀 ENRICH (only if results exist)
+      if (results.length > 0 && enrichQueue) {
         await enrichQueue.add("enrich-job", { queryId });
       }
 

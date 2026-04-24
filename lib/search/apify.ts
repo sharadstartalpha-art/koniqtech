@@ -17,7 +17,7 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: [query], // ✅ MUST BE ARRAY (THIS FIXES YOUR ERROR)
+          queries: query, // ✅ FIX: STRING (NOT ARRAY)
           maxPagesPerQuery: 2,
         }),
       }
@@ -39,7 +39,6 @@ export async function apifySearch(query: string) {
       const url = item.url || "";
 
       let company = "";
-
       try {
         const domain = new URL(url).hostname.replace("www.", "");
         company = domain.split(".")[0];

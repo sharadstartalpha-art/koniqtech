@@ -8,37 +8,24 @@ export type LeadResult = {
   location?: string;
   website?: string;
   title?: string;
+  snippet?: string;
 };
 
 export async function searchLeads(query: string): Promise<LeadResult[]> {
-  const rawResults = await apifySearch(query);
+  const results = await apifySearch(query);
 
-  // ✅ Normalize data (IMPORTANT FIX)
-  const results: LeadResult[] = rawResults.map((item: any) => ({
-    name: item.name || undefined,
-    profileUrl: item.profileUrl || item.url || undefined,
-    website: item.website || item.url || undefined,
-    title: item.title || item.name || "",
-    company: item.company || undefined,
-    email: item.email || undefined,
-    location: item.location || undefined,
-  }));
-
-  // 🚨 FALLBACK (VERY IMPORTANT)
- if (!results.length) {
-  console.log("⚠️ No results from Apify");
-  return [];
-}
+  if (!results.length) {
+    console.log("⚠️ No results from Apify");
+    return []; // ❌ NO DEMO DATA
+  }
 
   const cleanResults: LeadResult[] = [];
 
   for (const item of results) {
     const title = item.title?.toLowerCase() || "";
 
-    // 🚫 FILTER JUNK
+    // 🚫 FILTER (keep light for now as you want)
     if (
-      title.includes("news") ||
-      title.includes("accused") ||
       title.includes("youtube") ||
       title.includes("reddit")
     ) {

@@ -7,17 +7,18 @@ export async function apifySearch(query: string) {
       return [];
     }
 
+    // ✅ CORRECT ACTOR (WORKING)
+    const ACTOR = "apify~google-search-scraper";
+
     const res = await fetch(
-      `https://api.apify.com/v2/acts/apify/google-search-scraper/run-sync-get-dataset-items?token=${TOKEN}`,
+      `https://api.apify.com/v2/acts/${ACTOR}/run-sync-get-dataset-items?token=${TOKEN}`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // ✅ FIX: MUST BE STRING NOT ARRAY
-          queries: query,
-
+          queries: query, // ✅ STRING (correct)
           maxPagesPerQuery: 2,
         }),
       }
@@ -25,7 +26,7 @@ export async function apifySearch(query: string) {
 
     const data = await res.json();
 
-    if (!data || data.error) {
+    if (!res.ok || data?.error) {
       console.error("❌ APIFY RAW:", data);
       return [];
     }
@@ -40,6 +41,7 @@ export async function apifySearch(query: string) {
       profileUrl: item.url || undefined,
       website: item.url || undefined,
       title: item.title || "",
+      snippet: item.description || "",
     }));
   } catch (err) {
     console.error("❌ Apify failed:", err);

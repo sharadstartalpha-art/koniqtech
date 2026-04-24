@@ -34,13 +34,11 @@ new Worker(
       // 🔄 STATUS → RUNNING
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "running" }, // ✅ FIXED
+        data: { scrapeStatus: "running" },
       });
 
-      // 🔥 LINKEDIN QUERY
-      const smartQuery = text; // ✅ Direct LinkedIn search
-
-      const results: LeadResult[] = await searchLeads(smartQuery);
+      // 🔥 GOOGLE → LINKEDIN SEARCH
+      const results: LeadResult[] = await searchLeads(text);
 
       console.log("📊 Clean results:", results.length);
 
@@ -92,7 +90,7 @@ new Worker(
       // ✅ DONE
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "done" }, // ✅ FIXED
+        data: { scrapeStatus: "done" },
       });
 
       // 🚀 ENRICH

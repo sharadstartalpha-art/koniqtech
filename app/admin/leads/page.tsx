@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export default function LeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
+  const [limit, setLimit] = useState(20); // ✅ LIMIT STATE
   const [total, setTotal] = useState(0);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function LeadsPage() {
 
     try {
       const res = await fetch(
-        `/api/leads?page=${page}&limit=${limit}&q=${query}`
+        `/api/leads?page=${page}&limit=${limit}&q=${query}` // ✅ UPDATED
       );
       const data = await res.json();
 
@@ -59,17 +59,20 @@ export default function LeadsPage() {
       <div className="flex justify-between items-center">
         <p className="text-gray-600">Total Leads: {total}</p>
 
+        {/* ✅ DROPDOWN */}
         <select
           value={limit}
           onChange={(e) => {
-            setPage(1);
+            setPage(1); // reset page
             setLimit(Number(e.target.value));
           }}
-          className="border p-2 rounded"
+          className="border px-2 py-1 rounded"
         >
-          <option value={20}>20</option>
+          <option value={10}>10</option>
+          <option value={25}>25</option>
           <option value={50}>50</option>
           <option value={100}>100</option>
+          <option value={500}>500</option>
         </select>
       </div>
 
@@ -111,7 +114,6 @@ export default function LeadsPage() {
                   <td className="p-2">{lead.company}</td>
                   <td className="p-2">{lead.location}</td>
 
-                  {/* ✅ FIXED */}
                   <td className="p-2 text-gray-600">
                     {lead.query?.text || "-"}
                   </td>

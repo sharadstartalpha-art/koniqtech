@@ -26,9 +26,7 @@ console.log("🚀 Scrape Worker Started");
 new Worker(
   "scrape",
   async (job) => {
-    const { queryId, text, userId } = job.data;
-
-    if (!userId) throw new Error("Missing userId");
+    const { queryId, text } = job.data; // ✅ removed userId
 
     try {
       // 🔄 STATUS → RUNNING
@@ -77,7 +75,6 @@ new Worker(
               website: item.website || null,
 
               queryId,
-              userId,
               source: "search",
 
               score,
@@ -95,7 +92,7 @@ new Worker(
         data: { scrapeStatus: "done" },
       });
 
-      // 🚀 AUTO TRIGGER ENRICH (SAFE)
+      // 🚀 AUTO TRIGGER ENRICH
       if (enrichQueue) {
         await enrichQueue.add("enrich-job", { queryId });
       }

@@ -8,14 +8,14 @@ export async function GET() {
 
   const data = await Promise.all(
     queries.map(async (q) => {
-      const total = await prisma.lead.count({
+      const totalExpected = await prisma.lead.count({
         where: { queryId: q.id },
       });
 
-      const withEmail = await prisma.lead.count({
+      const processed = await prisma.lead.count({
         where: {
           queryId: q.id,
-          email: { not: null },
+          email: { not: null }, // treated as "processed"
         },
       });
 
@@ -26,21 +26,18 @@ export async function GET() {
         },
       });
 
-      // ✅ Define finished clearly
-      const finished = withEmail;
-
-      // ✅ FIXED progress logic (correct variables)
+      // ✅ PROGRESS = processed / totalExpected
       const progress =
-        total > 0
-          ? Math.round((finished / total) * 100)
+        totalExpected > 0
+          ? Math.round((processed / totalExpected) * 100)
           : 0;
 
       return {
         ...q,
-        total,
-        withEmail,
+        total: totalExpected,
+        withEmail: processed,
         withCompany,
-        finished,
+        finished: processed,
         progress,
       };
     })

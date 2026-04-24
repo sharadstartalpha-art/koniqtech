@@ -102,12 +102,14 @@ model Lead {
   id           String   @id @default(cuid())
 
   name         String?
-  nameKey      String?
+  nameKey      String?   // ✅ ADD HERE
+
   email        String?   @unique
   profileUrl   String?   @unique
 
   company      String?
-  companyKey   String?
+  companyKey   String?   // ✅ ADD HERE
+
   domain       String?
   website      String?
 
@@ -130,8 +132,10 @@ model Lead {
   source       String?
 
   score Int? @default(0)
+  qualityScore Int @default(0) // ✅ ADD HERE
+
   isContactable Boolean @default(false)
-  // ✅ OPTIONAL RELATIONS (IMPORTANT)
+
   userId    String?
   user      User?     @relation(fields: [userId], references: [id])
 
@@ -151,8 +155,13 @@ model Lead {
 
   @@index([email])
   @@index([profileUrl])
-  @@index([companyKey, country])
+
+  // ✅ ADD THESE INDEXES
+  @@index([nameKey])
+  @@index([companyKey])
+  @@index([location])
 }
+
 
 model Balance {
   id     String @id @default(cuid())

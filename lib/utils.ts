@@ -12,7 +12,7 @@ export function normalize(str?: string | null): string | null {
 }
 
 /* ============================= */
-/* 🌐 DOMAIN EXTRACTION          */
+/* 🌐 DOMAIN FROM COMPANY NAME   */
 /* ============================= */
 export function extractDomain(company?: string | null): string {
   if (!company) return "";
@@ -22,6 +22,25 @@ export function extractDomain(company?: string | null): string {
     .replace(/[^a-z0-9]/g, "");
 
   return clean ? `${clean}.com` : "";
+}
+
+/* ============================= */
+/* 🌐 COMPANY FROM URL           */
+/* ============================= */
+export function extractCompanyFromDomain(
+  url?: string | null
+): string | null {
+  if (!url) return null;
+
+  try {
+    const domain = new URL(url).hostname;
+
+    return domain
+      .replace("www.", "")
+      .split(".")[0] || null;
+  } catch {
+    return null;
+  }
 }
 
 /* ============================= */
@@ -49,5 +68,6 @@ export async function runWithConcurrency<T>(
   }
 
   await Promise.all(executing);
+
   return results;
 }

@@ -37,11 +37,12 @@ new Worker(
         data: { scrapeStatus: "running" },
       });
 
-      // 🔥 LINKEDIN VIA GOOGLE
+      // 🔍 FETCH LEADS
       const results: LeadResult[] = await searchLeads(text);
 
       console.log("📊 Clean results:", results.length);
 
+      // 💾 SAVE LEADS
       for (const item of results) {
         try {
           const conditions: any[] = [];
@@ -59,6 +60,7 @@ new Worker(
 
           if (exists) continue;
 
+          // 🎯 SCORE CALCULATION
           const score =
             (item.email ? 40 : 0) +
             (item.company ? 20 : 0) +
@@ -87,14 +89,14 @@ new Worker(
         }
       }
 
-      // ✅ DONE
+      // ✅ STATUS → DONE
       await prisma.query.update({
         where: { id: queryId },
         data: { scrapeStatus: "done" },
       });
 
-      // 🚀 ENRICH
-      if (results.length > 0 && enrichQueue) {
+      // 🚀 AUTO TRIGGER ENRICH (SAFE)
+      if (enrichQueue) {
         await enrichQueue.add("enrich-job", { queryId });
       }
 

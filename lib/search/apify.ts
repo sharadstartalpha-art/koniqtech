@@ -8,7 +8,7 @@ export async function apifySearch(query: string) {
     }
 
     const res = await fetch(
-      `https://api.apify.com/v2/acts/apify/google-search-scraper/run-sync-get-dataset-items?token=${TOKEN}`,
+      `https://api.apify.com/v2/acts/apify~google-search-scraper/run-sync-get-dataset-items?token=${TOKEN}`,
       {
         method: "POST",
         headers: {
@@ -36,9 +36,12 @@ export async function apifySearch(query: string) {
 
     return data.map((item: any) => ({
       name: item.title || "",
+      profileUrl: item.url || "",
       website: item.url || "",
-      snippet: item.description || "",
-      source: "apify",
+      title: item.title || "",
+      company: null,
+      email: null,
+      location: null,
     }));
   } catch (err) {
     console.error("❌ Apify failed:", err);

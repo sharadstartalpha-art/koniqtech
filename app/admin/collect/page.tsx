@@ -7,21 +7,18 @@ export default function CollectPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ NEW STATES
   const [toast, setToast] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  const pageSize = 5;
+  // ✅ NEW
+  const [pageSize, setPageSize] = useState(10);
 
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ==============================
-  // 📡 Fetch Data
-  // ==============================
   const fetchData = async () => {
     try {
       const res = await fetch("/api/admin/query-stats");
@@ -38,9 +35,6 @@ export default function CollectPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ==============================
-  // ➕ CREATE QUERY
-  // ==============================
   const createQuery = async () => {
     if (!query.trim()) return;
 
@@ -50,17 +44,17 @@ export default function CollectPage() {
       const res = await fetch("/api/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: query }),
+        body: JSON.stringify({ text: query.toLowerCase() }),
       });
 
       if (!res.ok) {
-        showToast("❌ Failed to create query");
+        showToast("❌ Failed");
         return;
       }
 
       setQuery("");
       fetchData();
-      showToast("✅ Query created");
+      showToast("✅ Created");
     } catch (err) {
       console.error(err);
     }
@@ -68,9 +62,6 @@ export default function CollectPage() {
     setLoading(false);
   };
 
-  // ==============================
-  // 🔄 SEARCH AGAIN
-  // ==============================
   const searchAgain = async (queryId: string) => {
     await fetch("/api/query/search-again", {
       method: "POST",
@@ -78,34 +69,25 @@ export default function CollectPage() {
       body: JSON.stringify({ queryId }),
     });
 
-    showToast("🔄 Search started");
+    showToast("🔄 Started");
     fetchData();
   };
 
-  // ==============================
-  // ⚡ ENRICH AGAIN
-  // ==============================
-  const filterAgain = async (queryId: string) => {
+  const enrichAgain = async (queryId: string) => {
     await fetch("/api/query/enrich-again", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ queryId }),
     });
 
-    showToast("⚡ Enrich started");
+    showToast("⚡ Enrich");
     fetchData();
   };
 
-  // ==============================
-  // 🔍 FILTER
-  // ==============================
   const filtered = data.filter((q) =>
     q.text.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ==============================
-  // 📄 PAGINATION
-  // ==============================
   const paginated = filtered.slice(
     (page - 1) * pageSize,
     page * pageSize
@@ -120,8 +102,8 @@ export default function CollectPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="e.g. SaaS founders in UK"
           className="border p-2 w-full rounded"
+          placeholder="e.g. SaaS founders in UK"
         />
 
         <button
@@ -133,7 +115,7 @@ export default function CollectPage() {
         </button>
       </div>
 
-      {/* 🔍 SEARCH */}
+      {/* SEARCH */}
       <input
         placeholder="Search query..."
         className="border px-3 py-2"
@@ -141,22 +123,35 @@ export default function CollectPage() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {/* 📊 TOTAL */}
-      <div className="flex gap-6">
+      {/* TOP BAR */}
+      <div className="flex justify-between items-center">
         <span>Total Queries: {filtered.length}</span>
+
+        {/* 🔥 PAGE SIZE */}
+        <select
+          value={pageSize}
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+            setPage(1);
+          }}
+          className="border px-2 py-1"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+          <option value={500}>500</option>
+        </select>
       </div>
 
       {/* TABLE */}
       <div className="border rounded overflow-hidden">
-        <table className="w-full border text-left">
+        <table className="w-full text-left">
           <thead className="bg-gray-100">
             <tr>
               <th className="p-2">#</th>
               <th className="p-2">Query</th>
               <th className="p-2">Total</th>
-              <th className="p-2">Email</th>
-              <th className="p-2">Company</th>
-              <th className="p-2">Finished</th>
               <th className="p-2">Progress</th>
               <th className="p-2">Scrape</th>
               <th className="p-2">Enrich</th>
@@ -166,86 +161,63 @@ export default function CollectPage() {
           </thead>
 
           <tbody>
-            {paginated.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="p-4 text-center">
-                  No data
+            {paginated.map((q, index) => (
+              <tr key={q.id} className="border-t">
+                <td className="p-2">
+                  {(page - 1) * pageSize + index + 1}
+                </td>
+
+                <td className="p-2">{q.text}</td>
+                <td className="p-2">{q.total}</td>
+
+                <td className="p-2">
+                  <div className="w-32 bg-gray-200 h-2 rounded">
+                    <div
+                      className="bg-green-500 h-2 rounded"
+                      style={{ width: `${q.progress || 0}%` }}
+                    />
+                  </div>
+                </td>
+
+                <td>{q.scrapeStatus}</td>
+                <td>{q.enrichStatus}</td>
+                <td>{q.dedupStatus}</td>
+
+                <td className="flex gap-2">
+                  <button
+                    onClick={() => searchAgain(q.id)}
+                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                  >
+                    🔄
+                  </button>
+
+                  <button
+                    onClick={() => enrichAgain(q.id)}
+                    className="bg-purple-500 text-white px-2 py-1 rounded"
+                  >
+                    ⚡
+                  </button>
                 </td>
               </tr>
-            ) : (
-              paginated.map((q: any, index) => (
-                <tr key={q.id} className="border-t">
-                  {/* 🔢 SL NO */}
-                  <td className="p-2">
-                    {(page - 1) * pageSize + index + 1}
-                  </td>
-
-                  <td className="p-2">{q.text}</td>
-                  <td className="p-2">{q.total}</td>
-                  <td className="p-2">{q.withEmail}</td>
-                  <td className="p-2">{q.withCompany}</td>
-                  <td className="p-2">{q.finished}</td>
-
-                  {/* 📊 Progress */}
-                  <td className="p-2">
-                    <div className="w-32 bg-gray-200 rounded h-2">
-                      <div
-                        className="bg-green-500 h-2 rounded transition-all duration-300"
-                        style={{ width: `${q.progress || 0}%` }}
-                      />
-                    </div>
-                    <span className="text-xs">
-                      {q.progress || 0}%
-                    </span>
-                  </td>
-
-                  <td className="p-2">{q.scrapeStatus}</td>
-                  <td className="p-2">{q.enrichStatus}</td>
-                  <td className="p-2">{q.dedupStatus}</td>
-
-                  {/* ⚡ Actions */}
-                  <td className="p-2 flex gap-2">
-                    <button
-                      onClick={() => searchAgain(q.id)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded"
-                    >
-                      🔄
-                    </button>
-
-                    <button
-                      onClick={() => filterAgain(q.id)}
-                      className="bg-purple-500 text-white px-2 py-1 rounded"
-                    >
-                      ⚡
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
 
-      {/* 📄 Pagination */}
+      {/* PAGINATION */}
       <div className="flex gap-2">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="border px-3 py-1 rounded"
-        >
+        <button onClick={() => setPage((p) => Math.max(1, p - 1))}>
           Prev
         </button>
 
-        <button
-          onClick={() => setPage((p) => p + 1)}
-          className="border px-3 py-1 rounded"
-        >
+        <button onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>
 
-      {/* 🔔 Toast */}
+      {/* TOAST */}
       {toast && (
-        <div className="fixed bottom-5 right-5 bg-black text-white px-4 py-2 rounded shadow-lg">
+        <div className="fixed bottom-5 right-5 bg-black text-white px-4 py-2 rounded">
           {toast}
         </div>
       )}

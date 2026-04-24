@@ -158,6 +158,9 @@ export default function CollectPage() {
               <th className="p-2">Company</th>
               <th className="p-2">Finished</th>
               <th className="p-2">Progress</th>
+              <th className="p-2">Scrape</th>
+              <th className="p-2">Enrich</th>
+              <th className="p-2">Dedup</th>
               <th className="p-2">Actions</th>
             </tr>
           </thead>
@@ -195,6 +198,10 @@ export default function CollectPage() {
                       {q.progress || 0}%
                     </span>
                   </td>
+
+                  <td className="p-2">{q.scrapeStatus}</td>
+                  <td className="p-2">{q.enrichStatus}</td>
+                  <td className="p-2">{q.dedupStatus}</td>
 
                   {/* ⚡ Actions */}
                   <td className="p-2 flex gap-2">

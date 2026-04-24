@@ -7,7 +7,6 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    // ✅ WORKING ACTOR (GOOGLE SEARCH)
     const ACTOR = "apify~google-search-scraper";
 
     const res = await fetch(
@@ -18,7 +17,8 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: [`site:linkedin.com/in ${query}`], // 🔥 KEY FIX
+          // ✅ MUST BE STRING (THIS FIXES YOUR ERROR)
+          queries: `site:linkedin.com/in ${query}`,
           maxPagesPerQuery: 2,
         }),
       }

@@ -37,7 +37,7 @@ new Worker(
         data: { scrapeStatus: "running" },
       });
 
-      // 🔥 GOOGLE → LINKEDIN SEARCH
+      // 🔥 LINKEDIN VIA GOOGLE
       const results: LeadResult[] = await searchLeads(text);
 
       console.log("📊 Clean results:", results.length);

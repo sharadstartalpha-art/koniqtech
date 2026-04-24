@@ -38,7 +38,7 @@ new Worker(
       });
 
       // 🔥 LINKEDIN QUERY
-      const smartQuery = `site:linkedin.com/in ${text}`;
+      const smartQuery = text; // ✅ Direct LinkedIn search
 
       const results: LeadResult[] = await searchLeads(smartQuery);
 

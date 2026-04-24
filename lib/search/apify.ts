@@ -7,7 +7,6 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    // ✅ CORRECT ACTOR (WORKING)
     const ACTOR = "apify~google-search-scraper";
 
     const res = await fetch(
@@ -18,7 +17,7 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: query, // ✅ STRING (correct)
+          queries: [query], // ✅ MUST BE ARRAY (THIS FIXES YOUR ERROR)
           maxPagesPerQuery: 2,
         }),
       }
@@ -36,13 +35,25 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    return data.map((item: any) => ({
-      name: item.title || undefined,
-      profileUrl: item.url || undefined,
-      website: item.url || undefined,
-      title: item.title || "",
-      snippet: item.description || "",
-    }));
+    return data.map((item: any) => {
+      const url = item.url || "";
+
+      let company = "";
+
+      try {
+        const domain = new URL(url).hostname.replace("www.", "");
+        company = domain.split(".")[0];
+      } catch {}
+
+      return {
+        name: item.title || undefined,
+        profileUrl: url,
+        website: url,
+        title: item.title || "",
+        snippet: item.description || "",
+        company,
+      };
+    });
   } catch (err) {
     console.error("❌ Apify failed:", err);
     return [];

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { emailQueue } from "@/lib/queue";
 
 export async function dispatchCampaign(campaignId: string) {
-  // ❌ Handle missing queue (build / no Redis)
+  // ❌ Prevent crash if Redis not connected
   if (!emailQueue) {
     throw new Error("Email queue not available (Redis missing)");
   }
@@ -10,14 +10,18 @@ export async function dispatchCampaign(campaignId: string) {
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
     include: {
-      steps: true,
+      steps: {
+        orderBy: { order: "asc" }, // ✅ ensure correct sequence
+      },
       recipients: true,
     },
   });
 
-  if (!campaign) throw new Error("Campaign not found");
+  if (!campaign) {
+    throw new Error("Campaign not found");
+  }
 
-  // 🔄 update status
+  // 🔄 mark sending
   await prisma.campaign.update({
     where: { id: campaignId },
     data: { status: "SENDING" },
@@ -25,18 +29,24 @@ export async function dispatchCampaign(campaignId: string) {
 
   for (const step of campaign.steps) {
     for (const recipient of campaign.recipients) {
-      await emailQueue.add(
-        "send-email",
-        {
-          campaignId,
-          stepId: step.id,
-          recipientId: recipient.id,
-        },
-        {
-          delay: step.delay * 1000, // ⏱ schedule per step
-          attempts: 3,
-        }
-      );
+      try {
+        await emailQueue.add(
+          "send-email",
+          {
+            campaignId,
+            stepId: step.id,
+            recipientId: recipient.id,
+          },
+          {
+            delay: (step.delay || 0) * 1000,
+            attempts: 3,
+          }
+        );
+      } catch (err) {
+        console.error("❌ Queue error:", err);
+      }
     }
   }
+
+  return { success: true };
 }

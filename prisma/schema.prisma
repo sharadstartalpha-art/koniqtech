@@ -126,8 +126,11 @@ model Lead {
   fundingStage  String?
 
   status       String   @default("raw")
+
   source       String?
 
+  score Int? @default(0)
+  isContactable Boolean @default(false)
   // ✅ OPTIONAL RELATIONS (IMPORTANT)
   userId    String?
   user      User?     @relation(fields: [userId], references: [id])

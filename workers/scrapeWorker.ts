@@ -15,7 +15,10 @@ type LeadResult = {
 };
 
 const connection = getRedis();
-if (!connection) throw new Error("❌ Redis not available");
+
+if (!connection) {
+  throw new Error("❌ Redis not available");
+}
 
 console.log("🚀 Scrape Worker Started");
 
@@ -24,11 +27,10 @@ new Worker(
   async (job) => {
     const { queryId, text, userId } = job.data;
 
-    console.log("🔥 SCRAPE JOB:", job.data);
-
     if (!userId) throw new Error("Missing userId");
 
     try {
+      // 🔄 SET STATUS → RUNNING
       await prisma.query.update({
         where: { id: queryId },
         data: { scrapeStatus: "running" },
@@ -36,20 +38,32 @@ new Worker(
 
       const results: LeadResult[] = await searchLeads(text);
 
-      console.log("📊 Total results:", results.length);
+      console.log("📊 Clean results:", results.length);
 
       for (const item of results) {
         try {
-          if (item.website) {
-            const exists = await prisma.lead.findFirst({
-              where: { website: item.website },
-            });
+          const conditions: any[] = [];
 
-            if (exists) {
-              console.log("⚠️ Duplicate:", item.website);
-              continue;
-            }
-          }
+          if (item.email) conditions.push({ email: item.email });
+          if (item.profileUrl)
+            conditions.push({ profileUrl: item.profileUrl });
+          if (item.website) conditions.push({ website: item.website });
+
+          const exists =
+            conditions.length > 0
+              ? await prisma.lead.findFirst({
+                  where: { OR: conditions },
+                })
+              : null;
+
+          if (exists) continue;
+
+          // 🧠 SCORE SYSTEM
+          const score =
+            (item.email ? 40 : 0) +
+            (item.company ? 20 : 0) +
+            (item.profileUrl ? 20 : 0) +
+            (item.website ? 20 : 0);
 
           await prisma.lead.create({
             data: {
@@ -59,9 +73,13 @@ new Worker(
               company: item.company || null,
               location: item.location || null,
               website: item.website || null,
+
               queryId,
               userId,
               source: "search",
+
+              score,
+              isContactable: !!item.email,
             },
           });
         } catch (err) {
@@ -69,15 +87,14 @@ new Worker(
         }
       }
 
+      // ✅ DONE
       await prisma.query.update({
         where: { id: queryId },
         data: { scrapeStatus: "done" },
       });
 
-      // 🔥 TRIGGER ENRICH (THIS FIXES YOUR IDLE ISSUE)
-      if (enrichQueue) {
-        await enrichQueue.add("enrich-job", { queryId });
-      }
+      // 🚀 TRIGGER ENRICH (SAFE ASSERTION)
+      await enrichQueue!.add("enrich-job", { queryId });
 
       console.log("✅ SCRAPE DONE:", queryId);
 

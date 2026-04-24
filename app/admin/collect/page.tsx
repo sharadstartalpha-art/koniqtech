@@ -3,29 +3,30 @@
 import { useEffect, useState } from "react";
 
 export default function CollectPage() {
-  const [queries, setQueries] = useState<any[]>([]);
+  const [data, setData] = useState<any[]>([]);
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
   // ==============================
-  // 📡 Fetch Queries
+  // 📡 Fetch Query Stats
   // ==============================
-  const fetchQueries = async () => {
+  const fetchData = async () => {
     try {
-      const res = await fetch(`/api/query/list?page=${page}`);
-      const data = await res.json();
-      setQueries(data.queries || []);
+      const res = await fetch("/api/admin/query-stats");
+      const json = await res.json();
+      setData(json || []);
     } catch (err) {
-      console.error("❌ Failed to fetch queries:", err);
+      console.error("❌ Failed to fetch stats:", err);
     }
   };
 
   useEffect(() => {
-    fetchQueries();
-    const interval = setInterval(fetchQueries, 2000);
+    fetchData();
+
+    // 🔄 Auto refresh every 2s
+    const interval = setInterval(fetchData, 2000);
     return () => clearInterval(interval);
-  }, [page]);
+  }, []);
 
   // ==============================
   // ➕ CREATE QUERY
@@ -48,7 +49,7 @@ export default function CollectPage() {
       }
 
       setQuery("");
-      fetchQueries();
+      fetchData();
     } catch (err) {
       console.error(err);
     }
@@ -57,21 +58,31 @@ export default function CollectPage() {
   };
 
   // ==============================
-  // 🚀 RUN SCRAPE
+  // 🔄 SEARCH AGAIN
   // ==============================
-  const runScrape = async (id: string) => {
-    try {
-      await fetch("/api/query/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ queryId: id }),
-      });
+  const searchAgain = async (queryId: string) => {
+    await fetch("/api/query/search-again", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ queryId }),
+    });
 
-      alert("Scraping started 🚀");
-      fetchQueries();
-    } catch (err) {
-      console.error(err);
-    }
+    alert("Search triggered 🔄");
+    fetchData();
+  };
+
+  // ==============================
+  // ⚡ ENRICH AGAIN
+  // ==============================
+  const filterAgain = async (queryId: string) => {
+    await fetch("/api/query/enrich-again", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ queryId }),
+    });
+
+    alert("Enrich triggered ⚡");
+    fetchData();
   };
 
   return (
@@ -98,41 +109,64 @@ export default function CollectPage() {
 
       {/* TABLE */}
       <div className="border rounded overflow-hidden">
-        <table className="w-full text-left">
+        <table className="w-full border text-left">
           <thead className="bg-gray-100">
             <tr>
-              <th className="p-2">#</th>
               <th className="p-2">Query</th>
-              <th className="p-2">Scrape</th>
-              <th className="p-2">Enrich</th>
-              <th className="p-2">Dedup</th>
+              <th className="p-2">Total</th>
+              <th className="p-2">Email</th>
+              <th className="p-2">Company</th>
+              <th className="p-2">Finished</th>
+              <th className="p-2">Progress</th>
+              <th className="p-2">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {queries.length === 0 ? (
+            {data.length === 0 ? (
               <tr>
-                <td colSpan={5} className="p-4 text-center">
-                  No queries yet
+                <td colSpan={7} className="p-4 text-center">
+                  No data yet
                 </td>
               </tr>
             ) : (
-              queries.map((q: any, i) => (
+              data.map((q: any) => (
                 <tr key={q.id} className="border-t">
-                  <td className="p-2">{(page - 1) * 10 + i + 1}</td>
                   <td className="p-2">{q.text}</td>
+                  <td className="p-2">{q.total}</td>
+                  <td className="p-2">{q.withEmail}</td>
+                  <td className="p-2">{q.withCompany}</td>
+                  <td className="p-2">{q.finished}</td>
 
+                  {/* ✅ Progress */}
                   <td className="p-2">
-                    <button
-                      onClick={() => runScrape(q.id)}
-                      className="bg-black text-white px-2 py-1 rounded"
-                    >
-                      {q.scrapeStatus || "idle"}
-                    </button>
+                    <div className="w-full bg-gray-200 h-2 rounded">
+                      <div
+                        className="bg-green-500 h-2 rounded transition-all duration-300"
+                        style={{ width: `${q.progress || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-600">
+                      {q.progress || 0}%
+                    </span>
                   </td>
 
-                  <td className="p-2">{q.enrichStatus || "idle"}</td>
-                  <td className="p-2">{q.dedupStatus || "idle"}</td>
+                  {/* ✅ Actions */}
+                  <td className="p-2 flex gap-2">
+                    <button
+                      onClick={() => searchAgain(q.id)}
+                      className="bg-blue-500 text-white px-2 py-1 rounded"
+                    >
+                      🔄 Search
+                    </button>
+
+                    <button
+                      onClick={() => filterAgain(q.id)}
+                      className="bg-purple-500 text-white px-2 py-1 rounded"
+                    >
+                      ⚡ Enrich
+                    </button>
+                  </td>
                 </tr>
               ))
             )}

@@ -25,19 +25,10 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
   }));
 
   // 🚨 FALLBACK (VERY IMPORTANT)
-  if (!results.length) {
-    console.log("⚠️ No results → fallback");
-
-    return [
-      {
-        name: "Demo Founder",
-        profileUrl: "https://linkedin.com/in/demo",
-        website: "https://demo.com",
-        company: "Demo Inc",
-        location: "USA",
-      },
-    ];
-  }
+ if (!results.length) {
+  console.log("⚠️ No results from Apify");
+  return [];
+}
 
   const cleanResults: LeadResult[] = [];
 

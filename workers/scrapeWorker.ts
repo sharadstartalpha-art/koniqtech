@@ -36,7 +36,10 @@ new Worker(
         data: { scrapeStatus: "running" },
       });
 
-      const results: LeadResult[] = await searchLeads(text);
+      // 🔥 SMART QUERY (better results)
+      const smartQuery = `site:linkedin.com/in ${text}`;
+
+      const results: LeadResult[] = await searchLeads(smartQuery);
 
       console.log("📊 Clean results:", results.length);
 
@@ -45,8 +48,7 @@ new Worker(
           const conditions: any[] = [];
 
           if (item.email) conditions.push({ email: item.email });
-          if (item.profileUrl)
-            conditions.push({ profileUrl: item.profileUrl });
+          if (item.profileUrl) conditions.push({ profileUrl: item.profileUrl });
           if (item.website) conditions.push({ website: item.website });
 
           const exists =
@@ -93,8 +95,10 @@ new Worker(
         data: { scrapeStatus: "done" },
       });
 
-      // 🚀 TRIGGER ENRICH (SAFE ASSERTION)
-      await enrichQueue!.add("enrich-job", { queryId });
+      // 🚀 TRIGGER ENRICH (SAFE)
+      if (enrichQueue) {
+        await enrichQueue.add("enrich-job", { queryId });
+      }
 
       console.log("✅ SCRAPE DONE:", queryId);
 

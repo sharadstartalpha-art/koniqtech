@@ -7,7 +7,7 @@ import { enrichQueue } from "@/lib/queue";
 
 type LeadResult = {
   name?: string;
-  title?: string; // ✅ FIX ADDED
+  title?: string;
   profileUrl?: string;
   email?: string;
   company?: string;
@@ -34,7 +34,7 @@ new Worker(
       // 🔄 STATUS → RUNNING
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "running", progress: 0 },
+        data: { scrapeStatus: "running" }, // ✅ FIXED
       });
 
       // 🔥 LINKEDIN QUERY
@@ -44,12 +44,7 @@ new Worker(
 
       console.log("📊 Clean results:", results.length);
 
-      let processed = 0;
-      const total = results.length;
-
       for (const item of results) {
-        processed++;
-
         try {
           const conditions: any[] = [];
 
@@ -74,7 +69,7 @@ new Worker(
 
           await prisma.lead.create({
             data: {
-              name: item.name || item.title || "N/A", // ✅ now valid
+              name: item.name || item.title || "N/A",
               profileUrl: item.profileUrl || null,
               email: item.email || null,
               company: item.company || null,
@@ -92,25 +87,15 @@ new Worker(
         } catch (err) {
           console.log("⚠️ Lead skipped:", err);
         }
-
-        // ✅ PROGRESS UPDATE
-        await prisma.query.update({
-          where: { id: queryId },
-          data: {
-            progress: total
-              ? Math.floor((processed / total) * 100)
-              : 100,
-          },
-        });
       }
 
       // ✅ DONE
       await prisma.query.update({
         where: { id: queryId },
-        data: { scrapeStatus: "done", progress: 100 },
+        data: { scrapeStatus: "done" }, // ✅ FIXED
       });
 
-      // 🚀 ENRICH (only if results exist)
+      // 🚀 ENRICH
       if (results.length > 0 && enrichQueue) {
         await enrichQueue.add("enrich-job", { queryId });
       }

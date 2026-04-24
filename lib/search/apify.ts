@@ -7,8 +7,8 @@ export async function apifySearch(query: string) {
       return [];
     }
 
-    // ✅ REAL WORKING LINKEDIN ACTOR
-    const ACTOR = "apify/linkedin-people-search-scraper";
+    // ✅ WORKING ACTOR (GOOGLE SEARCH)
+    const ACTOR = "apify~google-search-scraper";
 
     const res = await fetch(
       `https://api.apify.com/v2/acts/${ACTOR}/run-sync-get-dataset-items?token=${TOKEN}`,
@@ -18,8 +18,8 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          keywords: query,        // ✅ IMPORTANT FIELD (NOT "search")
-          maxItems: 20,
+          queries: [`site:linkedin.com/in ${query}`], // 🔥 KEY FIX
+          maxPagesPerQuery: 2,
         }),
       }
     );
@@ -27,25 +27,24 @@ export async function apifySearch(query: string) {
     const data = await res.json();
 
     if (!res.ok || data?.error) {
-      console.error("❌ APIFY LINKEDIN ERROR:", data);
+      console.error("❌ APIFY ERROR:", data);
       return [];
     }
 
     if (!Array.isArray(data)) {
-      console.error("❌ LinkedIn data not array:", data);
+      console.error("❌ Invalid response:", data);
       return [];
     }
 
     return data.map((item: any) => ({
-      name: item.fullName || undefined,
-      profileUrl: item.profileUrl || undefined,
-      company: item.currentCompanyName || undefined,
-      location: item.location || undefined,
-      title: item.headline || "",
-      website: item.currentCompanyUrl || undefined,
+      name: item.title || undefined,
+      profileUrl: item.url || undefined,
+      website: item.url || undefined,
+      title: item.title || "",
+      snippet: item.description || "",
     }));
   } catch (err) {
-    console.error("❌ LinkedIn scrape failed:", err);
+    console.error("❌ Apify failed:", err);
     return [];
   }
 }

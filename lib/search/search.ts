@@ -14,7 +14,7 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
   const results = await apifySearch(query);
 
   if (!results.length) {
-    console.log("⚠️ No LinkedIn results");
+    console.log("⚠️ No results");
     return [];
   }
 

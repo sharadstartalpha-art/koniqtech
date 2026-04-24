@@ -26,10 +26,14 @@ export async function GET() {
         },
       });
 
+      // ✅ Define finished clearly
       const finished = withEmail;
 
+      // ✅ FIXED progress logic (correct variables)
       const progress =
-        total > 0 ? Math.round((finished / total) * 100) : 0;
+        total > 0
+          ? Math.round((finished / total) * 100)
+          : 0;
 
       return {
         ...q,

@@ -20,6 +20,7 @@ export async function searchLeads(query: string): Promise<LeadResult[]> {
 
   return results.map((item) => ({
     ...item,
-    name: item.name || "N/A",
+    name: item.name || item.title || "Unknown",
+    company: item.company || undefined, // ✅ FIXED
   }));
 }

@@ -19,7 +19,7 @@ setInterval(async () => {
       where: {
         scrapeStatus: "idle",
       },
-      take: 5,
+      take: 2,
     });
 
     for (const q of queries) {
@@ -37,4 +37,4 @@ setInterval(async () => {
   } catch (err) {
     console.error("❌ Scheduler error:", err);
   }
-}, 120000);
+}, 300000);

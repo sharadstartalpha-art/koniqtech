@@ -1,10 +1,12 @@
+import { fallbackSearch } from "./fallback";
+
 export async function apifySearch(query: string) {
   try {
     const TOKEN = process.env.APIFY_API_TOKEN;
 
     if (!TOKEN) {
-      console.error("❌ Missing APIFY_API_TOKEN");
-      return [];
+      console.log("⚠️ No APIFY token → fallback");
+      return fallbackSearch(query);
     }
 
     const ACTOR = "apify~google-search-scraper";
@@ -17,37 +19,42 @@ export async function apifySearch(query: string) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          queries: `site:linkedin.com/in ${query}`, // ✅ STRING
-          maxPagesPerQuery: 2,
+          // ✅ ALWAYS ARRAY (stable)
+          queries: [`site:linkedin.com/in ${query}`],
+          maxPagesPerQuery: 1, // 🔥 reduce cost
         }),
       }
     );
 
     const data = await res.json();
 
+    // ❌ fallback if error / no credits
     if (!res.ok || data?.error) {
-      console.error("❌ APIFY ERROR:", data);
-      return [];
+      console.log("⚠️ Apify failed → fallback");
+      return fallbackSearch(query);
     }
 
     if (!Array.isArray(data)) {
-      console.error("❌ Invalid response:", data);
-      return [];
+      console.log("⚠️ Invalid Apify response → fallback");
+      return fallbackSearch(query);
     }
 
     return data.map((item: any) => {
       const title = item.title || "";
       const url = item.url || "";
 
-      // 🔥 SMART PARSING
       let name = "";
       let company = "";
 
+      // 🔥 BETTER PARSING
       if (title.includes(" - ")) {
-        const parts = title.split(" - ");
+        const [left, right] = title.split(" - ");
 
-        name = parts[0]; // John Doe
-        company = parts[1]?.split("|")[0] || ""; // CEO at XYZ
+        name = left?.trim();
+
+        if (right) {
+          company = right.split("|")[0]?.trim();
+        }
       }
 
       return {
@@ -57,10 +64,11 @@ export async function apifySearch(query: string) {
         title,
         snippet: item.description || "",
         company: company || undefined,
+        source: "google",
       };
     });
   } catch (err) {
-    console.error("❌ Apify failed:", err);
-    return [];
+    console.log("⚠️ Apify crashed → fallback");
+    return fallbackSearch(query);
   }
 }

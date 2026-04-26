@@ -7,7 +7,6 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
-    "worker": "tsx workers/index.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
@@ -42,7 +41,6 @@
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stripe": "^21.0.0",
-    "tsx": "^4.21.0",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.12"
   },

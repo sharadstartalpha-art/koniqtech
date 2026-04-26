@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,607 +9,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  TEAM
-  USER
-}
-
-enum TeamRole {
-  OWNER
-  ADMIN
-  MEMBER
-}
-
 model User {
-  id                 String               @id @default(cuid())
-  email              String               @unique
-  password           String
-  name               String?
-  role               Role                 @default(USER)
-  createdAt          DateTime             @default(now())
-  resetTokens        PasswordResetToken[]
-  verificationTokens VerificationToken[]
-  campaigns          Campaign[]
-  notifications      Notification[]
-  // ✅ COMPANY RELATION (FIXED)
-  companyId          String?
-  company            Company?             @relation("CompanyUsers", fields: [companyId], references: [id])
-  credits            Int                  @default(0)
-  // ✅ OWNER RELATION
-  ownedCompany       Company?             @relation("CompanyOwner")
-  subscriptions      Subscription[]
-  projects           Project[]
-  leads              Lead[]
-  balance            Balance?
-  transactions       Transaction[]
-  payments           Payment[]
-  usages             Usage[]
-  isBanned           Boolean              @default(false)
-  plan               String               @default("FREE")
-  unsubscribed       Boolean              @default(false)
-  dailyLimit         Int                  @default(20)
-  activities         Activity[]
-  teamsOwned         Team[]               @relation("TeamOwner")
-  teamMembers        TeamMember[]
-  tasksCreated       Task[]               @relation("TaskCreator")
-  tasksAssigned      Task[]               @relation("TaskAssignee")
-}
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
 
-model Company {
-  id        String   @id @default(cuid())
-  name      String
+  password  String?   // for admin / optional login
+  role      String    @default("USER") // USER / ADMIN
+
+  otp       String?
+  otpExpiry DateTime?
+
   createdAt DateTime @default(now())
 
-  // 👑 OWNER
-  ownerId String @unique
-  owner   User   @relation("CompanyOwner", fields: [ownerId], references: [id])
-
-  // 👥 USERS
-  users User[] @relation("CompanyUsers")
+  subscriptions Subscription[]
+  invoices      Invoice[]
 }
 
 model Product {
-  id          String  @id @default(cuid())
-  name        String // "Lead Finder"
-  slug        String  @unique // "lead-finder"
-  description String?
-  price       Int // credits cost OR subscription price
-  active      Boolean @default(true)
-
-  createdAt DateTime @default(now())
-
-  projects Project[]
-}
-
-model Project {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   name      String
+  slug      String   @unique
+  price     Float
   createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-
-  // optional team
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id])
-
-  chats Chat[]
-  leads Lead[]
-}
-model Lead {
-  id           String   @id @default(cuid())
-
-  name         String?
-  nameKey      String?   // ✅ ADD HERE
-
-  email        String?   @unique
-  profileUrl   String?   @unique
-
-  company      String?
-  companyKey   String?   // ✅ ADD HERE
-
-  domain       String?
-  website      String?
-
-  phone        String?
-  contactEmail String?
-
-  location     String?
-  country      String?
-  category     String?
-
-  title        String?
-
-  employeeCount Int?
-  techStack     String[]
-  isHiring      Boolean  @default(false)
-  fundingStage  String?
-
-  status       String   @default("raw")
-
-  source       String?
-
-  score Int? @default(0)
-  qualityScore Int @default(0) // ✅ ADD HERE
-
-  isContactable Boolean @default(false)
-
-  userId    String?
-  user      User?     @relation(fields: [userId], references: [id])
-
-  projectId String?
-  project   Project?  @relation(fields: [projectId], references: [id])
-
-  teamId    String?
-  team      Team?     @relation(fields: [teamId], references: [id])
-
-  queryId   String?
-  query     Query?    @relation(fields: [queryId], references: [id])
-
-  sequences  LeadSequence[]
-  LeadStatus LeadStatus?
-
-  createdAt DateTime @default(now())
-
-  @@index([email])
-  @@index([profileUrl])
-
-  // ✅ ADD THESE INDEXES
-  @@index([nameKey])
-  @@index([companyKey])
-  @@index([location])
-}
-
-
-model Balance {
-  id     String @id @default(cuid())
-  amount Int    @default(10)
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-}
-
-model Transaction {
-  id        String   @id @default(cuid())
-  amount    Int
-  type      String
-  status    String?
-  provider  String? // ✅ ADD THIS
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Chat {
-  id        String  @id @default(cuid())
-  projectId String
-  project   Project @relation(fields: [projectId], references: [id])
-
-  messages Message[]
-
-  createdAt DateTime @default(now())
-}
-
-model Message {
-  id     String @id @default(cuid())
-  chatId String
-  chat   Chat   @relation(fields: [chatId], references: [id])
-
-  role    String
-  content String
-
-  createdAt DateTime @default(now())
-}
-
-model PasswordResetToken {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-}
-
-model VerificationToken {
-  id String @id @default(cuid())
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
-  email     String
-  token     String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-}
-
-model LeadSequence {
-  id          String   @id @default(cuid())
-  leadId      String
-  subject     String
-  content     String
-  scheduledAt DateTime
-  sent        Boolean  @default(false)
-
-  lead Lead @relation(fields: [leadId], references: [id])
-}
-
-model LeadStatus {
-  id     String @id @default(cuid())
-  leadId String @unique
-  status String
-
-  lead Lead @relation(fields: [leadId], references: [id])
-}
-
-model Plan {
-  id          String   @id @default(cuid())
-  name        String
-  price       Int
-  credits     Int
-  description String?
-  createdAt   DateTime @default(now())
 
   subscriptions Subscription[]
+  invoices      Invoice[]
 }
 
 model Subscription {
-  id        String   @id @default(cuid())
-  userId    String   @unique // 🔥 THIS IS REQUIRED
-  planId    String
-  status    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-  plan      Plan     @relation(fields: [planId], references: [id])
+  id                    String   @id @default(uuid())
+  userId                String
+  productId             String
+  paypalSubscriptionId  String?
+  status                String   // active, cancelled
 
-  @@unique([userId, planId])
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id          String   @id @default(uuid())
+  userId      String
+  productId   String
+  clientEmail String
+  clientName  String?
+  amount      Float
+  dueDate     DateTime
+  status      String   // unpaid, paid
+  paymentLink String?
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  reminders Reminder[]
+}
+
+model Reminder {
+  id         String   @id @default(uuid())
+  invoiceId  String
+  type       String   // day1, day3, day7
+  sentAt     DateTime?
+  status     String   // pending, sent
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
 }
 
 model Payment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
+  productId String
   amount    Float
-  status    String
+  status    String   // success, failed
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-
-model EmailLog {
-  id          String    @id @default(cuid())
-  userId      String
-  leadId      String?
-  email       String
-  scheduledAt DateTime?
-  status      String
-  opened      Boolean   @default(false)
-  clicked     Boolean   @default(false)
-
-  createdAt DateTime @default(now())
-}
-
-model Email {
-  id        String   @id @default(cuid())
-  threadId  String
-  from      String
-  to        String
-  body      String
-  opened    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  thread EmailThread @relation(fields: [threadId], references: [id])
-}
-
-model EmailThread {
-  id        String   @id @default(cuid())
-  userId    String
-  subject   String
-  createdAt DateTime @default(now())
-
-  // ✅ REQUIRED (this was missing)
-  messages EmailMessage[]
-  Email    Email[]
-}
-
-model EmailMessage {
-  id        String   @id @default(cuid())
-  threadId  String
-  from      String
-  to        String
-  body      String
-  createdAt DateTime @default(now())
-
-  // ✅ RELATION (correct)
-  thread EmailThread @relation(fields: [threadId], references: [id])
-}
-
-model EmailQueue {
-  id      String @id @default(cuid())
-  userId  String
-  email   String
-  subject String
-  body    String
-
-  status   String @default("PENDING")
-  attempts Int    @default(0)
-
-  scheduledAt DateTime
-  createdAt   DateTime @default(now())
-  stopped     Boolean  @default(false)
-}
-
-model Invite {
-  id    String @id @default(cuid())
-  email String
-
-  role Role
-
-  createdAt DateTime @default(now())
-}
-
-model Usage {
-  id     String @id @default(cuid())
-  userId String
-
-  action    String
-  credits   Int
-  teamId    String?
-  team      Team?    @relation(fields: [teamId], references: [id])
-  createdAt DateTime @default(now())
-  meta      Json?
-  user      User     @relation(fields: [userId], references: [id])
-}
-
-model Team {
-  id      String       @id @default(cuid())
-  name    String
-  ownerId String
-  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id])
-  usages  Usage[]
-  members TeamMember[]
-  invites TeamInvite[]
-  tasks   Task[]
-leads     Lead[]
-  notifications Notification[]
-  projects      Project[]
-  activities    Activity[]
-  credits       Int               @default(0)
-  subscription  TeamSubscription?
-  createdAt     DateTime          @default(now())
-}
-
-model TeamMember {
-  id     String @id @default(cuid())
-  userId String
-  teamId String
-
-  role TeamRole @default(MEMBER)
-
-  user User @relation(fields: [userId], references: [id])
-  team Team @relation(fields: [teamId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, teamId])
-}
-
-model TeamInvite {
-  id     String @id @default(cuid())
-  email  String
-  teamId String
-
-  role  TeamRole @default(MEMBER)
-  token String   @unique
-
-  expiresAt DateTime
-
-  team Team @relation(fields: [teamId], references: [id])
-accepted  Boolean  @default(false) // ✅ ADD THIS
-  createdAt DateTime @default(now())
-}
-
-model TeamSubscription {
-  id     String @id @default(cuid())
-  teamId String @unique
-
-  plan   String
-  status String
-
-  seats Int @default(1) // 👈 seat billing
-  price Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  team Team @relation(fields: [teamId], references: [id])
-}
-
-model AuditLog {
-  id     String  @id @default(cuid())
-  userId String
-  teamId String?
-
-  action String
-  meta   Json?
-
-  createdAt DateTime @default(now())
-}
-
-model Activity {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id]) // ✅ FIX
-
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id])
-
-  message String
-  type    String
-
-  createdAt DateTime @default(now())
-}
-
-model Notification {
-  id String @id @default(cuid())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  message String
-  read    Boolean @default(false)
-
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model Task {
-  id String @id @default(cuid())
-
-  title       String
-  description String?
-
-  teamId String
-  team   Team   @relation(fields: [teamId], references: [id])
-
-  createdById String
-  createdBy   User   @relation("TaskCreator", fields: [createdById], references: [id])
-
-  assignedToId String?
-  assignedTo   User?   @relation("TaskAssignee", fields: [assignedToId], references: [id])
-
-  status String @default("TODO")
-
-  createdAt DateTime @default(now())
-}
-
-model Deal {
-  id    String @id @default(cuid())
-  title String
-  value Int
-  stage String // "NEW", "CONTACTED", "CLOSED"
-
-  teamId String
-  leadId String
-
-  createdAt DateTime @default(now())
-}
-
-model Campaign {
-  id      String         @id @default(cuid())
-  name    String
-  subject String
-  content String
-  status  CampaignStatus @default(DRAFT)
-teamId String?
-  scheduledAt DateTime?
-  sentAt      DateTime?
-
-  totalSent Int @default(0)
-  opens     Int @default(0)
-  clicks    Int @default(0)
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ✅ ADD THESE (fix errors)
-  steps      CampaignStep[]
-  recipients CampaignRecipient[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([status])
-}
-
-enum CampaignStatus {
-  DRAFT
-  SCHEDULED
-  SENDING
-  SENT
-  FAILED
-}
-
-
-
-
-
-model CampaignStep {
-  id         String   @id @default(cuid())
-  campaignId String
-
-  // 📧 Email content
-  subject    String
-  body       String
-
-  // 🧠 Step info
-  name       String
-  order      Int
-  delay      Int   // in seconds
-
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  createdAt  DateTime @default(now())
-
-  @@index([campaignId])
-  @@index([order])
-}
-
-
-model CampaignRecipient {
-  id         String @id @default(cuid())
-  campaignId String
-  email      String
-
-  status    String
-  openedAt  DateTime?
-  clickedAt DateTime?
-  repliedAt   DateTime? 
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  unsubscribed Boolean @default(false)
-   unsubscribedAt  DateTime?
-   sentAt DateTime?
-  createdAt DateTime @default(now())
-  @@index([campaignId])
-}
-
-model Waitlist {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
-}
-
-
-model Job {
-  id        String   @id @default(cuid())
-  type      String
-  status    String
-  query     String   // 🔥 ADD THIS
-  progress  Int      @default(0)
-  logs      String?
-  createdAt DateTime @default(now())
-}
-
-model Query {
-  id        String   @id @default(cuid())
-  text String @unique  // 🔥 THIS STOPS DUPLICATES FOREVER
-  status    String   @default("idle") // idle | running | done
-  createdAt DateTime @default(now())
-  leads     Lead[]
-  teamId        String
-  projectId     String
-  userId        String
-  scrapeStatus String @default("idle")
-  enrichStatus String @default("idle")
-  dedupStatus  String @default("idle")
 }

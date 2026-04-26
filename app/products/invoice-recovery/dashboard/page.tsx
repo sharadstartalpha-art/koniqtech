@@ -43,7 +43,7 @@ export default function DashboardPage() {
       {!isSubscribed ? (
         <div className="mb-6">
           <p className="mb-4">
-            You need a subscription to use this product.
+            You need a subscription to use this product.....
           </p>
 
           <button

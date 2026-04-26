@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
       <div className="grid grid-cols-2 gap-4 mt-6">
         <div className="p-4 border">Users: {users}</div>
-        <div className="p-4 border">Invoices: {invoices}</div>
+        <div className="p-4 border">Invoices New: {invoices}</div>
       </div>
     </div>
   );

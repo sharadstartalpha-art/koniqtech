@@ -53,7 +53,7 @@ export async function sendReminderEmail(
           Pay Now
         </a>
 
-        <p style="margin-top:20px;">Thank you ...🙏</p>
+        <p style="margin-top:20px;">Thank you .....🙏</p>
       </div>
     `,
   });

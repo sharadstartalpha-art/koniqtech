@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "dailyLimit" INTEGER NOT NULL DEFAULT 20;

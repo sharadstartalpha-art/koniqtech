@@ -1,29 +1,21 @@
 import { NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
 
-export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
-};
+export function middleware(req: any) {
+  const user = req.cookies.get("user");
 
-export async function middleware(req: any) {
-  const token = await getToken({ req });
-
-  const url = req.nextUrl.pathname;
-
-  // 🔐 PROTECT DASHBOARD
-  if (url.startsWith("/dashboard")) {
-    if (!token) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+  if (
+    req.nextUrl.pathname.startsWith("/products") &&
+    !user
+  ) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 🔐 PROTECT ADMIN
-  if (url.startsWith("/admin")) {
-    if (!token || token.role !== "ADMIN") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
+  if (
+    req.nextUrl.pathname.startsWith("/admin") &&
+    user !== "admin"
+  ) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
 }
-

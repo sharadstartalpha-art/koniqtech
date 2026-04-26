@@ -1,66 +1,60 @@
 import { Resend } from "resend";
 
-/* ============================= */
-/* RESEND CLIENT                 */
-/* ============================= */
-export const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-/* ============================= */
-/* GENERIC EMAIL SENDER          */
-/* ============================= */
-export async function sendEmail({
-  to,
-  subject,
-  html,
-}: {
-  to: string;
-  subject: string;
-  html: string;
-}) {
-  return resend.emails.send({
-    from: "KoniqTech <noreply@koniqtech.com>",
-    to,
-    subject,
-    html,
-  });
-}
-
-/* ============================= */
-/* INVITE EMAIL                  */
-/* ============================= */
-export async function sendInviteEmail(email: string, link: string) {
-  return sendEmail({
+// ✅ Send OTP Email
+export async function sendOTP(email: string, otp: string) {
+  return await resend.emails.send({
+    from: "KoniqTech <onboarding@resend.dev>",
     to: email,
-    subject: "You're invited to join a team 🚀",
+    subject: "Your Login Code",
     html: `
-      <h2>You’ve been invited!</h2>
-      <p>Click below to join the team:</p>
-      <a href="${link}" 
-         style="padding:10px 20px;background:black;color:white;text-decoration:none;border-radius:5px;">
-        Accept Invite
-      </a>
+      <div style="font-family: sans-serif;">
+        <h2>Your OTP Code</h2>
+        <p>Use the code below to login:</p>
+        <h1>${otp}</h1>
+        <p>This code will expire soon.</p>
+      </div>
     `,
   });
 }
 
-/* ============================= */
-/* EMAIL PATTERN GENERATOR       */
-/* ============================= */
-export function generateEmailPatterns(
-  first: string,
-  last: string,
-  domain: string
-): string[] {
-  if (!first || !last || !domain) return [];
+// ✅ Send Invoice Reminder Email
+export async function sendReminderEmail(
+  to: string,
+  amount: number,
+  paymentLink: string
+) {
+  return await resend.emails.send({
+    from: "KoniqTech <onboarding@resend.dev>",
+    to,
+    subject: "Invoice Reminder",
+    html: `
+      <div style="font-family: sans-serif;">
+        <h2>Payment Reminder</h2>
+        <p>You have a pending invoice:</p>
 
-  const f = first.toLowerCase();
-  const l = last.toLowerCase();
+        <p style="font-size: 20px; font-weight: bold;">
+          $${amount}
+        </p>
 
-  return [
-    `${f}@${domain}`,
-    `${f}.${l}@${domain}`,
-    `${f}${l}@${domain}`,
-    `${f[0]}${l}@${domain}`,
-    `${f}${l[0]}@${domain}`,
-  ];
+        <a 
+          href="${paymentLink}" 
+          style="
+            display:inline-block;
+            margin-top:10px;
+            padding:10px 20px;
+            background:black;
+            color:white;
+            text-decoration:none;
+            border-radius:5px;
+          "
+        >
+          Pay Now
+        </a>
+
+        <p style="margin-top:20px;">Thank you 🙏</p>
+      </div>
+    `,
+  });
 }

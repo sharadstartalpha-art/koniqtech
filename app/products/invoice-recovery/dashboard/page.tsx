@@ -2,30 +2,26 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Layout from "@/components/Layout";
 
-type Invoice = {
-  id: string;
-  amount: number;
-};
-
-export default function DashboardPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+export default function Page() {
+  const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchInvoices();
+    fetchStats();
   }, []);
 
-  const fetchInvoices = async () => {
+  const fetchStats = async () => {
     try {
-      const res = await axios.get("/api/invoices/list");
-      setInvoices(res.data);
+      const res = await axios.get("/api/dashboard/stats");
+      setData(res.data);
     } catch (err) {
-      console.error("Failed to fetch invoices", err);
+      console.error("Failed to load stats", err);
     }
   };
 
-  // ✅ CLEAN SUBSCRIBE FUNCTION
+  // ✅ Subscribe
   const subscribe = async () => {
     try {
       setLoading(true);
@@ -36,33 +32,29 @@ export default function DashboardPage() {
 
       const data = await res.json();
 
-      console.log("SUBSCRIBE RESPONSE:", data);
-
       if (data.url) {
         window.location.href = data.url;
       } else {
         alert(data.error || "Payment error");
       }
     } catch (err) {
-      console.error("SUBSCRIBE ERROR:", err);
+      console.error(err);
       alert("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
-  const total = invoices.reduce((sum, i) => sum + i.amount, 0);
-
-  const isSubscribed = false; // 🔥 replace with DB check later
+  const isSubscribed = false; // 🔥 replace with real DB check
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">
+    <Layout>
+      <h1 className="text-2xl font-bold mb-6">
         Dashboard
       </h1>
 
       {!isSubscribed ? (
-        <div className="mb-6">
+        <div className="bg-white p-6 rounded shadow">
           <p className="mb-4">
             You need a subscription to use this product.
           </p>
@@ -70,31 +62,54 @@ export default function DashboardPage() {
           <button
             onClick={subscribe}
             disabled={loading}
-            className="bg-black text-white px-4 py-2"
+            className="bg-black text-white px-4 py-2 rounded"
           >
             {loading ? "Redirecting..." : "Subscribe Now"}
           </button>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="p-4 border rounded">
-              Total: ${total}
+          {/* ✅ CARDS */}
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded shadow">
+              <p className="text-sm text-gray-500">
+                Recovered
+              </p>
+              <h2 className="text-2xl font-bold">
+                ${data.recovered || 0}
+              </h2>
             </div>
 
-            <div className="p-4 border rounded">
-              Invoices: {invoices.length}
+            <div className="bg-white p-6 rounded shadow">
+              <p className="text-sm text-gray-500">
+                Pending
+              </p>
+              <h2 className="text-2xl font-bold">
+                ${data.pending || 0}
+              </h2>
+            </div>
+
+            <div className="bg-white p-6 rounded shadow">
+              <p className="text-sm text-gray-500">
+                Invoices
+              </p>
+              <h2 className="text-2xl font-bold">
+                {data.count || 0}
+              </h2>
             </div>
           </div>
 
-          <a
-            href="/products/invoice-recovery/invoices/create"
-            className="bg-black text-white px-4 py-2"
-          >
-            Add Invoice
-          </a>
+          {/* ✅ ACTION */}
+          <div className="mt-6">
+            <a
+              href="/products/invoice-recovery/invoices/create"
+              className="bg-black text-white px-4 py-2 rounded"
+            >
+              Add Invoice
+            </a>
+          </div>
         </>
       )}
-    </div>
+    </Layout>
   );
 }

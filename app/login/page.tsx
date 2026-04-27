@@ -4,64 +4,71 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function LoginPage() {
+  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState(1);
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const sendOtp = async () => {
-    await axios.post("/api/auth/send-otp", { email });
-    setStep(2);
-  };
+  const submit = async () => {
+    try {
+      setLoading(true);
 
-  const verifyOtp = async () => {
-    const res = await axios.post("/api/auth/verify-otp", {
-      email,
-      otp,
-    });
-
-    localStorage.setItem("userId", res.data.userId);
-
-    window.location.href =
-      "/products/invoice-recovery/dashboard";
+      if (isRegister) {
+        await axios.post("/api/auth/register", { email, password });
+        alert("📧 OTP sent to your email");
+      } else {
+        await axios.post("/api/auth/login", { email, password });
+        window.location.href =
+          "/products/invoice-recovery/dashboard";
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="p-10 max-w-md mx-auto">
-      <h1 className="text-2xl mb-4">Login</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {isRegister ? "Register" : "Login"}
+      </h1>
 
-      {step === 1 && (
-        <>
-          <input
-            className="border p-2 w-full mb-3"
-            placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
-          />
+      <input
+        placeholder="Email"
+        className="border p-2 w-full mb-3"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
 
-          <button
-            onClick={sendOtp}
-            className="bg-black text-white px-4 py-2 w-full"
-          >
-            Send OTP
-          </button>
-        </>
-      )}
+      <input
+        type="password"
+        placeholder="Password"
+        className="border p-2 w-full mb-3"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
-      {step === 2 && (
-        <>
-          <input
-            className="border p-2 w-full mb-3"
-            placeholder="Enter OTP"
-            onChange={(e) => setOtp(e.target.value)}
-          />
+      <button
+        onClick={submit}
+        disabled={loading}
+        className="bg-black text-white px-4 py-2 w-full"
+      >
+        {loading
+          ? "Processing..."
+          : isRegister
+          ? "Register"
+          : "Login"}
+      </button>
 
-          <button
-            onClick={verifyOtp}
-            className="bg-black text-white px-4 py-2 w-full"
-          >
-            Verify
-          </button>
-        </>
-      )}
+      <p
+        className="mt-4 text-sm cursor-pointer text-blue-600"
+        onClick={() => setIsRegister(!isRegister)}
+      >
+        {isRegister
+          ? "Already have an account? Login"
+          : "Create account"}
+      </p>
     </div>
   );
 }

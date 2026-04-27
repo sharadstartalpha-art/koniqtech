@@ -28,16 +28,27 @@ export default function CreateInvoicePage() {
 
       setLoading(true);
 
-      await axios.post("/api/invoices/create", {
-        clientEmail: form.clientEmail,
-        amount: Number(form.amount),
-        dueDate: form.dueDate || null,
-      });
+      await axios.post(
+        "/api/invoices/create",
+        {
+          clientEmail: form.clientEmail,
+          amount: Number(form.amount),
+          dueDate: form.dueDate,
+        },
+        {
+          withCredentials: true, // 🔥 VERY IMPORTANT (fixes 401)
+        }
+      );
 
       router.push("/products/invoice-recovery/invoices");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to create invoice");
+
+      if (err?.response?.status === 401) {
+        setError("You must be logged in");
+      } else {
+        setError("Failed to create invoice");
+      }
     } finally {
       setLoading(false);
     }
@@ -46,19 +57,16 @@ export default function CreateInvoicePage() {
   return (
     <Layout>
       <div className="max-w-md">
-        {/* HEADER */}
         <h1 className="text-2xl font-bold mb-6">
           Create Invoice
         </h1>
 
-        {/* ERROR */}
         {error && (
           <p className="mb-4 text-red-500 text-sm">
             {error}
           </p>
         )}
 
-        {/* EMAIL */}
         <input
           type="email"
           placeholder="Client Email"
@@ -69,7 +77,6 @@ export default function CreateInvoicePage() {
           }
         />
 
-        {/* AMOUNT */}
         <input
           type="number"
           placeholder="Amount"
@@ -80,7 +87,6 @@ export default function CreateInvoicePage() {
           }
         />
 
-        {/* DUE DATE */}
         <input
           type="date"
           className="border p-3 w-full mb-6 rounded"
@@ -90,7 +96,6 @@ export default function CreateInvoicePage() {
           }
         />
 
-        {/* BUTTON */}
         <button
           onClick={submit}
           disabled={loading}

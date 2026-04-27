@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 
+type Invoice = {
+  id: string;
+  clientEmail: string;
+  amount: number;
+  status: string;
+};
+
 export default function InvoiceListPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<Invoice[]>([]);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     load();
@@ -14,10 +22,13 @@ export default function InvoiceListPage() {
 
   const load = async () => {
     try {
+      setLoading(true);
       const res = await axios.get("/api/invoices/list");
       setData(res.data);
     } catch (err) {
       console.error("Failed to load invoices", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,9 +36,9 @@ export default function InvoiceListPage() {
     try {
       setLoadingId(id);
       await axios.post("/api/invoices/mark-paid", { id });
-      load();
+      await load();
     } catch (err) {
-      console.error(err);
+      console.error("Mark paid failed", err);
     } finally {
       setLoadingId(null);
     }
@@ -37,9 +48,9 @@ export default function InvoiceListPage() {
     try {
       setLoadingId(id);
       await axios.post("/api/invoices/delete", { id });
-      load();
+      await load();
     } catch (err) {
-      console.error(err);
+      console.error("Delete failed", err);
     } finally {
       setLoadingId(null);
     }
@@ -60,74 +71,78 @@ export default function InvoiceListPage() {
           </a>
         </div>
 
-        {/* TABLE */}
-        <div className="bg-white shadow rounded-xl overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-100 text-left">
-              <tr>
-                <th className="p-4">Email</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {data.length === 0 ? (
+        {/* LOADING */}
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">
+            Loading invoices...
+          </div>
+        ) : (
+          <div className="bg-white shadow rounded-xl overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-100 text-left">
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="text-center p-6 text-gray-500"
-                  >
-                    No invoices found
-                  </td>
+                  <th className="p-4">Email</th>
+                  <th className="p-4">Amount</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Actions</th>
                 </tr>
-              ) : (
-                data.map((i: any) => (
-                  <tr key={i.id} className="border-t">
-                    <td className="p-4">{i.clientEmail}</td>
+              </thead>
 
-                    <td className="p-4 font-semibold">
-                      ${i.amount}
-                    </td>
-
-                    <td className="p-4">
-                      <span
-                        className={
-                          i.status === "paid"
-                            ? "text-green-600 font-medium"
-                            : "text-red-500 font-medium"
-                        }
-                      >
-                        {i.status}
-                      </span>
-                    </td>
-
-                    <td className="p-4 space-x-2">
-                      <button
-                        onClick={() => markPaid(i.id)}
-                        disabled={loadingId === i.id}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                      >
-                        {loadingId === i.id
-                          ? "..."
-                          : "Mark Paid"}
-                      </button>
-
-                      <button
-                        onClick={() => deleteInvoice(i.id)}
-                        disabled={loadingId === i.id}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
+              <tbody>
+                {data.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="text-center p-6 text-gray-500"
+                    >
+                      No invoices found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  data.map((i) => (
+                    <tr key={i.id} className="border-t">
+                      <td className="p-4">{i.clientEmail}</td>
+
+                      <td className="p-4 font-semibold">
+                        ${i.amount}
+                      </td>
+
+                      <td className="p-4">
+                        <span
+                          className={
+                            i.status === "paid"
+                              ? "text-green-600 font-medium"
+                              : "text-red-500 font-medium"
+                          }
+                        >
+                          {i.status}
+                        </span>
+                      </td>
+
+                      <td className="p-4 space-x-2">
+                        <button
+                          onClick={() => markPaid(i.id)}
+                          disabled={loadingId === i.id}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                        >
+                          {loadingId === i.id ? "..." : "Mark Paid"}
+                        </button>
+
+                        <button
+                          onClick={() => deleteInvoice(i.id)}
+                          disabled={loadingId === i.id}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </Layout>
   );

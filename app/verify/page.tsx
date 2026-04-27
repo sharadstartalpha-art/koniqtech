@@ -1,70 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import axios from "axios";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import VerifyClient from "./VerifyClient";
 
-export default function VerifyPage() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const email = params.get("email") || "";
-
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-
-  const handleChange = (value: string, index: number) => {
-    if (!/^[0-9]?$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-
-    // auto focus next
-    if (value && index < 5) {
-      const next = document.getElementById(`otp-${index + 1}`);
-      next?.focus();
-    }
-  };
-
-  const verify = async () => {
-    const code = otp.join("");
-
-    try {
-      await axios.post("/api/auth/verify-otp", {
-        email,
-        otp: code,
-      });
-
-      alert("Verified ✅");
-
-      router.push("/login");
-    } catch (err: any) {
-      alert(err.response?.data?.error);
-    }
-  };
-
+export default function Page() {
   return (
-    <div className="p-10 max-w-md mx-auto text-center">
-      <h1 className="text-2xl mb-4">Enter OTP</h1>
-
-      <div className="flex justify-center gap-2 mb-4">
-        {otp.map((digit, i) => (
-          <input
-            key={i}
-            id={`otp-${i}`}
-            value={digit}
-            onChange={(e) => handleChange(e.target.value, i)}
-            className="w-10 h-12 border text-center text-xl"
-            maxLength={1}
-          />
-        ))}
-      </div>
-
-      <button
-        onClick={verify}
-        className="bg-black text-white px-4 py-2 w-full"
-      >
-        Verify
-      </button>
-    </div>
+    <Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+      <VerifyClient />
+    </Suspense>
   );
 }

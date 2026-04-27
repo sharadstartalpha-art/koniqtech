@@ -1,46 +1,52 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST(req: Request) {
-  const { email, otp } = await req.json();
+  try {
+    const { email, otp } = await req.json();
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
+    if (!email || !otp) {
+      return NextResponse.json(
+        { error: "Email and OTP required" },
+        { status: 400 }
+      );
+    }
 
-  if (!user) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || user.otp !== otp) {
+      return NextResponse.json(
+        { error: "Invalid OTP" },
+        { status: 400 }
+      );
+    }
+
+    if (!user.otpExpiry || new Date() > user.otpExpiry) {
+      return NextResponse.json(
+        { error: "OTP expired" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ mark verified
+    await prisma.user.update({
+      where: { email },
+      data: {
+        otp: null,
+        otpExpiry: null,
+        isVerified: true,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("VERIFY OTP ERROR:", error);
+
     return NextResponse.json(
-      { error: "User not found" },
-      { status: 400 }
+      { error: "Verification failed" },
+      { status: 500 }
     );
   }
-
-  // ✅ Proper typing (no any hacks)
-  if (user.otp !== otp) {
-    return NextResponse.json(
-      { error: "Invalid OTP" },
-      { status: 400 }
-    );
-  }
-
-  if (!user.otpExpiry || new Date() > user.otpExpiry) {
-    return NextResponse.json(
-      { error: "OTP expired" },
-      { status: 400 }
-    );
-  }
-
-  // ✅ FIX: await cookies()
-  const cookieStore = await cookies();
-
-  cookieStore.set("user", user.id, {
-    httpOnly: true,
-    path: "/",
-  });
-
-  return NextResponse.json({
-    success: true,
-    userId: user.id,
-  });
 }

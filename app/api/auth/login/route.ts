@@ -7,6 +7,13 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Email and password required" },
+        { status: 400 }
+      );
+    }
+
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -14,6 +21,14 @@ export async function POST(req: Request) {
     if (!user || !user.password) {
       return NextResponse.json(
         { error: "Invalid credentials" },
+        { status: 400 }
+      );
+    }
+
+    // ❌ BLOCK unverified users
+    if (!user.isVerified) {
+      return NextResponse.json(
+        { error: "Please verify your email first" },
         { status: 400 }
       );
     }
@@ -27,7 +42,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ FIXED: use await cookies()
     const cookieStore = await cookies();
 
     cookieStore.set("user", user.id, {

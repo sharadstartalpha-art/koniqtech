@@ -13,8 +13,9 @@ export default function LandingPage() {
         Stop chasing clients. Get paid faster with automated reminders.
       </p>
 
+      {/* ✅ FIX: go to product page, not dashboard */}
       <Link
-        href="/products/invoice-recovery/dashboard"
+        href="/products/invoice-recovery"
         className="bg-black text-white px-6 py-3"
       >
         Get Started

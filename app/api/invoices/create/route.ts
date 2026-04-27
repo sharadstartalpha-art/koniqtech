@@ -2,19 +2,32 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const invoice = await prisma.invoice.create({
-    data: {
-      userId: body.userId,
-      productId: body.productId,
-      clientEmail: body.clientEmail,
-      clientName: body.clientName,
-      amount: body.amount,
-      dueDate: new Date(body.dueDate),
-      status: "unpaid",
-    },
-  });
+    // ✅ Generate PayPal payment link
+    const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${body.amount}`;
 
-  return NextResponse.json(invoice);
+    const invoice = await prisma.invoice.create({
+      data: {
+        userId: body.userId,
+        productId: body.productId,
+        clientEmail: body.clientEmail,
+        clientName: body.clientName,
+        amount: body.amount,
+        dueDate: new Date(body.dueDate),
+        status: "unpaid",
+        paymentLink, // ✅ ADDED HERE
+      },
+    });
+
+    return NextResponse.json(invoice);
+  } catch (error) {
+    console.error("CREATE INVOICE ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create invoice" },
+      { status: 500 }
+    );
+  }
 }

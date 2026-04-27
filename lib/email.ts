@@ -2,12 +2,9 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 🔹 Base sender (change later when domain verified)
-const FROM_EMAIL = "KoniqTech <onboarding@resend.dev>";
+// 🔹 CHANGE THIS AFTER DOMAIN VERIFY
+const FROM_EMAIL = "onboarding@resend.dev";
 
-/**
- * ✅ Send OTP Email
- */
 export async function sendOTP(email: string, otp: string) {
   try {
     console.log("📨 Sending OTP to:", email);
@@ -20,23 +17,25 @@ export async function sendOTP(email: string, otp: string) {
         <div style="font-family: Arial, sans-serif;">
           <h2>Your OTP Code</h2>
           <p>Use the code below to login:</p>
-          <h1 style="letter-spacing: 2px;">${otp}</h1>
+          <h1>${otp}</h1>
           <p>This code will expire in 5 minutes.</p>
         </div>
       `,
     });
 
-    console.log("✅ OTP sent:", response);
+    if (response.error) {
+      console.error("❌ RESEND ERROR:", response.error.message);
+      throw new Error(response.error.message);
+    }
+
+    console.log("✅ OTP sent successfully");
     return response;
-  } catch (error) {
-    console.error("❌ OTP EMAIL ERROR:", error);
+  } catch (error: any) {
+    console.error("❌ OTP EMAIL FAILED:", error.message);
     throw error;
   }
 }
 
-/**
- * ✅ Send Invoice Reminder Email
- */
 export async function sendReminderEmail(
   to: string,
   amount: number,
@@ -58,18 +57,15 @@ export async function sendReminderEmail(
             $${amount}
           </p>
 
-          <a 
-            href="${paymentLink}" 
-            style="
-              display:inline-block;
-              margin-top:12px;
-              padding:10px 18px;
-              background:#000;
-              color:#fff;
-              text-decoration:none;
-              border-radius:6px;
-            "
-          >
+          <a href="${paymentLink}" style="
+            display:inline-block;
+            margin-top:12px;
+            padding:10px 18px;
+            background:#000;
+            color:#fff;
+            text-decoration:none;
+            border-radius:6px;
+          ">
             Pay Now
           </a>
 
@@ -78,10 +74,15 @@ export async function sendReminderEmail(
       `,
     });
 
-    console.log("✅ Reminder sent:", response);
+    if (response.error) {
+      console.error("❌ RESEND ERROR:", response.error.message);
+      throw new Error(response.error.message);
+    }
+
+    console.log("✅ Reminder sent successfully");
     return response;
-  } catch (error) {
-    console.error("❌ REMINDER EMAIL ERROR:", error);
+  } catch (error: any) {
+    console.error("❌ REMINDER EMAIL FAILED:", error.message);
     throw error;
   }
 }

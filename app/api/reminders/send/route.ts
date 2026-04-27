@@ -1,33 +1,17 @@
-import { prisma } from "@/lib/prisma";
-import { sendReminderEmail } from "@/lib/email";
+import { runReminders } from "@/lib/reminder";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const invoices = await prisma.invoice.findMany({
-    where: { status: "unpaid" },
-  });
+  try {
+    await runReminders();
 
-  for (const inv of invoices) {
-    const diff =
-      (new Date().getTime() - new Date(inv.dueDate).getTime()) /
-      (1000 * 60 * 60 * 24);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Reminder job failed:", error);
 
-    if (diff >= 1) {
-      await sendReminderEmail(
-        inv.clientEmail,
-        inv.amount,
-        inv.paymentLink || "#"
-      );
-
-      await prisma.reminder.create({
-        data: {
-          invoiceId: inv.id,
-          type: "day1",
-          status: "sent",
-        },
-      });
-    }
+    return NextResponse.json(
+      { error: "Failed to run reminders" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ success: true });
 }

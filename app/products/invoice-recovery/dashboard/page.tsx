@@ -44,55 +44,82 @@ export default function DashboardPage() {
     }
   };
 
-  const isSubscribed = false; // replace with DB later
+  const isSubscribed = false; // 🔥 replace with DB later
 
   return (
     <Layout>
-      <h1 className="text-3xl font-bold mb-8">
-        Dashboard
-      </h1>
+      <div>
+        <h1 className="text-3xl font-bold mb-8">
+          Dashboard
+        </h1>
 
-      {!isSubscribed ? (
-        <div className="bg-white p-6 rounded-xl shadow">
-          <p className="mb-4 text-gray-600">
-            You need a subscription to use this product.
-          </p>
+        {!isSubscribed ? (
+          <div className="bg-white p-6 rounded-xl shadow">
+            <p className="mb-4 text-gray-600">
+              You need a subscription to use this product.
+            </p>
 
-          <button
-            onClick={subscribe}
-            disabled={loading}
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg"
-          >
-            {loading ? "Redirecting..." : "Subscribe Now"}
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-6">
-
-            <div className="bg-blue-500 text-white p-6 rounded-xl">
-              <p>Recovered</p>
-              <h2 className="text-3xl font-bold">
-                ${data.recovered || 0}
-              </h2>
-            </div>
-
-            <div className="bg-green-500 text-white p-6 rounded-xl">
-              <p>Pending</p>
-              <h2 className="text-3xl font-bold">
-                ${data.pending || 0}
-              </h2>
-            </div>
-
-            <div className="bg-red-500 text-white p-6 rounded-xl">
-              <p>Invoices</p>
-              <h2 className="text-3xl font-bold">
-                {data.count || 0}
-              </h2>
-            </div>
+            <button
+              onClick={subscribe}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+            >
+              {loading ? "Redirecting..." : "Subscribe Now"}
+            </button>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            {/* 🔥 STATS CARDS */}
+            <div className="grid grid-cols-3 gap-6">
+
+              <Card
+                title="Recovered"
+                value={`$${data.recovered || 0}`}
+                color="blue"
+              />
+
+              <Card
+                title="Pending"
+                value={`$${data.pending || 0}`}
+                color="green"
+              />
+
+              <Card
+                title="Invoices"
+                value={data.count || 0}
+                color="red"
+              />
+            </div>
+
+            {/* 📊 ACTIVITY */}
+            <div className="bg-white mt-6 p-6 rounded-xl shadow">
+              <h2 className="mb-4 font-semibold">
+                Recent Activity
+              </h2>
+
+              <p className="text-gray-500">
+                Payments & reminders will show here
+              </p>
+            </div>
+          </>
+        )}
+      </div>
     </Layout>
+  );
+}
+
+/* 🔥 CARD COMPONENT */
+function Card({ title, value, color }: any) {
+  const styles: any = {
+    blue: "bg-blue-500 text-white",
+    green: "bg-green-500 text-white",
+    red: "bg-red-500 text-white",
+  };
+
+  return (
+    <div className={`${styles[color]} p-6 rounded-xl shadow`}>
+      <p className="text-sm opacity-80">{title}</p>
+      <h2 className="text-3xl font-bold">{value}</h2>
+    </div>
   );
 }

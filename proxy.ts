@@ -3,17 +3,18 @@ import type { NextRequest } from "next/server";
 
 export function proxy(req: NextRequest) {
   const user = req.cookies.get("user")?.value;
+  const role = req.cookies.get("role")?.value;
 
-  const url = req.nextUrl.pathname;
+  const path = req.nextUrl.pathname;
 
-  // Protect product routes
-  if (url.startsWith("/products") && !user) {
+  // USER routes
+  if (path.startsWith("/products") && !user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Protect admin
-  if (url.startsWith("/admin") && user !== "admin") {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // ADMIN routes
+  if (path.startsWith("/admin") && role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();

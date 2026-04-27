@@ -2,28 +2,42 @@
 
 import { useState } from "react";
 
-export default function InvoiceRecoveryPage() {
+export default function ProductPage() {
   const [loading, setLoading] = useState(false);
 
   const subscribe = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch("/api/payments/checkout", {
-      method: "POST",
-    });
+      const res = await fetch("/api/payments/subscribe", {
+        method: "POST",
+      });
 
-    const data = await res.json();
-    window.location.href = data.url;
+      const data = await res.json();
+
+      console.log("SUBSCRIBE RESPONSE:", data);
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Payment error");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-10">
+    <div className="p-10 text-center">
       <h1 className="text-3xl font-bold mb-4">
         Invoice Recovery System
       </h1>
 
-      <p className="mb-6 text-gray-600">
-        Automatically send reminders and recover unpaid invoices.
+      <p className="mb-6">
+        Automate reminders and recover unpaid invoices easily.
       </p>
 
       <button

@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
+    // 🔹 validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password required" },
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
       where: { email },
     });
 
+    // 🔹 invalid user
     if (!user || !user.password) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ❌ BLOCK unverified users
+    // 🔹 block unverified users
     if (!user.isVerified) {
       return NextResponse.json(
         { error: "Please verify your email first" },
@@ -33,6 +35,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // 🔹 password check
     const valid = await bcrypt.compare(password, user.password);
 
     if (!valid) {
@@ -44,12 +47,22 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies();
 
+    // ✅ set user id
     cookieStore.set("user", user.id, {
       httpOnly: true,
       path: "/",
     });
 
-    return NextResponse.json({ success: true });
+    // ✅ set role (ADMIN / USER)
+    cookieStore.set("role", user.role, {
+      httpOnly: true,
+      path: "/",
+    });
+
+    return NextResponse.json({
+      success: true,
+      role: user.role,
+    });
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 

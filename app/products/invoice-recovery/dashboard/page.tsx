@@ -17,28 +17,49 @@ export default function DashboardPage() {
   }, []);
 
   const fetchInvoices = async () => {
-    const res = await axios.get("/api/invoices/list");
-    setInvoices(res.data);
+    try {
+      const res = await axios.get("/api/invoices/list");
+      setInvoices(res.data);
+    } catch (err) {
+      console.error("Failed to fetch invoices", err);
+    }
   };
 
+  // ✅ CLEAN SUBSCRIBE FUNCTION
   const subscribe = async () => {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await fetch("/api/payments/subscribe", {
-      method: "POST",
-    });
+      const res = await fetch("/api/payments/subscribe", {
+        method: "POST",
+      });
 
-    const data = await res.json();
-    window.location.href = data.url;
+      const data = await res.json();
+
+      console.log("SUBSCRIBE RESPONSE:", data);
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Payment error");
+      }
+    } catch (err) {
+      console.error("SUBSCRIBE ERROR:", err);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const total = invoices.reduce((sum, i) => sum + i.amount, 0);
 
-  const isSubscribed = false; // 🔥 replace later with DB check
+  const isSubscribed = false; // 🔥 replace with DB check later
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Dashboard New</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Dashboard
+      </h1>
 
       {!isSubscribed ? (
         <div className="mb-6">
@@ -60,6 +81,7 @@ export default function DashboardPage() {
             <div className="p-4 border rounded">
               Total: ${total}
             </div>
+
             <div className="p-4 border rounded">
               Invoices: {invoices.length}
             </div>

@@ -7,10 +7,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html>
-      <body>
+    <html lang="en">
+      <body className="bg-gray-100 text-gray-900">
+        {/* ✅ Global Header */}
         <Header />
-        {children}
+
+        {/* ✅ Centered Content */}
+        <div className="max-w-5xl mx-auto">
+          {children}
+        </div>
       </body>
     </html>
   );

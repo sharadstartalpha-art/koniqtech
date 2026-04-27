@@ -61,6 +61,7 @@ model Invoice {
   status      String   // unpaid, paid
   paymentLink String?
 
+  paidAt      DateTime?   // ✅ ADD THIS  
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id])

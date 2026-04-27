@@ -1,75 +1,70 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function VerifyPage() {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [timer, setTimer] = useState(60);
+  const router = useRouter();
+  const params = useSearchParams();
+  const email = params.get("email") || "";
 
-  // ⏱ countdown
-  useEffect(() => {
-    if (timer === 0) return;
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
-    const interval = setInterval(() => {
-      setTimer((t) => t - 1);
-    }, 1000);
+  const handleChange = (value: string, index: number) => {
+    if (!/^[0-9]?$/.test(value)) return;
 
-    return () => clearInterval(interval);
-  }, [timer]);
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    // auto focus next
+    if (value && index < 5) {
+      const next = document.getElementById(`otp-${index + 1}`);
+      next?.focus();
+    }
+  };
 
   const verify = async () => {
+    const code = otp.join("");
+
     try {
-      await axios.post("/api/auth/verify-otp", { email, otp });
+      await axios.post("/api/auth/verify-otp", {
+        email,
+        otp: code,
+      });
+
       alert("Verified ✅");
-      window.location.href = "/login";
+
+      router.push("/login");
     } catch (err: any) {
       alert(err.response?.data?.error);
     }
   };
 
-  const resend = async () => {
-    await axios.post("/api/auth/resend-otp", { email });
-    alert("OTP resent 📩");
-    setTimer(60);
-  };
-
   return (
-    <div className="p-10 max-w-md mx-auto">
-      <h1 className="text-2xl mb-4">Verify OTP</h1>
+    <div className="p-10 max-w-md mx-auto text-center">
+      <h1 className="text-2xl mb-4">Enter OTP</h1>
 
-      <input
-        placeholder="Email"
-        className="border p-2 w-full mb-3"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        placeholder="Enter OTP"
-        className="border p-2 w-full mb-3"
-        onChange={(e) => setOtp(e.target.value)}
-      />
+      <div className="flex justify-center gap-2 mb-4">
+        {otp.map((digit, i) => (
+          <input
+            key={i}
+            id={`otp-${i}`}
+            value={digit}
+            onChange={(e) => handleChange(e.target.value, i)}
+            className="w-10 h-12 border text-center text-xl"
+            maxLength={1}
+          />
+        ))}
+      </div>
 
       <button
         onClick={verify}
-        className="bg-black text-white px-4 py-2 w-full mb-3"
+        className="bg-black text-white px-4 py-2 w-full"
       >
         Verify
       </button>
-
-      {timer > 0 ? (
-        <p className="text-sm text-gray-500">
-          Resend OTP in {timer}s
-        </p>
-      ) : (
-        <button
-          onClick={resend}
-          className="text-blue-500 underline"
-        >
-          Resend OTP
-        </button>
-      )}
     </div>
   );
 }

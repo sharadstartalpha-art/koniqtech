@@ -1,6 +1,15 @@
-import { prisma } from "./prisma";
+import { NextAuthOptions } from "next-auth";
 
-export async function getUser() {
-  // TEMP: replace later with real auth
-  return prisma.user.findFirst();
-}
+export const authOptions: NextAuthOptions = {
+  providers: [
+    // your providers
+  ],
+  callbacks: {
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub as string; // ✅ force type
+      }
+      return session;
+    },
+  },
+};

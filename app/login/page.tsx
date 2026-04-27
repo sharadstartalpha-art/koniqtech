@@ -16,6 +16,7 @@ export default function LoginPage() {
       if (isRegister) {
         await axios.post("/api/auth/register", { email, password });
         alert("📧 OTP sent to your email");
+        window.location.href = "/verify";
       } else {
         await axios.post("/api/auth/login", { email, password });
         window.location.href =

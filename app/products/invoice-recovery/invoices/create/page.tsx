@@ -15,11 +15,14 @@ export default function CreateInvoicePage() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = async () => {
     try {
+      setError(null);
+
       if (!form.clientEmail || !form.amount) {
-        alert("Please fill all required fields");
+        setError("Email and amount are required");
         return;
       }
 
@@ -28,13 +31,13 @@ export default function CreateInvoicePage() {
       await axios.post("/api/invoices/create", {
         clientEmail: form.clientEmail,
         amount: Number(form.amount),
-        dueDate: form.dueDate,
+        dueDate: form.dueDate || null,
       });
 
       router.push("/products/invoice-recovery/invoices");
     } catch (err) {
       console.error(err);
-      alert("Failed to create invoice");
+      setError("Failed to create invoice");
     } finally {
       setLoading(false);
     }
@@ -43,9 +46,17 @@ export default function CreateInvoicePage() {
   return (
     <Layout>
       <div className="max-w-md">
+        {/* HEADER */}
         <h1 className="text-2xl font-bold mb-6">
           Create Invoice
         </h1>
+
+        {/* ERROR */}
+        {error && (
+          <p className="mb-4 text-red-500 text-sm">
+            {error}
+          </p>
+        )}
 
         {/* EMAIL */}
         <input
@@ -83,7 +94,7 @@ export default function CreateInvoicePage() {
         <button
           onClick={submit}
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg w-full"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg w-full disabled:opacity-50"
         >
           {loading ? "Creating..." : "Create Invoice"}
         </button>

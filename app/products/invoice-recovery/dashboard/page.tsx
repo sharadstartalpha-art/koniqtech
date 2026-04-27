@@ -4,9 +4,21 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 
+type Stats = {
+  recovered: number;
+  pending: number;
+  count: number;
+};
+
 export default function DashboardPage() {
-  const [data, setData] = useState<any>({});
+  const [data, setData] = useState<Stats>({
+    recovered: 0,
+    pending: 0,
+    count: 0,
+  });
+
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     fetchStats();
@@ -18,6 +30,8 @@ export default function DashboardPage() {
       setData(res.data);
     } catch (err) {
       console.error("Failed to load stats", err);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -29,12 +43,12 @@ export default function DashboardPage() {
         method: "POST",
       });
 
-      const data = await res.json();
+      const result = await res.json();
 
-      if (data.url) {
-        window.location.href = data.url;
+      if (result.url) {
+        window.location.href = result.url;
       } else {
-        alert(data.error || "Payment error");
+        alert(result.error || "Payment error");
       }
     } catch (err) {
       console.error(err);
@@ -44,17 +58,19 @@ export default function DashboardPage() {
     }
   };
 
-  const isSubscribed = false; // 🔥 replace with DB later
+  // 🔥 Replace with real DB check later
+  const isSubscribed = false;
 
   return (
     <Layout>
       <div>
+        {/* HEADER */}
         <h1 className="text-3xl font-bold mb-8">
           Dashboard
         </h1>
 
         {!isSubscribed ? (
-          <div className="bg-white p-6 rounded-xl shadow">
+          <div className="bg-white p-6 rounded-xl shadow max-w-md">
             <p className="mb-4 text-gray-600">
               You need a subscription to use this product.
             </p>
@@ -62,36 +78,37 @@ export default function DashboardPage() {
             <button
               onClick={subscribe}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg disabled:opacity-50"
             >
               {loading ? "Redirecting..." : "Subscribe Now"}
             </button>
           </div>
+        ) : fetching ? (
+          <div className="text-gray-500">Loading dashboard...</div>
         ) : (
           <>
-            {/* 🔥 STATS CARDS */}
-            <div className="grid grid-cols-3 gap-6">
-
+            {/* STATS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card
                 title="Recovered"
-                value={`$${data.recovered || 0}`}
+                value={`$${data.recovered}`}
                 color="blue"
               />
 
               <Card
                 title="Pending"
-                value={`$${data.pending || 0}`}
+                value={`$${data.pending}`}
                 color="green"
               />
 
               <Card
                 title="Invoices"
-                value={data.count || 0}
+                value={data.count}
                 color="red"
               />
             </div>
 
-            {/* 📊 ACTIVITY */}
+            {/* ACTIVITY */}
             <div className="bg-white mt-6 p-6 rounded-xl shadow">
               <h2 className="mb-4 font-semibold">
                 Recent Activity
@@ -108,9 +125,17 @@ export default function DashboardPage() {
   );
 }
 
-/* 🔥 CARD COMPONENT */
-function Card({ title, value, color }: any) {
-  const styles: any = {
+/* CARD COMPONENT */
+function Card({
+  title,
+  value,
+  color,
+}: {
+  title: string;
+  value: string | number;
+  color: "blue" | "green" | "red";
+}) {
+  const styles = {
     blue: "bg-blue-500 text-white",
     green: "bg-green-500 text-white",
     red: "bg-red-500 text-white",

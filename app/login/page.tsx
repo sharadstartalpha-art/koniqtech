@@ -9,19 +9,29 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const submit = async (e: any) => {
-    e.preventDefault(); // 🔥 prevents page reload
+    e.preventDefault();
 
     try {
       if (isRegister) {
         await axios.post("/api/auth/register", { email, password });
 
-        alert("OTP sent");
+        alert("OTP sent to your email");
         window.location.href = `/verify?email=${email}`;
       } else {
-        await axios.post("/api/auth/login", { email, password });
+        const res = await axios.post("/api/auth/login", {
+          email,
+          password,
+        });
 
-        window.location.href =
-          "/products/invoice-recovery/dashboard";
+        const data = res.data;
+
+        // ✅ ROLE BASED REDIRECT
+        if (data.role === "ADMIN") {
+          window.location.href = "/admin";
+        } else {
+          window.location.href =
+            "/products/invoice-recovery/dashboard";
+        }
       }
     } catch (err: any) {
       alert(err.response?.data?.error);
@@ -36,7 +46,9 @@ export default function LoginPage() {
 
       <form onSubmit={submit}>
         <input
+          type="email"
           placeholder="Email"
+          required
           className="border p-2 w-full mb-3"
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -44,12 +56,13 @@ export default function LoginPage() {
         <input
           type="password"
           placeholder="Password"
+          required
           className="border p-2 w-full mb-3"
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
-          type="submit" // 🔥 THIS enables Enter key
+          type="submit"
           className="bg-black text-white px-4 py-2 w-full"
         >
           {isRegister ? "Register" : "Login"}
@@ -57,11 +70,11 @@ export default function LoginPage() {
       </form>
 
       <p
-        className="mt-4 text-sm cursor-pointer"
+        className="mt-4 text-sm cursor-pointer text-blue-600"
         onClick={() => setIsRegister(!isRegister)}
       >
         {isRegister
-          ? "Already have account? Login"
+          ? "Already have an account? Login"
           : "Create account"}
       </p>
     </div>

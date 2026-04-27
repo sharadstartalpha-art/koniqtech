@@ -47,18 +47,18 @@ export async function POST(req: Request) {
 
     const cookieStore = await cookies();
 
-    // ✅ set user id
+    // ✅ set cookies
     cookieStore.set("user", user.id, {
       httpOnly: true,
       path: "/",
     });
 
-    // ✅ set role (ADMIN / USER)
     cookieStore.set("role", user.role, {
       httpOnly: true,
       path: "/",
     });
 
+    // ✅ return role for frontend redirect
     return NextResponse.json({
       success: true,
       role: user.role,

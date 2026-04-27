@@ -7,11 +7,13 @@ export async function POST(req: Request) {
 
     console.log("📩 PAYPAL WEBHOOK:", body.event_type);
 
-    // ✅ Handle subscription activation
+    /* =======================================================
+       🔥 1. SUBSCRIPTION ACTIVATED
+    ======================================================= */
     if (body.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
       const sub = body.resource;
 
-      const userId = sub.custom_id; // 🔥 mapped from subscribe API
+      const userId = sub.custom_id;
       const subscriptionId = sub.id;
 
       if (!userId) {
@@ -22,7 +24,7 @@ export async function POST(req: Request) {
         );
       }
 
-      // ✅ Prevent duplicate subscriptions
+      // ✅ Prevent duplicate subscription
       const existing = await prisma.subscription.findFirst({
         where: {
           paypalSubscriptionId: subscriptionId,
@@ -33,14 +35,43 @@ export async function POST(req: Request) {
         await prisma.subscription.create({
           data: {
             userId,
-            productId: "invoice-recovery", // 🔥 keep consistent
+            productId: "invoice-recovery",
             paypalSubscriptionId: subscriptionId,
             status: "active",
           },
         });
 
-        console.log("✅ Subscription created for user:", userId);
+        console.log("✅ Subscription created:", subscriptionId);
       }
+    }
+
+    /* =======================================================
+       💰 2. INVOICE PAYMENT RECEIVED
+    ======================================================= */
+    if (body.event_type === "PAYMENT.SALE.COMPLETED") {
+      const resource = body.resource;
+
+      // 🔥 Try multiple fields safely
+      const invoiceId =
+        resource?.custom ||
+        resource?.invoice_id ||
+        resource?.note;
+
+      if (!invoiceId) {
+        console.warn("⚠️ No invoice ID found in payment");
+        return NextResponse.json({ ok: true });
+      }
+
+      // ✅ Update invoice status
+      await prisma.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: "paid",
+          paidAt: new Date(),
+        },
+      });
+
+      console.log("💰 Invoice marked paid:", invoiceId);
     }
 
     return NextResponse.json({ ok: true });

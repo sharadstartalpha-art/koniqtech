@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 text-center px-6 py-16">
 
@@ -55,12 +55,12 @@ export default function Home() {
         <div className="bg-white p-6 shadow rounded">
           🤖 <h3 className="font-semibold mt-2">Fully Automated</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Smart reminders sent at the right time automatically.
+            Smart reminders sent automatically.
           </p>
         </div>
       </div>
 
-      {/* FINAL CTA */}
+      {/* CTA */}
       <div className="mt-16">
         <Link
           href="/login"

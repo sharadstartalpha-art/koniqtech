@@ -15,8 +15,6 @@ export default function ProductPage() {
 
       const data = await res.json();
 
-      console.log("SUBSCRIBE RESPONSE:", data);
-
       if (data.url) {
         window.location.href = data.url;
       } else {

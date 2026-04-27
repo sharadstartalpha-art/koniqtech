@@ -16,7 +16,7 @@ export async function POST() {
 
     // ✅ Create PayPal subscription
     const res = await fetch(
-      "https://api-m.sandbox.paypal.com/v1/billing/subscriptions",
+      "https://api-m.paypal.com/v1/billing/subscriptions",
       {
         method: "POST",
         headers: {

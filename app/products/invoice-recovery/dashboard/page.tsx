@@ -21,7 +21,6 @@ export default function Page() {
     }
   };
 
-  // ✅ Subscribe
   const subscribe = async () => {
     try {
       setLoading(true);
@@ -45,65 +44,61 @@ export default function Page() {
     }
   };
 
-  const isSubscribed = false; // 🔥 replace with real DB check
+  const isSubscribed = false; // 🔥 replace with DB later
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold mb-6">
-        Dashboard
-      </h1>
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
       {!isSubscribed ? (
-        <div className="bg-white p-6 rounded shadow">
-          <p className="mb-4">
+        <div className="bg-white p-6 rounded-xl shadow">
+          <p className="mb-4 text-gray-600">
             You need a subscription to use this product.
           </p>
 
           <button
             onClick={subscribe}
             disabled={loading}
-            className="bg-black text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg transition"
           >
             {loading ? "Redirecting..." : "Subscribe Now"}
           </button>
         </div>
       ) : (
         <>
-          {/* ✅ CARDS */}
+          {/* 🔥 STATS CARDS */}
           <div className="grid grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded shadow">
-              <p className="text-sm text-gray-500">
-                Recovered
-              </p>
-              <h2 className="text-2xl font-bold">
+
+            {/* BLUE */}
+            <div className="bg-blue-500 text-white p-6 rounded-xl shadow">
+              <p className="text-sm opacity-80">Recovered</p>
+              <h2 className="text-3xl font-bold">
                 ${data.recovered || 0}
               </h2>
             </div>
 
-            <div className="bg-white p-6 rounded shadow">
-              <p className="text-sm text-gray-500">
-                Pending
-              </p>
-              <h2 className="text-2xl font-bold">
+            {/* GREEN */}
+            <div className="bg-green-500 text-white p-6 rounded-xl shadow">
+              <p className="text-sm opacity-80">Pending</p>
+              <h2 className="text-3xl font-bold">
                 ${data.pending || 0}
               </h2>
             </div>
 
-            <div className="bg-white p-6 rounded shadow">
-              <p className="text-sm text-gray-500">
-                Invoices
-              </p>
-              <h2 className="text-2xl font-bold">
+            {/* RED */}
+            <div className="bg-red-500 text-white p-6 rounded-xl shadow">
+              <p className="text-sm opacity-80">Invoices</p>
+              <h2 className="text-3xl font-bold">
                 {data.count || 0}
               </h2>
             </div>
           </div>
 
-          {/* ✅ ACTION */}
-          <div className="mt-6">
+          {/* ACTION */}
+          <div className="mt-8">
             <a
               href="/products/invoice-recovery/invoices/create"
-              className="bg-black text-white px-4 py-2 rounded"
+              className="bg-black text-white px-5 py-2 rounded-lg hover:opacity-80"
             >
               Add Invoice
             </a>

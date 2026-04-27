@@ -1,24 +1,42 @@
+"use client";
+
+import Link from "next/link";
+
 export default function Layout({ children }: any) {
   return (
     <div className="flex min-h-screen bg-gray-100">
 
-      {/* Sidebar */}
-      <div className="w-60 bg-white shadow p-4">
-        <h2 className="font-bold mb-6">KoniqTech</h2>
+      {/* 🔥 SIDEBAR */}
+      <aside className="w-60 bg-white shadow-md p-6">
 
-        <a href="/products/invoice-recovery/dashboard" className="block mb-2">
-          Dashboard
-        </a>
+        {/* LOGO (click → home) */}
+        <Link href="/" className="text-xl font-bold mb-8 block">
+          KoniqTech
+        </Link>
 
-        <a href="/products/invoice-recovery/invoices" className="block mb-2">
-          Invoices
-        </a>
-      </div>
+        {/* NAV */}
+        <nav className="flex flex-col gap-3 text-gray-700">
 
-      {/* Content */}
-      <div className="flex-1 p-6">
+          <Link
+            href="/products/invoice-recovery/dashboard"
+            className="hover:text-blue-600"
+          >
+            Dashboard
+          </Link>
+
+          <Link
+            href="/products/invoice-recovery/invoices"
+            className="hover:text-blue-600"
+          >
+            Invoices
+          </Link>
+        </nav>
+      </aside>
+
+      {/* 🔥 CONTENT */}
+      <main className="flex-1 p-8">
         {children}
-      </div>
+      </main>
     </div>
   );
 }

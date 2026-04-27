@@ -19,7 +19,7 @@ model User {
 
   otp       String?
   otpExpiry DateTime?
-
+  isVerified Boolean  @default(false) // ✅ NEW
   createdAt DateTime @default(now())
 
   subscriptions Subscription[]

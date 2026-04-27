@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-export default function InvoiceList() {
+export default function InvoiceListPage() {
   const [data, setData] = useState([]);
 
   useEffect(() => {

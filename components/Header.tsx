@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Header() {
   const [user, setUser] = useState<any>(null);
@@ -18,8 +19,12 @@ export default function Header() {
   };
 
   return (
-    <div className="flex justify-between items-center p-4 border-b">
-      <h1 className="font-bold">KoniqTech</h1>
+    <div className="flex justify-between items-center p-4 border-b bg-white">
+
+      {/* ✅ LOGO FIXED */}
+      <Link href="/" className="font-bold text-lg">
+        KoniqTech
+      </Link>
 
       {user ? (
         <div className="relative">
@@ -28,7 +33,7 @@ export default function Header() {
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-2 bg-white border p-3 shadow">
+            <div className="absolute right-0 mt-2 bg-white border p-3 shadow rounded">
               <p className="text-sm mb-2">{user.email}</p>
 
               <button
@@ -41,9 +46,9 @@ export default function Header() {
           )}
         </div>
       ) : (
-        <a href="/login" className="text-blue-500">
+        <Link href="/login" className="text-blue-500">
           Login
-        </a>
+        </Link>
       )}
     </div>
   );

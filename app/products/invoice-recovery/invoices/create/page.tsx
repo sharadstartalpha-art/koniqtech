@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+import api from "@/lib/axios"; // ✅ use your custom axios
 import { useRouter } from "next/navigation";
 import Layout from "@/components/Layout";
 
@@ -21,6 +21,7 @@ export default function CreateInvoicePage() {
     try {
       setError(null);
 
+      // ✅ validation
       if (!form.clientEmail || !form.amount) {
         setError("Email and amount are required");
         return;
@@ -28,18 +29,14 @@ export default function CreateInvoicePage() {
 
       setLoading(true);
 
-      await axios.post(
-        "/api/invoices/create",
-        {
-          clientEmail: form.clientEmail,
-          amount: Number(form.amount),
-          dueDate: form.dueDate,
-        },
-        {
-          withCredentials: true, // 🔥 VERY IMPORTANT (fixes 401)
-        }
-      );
+      // ✅ API call (cookies included automatically)
+      await api.post("/api/invoices/create", {
+        clientEmail: form.clientEmail,
+        amount: Number(form.amount),
+        dueDate: form.dueDate,
+      });
 
+      // ✅ redirect
       router.push("/products/invoice-recovery/invoices");
     } catch (err: any) {
       console.error(err);
@@ -57,16 +54,19 @@ export default function CreateInvoicePage() {
   return (
     <Layout>
       <div className="max-w-md">
+        {/* HEADER */}
         <h1 className="text-2xl font-bold mb-6">
           Create Invoice
         </h1>
 
+        {/* ERROR */}
         {error && (
           <p className="mb-4 text-red-500 text-sm">
             {error}
           </p>
         )}
 
+        {/* EMAIL */}
         <input
           type="email"
           placeholder="Client Email"
@@ -77,6 +77,7 @@ export default function CreateInvoicePage() {
           }
         />
 
+        {/* AMOUNT */}
         <input
           type="number"
           placeholder="Amount"
@@ -87,6 +88,7 @@ export default function CreateInvoicePage() {
           }
         />
 
+        {/* DUE DATE */}
         <input
           type="date"
           className="border p-3 w-full mb-6 rounded"
@@ -96,6 +98,7 @@ export default function CreateInvoicePage() {
           }
         />
 
+        {/* BUTTON */}
         <button
           onClick={submit}
           disabled={loading}

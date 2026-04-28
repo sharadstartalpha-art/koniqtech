@@ -13,22 +13,33 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="p-6 grid grid-cols-4 gap-6">
+    <div className="p-6 space-y-6">
 
-      <Card title="Total Revenue" value={`$${data.revenue}`} />
-      <Card title="Users" value={data.users} />
-      <Card title="Active Subs" value={data.subs} />
-      <Card title="Invoices Paid" value={data.paid} />
+      {/* HEADER */}
+      <h1 className="text-lg font-medium text-gray-900">
+        Overview
+      </h1>
 
+      {/* STATS */}
+      <div className="grid grid-cols-4 gap-4">
+
+        <Card title="Total Revenue" value={`$${data.revenue || 0}`} />
+        <Card title="Users" value={data.users || 0} />
+        <Card title="Active Subs" value={data.subs || 0} />
+        <Card title="Invoices Paid" value={data.paid || 0} />
+
+      </div>
     </div>
   );
 }
 
 function Card({ title, value }: any) {
   return (
-    <div className="bg-white p-6 shadow rounded">
-      <p>{title}</p>
-      <h2 className="text-2xl font-bold">{value}</h2>
+    <div className="bg-white border border-gray-200 rounded-md px-4 py-3">
+      <p className="text-xs text-gray-500 mb-1">{title}</p>
+      <h2 className="text-lg font-semibold text-gray-900">
+        {value}
+      </h2>
     </div>
   );
 }

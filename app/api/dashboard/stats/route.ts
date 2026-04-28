@@ -14,19 +14,21 @@ export async function GET() {
 
   const count = invoices.length;
 
-  // 🔥 SIMPLE AI INSIGHT (upgrade later with OpenAI)
+  // 🔥 AI INSIGHTS LOGIC
   let insights = "No insights yet";
 
   if (pending > recovered) {
-    insights = "You have more pending payments than recovered. Consider sending reminders.";
+    insights =
+      "You have more pending payments than recovered. Consider sending reminders.";
   } else if (recovered > 0) {
-    insights = "Great job! You're successfully recovering payments.";
+    insights =
+      "Great job! Your recovery rate is healthy. Keep it up.";
   }
 
   return NextResponse.json({
     recovered,
     pending,
     count,
-    insights,
+    insights, // ✅ ALWAYS INCLUDED
   });
 }

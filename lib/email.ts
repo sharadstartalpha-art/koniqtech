@@ -2,37 +2,36 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ⚠️ Make sure this domain is verified in Resend
-const FROM_EMAIL = "KoniqTech <noreply@koniqtech.com>";
+// ⚠️ Use onboarding@resend.dev for testing OR your verified domain
+const FROM_EMAIL = "KoniqTech <onboarding@resend.dev>";
 
-/* 🔹 GENERIC EMAIL SENDER (reusable) */
-async function sendEmail(
+/* 🔹 CLEAN GENERIC EMAIL SENDER */
+export async function sendEmail(
   to: string,
   subject: string,
   html: string
 ) {
   try {
-    const res = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject,
       html,
     });
 
-    if (res.error) {
-      console.error("❌ RESEND ERROR:", res.error.message);
-      throw new Error(res.error.message);
+    if (error) {
+      console.error("❌ RESEND ERROR:", error.message);
+      throw new Error(error.message);
     }
 
     console.log(`✅ Email sent → ${to}`);
-    return res;
-  } catch (error: any) {
-    console.error("❌ EMAIL FAILED:", error.message);
-    throw error;
+  } catch (err: any) {
+    console.error("❌ EMAIL FAILED:", err.message);
+    throw err;
   }
 }
 
-/* 🔐 OTP EMAIL */
+/* 🔐 OTP EMAIL (UNCHANGED) */
 export async function sendOTP(email: string, otp: string) {
   console.log("📨 Sending OTP to:", email);
 
@@ -48,7 +47,7 @@ export async function sendOTP(email: string, otp: string) {
   return sendEmail(email, "Your Login Code", html);
 }
 
-/* 💰 INVOICE REMINDER EMAIL */
+/* 💰 INVOICE REMINDER EMAIL (UNCHANGED) */
 export async function sendReminderEmail(
   to: string,
   amount: number,
@@ -83,6 +82,3 @@ export async function sendReminderEmail(
 
   return sendEmail(to, "Invoice Reminder", html);
 }
-
-/* 🔹 EXPORT (IMPORTANT for reminders.ts) */
-export { sendEmail };

@@ -20,11 +20,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
+  // 🔥 Replace with real DB value later
+  const isSubscribed = true;
+
   useEffect(() => {
-    fetchStats();
+    load();
+
+    // 🔥 real-time updates every 3s
+    const interval = setInterval(load, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchStats = async () => {
+  const load = async () => {
     try {
       const res = await axios.get("/api/dashboard/stats");
       setData(res.data);
@@ -58,9 +66,6 @@ export default function DashboardPage() {
     }
   };
 
-  // 🔥 Replace with real DB check later
-  const isSubscribed = false;
-
   return (
     <Layout>
       <div>
@@ -69,6 +74,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
 
+        {/* 🔒 SUBSCRIPTION GATE */}
         {!isSubscribed ? (
           <div className="bg-white p-6 rounded-xl shadow max-w-md">
             <p className="mb-4 text-gray-600">
@@ -84,31 +90,32 @@ export default function DashboardPage() {
             </button>
           </div>
         ) : fetching ? (
-          <div className="text-gray-500">Loading dashboard...</div>
+          <div className="text-gray-500">
+            Loading dashboard...
+          </div>
         ) : (
           <>
-            {/* STATS */}
+            {/* 📊 STATS */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card
                 title="Recovered"
                 value={`$${data.recovered}`}
-                color="blue"
+                color="green"
               />
 
               <Card
                 title="Pending"
                 value={`$${data.pending}`}
-                color="green"
+                color="red"
               />
 
               <Card
                 title="Invoices"
                 value={data.count}
-                color="red"
               />
             </div>
 
-            {/* ACTIVITY */}
+            {/* 📜 ACTIVITY */}
             <div className="bg-white mt-6 p-6 rounded-xl shadow">
               <h2 className="mb-4 font-semibold">
                 Recent Activity
@@ -125,7 +132,7 @@ export default function DashboardPage() {
   );
 }
 
-/* CARD COMPONENT */
+/* 📦 CARD COMPONENT */
 function Card({
   title,
   value,
@@ -133,18 +140,23 @@ function Card({
 }: {
   title: string;
   value: string | number;
-  color: "blue" | "green" | "red";
+  color?: "green" | "red";
 }) {
-  const styles = {
-    blue: "bg-blue-500 text-white",
-    green: "bg-green-500 text-white",
-    red: "bg-red-500 text-white",
-  };
-
   return (
-    <div className={`${styles[color]} p-6 rounded-xl shadow`}>
-      <p className="text-sm opacity-80">{title}</p>
-      <h2 className="text-3xl font-bold">{value}</h2>
+    <div className="bg-white p-6 rounded-xl shadow">
+      <p className="text-gray-500">{title}</p>
+
+      <h2
+        className={`text-3xl font-bold ${
+          color === "green"
+            ? "text-green-600"
+            : color === "red"
+            ? "text-red-500"
+            : ""
+        }`}
+      >
+        {value}
+      </h2>
     </div>
   );
 }

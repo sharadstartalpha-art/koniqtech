@@ -15,16 +15,16 @@ export default async function Page() {
   return (
     <Layout>
       {!allowed ? (
-        <div className="bg-white border rounded-lg p-6 max-w-md">
-          <p className="text-gray-600 mb-4">
-            You need a subscription to use this product.
+        <div className="bg-white border border-gray-200 rounded-md p-5 max-w-md">
+          <p className="text-sm text-gray-700 mb-3">
+            You need an active subscription to use this product.
           </p>
 
           <a
             href="/products/invoice-recovery/subscribe"
-            className="bg-blue-600 text-white px-4 py-2 rounded-md"
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-black text-white rounded-md hover:opacity-90"
           >
-            Subscribe Now
+            Subscribe
           </a>
         </div>
       ) : (

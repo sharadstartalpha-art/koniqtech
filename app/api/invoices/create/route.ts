@@ -1,25 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"; // adjust if your path differs
+import { getUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ Get logged-in user
-    const session = await getServerSession(authOptions);
+    // ✅ GET USER FROM COOKIE
+    const user = await getUser();
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
-
-    // ✅ Validate input
+    // ✅ VALIDATION
     if (!body.clientEmail || !body.amount || !body.dueDate) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -27,31 +24,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Step 1: create invoice (no payment link yet)
+    // ✅ CREATE INVOICE
     const invoice = await prisma.invoice.create({
       data: {
-        userId,
-        productId: "invoice-recovery", // keep fixed for this SaaS
+        userId: user.id,
+        productId: "invoice-recovery",
         clientEmail: body.clientEmail,
-        clientName: body.clientName || "",
+        clientName: "",
         amount: Number(body.amount),
         dueDate: new Date(body.dueDate),
         status: "unpaid",
       },
     });
 
-    // ✅ Step 2: generate PayPal link with invoiceId
+    // ✅ PAYMENT LINK
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
-    // ✅ Step 3: update invoice
-    const updatedInvoice = await prisma.invoice.update({
+    const updated = await prisma.invoice.update({
       where: { id: invoice.id },
       data: { paymentLink },
     });
 
-    return NextResponse.json(updatedInvoice);
+    return NextResponse.json(updated);
   } catch (error) {
-    console.error("❌ CREATE INVOICE ERROR:", error);
+    console.error("CREATE INVOICE ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to create invoice" },

@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
-    // 🔹 validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password required" },
@@ -21,7 +20,6 @@ export async function POST(req: Request) {
       where: { email },
     });
 
-    // 🔹 invalid user
     if (!user || !user.password) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -29,7 +27,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 email not verified
     if (!user.isVerified) {
       return NextResponse.json(
         { error: "Please verify your email first" },
@@ -37,7 +34,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔹 password check
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
@@ -47,7 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ CREATE JWT TOKEN
+    // ✅ JWT
     const token = await new SignJWT({
       id: user.id,
       email: user.email,
@@ -57,20 +53,20 @@ export async function POST(req: Request) {
       .setExpirationTime("7d")
       .sign(secret);
 
-    // ✅ RESPONSE + COOKIE
-    const response = NextResponse.json({
+    const res = NextResponse.json({
       success: true,
       role: user.role,
     });
 
-    response.cookies.set("token", token, {
+    // ✅ IMPORTANT COOKIE FIX
+    res.cookies.set("token", token, {
       httpOnly: true,
-      secure: true,       // required for production (HTTPS)
-      sameSite: "none",   // required for Vercel
+      secure: true,
+      sameSite: "lax", // 🔥 critical
       path: "/",
     });
 
-    return response;
+    return res;
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 

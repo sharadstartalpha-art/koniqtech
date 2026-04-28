@@ -1,22 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { getUser } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+
+const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 🔐 Get logged-in user (JWT cookie)
-    const user = await getUser();
+    // ✅ GET TOKEN FROM COOKIE (FIXED)
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
-    if (!user) {
+    if (!token) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    // 🧾 Validate input
+    // ✅ VERIFY TOKEN
+    const { payload } = await jwtVerify(token, secret);
+
+    const userId = payload.id as string;
+
+    // ✅ VALIDATION
     const { clientEmail, amount, dueDate } = body;
 
     if (!clientEmail || !amount || !dueDate) {
@@ -26,10 +35,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 📦 Create invoice
+    // ✅ CREATE INVOICE
     const invoice = await prisma.invoice.create({
       data: {
-        userId: user.id,
+        userId,
         productId: "invoice-recovery",
         clientEmail,
         clientName: "",
@@ -39,16 +48,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // 💳 Generate payment link
+    // ✅ PAYMENT LINK
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
-    // 🔄 Update invoice with payment link
-    const updatedInvoice = await prisma.invoice.update({
+    const updated = await prisma.invoice.update({
       where: { id: invoice.id },
       data: { paymentLink },
     });
 
-    return NextResponse.json(updatedInvoice);
+    return NextResponse.json(updated);
   } catch (error) {
     console.error("❌ CREATE INVOICE ERROR:", error);
 

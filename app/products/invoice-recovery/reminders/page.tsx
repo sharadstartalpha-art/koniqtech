@@ -10,27 +10,31 @@ export default function RemindersPage() {
   const [preview, setPreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  // 🔮 Generate AI email
+  // 🔮 Generate email
   const generate = async () => {
     try {
       if (!amount) {
-        alert("Enter amount");
+        setError("Amount is required");
         return;
       }
 
+      setError("");
       setLoading(true);
-      setStatus(null);
 
       const res = await axios.post("/api/reminders/preview", {
-        amount: Number(amount),
+        amount: Number(amount), // ✅ FIX
       });
+
+      if (!res.data?.content) {
+        throw new Error("No content returned");
+      }
 
       setPreview(res.data.content);
     } catch (err) {
-      console.error(err);
-      setStatus("error");
+      console.error("Generate error:", err);
+      setError("Failed to generate email");
     } finally {
       setLoading(false);
     }
@@ -40,22 +44,25 @@ export default function RemindersPage() {
   const send = async () => {
     try {
       if (!email || !preview) {
-        alert("Email and content required");
+        setError("Email and content required");
         return;
       }
 
+      setError("");
       setSending(true);
-      setStatus(null);
 
       await axios.post("/api/reminders/send-custom", {
         email,
         content: preview,
       });
 
-      setStatus("success");
+      alert("✅ Email sent!");
+      setPreview("");
+      setEmail("");
+      setAmount("");
     } catch (err) {
-      console.error(err);
-      setStatus("error");
+      console.error("Send error:", err);
+      setError("Failed to send email");
     } finally {
       setSending(false);
     }
@@ -64,13 +71,12 @@ export default function RemindersPage() {
   return (
     <Layout>
       <div className="max-w-xl">
-        {/* HEADER */}
         <h1 className="text-2xl font-bold mb-6">
           Send Reminder
         </h1>
 
-        {/* FORM */}
         <div className="bg-white p-6 rounded-xl shadow">
+          {/* EMAIL */}
           <input
             type="email"
             placeholder="Client Email"
@@ -79,6 +85,7 @@ export default function RemindersPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
+          {/* AMOUNT */}
           <input
             type="number"
             placeholder="Amount"
@@ -91,10 +98,17 @@ export default function RemindersPage() {
           <button
             onClick={generate}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mb-4 disabled:opacity-50"
+            className="bg-blue-600 text-white px-4 py-2 rounded mb-4 w-full disabled:opacity-50"
           >
             {loading ? "Generating..." : "Generate Email"}
           </button>
+
+          {/* ERROR */}
+          {error && (
+            <p className="text-red-500 text-sm mb-3">
+              {error}
+            </p>
+          )}
 
           {/* PREVIEW */}
           {preview && (
@@ -113,19 +127,6 @@ export default function RemindersPage() {
                 {sending ? "Sending..." : "Send Email"}
               </button>
             </>
-          )}
-
-          {/* STATUS */}
-          {status === "success" && (
-            <p className="mt-4 text-green-600 text-sm">
-              ✅ Email sent successfully!
-            </p>
-          )}
-
-          {status === "error" && (
-            <p className="mt-4 text-red-500 text-sm">
-              ❌ Something went wrong
-            </p>
           )}
         </div>
       </div>

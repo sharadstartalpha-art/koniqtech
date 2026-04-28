@@ -2,70 +2,95 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const load = async () => {
+    const res = await axios.get("/api/admin/users");
+    setUsers(res.data);
+  };
 
   useEffect(() => {
-    axios.get("/api/admin/users").then((res) => {
-      setUsers(res.data);
-    });
+    load();
   }, []);
 
   const giveAccess = async (userId: string) => {
     try {
-      setLoading(userId);
+      setLoadingId(userId);
 
       await axios.post("/api/admin/give-access", {
         userId,
         productId: "invoice-recovery",
       });
 
-      alert("Access granted");
-    } catch (err) {
-      console.error(err);
+      toast.success("Access granted");
+
+      load();
+    } catch {
+      toast.error("Failed to grant access");
     } finally {
-      setLoading(null);
+      setLoadingId(null);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4">
 
-      {/* HEADER */}
-      <h1 className="text-lg font-medium">Users</h1>
+      <h1 className="text-lg font-semibold">Users</h1>
 
-      {/* TABLE */}
-      <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+      <div className="bg-white border rounded-md overflow-hidden">
 
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b text-gray-600">
+          <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="text-left px-4 py-2 font-medium">Email</th>
-              <th className="text-right px-4 py-2 font-medium">Actions</th>
+              <th className="text-left p-3">Email</th>
+              <th className="text-left p-3">Status</th>
+              <th className="text-right p-3">Actions</th>
             </tr>
           </thead>
 
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-2">{u.email}</td>
+              <tr key={u.id} className="border-t">
 
-                <td className="px-4 py-2 text-right">
-                  <button
-                    onClick={() => giveAccess(u.id)}
-                    disabled={loading === u.id}
-                    className="text-xs border px-2 py-1 rounded-md hover:bg-gray-100"
-                  >
-                    {loading === u.id ? "Processing..." : "Give Access"}
-                  </button>
+                <td className="p-3">{u.email}</td>
+
+                {/* STATUS */}
+                <td className="p-3">
+                  {u.hasAccess ? (
+                    <span className="text-green-600 text-xs font-medium">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 text-xs">
+                      No Access
+                    </span>
+                  )}
                 </td>
+
+                {/* ACTION */}
+                <td className="p-3 text-right">
+                  {!u.hasAccess && (
+                    <button
+                      onClick={() => giveAccess(u.id)}
+                      disabled={loadingId === u.id}
+                      className="text-xs border px-3 py-1 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {loadingId === u.id
+                        ? "Giving..."
+                        : "Give Access"}
+                    </button>
+                  )}
+                </td>
+
               </tr>
             ))}
           </tbody>
-
         </table>
+
       </div>
     </div>
   );

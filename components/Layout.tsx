@@ -15,16 +15,19 @@ export default function Layout({ children }: any) {
   ];
 
   return (
-    <div className="flex h-screen bg-[#f8fafc]">
+    <div className="flex h-screen bg-[#f9fafb]">
 
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r flex flex-col">
+      {/* 🔥 SIDEBAR (RESEND STYLE) */}
+      <aside className="w-56 bg-white border-r flex flex-col">
 
-        <div className="h-14 flex items-center px-6 border-b font-semibold">
+        {/* LOGO */}
+        <div className="h-14 flex items-center px-5 border-b text-sm font-semibold">
           KoniqTech
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 text-sm">
+        {/* NAV */}
+        <nav className="flex-1 px-3 py-4 space-y-1 text-sm">
+
           {menu.map((item) => {
             const active = pathname === item.href;
 
@@ -34,26 +37,28 @@ export default function Layout({ children }: any) {
                 href={item.href}
                 className={`block px-3 py-2 rounded-md transition ${
                   active
-                    ? "bg-gray-100 font-medium"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? "bg-gray-100 text-black font-medium"
+                    : "text-gray-500 hover:bg-gray-100"
                 }`}
               >
                 {item.name}
               </Link>
             );
           })}
+
         </nav>
 
-        <div className="p-4 border-t">
+        {/* USER */}
+        <div className="p-3 border-t">
           <button
             onClick={() => setOpen(!open)}
-            className="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100"
+            className="w-full text-left text-sm px-3 py-2 rounded hover:bg-gray-100"
           >
             jhadipu@gmail.com
           </button>
 
           {open && (
-            <div className="mt-2 border rounded shadow bg-white">
+            <div className="mt-2 bg-white border rounded shadow-sm">
               <button
                 onClick={() => {
                   document.cookie = "token=; Max-Age=0; path=/;";
@@ -68,17 +73,23 @@ export default function Layout({ children }: any) {
         </div>
       </aside>
 
-      {/* MAIN */}
+      {/* 🔥 MAIN */}
       <div className="flex-1 flex flex-col">
 
-        <header className="h-14 bg-white border-b flex items-center justify-between px-6">
+        {/* 🔥 TOP HEADER (NOT FULL WIDTH LIKE YOURS) */}
+        <div className="h-14 border-b bg-white flex items-center px-8">
           <span className="text-sm text-gray-700 font-medium">
             Invoice Recovery
           </span>
-        </header>
+        </div>
 
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
+        {/* 🔥 CONTENT (KEY FIX → CENTERED LIKE RESEND) */}
+        <main className="flex-1 overflow-y-auto px-8 py-8">
+
+          <div className="max-w-5xl mx-auto">
+            {children}
+          </div>
+
         </main>
       </div>
     </div>

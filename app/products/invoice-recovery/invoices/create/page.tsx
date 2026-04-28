@@ -44,7 +44,7 @@ export default function CreateInvoicePage() {
       if (err?.response?.status === 401) {
         setError("You must be logged in");
       } else {
-        setError("Failed to create invoice");
+        setError("Failed to create invoice...");
       }
     } finally {
       setLoading(false);

@@ -8,17 +8,8 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    fetchUser();
+    axios.get("/api/auth/me").then((res) => setUser(res.data));
   }, []);
-
-  const fetchUser = async () => {
-    try {
-      const res = await axios.get("/api/auth/me");
-      setUser(res.data);
-    } catch {
-      setUser(null);
-    }
-  };
 
   const logout = async () => {
     await axios.post("/api/auth/logout");
@@ -26,36 +17,41 @@ export default function Header() {
   };
 
   return (
-    <div className="flex justify-between items-center px-6 py-4 bg-white shadow">
-      <h1 className="font-bold text-lg">KoniqTech</h1>
+    <header className="h-14 bg-white border-b flex items-center justify-between px-6">
 
-      {user ? (
-        <div className="relative">
-          {/* EMAIL BUTTON */}
-          <button
-            onClick={() => setOpen(!open)}
-            className="border px-4 py-2 rounded"
-          >
-            {user.email}
-          </button>
+      {/* LEFT TITLE */}
+      <div className="text-sm font-medium text-gray-700">
+        Invoice Recovery
+      </div>
 
-          {/* DROPDOWN */}
-          {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow">
-              <button
-                onClick={logout}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        <a href="/login" className="text-blue-600">
-          Login
-        </a>
-      )}
-    </div>
+      {/* RIGHT USER */}
+      <div className="relative">
+        {user ? (
+          <>
+            <button
+              onClick={() => setOpen(!open)}
+              className="text-sm border px-3 py-1.5 rounded-md hover:bg-gray-50"
+            >
+              {user.email}
+            </button>
+
+            {open && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow">
+                <button
+                  onClick={logout}
+                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <a href="/login" className="text-sm text-blue-600">
+            Login
+          </a>
+        )}
+      </div>
+    </header>
   );
 }

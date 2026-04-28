@@ -12,31 +12,24 @@ export default async function Page() {
 
   const allowed = await hasAccess(user.id, "invoice-recovery");
 
-  if (!allowed) {
-    return (
-      <Layout>
-        <div className="bg-white p-6 rounded-xl shadow max-w-md">
-          <p className="mb-4 text-gray-600">
+  return (
+    <Layout>
+      {!allowed ? (
+        <div className="bg-white border rounded-lg p-6 max-w-md">
+          <p className="text-gray-600 mb-4">
             You need a subscription to use this product.
           </p>
 
           <a
             href="/products/invoice-recovery/subscribe"
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg inline-block"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md"
           >
             Subscribe Now
           </a>
         </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <div>
-        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      ) : (
         <DashboardClient />
-      </div>
+      )}
     </Layout>
   );
 }

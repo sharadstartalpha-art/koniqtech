@@ -1,22 +1,25 @@
-import { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google"; // or your provider
+import { jwtVerify } from "jose";
+import { cookies } from "next/headers";
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-  ],
+const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
-      }
-      return session;
-    },
-  },
+export async function getUser() {
+  try {
+    // ❗ FIX: cookies() is async in your runtime
+    const cookieStore = await cookies();
 
-  secret: process.env.NEXTAUTH_SECRET,
-};
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) return null;
+
+    const { payload } = await jwtVerify(token, secret);
+
+    return payload as {
+      id: string;
+      email: string;
+      role: string;
+    };
+  } catch {
+    return null;
+  }
+}

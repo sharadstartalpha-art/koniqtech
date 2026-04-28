@@ -2,19 +2,14 @@
 
 import { useState } from "react";
 import api from "@/lib/axios";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
-
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    console.log("🔥 CLICK WORKING");
-
     try {
       setLoading(true);
 
@@ -27,7 +22,7 @@ export default function LoginPage() {
         await api.post("/api/auth/register", { email, password });
 
         alert("OTP sent");
-        router.push(`/verify?email=${email}`);
+        window.location.href = `/verify?email=${email}`;
       } else {
         const res = await api.post("/api/auth/login", {
           email,
@@ -37,13 +32,14 @@ export default function LoginPage() {
         console.log("LOGIN RESPONSE:", res.data);
 
         if (res.data.role === "ADMIN") {
-          router.push("/admin");
+          window.location.href = "/admin";
         } else {
-          router.push("/products/invoice-recovery/dashboard");
+          window.location.href =
+            "/products/invoice-recovery/dashboard";
         }
       }
     } catch (err: any) {
-      console.error("LOGIN ERROR:", err);
+      console.error(err);
       alert(err?.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
@@ -56,7 +52,6 @@ export default function LoginPage() {
         {isRegister ? "Register" : "Login"}
       </h1>
 
-      {/* EMAIL */}
       <input
         type="email"
         placeholder="Email"
@@ -65,7 +60,6 @@ export default function LoginPage() {
         onChange={(e) => setEmail(e.target.value)}
       />
 
-      {/* PASSWORD */}
       <input
         type="password"
         placeholder="Password"
@@ -74,16 +68,14 @@ export default function LoginPage() {
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      {/* BUTTON */}
       <button
-        onClick={submit}   // ✅ NOT form submit anymore
+        onClick={submit}
         disabled={loading}
         className="bg-black text-white px-4 py-2 w-full disabled:opacity-50"
       >
         {loading ? "Loading..." : isRegister ? "Register" : "Login"}
       </button>
 
-      {/* TOGGLE */}
       <p
         className="mt-4 text-sm cursor-pointer text-blue-600"
         onClick={() => setIsRegister(!isRegister)}

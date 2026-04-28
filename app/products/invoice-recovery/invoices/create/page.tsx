@@ -1,47 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import api from "@/lib/axios";
+import axios from "axios";
 import Layout from "@/components/Layout";
 
 export default function CreateInvoicePage() {
-  const [form, setForm] = useState({
-    clientEmail: "",
-    amount: "",
-    dueDate: "",
-  });
-
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const submit = async () => {
+  const create = async () => {
+    if (!email || !amount) {
+      alert("All fields required");
+      return;
+    }
+
     try {
-      setError(null);
-
-      if (!form.clientEmail || !form.amount) {
-        setError("Email and amount are required");
-        return;
-      }
-
       setLoading(true);
 
-      await api.post("/api/invoices/create", {
-        clientEmail: form.clientEmail,
-        amount: Number(form.amount),
-        dueDate: form.dueDate,
+      await axios.post("/api/invoices/create", {
+        clientEmail: email,
+        amount: Number(amount),
+        dueDate: new Date(),
       });
 
-      // ✅ IMPORTANT FIX
       window.location.href =
         "/products/invoice-recovery/invoices";
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-
-      if (err?.response?.status === 401) {
-        setError("You must be logged in");
-      } else {
-        setError("Failed to create invoice...");
-      }
+      alert("Failed to create invoice");
     } finally {
       setLoading(false);
     }
@@ -49,53 +36,69 @@ export default function CreateInvoicePage() {
 
   return (
     <Layout>
-      <div className="max-w-md">
-        <h1 className="text-2xl font-bold mb-6">
-          Create Invoice
-        </h1>
+      <div className="flex justify-center pt-20">
 
-        {error && (
-          <p className="mb-4 text-red-500 text-sm">
-            {error}
-          </p>
-        )}
+        {/* CARD */}
+        <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg p-6 space-y-5">
 
-        <input
-          type="email"
-          placeholder="Client Email"
-          className="border p-3 w-full mb-4 rounded"
-          value={form.clientEmail}
-          onChange={(e) =>
-            setForm({ ...form, clientEmail: e.target.value })
-          }
-        />
+          {/* TITLE */}
+          <div>
+            <h1 className="text-lg font-medium">
+              Create Invoice
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Send a payment request to your client
+            </p>
+          </div>
 
-        <input
-          type="number"
-          placeholder="Amount"
-          className="border p-3 w-full mb-4 rounded"
-          value={form.amount}
-          onChange={(e) =>
-            setForm({ ...form, amount: e.target.value })
-          }
-        />
+          {/* EMAIL */}
+          <div>
+            <label className="text-sm text-gray-600">
+              Client email
+            </label>
+            <input
+              type="email"
+              placeholder="client@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+            />
+          </div>
 
-        <input
-          type="date"
-          className="border p-3 w-full mb-6 rounded"
-          value={form.dueDate}
-          onChange={(e) =>
-            setForm({ ...form, dueDate: e.target.value })
-          }
-        />
+          {/* AMOUNT */}
+          <div>
+            <label className="text-sm text-gray-600">
+              Amount (USD)
+            </label>
+            <input
+              type="number"
+              placeholder="100"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="mt-1 w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+            />
+          </div>
 
-        <button
-          onClick={submit}
-          disabled={loading}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg w-full disabled:opacity-50"
-        >
-          {loading ? "Creating..." : "Create Invoice"}
-        </button>
+          {/* ACTIONS */}
+          <div className="flex justify-between items-center pt-2">
+
+            <a
+              href="/products/invoice-recovery/invoices"
+              className="text-sm text-gray-500 hover:underline"
+            >
+              Cancel
+            </a>
+
+            <button
+              onClick={create}
+              disabled={loading}
+              className="bg-black text-white text-sm px-4 py-2 rounded-md hover:bg-gray-900 disabled:opacity-50"
+            >
+              {loading ? "Creating..." : "Create"}
+            </button>
+
+          </div>
+        </div>
       </div>
     </Layout>
   );

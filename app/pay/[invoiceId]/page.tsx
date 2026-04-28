@@ -9,35 +9,58 @@ export default function PayPage({ params }: any) {
   useEffect(() => {
     axios
       .get(`/api/invoices/get?id=${params.invoiceId}`)
-      .then((res) => setInvoice(res.data));
-  }, []);
+      .then((res) => setInvoice(res.data))
+      .catch(() => setInvoice(null));
+  }, [params.invoiceId]);
 
-  if (!invoice) return <p>Loading...</p>;
+  if (!invoice) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
+        Loading invoice...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
 
-      <div className="bg-white p-8 rounded shadow w-full max-w-md text-center">
+      {/* CARD */}
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg p-8 text-center">
 
-        <h1 className="text-2xl font-bold mb-2">
+        {/* TITLE */}
+        <h1 className="text-lg font-medium mb-1">
           Invoice Payment
         </h1>
 
-        <p className="text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 mb-6">
           {invoice.clientEmail}
         </p>
 
-        <h2 className="text-3xl font-bold mb-6">
+        {/* AMOUNT */}
+        <div className="text-3xl font-semibold mb-6">
           ${invoice.amount}
-        </h2>
+        </div>
 
+        {/* PAY BUTTON */}
         <a
           href={invoice.paymentLink}
           target="_blank"
-          className="bg-blue-600 text-white px-6 py-3 rounded w-full block"
+          rel="noopener noreferrer"
+          className="block w-full bg-black text-white text-sm px-4 py-3 rounded-md hover:bg-gray-900 transition"
         >
           Pay with PayPal
         </a>
+
+        {/* FOOTER */}
+        <p className="text-xs text-gray-500 mt-6">
+          Sent via KoniqTech — automate your invoices →
+          <a
+            href={`/signup?ref=${invoice.userId}`}
+            className="text-blue-600 ml-1 hover:underline"
+          >
+            Try free
+          </a>
+        </p>
 
       </div>
     </div>

@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ GET USER FROM COOKIE
+    // 🔐 Get logged-in user (JWT cookie)
     const user = await getUser();
 
     if (!user) {
@@ -16,41 +16,44 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ VALIDATION
-    if (!body.clientEmail || !body.amount || !body.dueDate) {
+    // 🧾 Validate input
+    const { clientEmail, amount, dueDate } = body;
+
+    if (!clientEmail || !amount || !dueDate) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // ✅ CREATE INVOICE
+    // 📦 Create invoice
     const invoice = await prisma.invoice.create({
       data: {
         userId: user.id,
         productId: "invoice-recovery",
-        clientEmail: body.clientEmail,
+        clientEmail,
         clientName: "",
-        amount: Number(body.amount),
-        dueDate: new Date(body.dueDate),
+        amount: Number(amount),
+        dueDate: new Date(dueDate),
         status: "unpaid",
       },
     });
 
-    // ✅ PAYMENT LINK
+    // 💳 Generate payment link
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
-    const updated = await prisma.invoice.update({
+    // 🔄 Update invoice with payment link
+    const updatedInvoice = await prisma.invoice.update({
       where: { id: invoice.id },
       data: { paymentLink },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updatedInvoice);
   } catch (error) {
-    console.error("CREATE INVOICE ERROR:", error);
+    console.error("❌ CREATE INVOICE ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to create invoice" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

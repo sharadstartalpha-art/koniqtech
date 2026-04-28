@@ -5,7 +5,6 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function getUser() {
   try {
-    // ❗ FIX: cookies() is async in your runtime
     const cookieStore = await cookies();
 
     const token = cookieStore.get("token")?.value;

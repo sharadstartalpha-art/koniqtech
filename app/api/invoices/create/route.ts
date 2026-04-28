@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ✅ GET TOKEN FROM COOKIE (FIXED)
+    // 🔐 GET TOKEN
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -20,12 +20,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ VERIFY TOKEN
+    // 🔐 VERIFY JWT
     const { payload } = await jwtVerify(token, secret);
-
     const userId = payload.id as string;
 
-    // ✅ VALIDATION
+    // 📦 VALIDATION
     const { clientEmail, amount, dueDate } = body;
 
     if (!clientEmail || !amount || !dueDate) {
@@ -35,11 +34,23 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ GET PRODUCT BY SLUG (IMPORTANT FIX)
+    const product = await prisma.product.findFirst({
+      where: { slug: "invoice-recovery" },
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 400 }
+      );
+    }
+
     // ✅ CREATE INVOICE
     const invoice = await prisma.invoice.create({
       data: {
         userId,
-        productId: "invoice-recovery",
+        productId: product.id, // ✅ FIXED
         clientEmail,
         clientName: "",
         amount: Number(amount),
@@ -48,15 +59,15 @@ export async function POST(req: Request) {
       },
     });
 
-    // ✅ PAYMENT LINK
+    // 💳 PAYMENT LINK
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
-    const updated = await prisma.invoice.update({
+    const updatedInvoice = await prisma.invoice.update({
       where: { id: invoice.id },
       data: { paymentLink },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updatedInvoice);
   } catch (error) {
     console.error("❌ CREATE INVOICE ERROR:", error);
 

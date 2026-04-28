@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
+import { generateEmail } from "./aiEmail";
 import { sendEmail } from "./email";
-import { getEmail } from "./emailTemplates";
 
 export async function runReminders() {
   try {
@@ -21,7 +21,7 @@ export async function runReminders() {
 
       if (!type) continue;
 
-      // ✅ Prevent duplicate reminders
+      // prevent duplicates
       const alreadySent = await prisma.reminder.findFirst({
         where: {
           invoiceId: inv.id,
@@ -31,24 +31,28 @@ export async function runReminders() {
 
       if (alreadySent) continue;
 
-      // ✅ Ensure payment link exists
+      // ensure payment link
       if (!inv.paymentLink) {
-        console.error("❌ Missing payment link for invoice:", inv.id);
+        console.error("❌ Missing payment link:", inv.id);
         continue;
       }
 
-      // ✅ Generate email HTML (safe)
-      const html = getEmail(type, inv.amount, inv.paymentLink);
+      // generate email
+      const content = await generateEmail(
+        inv.amount,
+        type,
+        inv.paymentLink
+      );
 
-      if (!html) {
-        console.error("❌ Email template failed:", inv.id);
+      if (!content) {
+        console.error("❌ AI email failed:", inv.id);
         continue;
       }
 
-      // ✅ Send email
-      await sendEmail(inv.clientEmail, "Invoice Reminder", html);
+      // send email
+      await sendEmail(inv.clientEmail, "Invoice Reminder", content);
 
-      // ✅ Save reminder log
+      // save log
       await prisma.reminder.create({
         data: {
           invoiceId: inv.id,

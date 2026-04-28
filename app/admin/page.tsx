@@ -3,68 +3,32 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-type Stats = {
-  revenue: number;
-  users: number;
-  mrr: number;
-};
-
 export default function AdminDashboard() {
-  const [data, setData] = useState<Stats>({
-    revenue: 0,
-    users: 0,
-    mrr: 0,
-  });
-
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>({});
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await axios.get("/api/admin/stats");
-        setData(res.data);
-      } catch (error) {
-        console.error("Failed to load stats", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+    axios.get("/api/admin/stats").then((res) => {
+      setData(res.data);
+    });
   }, []);
 
   return (
-    <div className="p-10">
-      <h1 className="text-2xl font-bold mb-6">
-        Admin Dashboard
-      </h1>
+    <div className="p-6 grid grid-cols-4 gap-6">
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <div className="grid grid-cols-3 gap-6">
-          <div className="border p-4 rounded">
-            <p className="text-gray-500">Revenue</p>
-            <p className="text-xl font-bold">
-              ${data.revenue}
-            </p>
-          </div>
+      <Card title="Total Revenue" value={`$${data.revenue}`} />
+      <Card title="Users" value={data.users} />
+      <Card title="Active Subs" value={data.subs} />
+      <Card title="Invoices Paid" value={data.paid} />
 
-          <div className="border p-4 rounded">
-            <p className="text-gray-500">Users</p>
-            <p className="text-xl font-bold">
-              {data.users}
-            </p>
-          </div>
+    </div>
+  );
+}
 
-          <div className="border p-4 rounded">
-            <p className="text-gray-500">MRR</p>
-            <p className="text-xl font-bold">
-              ${data.mrr}
-            </p>
-          </div>
-        </div>
-      )}
+function Card({ title, value }: any) {
+  return (
+    <div className="bg-white p-6 shadow rounded">
+      <p>{title}</p>
+      <h2 className="text-2xl font-bold">{value}</h2>
     </div>
   );
 }

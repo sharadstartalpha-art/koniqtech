@@ -46,23 +46,17 @@ export async function POST(req: Request) {
     }
 
     /* =======================================================
-       💰 2. INVOICE PAYMENT RECEIVED
+       💰 2. CHECKOUT PAYMENT (ORDER APPROVED)
     ======================================================= */
-    if (body.event_type === "PAYMENT.SALE.COMPLETED") {
-      const resource = body.resource;
-
-      // 🔥 Try multiple fields safely
+    if (body.event_type === "CHECKOUT.ORDER.APPROVED") {
       const invoiceId =
-        resource?.custom ||
-        resource?.invoice_id ||
-        resource?.note;
+        body.resource?.purchase_units?.[0]?.custom_id;
 
       if (!invoiceId) {
-        console.warn("⚠️ No invoice ID found in payment");
+        console.warn("⚠️ No invoice ID in checkout");
         return NextResponse.json({ ok: true });
       }
 
-      // ✅ Update invoice status
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
@@ -71,7 +65,34 @@ export async function POST(req: Request) {
         },
       });
 
-      console.log("💰 Invoice marked paid:", invoiceId);
+      console.log("💰 Invoice paid (checkout):", invoiceId);
+    }
+
+    /* =======================================================
+       💰 3. PAYMENT COMPLETED (fallback)
+    ======================================================= */
+    if (body.event_type === "PAYMENT.SALE.COMPLETED") {
+      const resource = body.resource;
+
+      const invoiceId =
+        resource?.custom ||
+        resource?.invoice_id ||
+        resource?.note;
+
+      if (!invoiceId) {
+        console.warn("⚠️ No invoice ID in sale");
+        return NextResponse.json({ ok: true });
+      }
+
+      await prisma.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          status: "paid",
+          paidAt: new Date(),
+        },
+      });
+
+      console.log("💰 Invoice paid (sale):", invoiceId);
     }
 
     return NextResponse.json({ ok: true });

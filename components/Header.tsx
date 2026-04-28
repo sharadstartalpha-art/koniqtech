@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { ChevronDown } from "lucide-react";
 
 export default function Header() {
   const [user, setUser] = useState<any>(null);
@@ -17,39 +18,36 @@ export default function Header() {
   };
 
   return (
-    <header className="h-14 bg-white border-b flex items-center justify-between px-6">
+    <header className="h-14 border-b bg-white flex items-center justify-between px-6">
 
       {/* LEFT TITLE */}
       <div className="text-sm font-medium text-gray-700">
-        Invoice Recovery
+        API Keys
       </div>
 
       {/* RIGHT USER */}
       <div className="relative">
-        {user ? (
+        {user && (
           <>
             <button
               onClick={() => setOpen(!open)}
-              className="text-sm border px-3 py-1.5 rounded-md hover:bg-gray-50"
+              className="flex items-center gap-1 text-sm border px-3 py-1.5 rounded-md hover:bg-gray-50"
             >
               {user.email}
+              <ChevronDown size={14} />
             </button>
 
             {open && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow">
+              <div className="absolute right-0 mt-2 w-44 bg-white border rounded-md shadow">
                 <button
                   onClick={logout}
-                  className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
                 >
                   Logout
                 </button>
               </div>
             )}
           </>
-        ) : (
-          <a href="/login" className="text-sm text-blue-600">
-            Login
-          </a>
         )}
       </div>
     </header>

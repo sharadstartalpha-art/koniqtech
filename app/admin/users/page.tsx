@@ -12,15 +12,24 @@ export default function UsersPage() {
     });
   }, []);
 
+  const giveAccess = async (userId: string) => {
+    await axios.post("/api/admin/give-access", {
+      userId,
+      productId: "invoice-recovery",
+    });
+
+    alert("Access granted");
+  };
+
   return (
-    <div className="p-10">
+    <div className="p-6">
       <h1 className="text-xl mb-4">Users</h1>
 
-      <table className="w-full border">
+      <table className="w-full bg-white shadow rounded">
         <thead>
           <tr>
             <th>Email</th>
-            <th>Role</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
@@ -28,7 +37,14 @@ export default function UsersPage() {
           {users.map((u: any) => (
             <tr key={u.id}>
               <td>{u.email}</td>
-              <td>{u.role}</td>
+              <td>
+                <button
+                  onClick={() => giveAccess(u.id)}
+                  className="bg-green-500 text-white px-3 py-1"
+                >
+                  Give Access
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

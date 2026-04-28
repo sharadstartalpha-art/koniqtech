@@ -3,20 +3,23 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const users = await prisma.user.count();
-
-  const subs = await prisma.subscription.findMany({
+  const subs = await prisma.subscription.count({
     where: { status: "active" },
   });
 
-  const mrr = subs.length * 29; // your pricing
+  const paid = await prisma.invoice.count({
+    where: { status: "paid" },
+  });
 
   const revenue = await prisma.invoice.aggregate({
     _sum: { amount: true },
+    where: { status: "paid" },
   });
 
   return NextResponse.json({
     users,
-    mrr,
+    subs,
+    paid,
     revenue: revenue._sum.amount || 0,
   });
 }

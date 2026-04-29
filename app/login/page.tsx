@@ -1,49 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import api from "@/lib/axios";
+import axios from "axios";
 
 export default function LoginPage() {
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const submit = async () => {
+  const sendLink = async () => {
     try {
-      if (!email || !password) {
-        alert("Email & password required");
+      if (!email) {
+        alert("Email required");
         return;
       }
 
       setLoading(true);
 
-      if (isRegister) {
-        const res = await api.post("/api/auth/register", {
-          email,
-          password,
-        });
+      await axios.post("/api/auth/magic-link", { email });
 
-        if (res.data.success) {
-          window.location.href = `/verify?email=${email}`;
-        } else {
-          alert(res.data.error);
-        }
-      } else {
-        const res = await api.post("/api/auth/login", {
-          email,
-          password,
-        });
-
-        if (res.data.role === "ADMIN") {
-          window.location.href = "/admin";
-        } else {
-          window.location.href =
-            "/products/invoice-recovery/dashboard";
-        }
-      }
+      setSent(true);
     } catch (err: any) {
-      alert(err?.response?.data?.error || "Something went wrong");
+      alert(err?.response?.data?.error || "Failed to send link");
     } finally {
       setLoading(false);
     }
@@ -51,42 +29,34 @@ export default function LoginPage() {
 
   return (
     <div className="p-10 max-w-md mx-auto">
-      <h1 className="text-2xl mb-4">
-        {isRegister ? "Create account" : "Login"}
+
+      <h1 className="text-2xl font-semibold mb-4">
+        Sign in
       </h1>
 
-      <input
-        type="email"
-        placeholder="Email"
-        className="border p-2 w-full mb-3"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      {!sent ? (
+        <>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            className="border p-2 w-full mb-3 rounded-md"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-      <input
-        type="password"
-        placeholder="Password"
-        className="border p-2 w-full mb-3"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <button
-        onClick={submit}
-        disabled={loading}
-        className="bg-black text-white px-4 py-2 w-full disabled:opacity-50"
-      >
-        {loading ? "Loading..." : isRegister ? "Register" : "Login"}
-      </button>
-
-      <p
-        className="mt-4 text-sm text-blue-600 cursor-pointer"
-        onClick={() => setIsRegister(!isRegister)}
-      >
-        {isRegister
-          ? "Already have an account? Login"
-          : "Create account"}
-      </p>
+          <button
+            onClick={sendLink}
+            disabled={loading}
+            className="bg-black text-white px-4 py-2 w-full rounded-md disabled:opacity-50"
+          >
+            {loading ? "Sending..." : "Send Magic Link"}
+          </button>
+        </>
+      ) : (
+        <div className="text-sm text-gray-600">
+          ✅ Check your email — we sent you a login link.
+        </div>
+      )}
     </div>
   );
 }

@@ -22,6 +22,9 @@ export default function DashboardClient() {
   const load = async () => {
     try {
       const res = await axios.get("/api/dashboard/stats");
+
+      console.log("DASHBOARD DATA:", res.data); // 🔥 DEBUG
+
       setData(res.data);
     } catch (err) {
       console.error("Dashboard error:", err);
@@ -58,7 +61,7 @@ export default function DashboardClient() {
         <Card title="Invoices" value={data.count} />
       </div>
 
-      {/* AI INSIGHTS (UPDATED STYLE) */}
+      {/* AI INSIGHTS */}
       <div className="bg-white border rounded-lg p-5">
         <p className="text-sm font-medium mb-2">
           AI Insights
@@ -73,7 +76,6 @@ export default function DashboardClient() {
   );
 }
 
-/* CARD */
 function Card({ title, value }: any) {
   return (
     <div className="bg-white border rounded-lg px-4 py-3">

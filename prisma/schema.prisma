@@ -31,6 +31,7 @@ model Product {
   name      String
   slug      String   @unique
   price     Float
+  invoiceLimit Int?  // null = unlimited
   createdAt DateTime @default(now())
 
   subscriptions Subscription[]

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 🔐 GET TOKEN
+    // 🔐 AUTH
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -20,11 +20,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 VERIFY JWT
     const { payload } = await jwtVerify(token, secret);
     const userId = payload.id as string;
 
-    // 📦 VALIDATION
     const { clientEmail, amount, dueDate } = body;
 
     if (!clientEmail || !amount || !dueDate) {
@@ -34,7 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ GET PRODUCT BY SLUG (IMPORTANT FIX)
+    // ✅ PRODUCT
     const product = await prisma.product.findFirst({
       where: { slug: "invoice-recovery" },
     });
@@ -46,11 +44,42 @@ export async function POST(req: Request) {
       );
     }
 
+    // 🔥 GET USER SUBSCRIPTION + LIMIT
+    const sub = await prisma.subscription.findFirst({
+      where: {
+        userId,
+        status: "active",
+      },
+      include: {
+        product: true,
+      },
+    });
+
+    if (!sub) {
+      return NextResponse.json(
+        { error: "No active subscription" },
+        { status: 403 }
+      );
+    }
+
+    const limit = sub.product.invoiceLimit;
+
+    const count = await prisma.invoice.count({
+      where: { userId },
+    });
+
+    if (limit !== null && count >= limit) {
+      return NextResponse.json(
+        { error: "Invoice limit reached" },
+        { status: 403 }
+      );
+    }
+
     // ✅ CREATE INVOICE
     const invoice = await prisma.invoice.create({
       data: {
         userId,
-        productId: product.id, // ✅ FIXED
+        productId: product.id,
         clientEmail,
         clientName: "",
         amount: Number(amount),
@@ -59,7 +88,6 @@ export async function POST(req: Request) {
       },
     });
 
-    // 💳 PAYMENT LINK
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
     const updatedInvoice = await prisma.invoice.update({

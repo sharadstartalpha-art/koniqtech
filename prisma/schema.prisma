@@ -17,8 +17,8 @@ model User {
   password  String?   // for admin / optional login
   role      String    @default("USER") // USER / ADMIN
   referredBy String?
-  otp       String?
-  otpExpiry DateTime?
+  verifyToken String?
+  verifyExpiry DateTime?
   isVerified Boolean  @default(false) // ✅ NEW
   createdAt DateTime @default(now())
 

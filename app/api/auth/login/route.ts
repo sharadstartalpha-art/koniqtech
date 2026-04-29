@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ email verification check
+    // ✅ must verify email
     if (!user.isVerified) {
       return NextResponse.json(
         { error: "Please verify your email first" },
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ password check
+    // ✅ check password
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
@@ -62,13 +62,13 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
-    // ✅ cookie (IMPORTANT FIXES)
+    // ✅ cookie fix (VERY IMPORTANT)
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // ✅ FIX
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     });
 
     return res;

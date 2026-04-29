@@ -11,25 +11,29 @@ export default function LoginPage() {
 
   const submit = async () => {
     try {
-      setLoading(true);
-
       if (!email || !password) {
         alert("Email & password required");
         return;
       }
 
-      if (isRegister) {
-        await api.post("/api/auth/register", { email, password });
+      setLoading(true);
 
-        alert("OTP sent");
-        window.location.href = `/verify?email=${email}`;
+      if (isRegister) {
+        const res = await api.post("/api/auth/register", {
+          email,
+          password,
+        });
+
+        if (res.data.success) {
+          window.location.href = `/verify?email=${email}`;
+        } else {
+          alert(res.data.error);
+        }
       } else {
         const res = await api.post("/api/auth/login", {
           email,
           password,
         });
-
-        console.log("LOGIN RESPONSE:", res.data);
 
         if (res.data.role === "ADMIN") {
           window.location.href = "/admin";
@@ -39,8 +43,7 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      console.error(err);
-      alert(err?.response?.data?.error || "Login failed");
+      alert(err?.response?.data?.error || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -49,7 +52,7 @@ export default function LoginPage() {
   return (
     <div className="p-10 max-w-md mx-auto">
       <h1 className="text-2xl mb-4">
-        {isRegister ? "Register" : "Login"}
+        {isRegister ? "Create account" : "Login"}
       </h1>
 
       <input
@@ -77,7 +80,7 @@ export default function LoginPage() {
       </button>
 
       <p
-        className="mt-4 text-sm cursor-pointer text-blue-600"
+        className="mt-4 text-sm text-blue-600 cursor-pointer"
         onClick={() => setIsRegister(!isRegister)}
       >
         {isRegister

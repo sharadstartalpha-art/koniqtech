@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     });
 
     // ✅ EMAIL LINK
-    const link = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
+    const link = `${process.env.NEXT_PUBLIC_BASE_URL}/verify?token=${token}`;
 
     await sendEmail(
       email,

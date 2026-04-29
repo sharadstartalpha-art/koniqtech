@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,74 +8,66 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-
-  password  String?   // for admin / optional login
-  role      String    @default("USER") // USER / ADMIN
-  referredBy String?
-  verifyToken String?
-  verifyExpiry DateTime?
-  isVerified Boolean  @default(false) // ✅ NEW
-  createdAt DateTime @default(now())
-
-  subscriptions Subscription[]
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String?
+  password      String?
+  role          String         @default("USER")
+  referredBy    String?
+  isVerified    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  verifyExpiry  DateTime?
+  verifyToken   String?
   invoices      Invoice[]
+  subscriptions Subscription[]
 }
 
 model Product {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  price     Float
-  invoiceLimit Int?  // null = unlimited
-  createdAt DateTime @default(now())
-
-  subscriptions Subscription[]
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique
+  price         Float
+  invoiceLimit  Int?
+  createdAt     DateTime       @default(now())
   invoices      Invoice[]
+  subscriptions Subscription[]
 }
 
 model Subscription {
-  id                    String   @id @default(uuid())
-  userId                String
-  productId             String
-  paypalSubscriptionId  String?
-  status                String   // active, cancelled
-
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  id                   String   @id @default(uuid())
+  userId               String
+  productId            String
+  paypalSubscriptionId String?
+  status               String
+  createdAt            DateTime @default(now())
+  product              Product  @relation(fields: [productId], references: [id])
+  user                 User     @relation(fields: [userId], references: [id])
 }
 
 model Invoice {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   userId      String
   productId   String
   clientEmail String
   clientName  String?
   amount      Float
   dueDate     DateTime
-  status      String   // unpaid, paid
+  status      String
   paymentLink String?
-
-  paidAt      DateTime?   // ✅ ADD THIS  
-  createdAt DateTime @default(now())
-
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
-  reminders Reminder[]
+  paidAt      DateTime?
+  createdAt   DateTime   @default(now())
+  product     Product    @relation(fields: [productId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+  reminders   Reminder[]
 }
 
 model Reminder {
-  id         String   @id @default(uuid())
-  invoiceId  String
-  type       String   // day1, day3, day7
-  sentAt     DateTime?
-  status     String   // pending, sent
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  id        String    @id @default(uuid())
+  invoiceId String
+  type      String
+  sentAt    DateTime?
+  status    String
+  invoice   Invoice   @relation(fields: [invoiceId], references: [id])
 }
 
 model Payment {
@@ -85,10 +75,9 @@ model Payment {
   userId    String
   productId String
   amount    Float
-  status    String   // success, failed
+  status    String
   createdAt DateTime @default(now())
 }
-
 
 model MagicLink {
   id        String   @id @default(uuid())

@@ -9,6 +9,7 @@ export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
 
+    // ✅ validation
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password required" },
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ find user
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -27,6 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ email verification check
     if (!user.isVerified) {
       return NextResponse.json(
         { error: "Please verify your email first" },
@@ -34,6 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ password check
     const isValid = await bcrypt.compare(password, user.password);
 
     if (!isValid) {
@@ -43,7 +47,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ JWT
+    // ✅ create JWT
     const token = await new SignJWT({
       id: user.id,
       email: user.email,
@@ -58,15 +62,17 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
-    // ✅ IMPORTANT COOKIE FIX
+    // ✅ cookie (IMPORTANT FIXES)
     res.cookies.set("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "lax", // 🔥 critical
+      secure: process.env.NODE_ENV === "production", // ✅ FIX
+      sameSite: "lax",
       path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
     return res;
+
   } catch (error) {
     console.error("LOGIN ERROR:", error);
 

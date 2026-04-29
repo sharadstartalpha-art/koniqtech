@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function VerifyPage() {
+export default function VerifyClient() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -17,19 +17,20 @@ export default function VerifyPage() {
       try {
         await axios.post("/api/auth/verify", { token });
 
-        // 🔥 redirect after login
+        // ✅ redirect after verify
         router.push("/products/invoice-recovery/dashboard");
       } catch (err: any) {
         alert(err?.response?.data?.error || "Invalid link");
+        router.push("/login");
       }
     };
 
     verify();
-  }, []);
+  }, [params, router]);
 
   return (
     <div className="p-10 text-center text-sm text-gray-600">
-      Logging you in...
+      Verifying your account...
     </div>
   );
 }

@@ -88,3 +88,12 @@ model Payment {
   status    String   // success, failed
   createdAt DateTime @default(now())
 }
+
+
+model MagicLink {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

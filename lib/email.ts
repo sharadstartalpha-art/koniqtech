@@ -3,7 +3,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ⚠️ Use onboarding@resend.dev (test) OR your verified domain
-const FROM_EMAIL = "KoniqTech <onboarding@resend.dev>";
+const FROM_EMAIL = "KoniqTech <no-reply@koniqtech.com>";
 
 /* 🔹 GENERIC EMAIL SENDER */
 export async function sendEmail(

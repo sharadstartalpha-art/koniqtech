@@ -10,6 +10,7 @@ export default function VerifyClient() {
   const email = params.get("email") || "";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (value: string, index: number) => {
     if (!/^[0-9]?$/.test(value)) return;
@@ -25,6 +26,8 @@ export default function VerifyClient() {
 
   const verify = async () => {
     try {
+      setLoading(true);
+
       await axios.post("/api/auth/verify-otp", {
         email,
         otp: otp.join(""),
@@ -33,7 +36,9 @@ export default function VerifyClient() {
       alert("Verified ✅");
       router.push("/login");
     } catch (err: any) {
-      alert(err.response?.data?.error);
+      alert(err.response?.data?.error || "Invalid OTP");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -56,9 +61,10 @@ export default function VerifyClient() {
 
       <button
         onClick={verify}
-        className="bg-black text-white px-4 py-2 w-full"
+        disabled={loading}
+        className="bg-black text-white px-4 py-2 w-full disabled:opacity-50"
       >
-        Verify
+        {loading ? "Verifying..." : "Verify"}
       </button>
     </div>
   );

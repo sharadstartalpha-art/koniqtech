@@ -4,9 +4,6 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const plans = await prisma.plan.findMany({
-      where: {
-        active: true, // optional (if you use it)
-      },
       orderBy: {
         price: "asc",
       },
@@ -16,6 +13,7 @@ export async function GET() {
         price: true,
         invoiceLimit: true,
         paypalPlanId: true,
+        productId: true, // ✅ ADD THIS
       },
     });
 

@@ -15,7 +15,6 @@ export async function POST(req: Request) {
 
       const userId = sub.custom_id;
       const subscriptionId = sub.id;
-      const paypalPlanId = sub.plan_id; // 🔥 IMPORTANT
 
       if (!userId) {
         console.error("❌ Missing custom_id");
@@ -25,20 +24,26 @@ export async function POST(req: Request) {
         );
       }
 
-      // 🔥 FIND PLAN FROM PAYPAL PLAN ID
-      const plan = await prisma.plan.findFirst({
-        where: { paypalPlanId },
+      // ✅ Get product
+      const product = await prisma.product.findUnique({
+        where: { slug: "invoice-recovery" },
+        include: { plans: true },
       });
 
-      if (!plan) {
-        console.error("❌ Plan not found for paypalPlanId:", paypalPlanId);
-        return NextResponse.json(
-          { error: "Plan not found" },
-          { status: 400 }
-        );
+      if (!product) {
+        console.error("❌ Product not found");
+        return NextResponse.json({ error: "Product missing" }, { status: 400 });
       }
 
-      // ✅ Prevent duplicate subscription
+      // 🔥 Pick plan (you can improve this later)
+      const plan = product.plans[0];
+
+      if (!plan) {
+        console.error("❌ No plan found");
+        return NextResponse.json({ error: "Plan missing" }, { status: 400 });
+      }
+
+      // ✅ Prevent duplicate
       const existing = await prisma.subscription.findFirst({
         where: {
           paypalSubscriptionId: subscriptionId,
@@ -49,10 +54,10 @@ export async function POST(req: Request) {
         await prisma.subscription.create({
           data: {
             userId,
-            productId: plan.productId, // ✅ FIXED
-            planId: plan.id,           // ✅ REQUIRED
+            productId: product.id, // ✅ FIX
+            planId: plan.id,       // ✅ REQUIRED
             paypalSubscriptionId: subscriptionId,
-            status: "ACTIVE",
+            status: "ACTIVE",      // ✅ consistent
           },
         });
 
@@ -75,7 +80,7 @@ export async function POST(req: Request) {
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
-          status: "paid",
+          status: "PAID",
           paidAt: new Date(),
         },
       });
@@ -102,7 +107,7 @@ export async function POST(req: Request) {
       await prisma.invoice.update({
         where: { id: invoiceId },
         data: {
-          status: "paid",
+          status: "PAID",
           paidAt: new Date(),
         },
       });
@@ -111,6 +116,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
+
   } catch (error) {
     console.error("❌ WEBHOOK ERROR:", error);
 

@@ -3,6 +3,9 @@ import DashboardClient from "./DashboardClient";
 import { getUser } from "@/lib/getUser";
 import { hasAccess } from "@/lib/access";
 
+// ✅ REQUIRED (fixes your build error)
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const user = await getUser();
 

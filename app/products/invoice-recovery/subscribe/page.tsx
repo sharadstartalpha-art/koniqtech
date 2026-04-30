@@ -2,87 +2,53 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
 
 export default function SubscribePage() {
   const [plans, setPlans] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
 
   useEffect(() => {
-    load();
+    axios
+      .get("/api/plans/invoice-recovery")
+      .then((res) => setPlans(res.data))
+      .catch(() => alert("Failed to load plans"));
   }, []);
 
-  const load = async () => {
+  const subscribe = async (plan: any) => {
     try {
-      const res = await axios.get("/api/products");
-      setPlans(res.data);
-    } catch (err) {
-      toast.error("Failed to load plans");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const subscribe = async (productId: string) => {
-    try {
-      setSubscribing(productId);
-
-      await axios.post("/api/payments/subscribe", {
-        productId,
+      const res = await axios.post("/api/payments/create-subscription", {
+        paypalPlanId: plan.paypalPlanId,
+        planId: plan.id,
       });
 
-      toast.success("Subscription activated");
-
-      // redirect after success
-      window.location.href = "/products/invoice-recovery/dashboard";
+      window.location.href = res.data.approvalUrl;
     } catch (err) {
-      toast.error("Subscription failed");
-    } finally {
-      setSubscribing(null);
+      alert("Subscription failed");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-6 text-sm text-gray-500">
-        Loading plans...
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-xl font-semibold mb-6">Choose a plan</h1>
 
-      <h1 className="text-xl font-semibold mb-6">
-        Choose a plan
-      </h1>
-
-      <div className="grid md:grid-cols-3 gap-4">
-
+      <div className="grid grid-cols-3 gap-6">
         {plans.map((p) => (
-          <div
-            key={p.id}
-            className="border rounded-lg p-5 bg-white hover:shadow transition"
-          >
-            <h3 className="font-medium text-lg">{p.name}</h3>
+          <div key={p.id} className="border p-6 rounded-lg">
+            <h3 className="font-semibold">{p.name}</h3>
 
-            <p className="text-2xl my-2">${p.price}/mo</p>
+            <p className="text-xl">${p.price}/mo</p>
 
             <p className="text-sm text-gray-500">
               {p.invoiceLimit ?? "Unlimited"} invoices
             </p>
 
             <button
-              onClick={() => subscribe(p.id)}
-              disabled={subscribing === p.id}
-              className="mt-4 w-full bg-black text-white py-2 rounded-md disabled:opacity-50"
+              onClick={() => subscribe(p)}
+              className="mt-4 w-full bg-black text-white py-2 rounded"
             >
-              {subscribing === p.id ? "Processing..." : "Subscribe"}
+              Subscribe
             </button>
           </div>
         ))}
-
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ type Plan = {
   price: number;
   invoiceLimit: number | null;
   paypalPlanId: string;
+  productId: string; // ✅ ADD THIS
 };
 
 export default function SubscribePage() {
@@ -39,6 +40,7 @@ export default function SubscribePage() {
       const res = await axios.post("/api/payments/create-subscription", {
         paypalPlanId: plan.paypalPlanId,
         planId: plan.id,
+        productId: plan.productId, // ✅ SEND THIS
       });
 
       if (res.data?.approvalUrl) {

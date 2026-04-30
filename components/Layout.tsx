@@ -14,7 +14,10 @@ export default function Layout({
 }) {
   const pathname = usePathname();
 
-  // 🔥 dynamic navigation
+  if (!slug) {
+    return <div className="p-6">Invalid product</div>;
+  }
+
   const nav = [
     {
       name: "Dashboard",
@@ -34,17 +37,13 @@ export default function Layout({
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#fafafa] text-[14px]">
-
+    <div className="flex h-screen w-full bg-[#fafafa] text-sm">
       {/* SIDEBAR */}
       <aside className="w-[220px] border-r bg-white flex flex-col">
-
-        {/* LOGO */}
         <div className="h-14 flex items-center px-4 border-b font-semibold">
           KoniqTech
         </div>
 
-        {/* NAV */}
         <div className="p-2 space-y-1">
           {nav.map((item) => {
             const active = pathname === item.href;
@@ -54,7 +53,7 @@ export default function Layout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-md ${
                   active
                     ? "bg-gray-100 text-black font-medium"
                     : "text-gray-500 hover:bg-gray-100"
@@ -66,24 +65,14 @@ export default function Layout({
             );
           })}
         </div>
-
-        {/* FOOTER */}
-        <div className="mt-auto p-3 border-t text-xs text-gray-400">
-          KoniqTech
-        </div>
       </aside>
 
-      {/* RIGHT PANEL */}
+      {/* MAIN */}
       <div className="flex-1 flex flex-col">
-
-        {/* HEADER */}
         <Header />
 
-        {/* CONTENT */}
         <main className="flex-1 overflow-auto px-8 py-6">
-          <div className="w-full max-w-[1100px]">
-            {children}
-          </div>
+          <div className="max-w-[1100px]">{children}</div>
         </main>
       </div>
     </div>

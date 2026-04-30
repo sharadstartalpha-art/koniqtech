@@ -3,39 +3,61 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useParams } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default function SubscribePage() {
+  const params = useParams();
+  const slug = params?.slug as string;
+
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!slug) return;
     load();
-  }, []);
+  }, [slug]);
 
   const load = async () => {
     try {
-      const res = await axios.get("/api/products");
-      setPlans(res.data);
+      console.log("Fetching plans for:", slug);
+
+      const res = await axios.get(`/api/products/${slug}`, {
+        headers: { "Cache-Control": "no-store" },
+      });
+
+      console.log("API RESPONSE:", res.data);
+
+      // ✅ FIX: use plans
+      setPlans(res.data.plans || []);
     } catch (err) {
+      console.error(err);
       toast.error("Failed to load plans");
     } finally {
-      setLoading(false);
+      setLoading(false); // 🔥 VERY IMPORTANT
     }
   };
 
-  const subscribe = async (productId: string) => {
+  const subscribe = async (planId: string) => {
     try {
-      setSubscribing(productId);
+      setSubscribing(planId);
 
-      await axios.post("/api/payments/subscribe", {
-        productId,
-      });
+      const res = await axios.post(
+        "/api/paypal/create-subscription",
+        { planId }
+      );
 
-      toast.success("Subscription activated");
+      const approvalUrl = res.data.links?.find(
+        (l: any) => l.rel === "approve"
+      )?.href;
 
-      // redirect after success
-      window.location.href = "/products/invoice-recovery/dashboard";
+      if (approvalUrl) {
+        window.location.href = approvalUrl;
+      } else {
+        toast.error("No approval link");
+      }
     } catch (err) {
       toast.error("Subscription failed");
     } finally {
@@ -43,23 +65,21 @@ export default function SubscribePage() {
     }
   };
 
+  // 🔥 FIX: loading state handled properly
   if (loading) {
-    return (
-      <div className="p-6 text-sm text-gray-500">
-        Loading plans...
-      </div>
-    );
+    return <div className="p-6 text-sm text-gray-500">Loading plans...</div>;
+  }
+
+  // 🔥 FIX: empty plans fallback
+  if (!plans.length) {
+    return <div className="p-6">No plans found</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-
-      <h1 className="text-xl font-semibold mb-6">
-        Choose a plan
-      </h1>
+      <h1 className="text-xl font-semibold mb-6">Choose a plan</h1>
 
       <div className="grid md:grid-cols-3 gap-4">
-
         {plans.map((p) => (
           <div
             key={p.id}
@@ -67,10 +87,14 @@ export default function SubscribePage() {
           >
             <h3 className="font-medium text-lg">{p.name}</h3>
 
-            <p className="text-2xl my-2">${p.price}/mo</p>
+            <p className="text-2xl my-2">
+              {p.price === 0 ? "Free" : `$${p.price}/mo`}
+            </p>
 
             <p className="text-sm text-gray-500">
-              {p.invoiceLimit ?? "Unlimited"} invoices
+              {p.invoiceLimit === -1
+                ? "Unlimited invoices"
+                : `${p.invoiceLimit} invoices`}
             </p>
 
             <button
@@ -82,7 +106,6 @@ export default function SubscribePage() {
             </button>
           </div>
         ))}
-
       </div>
     </div>
   );

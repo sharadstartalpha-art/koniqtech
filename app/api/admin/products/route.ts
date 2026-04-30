@@ -4,48 +4,49 @@ import { NextResponse } from "next/server";
 /* 📦 GET ALL PRODUCTS */
 export async function GET() {
   const products = await prisma.product.findMany({
-    include: {
-      plans: true, // 🔥 include plans now
-    },
     orderBy: { createdAt: "asc" },
+    include: { plans: true }, // 👈 optional but useful
   });
 
   return NextResponse.json(products);
 }
 
-/* ➕ CREATE PRODUCT */
+/* ➕ CREATE PRODUCT + DEFAULT PLAN */
 export async function POST(req: Request) {
   try {
-    const { name } = await req.json();
+    const { name, price, invoiceLimit } = await req.json();
 
-    if (!name) {
+    if (!name || !price) {
       return NextResponse.json(
-        { error: "Name required" },
+        { error: "Name and price required" },
         { status: 400 }
       );
     }
 
     const slug = name.toLowerCase().replace(/\s+/g, "-");
 
-    // ✅ Create product ONLY
+    // ✅ Create product + plan together
     const product = await prisma.product.create({
       data: {
         name,
         slug,
+        plans: {
+          create: [
+            {
+              name: "Default", // or "Pro"
+              price: Number(price),
+              invoiceLimit: invoiceLimit
+                ? Number(invoiceLimit)
+                : null,
+            },
+          ],
+        },
       },
-    });
-
-    // 🔥 OPTIONAL: create default FREE plan
-    await prisma.plan.create({
-      data: {
-        name: "Free",
-        price: 0,
-        invoiceLimit: -1,
-        productId: product.id,
-      },
+      include: { plans: true },
     });
 
     return NextResponse.json(product);
+
   } catch (error) {
     console.error("CREATE PRODUCT ERROR:", error);
 
@@ -69,16 +70,12 @@ export async function DELETE(req: Request) {
       );
     }
 
-    // 🔥 delete plans first (important for FK)
-    await prisma.plan.deleteMany({
-      where: { productId: id },
-    });
-
     await prisma.product.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error("DELETE PRODUCT ERROR:", error);
 

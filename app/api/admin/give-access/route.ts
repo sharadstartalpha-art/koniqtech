@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { userId, productId } = await req.json();
+    const body = await req.json();
+    const { userId, productId } = body;
 
     if (!userId || !productId) {
       return NextResponse.json(
@@ -12,10 +13,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Find product by slug
+    // 🔥 Find product by slug
     const product = await prisma.product.findUnique({
       where: { slug: productId },
-      include: { plans: true },
+      include: { plans: true }, // 👈 include plans
     });
 
     if (!product) {
@@ -25,18 +26,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Pick default plan (FREE or first plan)
-    const defaultPlan =
-      product.plans.find((p) => p.price === 0) || product.plans[0];
+    // 🔥 Pick a plan (e.g. first / default)
+    const plan = product.plans[0];
 
-    if (!defaultPlan) {
+    if (!plan) {
       return NextResponse.json(
         { error: "No plan found for this product" },
         { status: 400 }
       );
     }
 
-    // ✅ Prevent duplicate subscription
+    // 🔥 Prevent duplicate subscription
     const existing = await prisma.subscription.findFirst({
       where: {
         userId,
@@ -51,17 +51,18 @@ export async function POST(req: Request) {
       });
     }
 
-    // ✅ Create subscription (FIXED 🔥)
+    // ✅ Create subscription (NOW includes planId)
     await prisma.subscription.create({
       data: {
         userId,
         productId: product.id,
-        planId: defaultPlan.id, // ⭐ REQUIRED FIX
+        planId: plan.id, // ✅ REQUIRED FIX
         status: "ACTIVE",
       },
     });
 
     return NextResponse.json({ success: true });
+
   } catch (error) {
     console.error("GIVE ACCESS ERROR:", error);
 

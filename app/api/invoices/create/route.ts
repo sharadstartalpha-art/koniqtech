@@ -9,12 +9,15 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // 🔐 AUTH (FIXED ✅)
+    // 🔐 AUTH
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const { payload } = await jwtVerify(token, secret);
@@ -41,15 +44,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 GET USER SUBSCRIPTION + PLAN
+    // 🔥 GET USER SUBSCRIPTION + PLAN (IMPORTANT FIX)
     const sub = await prisma.subscription.findFirst({
       where: {
         userId,
-        productId: product.id,
-        status: "ACTIVE",
+        status: "ACTIVE", // keep consistent with your system
       },
       include: {
-        plan: true,
+        plan: true, // ✅ FIX: include plan instead of product
       },
     });
 
@@ -60,16 +62,13 @@ export async function POST(req: Request) {
       );
     }
 
-    const limit = sub.plan.invoiceLimit;
+    const limit = sub.plan.invoiceLimit; // ✅ FIXED
 
     const count = await prisma.invoice.count({
-      where: {
-        userId,
-        productId: product.id,
-      },
+      where: { userId },
     });
 
-    if (limit !== null && limit !== -1 && count >= limit) {
+    if (limit !== null && count >= limit) {
       return NextResponse.json(
         { error: "Invoice limit reached" },
         { status: 403 }
@@ -85,7 +84,7 @@ export async function POST(req: Request) {
         clientName: "",
         amount: Number(amount),
         dueDate: new Date(dueDate),
-        status: "unpaid",
+        status: "UNPAID", // keep consistent casing
       },
     });
 
@@ -97,6 +96,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(updatedInvoice);
+
   } catch (error) {
     console.error("❌ CREATE INVOICE ERROR:", error);
 

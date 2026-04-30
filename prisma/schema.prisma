@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  name          String?
-  password      String?
-  role          String         @default("USER")
+  id       String  @id @default(uuid())
+  email    String  @unique
+  name     String?
+  password String?
+  role     String  @default("USER")
+
   referredBy    String?
   isVerified    Boolean        @default(false)
   createdAt     DateTime       @default(now())
@@ -21,10 +22,6 @@ model User {
   invoices      Invoice[]
   subscriptions Subscription[]
 }
-
-
-
-
 
 model Invoice {
   id          String     @id @default(uuid())
@@ -69,14 +66,11 @@ model MagicLink {
   createdAt DateTime @default(now())
 }
 
-
-
-
 model Product {
-  id            String         @id @default(uuid())
-  name          String
-  slug          String         @unique
-  createdAt     DateTime       @default(now())
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
 
   plans         Plan[]
   invoices      Invoice[]
@@ -84,28 +78,28 @@ model Product {
 }
 
 model Plan {
-  id              String   @id @default(uuid())
-  productId       String
-  name            String   // Free / Pro / Business
-  price           Float
-  invoiceLimit    Int?
-  paypalPlanId    String?  // VERY IMPORTANT
-  createdAt       DateTime @default(now())
+  id           String   @id @default(uuid())
+  productId    String
+  name         String // Free / Pro / Business
+  price        Float
+  invoiceLimit Int?
+  paypalPlanId String? // VERY IMPORTANT
+  createdAt    DateTime @default(now())
 
-  product         Product  @relation(fields: [productId], references: [id])
-  subscriptions   Subscription[]
+  product       Product        @relation(fields: [productId], references: [id])
+  subscriptions Subscription[]
 }
 
 model Subscription {
   id                   String   @id @default(uuid())
   userId               String
   productId            String
-  planId               String   // 🔥 NEW
+  planId               String // 🔥 NEW
   paypalSubscriptionId String?
   status               String
   createdAt            DateTime @default(now())
 
-  product              Product  @relation(fields: [productId], references: [id])
-  plan                 Plan     @relation(fields: [planId], references: [id])
-  user                 User     @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+  plan    Plan    @relation(fields: [planId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
 }

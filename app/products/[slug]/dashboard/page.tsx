@@ -8,14 +8,15 @@ export default async function Page({
 }: {
   params: { slug: string };
 }) {
-  const user = await getUser();
+  const { slug } = params;
 
+  const user = await getUser();
   if (!user) return <div>Unauthorized</div>;
 
-  const allowed = await hasAccess(user.id, params.slug);
+  const allowed = await hasAccess(user.id, slug);
 
   return (
-    <Layout>
+    <Layout slug={slug}>
       {!allowed ? (
         <div className="bg-white border rounded-md p-5 max-w-md">
           <p className="text-sm mb-3">
@@ -23,14 +24,14 @@ export default async function Page({
           </p>
 
           <a
-            href={`/products/${params.slug}/subscribe`}
+            href={`/products/${slug}/subscribe`}
             className="bg-black text-white px-3 py-1.5 rounded-md text-sm"
           >
             Subscribe
           </a>
         </div>
       ) : (
-        <DashboardClient slug={params.slug} />
+        <DashboardClient slug={slug} />
       )}
     </Layout>
   );

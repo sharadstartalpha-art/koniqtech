@@ -5,23 +5,30 @@ import Link from "next/link";
 import Header from "./Header";
 import { LayoutDashboard, FileText, Mail } from "lucide-react";
 
-export default function Layout({ children }: any) {
+export default function Layout({
+  children,
+  slug,
+}: {
+  children: React.ReactNode;
+  slug: string;
+}) {
   const pathname = usePathname();
 
+  // 🔥 dynamic navigation
   const nav = [
     {
       name: "Dashboard",
-      href: "/products/invoice-recovery/dashboard",
+      href: `/products/${slug}/dashboard`,
       icon: LayoutDashboard,
     },
     {
       name: "Invoices",
-      href: "/products/invoice-recovery/invoices",
+      href: `/products/${slug}/invoices`,
       icon: FileText,
     },
     {
       name: "Reminders",
-      href: "/products/invoice-recovery/reminders",
+      href: `/products/${slug}/reminders`,
       icon: Mail,
     },
   ];
@@ -32,7 +39,7 @@ export default function Layout({ children }: any) {
       {/* SIDEBAR */}
       <aside className="w-[220px] border-r bg-white flex flex-col">
 
-        {/* LOGO (FIXED CORRECT) */}
+        {/* LOGO */}
         <div className="h-14 flex items-center px-4 border-b font-semibold">
           KoniqTech
         </div>
@@ -74,12 +81,9 @@ export default function Layout({ children }: any) {
 
         {/* CONTENT */}
         <main className="flex-1 overflow-auto px-8 py-6">
-
-          {/* EXACT RESEND WIDTH */}
           <div className="w-full max-w-[1100px]">
             {children}
           </div>
-
         </main>
       </div>
     </div>

@@ -8,7 +8,7 @@ export default async function Page({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
+  const slug = params.slug;
 
   const user = await getUser();
   if (!user) return <div>Unauthorized</div>;

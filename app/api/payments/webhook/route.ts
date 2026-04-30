@@ -15,11 +15,25 @@ export async function POST(req: Request) {
 
       const userId = sub.custom_id;
       const subscriptionId = sub.id;
+      const paypalPlanId = sub.plan_id; // 🔥 IMPORTANT
 
       if (!userId) {
         console.error("❌ Missing custom_id");
         return NextResponse.json(
           { error: "Missing user mapping" },
+          { status: 400 }
+        );
+      }
+
+      // 🔥 FIND PLAN FROM PAYPAL PLAN ID
+      const plan = await prisma.plan.findFirst({
+        where: { paypalPlanId },
+      });
+
+      if (!plan) {
+        console.error("❌ Plan not found for paypalPlanId:", paypalPlanId);
+        return NextResponse.json(
+          { error: "Plan not found" },
           { status: 400 }
         );
       }
@@ -35,9 +49,10 @@ export async function POST(req: Request) {
         await prisma.subscription.create({
           data: {
             userId,
-            productId: "invoice-recovery",
+            productId: plan.productId, // ✅ FIXED
+            planId: plan.id,           // ✅ REQUIRED
             paypalSubscriptionId: subscriptionId,
-            status: "active",
+            status: "ACTIVE",
           },
         });
 

@@ -12,9 +12,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 Find product by slug
+    // ✅ Find product by slug
     const product = await prisma.product.findUnique({
       where: { slug: productId },
+      include: { plans: true },
     });
 
     if (!product) {
@@ -24,7 +25,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 Prevent duplicate subscription
+    // ✅ Pick default plan (FREE or first plan)
+    const defaultPlan =
+      product.plans.find((p) => p.price === 0) || product.plans[0];
+
+    if (!defaultPlan) {
+      return NextResponse.json(
+        { error: "No plan found for this product" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Prevent duplicate subscription
     const existing = await prisma.subscription.findFirst({
       where: {
         userId,
@@ -39,12 +51,13 @@ export async function POST(req: Request) {
       });
     }
 
-    // ✅ Create subscription with REAL product.id
+    // ✅ Create subscription (FIXED 🔥)
     await prisma.subscription.create({
       data: {
         userId,
         productId: product.id,
-        status: "active",
+        planId: defaultPlan.id, // ⭐ REQUIRED FIX
+        status: "ACTIVE",
       },
     });
 

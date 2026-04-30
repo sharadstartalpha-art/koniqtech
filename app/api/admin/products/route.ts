@@ -4,6 +4,9 @@ import { NextResponse } from "next/server";
 /* 📦 GET ALL PRODUCTS */
 export async function GET() {
   const products = await prisma.product.findMany({
+    include: {
+      plans: true, // 🔥 include plans now
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -13,23 +16,32 @@ export async function GET() {
 /* ➕ CREATE PRODUCT */
 export async function POST(req: Request) {
   try {
-    const { name, price, invoiceLimit } = await req.json();
+    const { name } = await req.json();
 
-    if (!name || !price) {
+    if (!name) {
       return NextResponse.json(
-        { error: "Name and price required" },
+        { error: "Name required" },
         { status: 400 }
       );
     }
 
     const slug = name.toLowerCase().replace(/\s+/g, "-");
 
+    // ✅ Create product ONLY
     const product = await prisma.product.create({
       data: {
         name,
-        price: Number(price),
         slug,
-        invoiceLimit: invoiceLimit ? Number(invoiceLimit) : null,
+      },
+    });
+
+    // 🔥 OPTIONAL: create default FREE plan
+    await prisma.plan.create({
+      data: {
+        name: "Free",
+        price: 0,
+        invoiceLimit: -1,
+        productId: product.id,
       },
     });
 
@@ -56,6 +68,11 @@ export async function DELETE(req: Request) {
         { status: 400 }
       );
     }
+
+    // 🔥 delete plans first (important for FK)
+    await prisma.plan.deleteMany({
+      where: { productId: id },
+    });
 
     await prisma.product.delete({
       where: { id },

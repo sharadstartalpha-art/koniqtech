@@ -5,45 +5,39 @@ import Link from "next/link";
 import Header from "./Header";
 import { LayoutDashboard, FileText, Mail } from "lucide-react";
 
-export default function Layout({
-  children,
-  slug,
-}: {
-  children: React.ReactNode;
-  slug: string;
-}) {
+export default function Layout({ children }: any) {
   const pathname = usePathname();
-
-  if (!slug) {
-    return <div className="p-6">Invalid product</div>;
-  }
 
   const nav = [
     {
       name: "Dashboard",
-      href: `/products/${slug}/dashboard`,
+      href: "/products/invoice-recovery/dashboard",
       icon: LayoutDashboard,
     },
     {
       name: "Invoices",
-      href: `/products/${slug}/invoices`,
+      href: "/products/invoice-recovery/invoices",
       icon: FileText,
     },
     {
       name: "Reminders",
-      href: `/products/${slug}/reminders`,
+      href: "/products/invoice-recovery/reminders",
       icon: Mail,
     },
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#fafafa] text-sm">
+    <div className="flex h-screen w-full bg-[#fafafa] text-[14px]">
+
       {/* SIDEBAR */}
       <aside className="w-[220px] border-r bg-white flex flex-col">
+
+        {/* LOGO (FIXED CORRECT) */}
         <div className="h-14 flex items-center px-4 border-b font-semibold">
           KoniqTech
         </div>
 
+        {/* NAV */}
         <div className="p-2 space-y-1">
           {nav.map((item) => {
             const active = pathname === item.href;
@@ -53,7 +47,7 @@ export default function Layout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                   active
                     ? "bg-gray-100 text-black font-medium"
                     : "text-gray-500 hover:bg-gray-100"
@@ -65,14 +59,27 @@ export default function Layout({
             );
           })}
         </div>
+
+        {/* FOOTER */}
+        <div className="mt-auto p-3 border-t text-xs text-gray-400">
+          KoniqTech
+        </div>
       </aside>
 
-      {/* MAIN */}
+      {/* RIGHT PANEL */}
       <div className="flex-1 flex flex-col">
+
+        {/* HEADER */}
         <Header />
 
+        {/* CONTENT */}
         <main className="flex-1 overflow-auto px-8 py-6">
-          <div className="max-w-[1100px]">{children}</div>
+
+          {/* EXACT RESEND WIDTH */}
+          <div className="w-full max-w-[1100px]">
+            {children}
+          </div>
+
         </main>
       </div>
     </div>

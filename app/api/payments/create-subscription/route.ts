@@ -1,23 +1,14 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 
 const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
   try {
     const { paypalPlanId } = await req.json();
-
-    // ✅ Get logged-in user (for webhook mapping)
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("user")?.value;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
 
     if (!paypalPlanId) {
       return NextResponse.json(
@@ -26,9 +17,23 @@ export async function POST(req: Request) {
       );
     }
 
-    /* =======================================================
-       🔐 1. GET ACCESS TOKEN (REQUIRED)
-    ======================================================= */
+    // 🔐 AUTH (JWT)
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const { payload } = await jwtVerify(token, secret);
+    const userId = payload.id as string;
+
+    /* =========================
+       1. GET ACCESS TOKEN
+    ========================= */
     const auth = Buffer.from(
       `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
     ).toString("base64");
@@ -46,17 +51,15 @@ export async function POST(req: Request) {
 
     const accessToken = tokenRes.data.access_token;
 
-    /* =======================================================
-       💳 2. CREATE SUBSCRIPTION
-    ======================================================= */
+    /* =========================
+       2. CREATE SUBSCRIPTION
+    ========================= */
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 
     const subRes = await axios.post(
       `${PAYPAL_API}/v1/billing/subscriptions`,
       {
         plan_id: paypalPlanId,
-
-        // 🔥 CRITICAL (used in webhook)
         custom_id: userId,
 
         application_context: {
@@ -66,13 +69,13 @@ export async function POST(req: Request) {
       },
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`, // ✅ FIX
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
       }
     );
 
-    const approvalUrl = subRes.data.links.find(
+    const approvalUrl = subRes.data.links?.find(
       (l: any) => l.rel === "approve"
     )?.href;
 

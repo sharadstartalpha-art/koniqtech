@@ -16,11 +16,13 @@ export async function GET() {
     const { payload } = await jwtVerify(token, secret);
 
     return NextResponse.json({
-      id: payload.id,
-      email: payload.email,
-      role: payload.role,
+      id: payload.id as string,
+      email: payload.email as string,
+      role: payload.role as string,
     });
-  } catch {
+
+  } catch (error) {
+    console.error("GET USER ERROR:", error);
     return NextResponse.json(null);
   }
 }

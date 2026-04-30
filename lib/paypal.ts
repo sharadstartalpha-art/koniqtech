@@ -1,15 +1,11 @@
-const BASE = "https://api-m.sandbox.paypal.com";
-
-export async function getAccessToken() {
-  const res = await fetch(`${BASE}/v1/oauth2/token`, {
+export async function getPayPalAccessToken() {
+  const res = await fetch("https://api-m.sandbox.paypal.com/v1/oauth2/token", {
     method: "POST",
     headers: {
       Authorization:
         "Basic " +
         Buffer.from(
-          process.env.PAYPAL_CLIENT_ID +
-            ":" +
-            process.env.PAYPAL_SECRET
+          `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
         ).toString("base64"),
       "Content-Type": "application/x-www-form-urlencoded",
     },

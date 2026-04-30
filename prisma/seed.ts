@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+  // ✅ ADMIN (keep as is)
   const email = "admin@koniqtech.com";
   const password = await bcrypt.hash("admin123", 10);
 
@@ -19,6 +20,84 @@ async function main() {
   });
 
   console.log("✅ Admin created");
+
+  // ===============================
+  // ✅ PRODUCTS
+  // ===============================
+
+  const invoiceRecovery = await prisma.product.upsert({
+    where: { slug: "invoice-recovery" },
+    update: {},
+    create: {
+      name: "Invoice Recovery",
+      slug: "invoice-recovery",
+    },
+  });
+
+  const agenciesTool = await prisma.product.upsert({
+    where: { slug: "agencies-tool" },
+    update: {},
+    create: {
+      name: "Agencies Tool",
+      slug: "agencies-tool",
+    },
+  });
+
+  console.log("✅ Products created");
+
+  // ===============================
+  // ✅ PLANS (IMPORTANT)
+  // ===============================
+
+  // 🚀 Invoice Recovery Plans
+  await prisma.plan.createMany({
+    data: [
+      
+      {
+        name: "Starter",
+        price: 19,
+        invoiceLimit: 20,
+        productId: invoiceRecovery.id,
+        paypalPlanId: "PAYPAL_PLAN_STARTER",
+      },
+      {
+        name: "Growth",
+        price: 39,
+        invoiceLimit: 100,
+        productId: invoiceRecovery.id,
+        paypalPlanId: "PAYPAL_PLAN_GROWTH",
+      },
+      {
+        name: "Pro",
+        price: 79,
+        invoiceLimit: -1,
+        productId: invoiceRecovery.id,
+        paypalPlanId: "PAYPAL_PLAN_PRO",
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  // 🚀 Agencies Tool Plans (example)
+  await prisma.plan.createMany({
+    data: [
+      {
+        name: "Starter",
+        price: 29,
+        productId: agenciesTool.id,
+        paypalPlanId: "PAYPAL_PLAN_AGENCY_STARTER",
+      },
+      {
+        name: "Pro",
+        price: 99,
+        productId: agenciesTool.id,
+        paypalPlanId: "PAYPAL_PLAN_AGENCY_PRO",
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  console.log("✅ Plans created");
 }
 
 main()

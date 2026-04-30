@@ -6,7 +6,8 @@ import Layout from "@/components/Layout";
 import { useParams } from "next/navigation";
 
 export default function CreateInvoicePage() {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params?.slug as string;
 
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
@@ -22,7 +23,7 @@ export default function CreateInvoicePage() {
         clientEmail: email,
         amount: Number(amount),
         dueDate: new Date(),
-        slug, // 🔥 important
+        slug,
       });
 
       window.location.href = `/products/${slug}/invoices`;
@@ -34,7 +35,7 @@ export default function CreateInvoicePage() {
   };
 
   return (
-    <Layout>
+    <Layout slug={slug}>
       <div className="max-w-md mx-auto mt-20 space-y-4">
         <input
           placeholder="Email"
@@ -50,7 +51,11 @@ export default function CreateInvoicePage() {
           className="border p-2 w-full"
         />
 
-        <button onClick={create} className="bg-black text-white p-2 w-full">
+        <button
+          onClick={create}
+          disabled={loading}
+          className="bg-black text-white p-2 w-full"
+        >
           {loading ? "Creating..." : "Create"}
         </button>
       </div>

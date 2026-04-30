@@ -14,6 +14,8 @@ export default function DashboardClient({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!slug) return; // 🔥 guard
+
     load();
     const i = setInterval(load, 5000);
     return () => clearInterval(i);
@@ -21,7 +23,9 @@ export default function DashboardClient({ slug }: { slug: string }) {
 
   const load = async () => {
     try {
-      const res = await axios.get(`/api/dashboard/stats?slug=${slug}`);
+      const res = await axios.get(
+        `/api/dashboard/stats?slug=${slug}`
+      );
       setData(res.data);
     } catch (err) {
       console.error(err);

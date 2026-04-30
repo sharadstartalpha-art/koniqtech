@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // ✅ PRODUCT
-    const product = await prisma.product.findFirst({
+    const product = await prisma.product.findUnique({
       where: { slug: "invoice-recovery" },
     });
 
@@ -44,14 +44,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 GET USER SUBSCRIPTION + PLAN (IMPORTANT FIX)
+    // 🔥 SUBSCRIPTION + PLAN
     const sub = await prisma.subscription.findFirst({
       where: {
         userId,
-        status: "ACTIVE", // keep consistent with your system
+        status: "ACTIVE",
       },
       include: {
-        plan: true, // ✅ FIX: include plan instead of product
+        plan: true,
+      },
+      orderBy: {
+        createdAt: "desc", // ✅ always latest
       },
     });
 
@@ -62,7 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const limit = sub.plan.invoiceLimit; // ✅ FIXED
+    const limit = sub.plan.invoiceLimit;
 
     const count = await prisma.invoice.count({
       where: { userId },
@@ -84,10 +87,11 @@ export async function POST(req: Request) {
         clientName: "",
         amount: Number(amount),
         dueDate: new Date(dueDate),
-        status: "UNPAID", // keep consistent casing
+        status: "UNPAID",
       },
     });
 
+    // 💳 PAYMENT LINK
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
     const updatedInvoice = await prisma.invoice.update({
@@ -98,7 +102,7 @@ export async function POST(req: Request) {
     return NextResponse.json(updatedInvoice);
 
   } catch (error) {
-    console.error("❌ CREATE INVOICE ERROR:", error);
+    console.error("CREATE INVOICE ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal server error" },

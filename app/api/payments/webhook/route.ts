@@ -1,124 +1,54 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log("📩 PAYPAL WEBHOOK:", body.event_type);
+    console.log("WEBHOOK EVENT:", body.event_type);
 
-    /* =======================================================
-       🔥 1. SUBSCRIPTION ACTIVATED
-    ======================================================= */
-    if (body.event_type === "BILLING.SUBSCRIPTION.ACTIVATED") {
-      const sub = body.resource;
+    const eventType = body.event_type;
 
-      const userId = sub.custom_id;
-      const subscriptionId = sub.id;
+    /* =========================
+       SUBSCRIPTION ACTIVATED
+    ========================= */
+    if (eventType === "BILLING.SUBSCRIPTION.ACTIVATED") {
+      const subscriptionId = body.resource.id;
+      const userId = body.resource.custom_id;
 
-      if (!userId) {
-        console.error("❌ Missing custom_id");
-        return NextResponse.json(
-          { error: "Missing user mapping" },
-          { status: 400 }
-        );
-      }
+      console.log("ACTIVATED:", subscriptionId, userId);
 
-      // ✅ Get product
-      const product = await prisma.product.findUnique({
-        where: { slug: "invoice-recovery" },
-        include: { plans: true },
+      await prisma.subscription.updateMany({
+        where: {
+          paypalSubscriptionId: subscriptionId,
+          userId,
+        },
+        data: {
+          status: "ACTIVE",
+        },
       });
+    }
 
-      if (!product) {
-        console.error("❌ Product not found");
-        return NextResponse.json({ error: "Product missing" }, { status: 400 });
-      }
+    /* =========================
+       SUBSCRIPTION CANCELLED
+    ========================= */
+    if (eventType === "BILLING.SUBSCRIPTION.CANCELLED") {
+      const subscriptionId = body.resource.id;
 
-      // 🔥 Pick plan (you can improve this later)
-      const plan = product.plans[0];
-
-      if (!plan) {
-        console.error("❌ No plan found");
-        return NextResponse.json({ error: "Plan missing" }, { status: 400 });
-      }
-
-      // ✅ Prevent duplicate
-      const existing = await prisma.subscription.findFirst({
+      await prisma.subscription.updateMany({
         where: {
           paypalSubscriptionId: subscriptionId,
         },
-      });
-
-      if (!existing) {
-        await prisma.subscription.create({
-          data: {
-            userId,
-            productId: product.id, // ✅ FIX
-            planId: plan.id,       // ✅ REQUIRED
-            paypalSubscriptionId: subscriptionId,
-            status: "ACTIVE",      // ✅ consistent
-          },
-        });
-
-        console.log("✅ Subscription created:", subscriptionId);
-      }
-    }
-
-    /* =======================================================
-       💰 2. CHECKOUT PAYMENT (ORDER APPROVED)
-    ======================================================= */
-    if (body.event_type === "CHECKOUT.ORDER.APPROVED") {
-      const invoiceId =
-        body.resource?.purchase_units?.[0]?.custom_id;
-
-      if (!invoiceId) {
-        console.warn("⚠️ No invoice ID in checkout");
-        return NextResponse.json({ ok: true });
-      }
-
-      await prisma.invoice.update({
-        where: { id: invoiceId },
         data: {
-          status: "PAID",
-          paidAt: new Date(),
+          status: "CANCELLED",
         },
       });
-
-      console.log("💰 Invoice paid (checkout):", invoiceId);
     }
 
-    /* =======================================================
-       💰 3. PAYMENT COMPLETED (fallback)
-    ======================================================= */
-    if (body.event_type === "PAYMENT.SALE.COMPLETED") {
-      const resource = body.resource;
+    return NextResponse.json({ received: true });
 
-      const invoiceId =
-        resource?.custom ||
-        resource?.invoice_id ||
-        resource?.note;
-
-      if (!invoiceId) {
-        console.warn("⚠️ No invoice ID in sale");
-        return NextResponse.json({ ok: true });
-      }
-
-      await prisma.invoice.update({
-        where: { id: invoiceId },
-        data: {
-          status: "PAID",
-          paidAt: new Date(),
-        },
-      });
-
-      console.log("💰 Invoice paid (sale):", invoiceId);
-    }
-
-    return NextResponse.json({ ok: true });
-
-  } catch (error) {
-    console.error("❌ WEBHOOK ERROR:", error);
+  } catch (err) {
+    console.error("WEBHOOK ERROR:", err);
 
     return NextResponse.json(
       { error: "Webhook failed" },

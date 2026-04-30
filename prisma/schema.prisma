@@ -85,7 +85,7 @@ model Plan {
   invoiceLimit Int?
   paypalPlanId String? // VERY IMPORTANT
   createdAt    DateTime @default(now())
-
+  active         Boolean @default(true)
   product       Product        @relation(fields: [productId], references: [id])
   subscriptions Subscription[]
 }

@@ -42,7 +42,6 @@ export default function SubscribePage() {
       });
 
       if (res.data?.approvalUrl) {
-        // ✅ Redirect to PayPal
         window.location.href = res.data.approvalUrl;
       } else {
         alert("Failed to start subscription");

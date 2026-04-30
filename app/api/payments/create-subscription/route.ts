@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 
-const PAYPAL_API = "https://api-m.paypal.com"; // 🔥 use sandbox if testing
+const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+//const PAYPAL_API = "https://api-m.paypal.com"; // 🔥 use sandbox if testing
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {

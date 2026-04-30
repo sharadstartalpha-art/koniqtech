@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import { prisma } from "@/lib/prisma";
 
-const PAYPAL_API = "https://api-m.paypal.com";
-
+//const PAYPAL_API = "https://api-m.paypal.com";
+const PAYPAL_API = "https://api-m.sandbox.paypal.com";
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const subscriptionId = searchParams.get("subscriptionId");

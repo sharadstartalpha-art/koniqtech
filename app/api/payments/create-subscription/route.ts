@@ -3,7 +3,8 @@ import axios from "axios";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
-const PAYPAL_API = "https://api-m.sandbox.paypal.com";
+const PAYPAL_API = "https://api-m.paypal.com";
+//const PAYPAL_API = "https://api-m.sandbox.paypal.com"; // 🔥 switch if using live
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 AUTH (JWT)
+    // 🔐 AUTH
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -61,7 +62,6 @@ export async function POST(req: Request) {
       {
         plan_id: paypalPlanId,
         custom_id: userId,
-
         application_context: {
           return_url: `${baseUrl}/success`,
           cancel_url: `${baseUrl}/products/invoice-recovery/subscribe`,

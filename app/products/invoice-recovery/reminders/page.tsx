@@ -72,22 +72,6 @@ export default function RemindersPage() {
     return "bg-gray-100 text-gray-700";
   };
 
-  /* =========================
-     MARK AS PAID
-  ========================= */
-  const markAsPaid = async (email: string) => {
-    try {
-      await axios.post("/api/invoices/mark-paid", {
-        email,
-      });
-
-      alert("✅ Marked as paid");
-      load();
-    } catch (err) {
-      alert("❌ Failed");
-    }
-  };
-
   return (
     <Layout>
       <div className="space-y-6">
@@ -120,8 +104,10 @@ export default function RemindersPage() {
             onChange={(e) => setPerPage(Number(e.target.value))}
             className="border px-2 py-1 text-sm rounded"
           >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
           </select>
         </div>
 
@@ -142,7 +128,7 @@ export default function RemindersPage() {
                   <th className="p-3 text-left">Type</th>
                   <th className="p-3 text-left">Status</th>
                   <th className="p-3 text-left">Date</th>
-                  <th className="p-3 text-left">Actions</th>
+                  <th className="p-3 text-left">Action</th>
                 </tr>
               </thead>
 
@@ -182,25 +168,14 @@ export default function RemindersPage() {
                       {new Date(r.sentAt).toLocaleString()}
                     </td>
 
-                    {/* ACTION BUTTONS */}
-                    <td className="p-3 space-x-2">
-
-                      {/* VIEW BUTTON */}
+                    {/* VIEW BUTTON */}
+                    <td className="p-3">
                       <button
                         onClick={() => setSelectedReminder(r)}
                         className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         View
                       </button>
-
-                      {/* MARK AS PAID */}
-                      <button
-                        onClick={() => markAsPaid(r.email)}
-                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Paid
-                      </button>
-
                     </td>
                   </tr>
                 ))}
@@ -234,9 +209,7 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        {/* =========================
-           EMAIL MODAL
-        ========================= */}
+        {/* EMAIL MODAL */}
         <EmailViewerModal
           isOpen={!!selectedReminder}
           onClose={() => setSelectedReminder(null)}

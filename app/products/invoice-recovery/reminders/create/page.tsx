@@ -4,13 +4,21 @@ import { useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 
+type EmailPreview = {
+  html: string;
+  text: string;
+};
+
 export default function CreateReminderPage() {
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
-  const [preview, setPreview] = useState("");
+  const [preview, setPreview] = useState<EmailPreview | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
+  /* =========================
+     🔮 GENERATE EMAIL
+  ========================= */
   const generate = async () => {
     if (!amount) return alert("Amount required");
 
@@ -21,7 +29,7 @@ export default function CreateReminderPage() {
         amount: Number(amount),
       });
 
-      setPreview(res.data.html); // ✅ FIX
+      setPreview(res.data); // ✅ object { html, text }
     } catch {
       alert("Failed to generate");
     } finally {
@@ -29,6 +37,9 @@ export default function CreateReminderPage() {
     }
   };
 
+  /* =========================
+     📧 SEND EMAIL
+  ========================= */
   const send = async () => {
     if (!email || !preview) return alert("Missing data");
 
@@ -37,11 +48,14 @@ export default function CreateReminderPage() {
     try {
       await axios.post("/api/reminders/send-custom", {
         email,
-        html: preview,
+        html: preview.html, // ✅ correct
+        amount: Number(amount),
       });
 
       alert("✅ Sent");
-      window.location.href = "/products/invoice-recovery/reminders";
+
+      window.location.href =
+        "/products/invoice-recovery/reminders";
     } catch {
       alert("Failed to send");
     } finally {
@@ -59,6 +73,7 @@ export default function CreateReminderPage() {
 
         <div className="bg-white border rounded-md p-6 space-y-4">
 
+          {/* EMAIL */}
           <input
             type="email"
             placeholder="Client Email"
@@ -67,6 +82,7 @@ export default function CreateReminderPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
+          {/* AMOUNT */}
           <input
             type="number"
             placeholder="Amount"
@@ -75,6 +91,7 @@ export default function CreateReminderPage() {
             onChange={(e) => setAmount(e.target.value)}
           />
 
+          {/* GENERATE */}
           <button
             onClick={generate}
             className="bg-blue-600 text-white px-4 py-2 rounded w-full"
@@ -82,17 +99,39 @@ export default function CreateReminderPage() {
             {loading ? "Generating..." : "Generate Email"}
           </button>
 
+          {/* PREVIEW */}
           {preview && (
             <>
+              {/* HTML EDITOR */}
               <textarea
-                value={preview}
-                onChange={(e) => setPreview(e.target.value)}
-                className="border w-full h-40 p-2 rounded"
+                value={preview.html}
+                onChange={(e) =>
+                  setPreview({
+                    ...preview,
+                    html: e.target.value,
+                  })
+                }
+                className="border p-2 w-full h-40 rounded"
               />
 
+              {/* LIVE PREVIEW */}
+              <div className="border p-3 rounded bg-gray-50">
+                <p className="text-xs text-gray-500 mb-2">
+                  Preview:
+                </p>
+
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: preview.html,
+                  }}
+                />
+              </div>
+
+              {/* SEND */}
               <button
                 onClick={send}
-                className="bg-black text-white px-4 py-2 rounded w-full"
+                disabled={sending}
+                className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50"
               >
                 {sending ? "Sending..." : "Send Email"}
               </button>

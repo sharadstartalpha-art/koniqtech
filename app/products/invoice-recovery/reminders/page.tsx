@@ -9,7 +9,7 @@ type Reminder = {
   email: string;
   amount: number;
   type: "friendly" | "firm" | "final";
-  status: string;
+  status: "sent" | "failed";
   sentAt: string;
 };
 
@@ -21,12 +21,15 @@ export default function RemindersPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
 
+  // 👇 NEW: modal state
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+
   /* =========================
      LOAD DATA
   ========================= */
   const load = async () => {
     try {
-      const res = await axios.get("/api/reminders"); // ✅ FIXED
+      const res = await axios.get("/api/reminders");
       setData(res.data);
       setFiltered(res.data);
     } catch (err) {
@@ -56,6 +59,19 @@ export default function RemindersPage() {
   const paginated = filtered.slice(start, start + perPage);
   const totalPages = Math.ceil(filtered.length / perPage);
 
+  /* =========================
+     STATUS COLOR
+  ========================= */
+  const getStatusStyle = (status: string) => {
+    if (status === "sent") {
+      return "bg-green-100 text-green-700";
+    }
+    if (status === "failed") {
+      return "bg-red-100 text-red-700";
+    }
+    return "bg-gray-100 text-gray-700";
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -74,7 +90,7 @@ export default function RemindersPage() {
           </a>
         </div>
 
-        {/* SEARCH */}
+        {/* SEARCH + LIMIT */}
         <div className="flex justify-between items-center">
           <input
             placeholder="Search email..."
@@ -110,6 +126,7 @@ export default function RemindersPage() {
                   <th className="p-3 text-left">Type</th>
                   <th className="p-3 text-left">Status</th>
                   <th className="p-3 text-left">Date</th>
+                  <th className="p-3 text-left">Action</th>
                 </tr>
               </thead>
 
@@ -133,13 +150,27 @@ export default function RemindersPage() {
                     </td>
 
                     <td className="p-3">
-                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getStatusStyle(
+                          r.status
+                        )}`}
+                      >
                         {r.status}
                       </span>
                     </td>
 
                     <td className="p-3">
                       {new Date(r.sentAt).toLocaleString()}
+                    </td>
+
+                    {/* 👇 VIEW BUTTON */}
+                    <td className="p-3">
+                      <button
+                        onClick={() => setSelectedEmail(r.email)}
+                        className="text-blue-600 text-xs underline"
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -172,6 +203,32 @@ export default function RemindersPage() {
             </div>
           </div>
         </div>
+
+        {/* =========================
+           MODAL
+        ========================= */}
+        {selectedEmail && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded w-[400px] shadow-lg">
+
+              <h2 className="font-semibold mb-3">
+                Email Details
+              </h2>
+
+              <p className="text-sm break-all">
+                {selectedEmail}
+              </p>
+
+              <button
+                onClick={() => setSelectedEmail(null)}
+                className="mt-4 bg-black text-white px-3 py-2 rounded w-full"
+              >
+                Close
+              </button>
+
+            </div>
+          </div>
+        )}
 
       </div>
     </Layout>

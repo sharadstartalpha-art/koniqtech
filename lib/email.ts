@@ -2,15 +2,22 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ⚠️ Use onboarding@resend.dev (test) OR your verified domain
 const FROM_EMAIL = "KoniqTech <no-reply@koniqtech.com>";
 
-/* 🔹 GENERIC EMAIL SENDER */
-export async function sendEmail(
-  to: string,
-  subject: string,
-  html: string
-) {
+/* =========================
+   📤 GENERIC EMAIL SENDER
+========================= */
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}) {
   try {
     console.log("📤 Sending email →", to);
 
@@ -19,6 +26,7 @@ export async function sendEmail(
       to,
       subject,
       html,
+      text, // ✅ important fallback
     });
 
     if (error) {
@@ -33,7 +41,9 @@ export async function sendEmail(
   }
 }
 
-/* 🔐 MAGIC LINK EMAIL */
+/* =========================
+   🔐 MAGIC LINK EMAIL
+========================= */
 export async function sendMagicLink(
   email: string,
   link: string
@@ -61,10 +71,26 @@ export async function sendMagicLink(
     </div>
   `;
 
-  return sendEmail(email, "Your login link", html);
+  const text = `
+Login to KoniqTech
+
+Click the link below to sign in:
+${link}
+
+This link will expire in 10 minutes.
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: "Your login link",
+    html,
+    text,
+  });
 }
 
-/* 💰 INVOICE REMINDER EMAIL */
+/* =========================
+   💰 INVOICE REMINDER EMAIL
+========================= */
 export async function sendReminderEmail(
   to: string,
   amount: number,
@@ -98,5 +124,21 @@ export async function sendReminderEmail(
     </div>
   `;
 
-  return sendEmail(to, "Invoice Reminder", html);
+  const text = `
+Payment Reminder
+
+You have a pending invoice of $${amount}.
+
+Pay here:
+${paymentLink}
+
+Sent via KoniqTech
+  `;
+
+  return sendEmail({
+    to,
+    subject: "Invoice Reminder",
+    html,
+    text,
+  });
 }

@@ -2,6 +2,8 @@ import { prisma } from "./prisma";
 import { generateEmail } from "./aiEmail";
 import { sendEmail } from "./email";
 
+type EmailType = "friendly" | "firm" | "final";
+
 export async function runReminders() {
   try {
     const invoices = await prisma.invoice.findMany({
@@ -9,11 +11,14 @@ export async function runReminders() {
     });
 
     for (const inv of invoices) {
+      /* =========================
+         📅 CALCULATE DELAY
+      ========================= */
       const daysLate =
         (Date.now() - new Date(inv.dueDate).getTime()) /
         (1000 * 60 * 60 * 24);
 
-      let type: "friendly" | "firm" | "final" | "" = "";
+      let type: EmailType | null = null;
 
       if (daysLate >= 1 && daysLate < 3) type = "friendly";
       else if (daysLate >= 3 && daysLate < 7) type = "firm";
@@ -21,7 +26,9 @@ export async function runReminders() {
 
       if (!type) continue;
 
-      // prevent duplicates
+      /* =========================
+         🚫 PREVENT DUPLICATES
+      ========================= */
       const alreadySent = await prisma.reminder.findFirst({
         where: {
           invoiceId: inv.id,
@@ -31,28 +38,41 @@ export async function runReminders() {
 
       if (alreadySent) continue;
 
-      // ensure payment link
+      /* =========================
+         🔗 ENSURE PAYMENT LINK
+      ========================= */
       if (!inv.paymentLink) {
         console.error("❌ Missing payment link:", inv.id);
         continue;
       }
 
-      // generate email
-      const content = await generateEmail(
+      /* =========================
+         ✉️ GENERATE EMAIL
+      ========================= */
+      const { html, text } = generateEmail(
         inv.amount,
         type,
         inv.paymentLink
       );
 
-      if (!content) {
-        console.error("❌ AI email failed:", inv.id);
+      if (!html) {
+        console.error("❌ Email generation failed:", inv.id);
         continue;
       }
 
-      // send email
-      await sendEmail(inv.clientEmail, "Invoice Reminder", content);
+      /* =========================
+         📤 SEND EMAIL (FIXED)
+      ========================= */
+      await sendEmail({
+        to: inv.clientEmail,
+        subject: "Invoice Reminder",
+        html,
+        text,
+      });
 
-      // save log
+      /* =========================
+         💾 SAVE LOG
+      ========================= */
       await prisma.reminder.create({
         data: {
           invoiceId: inv.id,
@@ -61,7 +81,7 @@ export async function runReminders() {
         },
       });
 
-      console.log(`📧 ${type} reminder sent to ${inv.clientEmail}`);
+      console.log(`📧 ${type} reminder sent → ${inv.clientEmail}`);
     }
   } catch (error) {
     console.error("❌ Reminder job failed:", error);

@@ -21,7 +21,7 @@ export default function RemindersPage() {
   const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState<number>(5);
+  const [perPage, setPerPage] = useState(5);
 
   const [selectedReminder, setSelectedReminder] =
     useState<Reminder | null>(null);
@@ -35,7 +35,7 @@ export default function RemindersPage() {
       setData(res.data);
       setFiltered(res.data);
     } catch (err) {
-      console.error("LOAD ERROR:", err);
+      console.error(err);
     }
   };
 
@@ -62,16 +62,30 @@ export default function RemindersPage() {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   /* =========================
-     STATUS COLOR
+     STATUS STYLE
   ========================= */
   const getStatusStyle = (status: string) => {
-    if (status === "sent") {
+    if (status === "sent")
       return "bg-green-100 text-green-700";
-    }
-    if (status === "failed") {
+    if (status === "failed")
       return "bg-red-100 text-red-700";
-    }
     return "bg-gray-100 text-gray-700";
+  };
+
+  /* =========================
+     MARK AS PAID
+  ========================= */
+  const markAsPaid = async (email: string) => {
+    try {
+      await axios.post("/api/invoices/mark-paid", {
+        email,
+      });
+
+      alert("✅ Marked as paid");
+      load();
+    } catch (err) {
+      alert("❌ Failed");
+    }
   };
 
   return (
@@ -86,7 +100,7 @@ export default function RemindersPage() {
 
           <a
             href="/products/invoice-recovery/reminders/create"
-            className="bg-black text-white px-3 py-2 rounded-md text-sm"
+            className="bg-black text-white px-3 py-2 rounded-md text-sm hover:opacity-90"
           >
             + Send Reminder
           </a>
@@ -101,7 +115,6 @@ export default function RemindersPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          {/* ✅ FIXED SELECT */}
           <select
             value={perPage}
             onChange={(e) => setPerPage(Number(e.target.value))}
@@ -129,20 +142,27 @@ export default function RemindersPage() {
                   <th className="p-3 text-left">Type</th>
                   <th className="p-3 text-left">Status</th>
                   <th className="p-3 text-left">Date</th>
-                  <th className="p-3 text-left">Action</th>
+                  <th className="p-3 text-left">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {paginated.map((r, i) => (
-                  <tr key={r.id} className="border-t">
+                  <tr
+                    key={r.id}
+                    className="border-t hover:bg-gray-50 transition"
+                  >
                     <td className="p-3">
                       {start + i + 1}
                     </td>
 
-                    <td className="p-3">{r.email}</td>
+                    <td className="p-3">
+                      {r.email}
+                    </td>
 
-                    <td className="p-3">${r.amount}</td>
+                    <td className="p-3 font-medium">
+                      ${r.amount}
+                    </td>
 
                     <td className="p-3 capitalize">
                       {r.type}
@@ -162,13 +182,25 @@ export default function RemindersPage() {
                       {new Date(r.sentAt).toLocaleString()}
                     </td>
 
-                    <td className="p-3">
+                    {/* ACTION BUTTONS */}
+                    <td className="p-3 space-x-2">
+
+                      {/* VIEW BUTTON */}
                       <button
                         onClick={() => setSelectedReminder(r)}
-                        className="text-blue-600 text-xs underline"
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         View
                       </button>
+
+                      {/* MARK AS PAID */}
+                      <button
+                        onClick={() => markAsPaid(r.email)}
+                        className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Paid
+                      </button>
+
                     </td>
                   </tr>
                 ))}
@@ -202,7 +234,9 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        {/* MODAL */}
+        {/* =========================
+           EMAIL MODAL
+        ========================= */}
         <EmailViewerModal
           isOpen={!!selectedReminder}
           onClose={() => setSelectedReminder(null)}

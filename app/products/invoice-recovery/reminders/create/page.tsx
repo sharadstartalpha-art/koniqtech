@@ -20,6 +20,9 @@ export default function CreateReminderPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Invoice | null>(null);
 
+  // ✅ NEW: manual reminder amount
+  const [amount, setAmount] = useState("");
+
   const [preview, setPreview] = useState<EmailPreview | null>(null);
   const [tab, setTab] = useState<"text" | "html">("text");
 
@@ -35,7 +38,6 @@ export default function CreateReminderPage() {
     const loadInvoices = async () => {
       try {
         const res = await axios.get("/api/invoices");
-        console.log("INVOICES:", res.data); // 👈 DEBUG
         setInvoices(res.data);
       } catch (err) {
         console.error(err);
@@ -57,12 +59,13 @@ export default function CreateReminderPage() {
   ========================= */
   const generate = async () => {
     if (!selected) return alert("Select client");
+    if (!amount) return alert("Enter reminder amount");
 
     setLoading(true);
 
     try {
       const res = await axios.post("/api/reminders/preview", {
-        amount: selected.amount,
+        amount: Number(amount), // ✅ use manual amount
       });
 
       setPreview(res.data);
@@ -85,7 +88,7 @@ export default function CreateReminderPage() {
       await axios.post("/api/reminders/send-custom", {
         email: selected.clientEmail,
         html: preview.html,
-        amount: selected.amount,
+        amount: Number(amount), // ✅ manual amount
       });
 
       alert("✅ Sent");
@@ -148,17 +151,25 @@ export default function CreateReminderPage() {
             )}
           </div>
 
-          {/* AMOUNT */}
+          {/* TOTAL DUE (DISPLAY ONLY ✅) */}
+          {selected && (
+            <div className="bg-gray-50 border rounded p-3">
+              <p className="text-sm text-gray-500">
+                Total Amount Due
+              </p>
+              <p className="text-lg font-semibold text-black">
+                ${selected.amount}
+              </p>
+            </div>
+          )}
+
+          {/* REMINDER AMOUNT INPUT ✅ */}
           <input
-            type="text"
-            value={
-              selected
-                ? `$${selected.amount} (Total Due)`
-                : ""
-            }
-            readOnly
-            className="border p-2 w-full rounded bg-gray-50"
-            placeholder="Amount will appear here"
+            type="number"
+            placeholder="Enter reminder amount"
+            className="border p-2 w-full rounded"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
           />
 
           {/* GENERATE */}

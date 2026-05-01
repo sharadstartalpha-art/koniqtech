@@ -4,7 +4,7 @@ export async function hasAccess(userId: string, slug: string) {
   const sub = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: "active",
+      status: "ACTIVE",
       product: {
         slug,
       },

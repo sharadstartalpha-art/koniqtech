@@ -4,25 +4,29 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 
-//const PAYPAL_API = "https://api-m.sandbox.paypal.com";
-const PAYPAL_API = "https://api-m.paypal.com"; // 🔥 use sandbox if testing
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+const PAYPAL_API = "https://api-m.paypal.com";
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
   try {
-    const { paypalPlanId, planId, productId } = await req.json();
+    /* =========================
+       📥 1. INPUT VALIDATION
+    ========================= */
+    const body = await req.json();
 
-   if (!paypalPlanId || !planId || !productId) {
+    const { paypalPlanId, planId, productId } = body;
+
+    if (!paypalPlanId || !planId || !productId) {
       return NextResponse.json(
-        { error: "Missing plan data" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
     /* =========================
-       🔐 AUTH (JWT)
+       🔐 2. AUTH (JWT)
     ========================= */
-    const cookieStore = await cookies();
+    const cookieStore = await cookies(); // ✅ FIXED
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -32,15 +36,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, JWT_SECRET);
     const userId = payload.id as string;
 
     /* =========================
-       🔑 1. GET ACCESS TOKEN
+       🔑 3. PAYPAL ACCESS TOKEN
     ========================= */
-    const auth = Buffer.from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_SECRET}`
-    ).toString("base64");
+    const clientId = process.env.PAYPAL_CLIENT_ID!;
+    const secret = process.env.PAYPAL_SECRET!;
+
+    if (!clientId || !secret) {
+      throw new Error("Missing PayPal credentials");
+    }
+
+    const auth = Buffer.from(`${clientId}:${secret}`).toString("base64");
 
     const tokenRes = await axios.post(
       `${PAYPAL_API}/v1/oauth2/token`,
@@ -56,18 +65,24 @@ export async function POST(req: Request) {
     const accessToken = tokenRes.data.access_token;
 
     /* =========================
-       💳 2. CREATE SUBSCRIPTION
+       💳 4. CREATE SUBSCRIPTION
     ========================= */
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+
+    if (!baseUrl) {
+      throw new Error("Missing NEXT_PUBLIC_BASE_URL");
+    }
 
     const subRes = await axios.post(
       `${PAYPAL_API}/v1/billing/subscriptions`,
       {
         plan_id: paypalPlanId,
-        custom_id: userId, // 🔥 CRITICAL
+        custom_id: userId,
         application_context: {
+          brand_name: "KoniqTech",
           return_url: `${baseUrl}/success`,
           cancel_url: `${baseUrl}/products/invoice-recovery/subscribe`,
+          user_action: "SUBSCRIBE_NOW",
         },
       },
       {
@@ -81,20 +96,20 @@ export async function POST(req: Request) {
     const paypalSubscriptionId = subRes.data.id;
 
     /* =========================
-       🧠 3. SAVE TO DATABASE
+       🧠 5. SAVE TO DATABASE
     ========================= */
     await prisma.subscription.create({
       data: {
         userId,
-        planId, // from frontend
+        planId,
         productId,
-        paypalSubscriptionId, // 🔥 VERY IMPORTANT
+        paypalSubscriptionId,
         status: "PENDING",
       },
     });
 
     /* =========================
-       🔗 4. GET APPROVAL URL
+       🔗 6. APPROVAL URL
     ========================= */
     const approvalUrl = subRes.data.links?.find(
       (l: any) => l.rel === "approve"
@@ -102,7 +117,7 @@ export async function POST(req: Request) {
 
     if (!approvalUrl) {
       return NextResponse.json(
-        { error: "No approval URL" },
+        { error: "Approval URL not found" },
         { status: 400 }
       );
     }
@@ -110,10 +125,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ approvalUrl });
 
   } catch (err: any) {
-    console.error("PAYPAL CREATE ERROR:", err?.response?.data || err);
+    console.error(
+      "🔥 PAYPAL CREATE ERROR:",
+      err?.response?.data || err.message || err
+    );
 
     return NextResponse.json(
-      { error: "Failed to create subscription" },
+      {
+        error: "Failed to create subscription",
+        details: err?.response?.data || null,
+      },
       { status: 500 }
     );
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
+import EmailViewerModal from "@/components/EmailViewerModal";
 
 type Reminder = {
   id: string;
@@ -11,6 +12,7 @@ type Reminder = {
   type: "friendly" | "firm" | "final";
   status: "sent" | "failed";
   sentAt: string;
+  html?: string;
 };
 
 export default function RemindersPage() {
@@ -19,10 +21,10 @@ export default function RemindersPage() {
   const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(5);
+  const [perPage, setPerPage] = useState<number>(5);
 
-  // 👇 NEW: modal state
-  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+  const [selectedReminder, setSelectedReminder] =
+    useState<Reminder | null>(null);
 
   /* =========================
      LOAD DATA
@@ -99,6 +101,7 @@ export default function RemindersPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
+          {/* ✅ FIXED SELECT */}
           <select
             value={perPage}
             onChange={(e) => setPerPage(Number(e.target.value))}
@@ -137,13 +140,9 @@ export default function RemindersPage() {
                       {start + i + 1}
                     </td>
 
-                    <td className="p-3">
-                      {r.email}
-                    </td>
+                    <td className="p-3">{r.email}</td>
 
-                    <td className="p-3">
-                      ${r.amount}
-                    </td>
+                    <td className="p-3">${r.amount}</td>
 
                     <td className="p-3 capitalize">
                       {r.type}
@@ -163,10 +162,9 @@ export default function RemindersPage() {
                       {new Date(r.sentAt).toLocaleString()}
                     </td>
 
-                    {/* 👇 VIEW BUTTON */}
                     <td className="p-3">
                       <button
-                        onClick={() => setSelectedEmail(r.email)}
+                        onClick={() => setSelectedReminder(r)}
                         className="text-blue-600 text-xs underline"
                       >
                         View
@@ -204,31 +202,14 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        {/* =========================
-           MODAL
-        ========================= */}
-        {selectedEmail && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded w-[400px] shadow-lg">
-
-              <h2 className="font-semibold mb-3">
-                Email Details
-              </h2>
-
-              <p className="text-sm break-all">
-                {selectedEmail}
-              </p>
-
-              <button
-                onClick={() => setSelectedEmail(null)}
-                className="mt-4 bg-black text-white px-3 py-2 rounded w-full"
-              >
-                Close
-              </button>
-
-            </div>
-          </div>
-        )}
+        {/* MODAL */}
+        <EmailViewerModal
+          isOpen={!!selectedReminder}
+          onClose={() => setSelectedReminder(null)}
+          email={selectedReminder?.email || ""}
+          html={selectedReminder?.html || "<p>No content</p>"}
+          date={selectedReminder?.sentAt || ""}
+        />
 
       </div>
     </Layout>

@@ -5,11 +5,12 @@ export async function GET() {
   try {
     const reminders = await prisma.reminder.findMany({
       orderBy: {
-        sentAt: "desc", // latest first ✅
+        sentAt: "desc",
       },
     });
 
     return NextResponse.json(reminders);
+
   } catch (error) {
     console.error("GET REMINDERS ERROR:", error);
 

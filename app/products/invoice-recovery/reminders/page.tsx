@@ -10,7 +10,7 @@ type Reminder = {
   amount: number;
   type: "friendly" | "firm" | "final";
   status: string;
-  createdAt: string;
+  sentAt: string;
 };
 
 export default function RemindersPage() {
@@ -25,9 +25,13 @@ export default function RemindersPage() {
      LOAD DATA
   ========================= */
   const load = async () => {
-    const res = await axios.get("/api/reminders/list");
-    setData(res.data);
-    setFiltered(res.data);
+    try {
+      const res = await axios.get("/api/reminders/list");
+      setData(res.data);
+      setFiltered(res.data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -58,7 +62,9 @@ export default function RemindersPage() {
 
         {/* HEADER */}
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Reminders</h1>
+          <h1 className="text-xl font-semibold">
+            Reminders
+          </h1>
 
           <a
             href="/products/invoice-recovery/reminders/create"
@@ -68,7 +74,7 @@ export default function RemindersPage() {
           </a>
         </div>
 
-        {/* SEARCH */}
+        {/* SEARCH + LIMIT */}
         <div className="flex justify-between items-center">
           <input
             placeholder="Search email..."
@@ -110,13 +116,28 @@ export default function RemindersPage() {
               <tbody>
                 {paginated.map((r, i) => (
                   <tr key={r.id} className="border-t">
-                    <td className="p-3">{start + i + 1}</td>
-                    <td className="p-3">{r.email}</td>
-                    <td className="p-3">${r.amount}</td>
-                    <td className="p-3 capitalize">{r.type}</td>
-                    <td className="p-3">{r.status}</td>
                     <td className="p-3">
-                      {new Date(r.createdAt).toLocaleDateString()}
+                      {start + i + 1}
+                    </td>
+
+                    <td className="p-3">
+                      {r.email}
+                    </td>
+
+                    <td className="p-3">
+                      ${r.amount}
+                    </td>
+
+                    <td className="p-3 capitalize">
+                      {r.type}
+                    </td>
+
+                    <td className="p-3">
+                      {r.status}
+                    </td>
+
+                    <td className="p-3">
+                      {new Date(r.sentAt).toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -134,15 +155,15 @@ export default function RemindersPage() {
               <button
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
-                className="border px-2 py-1 rounded"
+                className="border px-2 py-1 rounded disabled:opacity-50"
               >
                 Prev
               </button>
 
               <button
-                disabled={page === totalPages}
+                disabled={page === totalPages || totalPages === 0}
                 onClick={() => setPage((p) => p + 1)}
-                className="border px-2 py-1 rounded"
+                className="border px-2 py-1 rounded disabled:opacity-50"
               >
                 Next
               </button>

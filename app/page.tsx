@@ -1,177 +1,199 @@
 "use client";
 
-import { motion } from "framer-motion";
-
 export default function Home() {
   return (
     <div className="bg-white text-gray-900">
 
       {/* NAVBAR */}
-      <div className="flex justify-between items-center px-6 py-4 border-b">
+      <div className="flex justify-between items-center px-6 py-5 border-b">
         <h1 className="font-semibold text-lg">KoniqTech</h1>
 
-        <a
-          href="/login"
-          className="text-sm bg-black text-white px-4 py-2 rounded-md"
-        >
-          Login
-        </a>
+        <div className="flex gap-4 items-center">
+          <a href="#pricing" className="text-sm text-gray-600">
+            Pricing
+          </a>
+
+          <a
+            href="/login"
+            className="bg-black text-white px-4 py-2 rounded-md text-sm"
+          >
+            Get Started
+          </a>
+        </div>
       </div>
 
       {/* HERO */}
-      <section className="text-center py-28 px-6 max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold mb-6 leading-tight">
-          Stop Chasing Clients.
+      <section className="text-center py-32 px-6 max-w-5xl mx-auto">
+        <h1 className="text-6xl font-bold leading-tight mb-6">
+          Get Paid Without
           <br />
-          <span className="text-blue-600">
-            Get Paid Automatically.
-          </span>
+          Chasing Clients.
         </h1>
 
-        <p className="text-lg text-gray-600 mb-8">
-          KoniqTech sends smart reminders, escalates follow-ups, and helps you
-          recover unpaid invoices — without awkward conversations.
+        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+          KoniqTech automatically follows up on unpaid invoices,
+          escalates emails intelligently, and helps you recover money
+          faster — without awkward conversations.
         </p>
 
         <div className="flex justify-center gap-4">
           <a
             href="/login"
-            className="bg-black text-white px-6 py-3 rounded-lg text-lg"
+            className="bg-black text-white px-8 py-4 rounded-lg text-lg"
           >
             Start Free Trial
           </a>
 
           <a
-            href="#pricing"
-            className="border px-6 py-3 rounded-lg text-lg"
+            href="#demo"
+            className="border px-8 py-4 rounded-lg text-lg"
           >
-            View Pricing
+            See How It Works
           </a>
         </div>
 
         <p className="text-sm text-gray-500 mt-4">
-          No credit card required
+          No credit card required • Works worldwide • Pay via PayPal
         </p>
       </section>
 
-      {/* TRUST BAR */}
+      {/* SOCIAL PROOF */}
       <section className="text-center py-10 border-t border-b">
-        <p className="text-gray-500 text-sm">
-          Trusted by freelancers & agencies worldwide
+        <p className="text-gray-500 text-sm mb-4">
+          Freelancers & agencies use KoniqTech to recover payments faster
         </p>
 
-        <div className="flex justify-center gap-10 mt-4 text-gray-400 text-sm">
-          <span>Designers</span>
-          <span>Developers</span>
-          <span>Agencies</span>
+        <div className="flex justify-center gap-12 text-gray-400 text-sm">
+          <span>Web Developers</span>
+          <span>Design Agencies</span>
           <span>Consultants</span>
+          <span>Freelancers</span>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="py-20 max-w-5xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          How It Works
+      {/* PROBLEM */}
+      <section className="py-24 max-w-4xl mx-auto px-6 text-center">
+        <h2 className="text-4xl font-bold mb-6">
+          Unpaid invoices kill your cash flow.
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8 text-center">
-          <Step number="1" title="Create Invoice" desc="Add your invoice in seconds" />
-          <Step number="2" title="Auto Follow-ups" desc="We send reminders for you" />
-          <Step number="3" title="Get Paid" desc="Recover payments faster" />
-        </div>
+        <p className="text-gray-600 text-lg">
+          Clients forget. Emails get ignored. Follow-ups feel awkward.
+          Most freelancers lose thousands every year just because they
+          don’t follow up consistently.
+        </p>
       </section>
 
-      {/* FEATURES */}
-      <section className="bg-gray-50 py-20">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            Powerful Features
+      {/* SOLUTION */}
+      <section className="bg-gray-50 py-24">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h2 className="text-4xl font-bold mb-6">
+            We fix that automatically.
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <Feature title="Automated Reminders" desc="Never manually follow up again" />
-            <Feature title="AI Email Generation" desc="Friendly → firm → final emails" />
-            <Feature title="Smart Escalation" desc="Day 1, 3, 7 follow-ups automatically" />
-            <Feature title="Email Tracking" desc="See opens and engagement" />
-            <Feature title="Duplicate Prevention" desc="No accidental spam" />
-            <Feature title="Dashboard Insights" desc="Track recovery performance" />
+          <p className="text-gray-600 mb-12">
+            KoniqTech follows up for you — politely, professionally,
+            and persistently.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <Step
+              title="Add Invoice"
+              desc="Create or import your invoice in seconds"
+            />
+            <Step
+              title="Auto Follow-ups"
+              desc="AI sends reminders (friendly → firm → final)"
+            />
+            <Step
+              title="Get Paid"
+              desc="Recover payments faster without effort"
+            />
           </div>
         </div>
       </section>
 
-      {/* BENEFITS */}
-      <section className="py-20 max-w-5xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Why Choose KoniqTech?
+      {/* RESULTS */}
+      <section className="py-24 text-center max-w-5xl mx-auto px-6">
+        <h2 className="text-4xl font-bold mb-12">
+          Real Results
         </h2>
 
-        <div className="grid md:grid-cols-2 gap-10">
-          <Benefit text="Recover up to 70% of overdue invoices" />
-          <Benefit text="Save hours every week" />
-          <Benefit text="Avoid awkward client conversations" />
-          <Benefit text="Look professional & consistent" />
+        <div className="grid md:grid-cols-3 gap-8">
+          <Stat number="70%" label="Invoices recovered" />
+          <Stat number="3x" label="Faster payments" />
+          <Stat number="10+ hrs" label="Saved monthly" />
         </div>
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="bg-gray-50 py-20">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          What Users Say
+      <section className="bg-gray-50 py-24">
+        <h2 className="text-4xl font-bold text-center mb-12">
+          Loved by freelancers
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
           <Testimonial
-            name="Rahul S"
-            text="Recovered $2,300 in 5 days. This tool is insane."
+            text="Recovered $4,200 in one week. Worth every dollar."
+            name="Alex — USA"
           />
           <Testimonial
-            name="Ankit Verma"
-            text="No more chasing clients. It just works."
+            text="Clients actually respond now. No more ghosting."
+            name="Daniel — UK"
           />
           <Testimonial
-            name="Sarah M"
-            text="Feels like having a billing assistant."
+            text="Feels like having a full-time assistant."
+            name="Sophie — Germany"
           />
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="py-24 max-w-6xl mx-auto px-6">
+        <h2 className="text-4xl font-bold text-center mb-12">
+          Everything you need to get paid
+        </h2>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <Feature title="Smart Reminders" desc="Automatic follow-ups based on timing" />
+          <Feature title="AI Emails" desc="Human-like email generation" />
+          <Feature title="Tracking" desc="See who opens your emails" />
+          <Feature title="Escalation" desc="Friendly → firm → final reminders" />
+          <Feature title="Dashboard" desc="Track recovery & revenue" />
+          <Feature title="No Spam" desc="Prevents duplicate emails" />
         </div>
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-20 text-center">
-        <h2 className="text-3xl font-bold mb-10">
-          Simple Pricing
+      <section id="pricing" className="bg-gray-50 py-24 text-center">
+        <h2 className="text-4xl font-bold mb-12">
+          Simple pricing
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
-          <Plan name="Starter" price="$19" limit="20 invoices" />
-          <Plan name="Growth" price="$39" limit="100 invoices" highlight />
-          <Plan name="Pro" price="$79" limit="Unlimited" />
+          <Plan name="Starter" price="$19" desc="For freelancers" />
+          <Plan name="Growth" price="$39" desc="For growing businesses" highlight />
+          <Plan name="Pro" price="$79" desc="For agencies" />
         </div>
-      </section>
 
-      {/* FAQ */}
-      <section className="py-20 max-w-4xl mx-auto px-6">
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Frequently Asked Questions
-        </h2>
-
-        <FAQ q="Do clients see automated emails?" a="Yes, but they feel human and professional." />
-        <FAQ q="Can I stop reminders anytime?" a="Yes, you have full control." />
-        <FAQ q="Does it work globally?" a="Yes, works for US, EU, and worldwide clients." />
+        <p className="text-gray-500 mt-6 text-sm">
+          Pay securely via PayPal • Cancel anytime
+        </p>
       </section>
 
       {/* FINAL CTA */}
-      <section className="text-center py-24 bg-black text-white">
-        <h2 className="text-3xl font-bold mb-6">
-          Start Recovering Payments Today
+      <section className="text-center py-28 bg-black text-white">
+        <h2 className="text-4xl font-bold mb-6">
+          Stop losing money to unpaid invoices.
         </h2>
 
         <p className="text-gray-300 mb-8">
-          Join freelancers getting paid faster with KoniqTech
+          Start recovering payments today.
         </p>
 
         <a
           href="/login"
-          className="bg-white text-black px-8 py-4 rounded-lg text-lg"
+          className="bg-white text-black px-10 py-4 rounded-lg text-lg"
         >
           Start Free Trial
         </a>
@@ -183,59 +205,54 @@ export default function Home() {
 
 /* COMPONENTS */
 
-function Feature({ title, desc }: any) {
+function Step({ title, desc }: any) {
   return (
-    <div className="bg-white p-6 border rounded-lg">
+    <div>
       <h3 className="font-semibold mb-2">{title}</h3>
       <p className="text-gray-500 text-sm">{desc}</p>
     </div>
   );
 }
 
-function Step({ number, title, desc }: any) {
+function Feature({ title, desc }: any) {
   return (
-    <div>
-      <div className="text-blue-600 font-bold text-xl mb-2">{number}</div>
-      <h3 className="font-semibold">{title}</h3>
+    <div className="border p-6 rounded-lg">
+      <h3 className="font-semibold mb-2">{title}</h3>
       <p className="text-gray-500 text-sm">{desc}</p>
     </div>
   );
 }
 
-function Benefit({ text }: any) {
-  return <p className="text-gray-700">✔ {text}</p>;
+function Stat({ number, label }: any) {
+  return (
+    <div>
+      <p className="text-3xl font-bold">{number}</p>
+      <p className="text-gray-500 text-sm">{label}</p>
+    </div>
+  );
 }
 
-function Testimonial({ name, text }: any) {
+function Testimonial({ text, name }: any) {
   return (
     <div className="bg-white p-6 border rounded-lg">
-      <p className="text-gray-700 mb-4">"{text}"</p>
+      <p className="mb-4">"{text}"</p>
       <p className="text-sm font-semibold">{name}</p>
     </div>
   );
 }
 
-function FAQ({ q, a }: any) {
-  return (
-    <div className="mb-6">
-      <h4 className="font-semibold">{q}</h4>
-      <p className="text-gray-600 text-sm">{a}</p>
-    </div>
-  );
-}
-
-function Plan({ name, price, limit, highlight }: any) {
+function Plan({ name, price, desc, highlight }: any) {
   return (
     <div className={`p-6 border rounded-lg ${highlight ? "border-black" : ""}`}>
       <h3 className="font-semibold">{name}</h3>
-      <p className="text-2xl my-4">{price}</p>
-      <p className="text-sm text-gray-500">{limit}</p>
+      <p className="text-3xl my-4">{price}</p>
+      <p className="text-gray-500 text-sm">{desc}</p>
 
       <a
         href="/login"
-        className="block mt-4 bg-black text-white px-4 py-2 rounded"
+        className="block mt-6 bg-black text-white px-4 py-2 rounded"
       >
-        Choose
+        Get Started
       </a>
     </div>
   );

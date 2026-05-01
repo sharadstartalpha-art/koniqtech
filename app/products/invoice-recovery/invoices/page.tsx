@@ -18,7 +18,6 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // 🔥 pagination
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
 
@@ -31,7 +30,7 @@ export default function InvoicesPage() {
       inv.clientEmail.toLowerCase().includes(search.toLowerCase())
     );
     setFiltered(result);
-    setPage(1); // reset page on search
+    setPage(1);
   }, [search, data]);
 
   const load = async () => {
@@ -57,11 +56,10 @@ export default function InvoicesPage() {
   };
 
   /* =========================
-     📊 PAGINATION LOGIC
+     PAGINATION
   ========================= */
   const total = filtered.length;
   const totalPages = Math.ceil(total / limit);
-
   const start = (page - 1) * limit;
   const current = filtered.slice(start, start + limit);
 
@@ -86,7 +84,7 @@ export default function InvoicesPage() {
           </a>
         </div>
 
-        {/* SEARCH + LIMIT */}
+        {/* SEARCH */}
         <div className="flex items-center justify-between gap-4">
 
           <div className="relative max-w-sm w-full">
@@ -96,7 +94,7 @@ export default function InvoicesPage() {
             />
             <input
               placeholder="Search emails..."
-              className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm"
+              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -107,9 +105,10 @@ export default function InvoicesPage() {
             onChange={(e) => setLimit(Number(e.target.value))}
             className="text-sm border rounded-md px-2 py-1"
           >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
           </select>
         </div>
 
@@ -130,61 +129,82 @@ export default function InvoicesPage() {
                 <tr>
                   <th className="px-4 py-3 text-left">#</th>
                   <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
+                  <th className="px-4 py-3 text-left">Total</th>
+                  <th className="px-4 py-3 text-left">Paid</th>
+                  <th className="px-4 py-3 text-left">Balance</th>
                   <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {current.map((inv, index) => (
-                  <tr key={inv.id} className="border-b hover:bg-gray-50">
+                {current.map((inv, index) => {
+                  const paid = inv.status === "paid" ? inv.amount : 0;
+                  const balance =
+                    inv.status === "paid" ? 0 : inv.amount;
 
-                    {/* SL NO */}
-                    <td className="px-4 py-3">
-                      {start + index + 1}
-                    </td>
+                  return (
+                    <tr
+                      key={inv.id}
+                      className="border-b hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3">
+                        {start + index + 1}
+                      </td>
 
-                    <td className="px-4 py-3">
-                      {inv.clientEmail}
-                    </td>
+                      <td className="px-4 py-3">
+                        {inv.clientEmail}
+                      </td>
 
-                    <td className="px-4 py-3">
-                      ${inv.amount}
-                    </td>
+                      {/* TOTAL */}
+                      <td className="px-4 py-3 font-medium">
+                        ${inv.amount}
+                      </td>
 
-                    <td className="px-4 py-3">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-md ${
-                          inv.status === "paid"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-600"
-                        }`}
-                      >
-                        {inv.status}
-                      </span>
-                    </td>
+                      {/* PAID */}
+                      <td className="px-4 py-3 font-semibold text-green-600">
+                        ${paid}
+                      </td>
 
-                    <td className="px-4 py-3 text-right space-x-2">
-                      {inv.status !== "paid" && (
-                        <button
-                          onClick={() => markPaid(inv.id)}
-                          className="text-xs px-2 py-1 border rounded-md hover:bg-gray-100"
+                      {/* BALANCE */}
+                      <td className="px-4 py-3 font-semibold text-red-600">
+                        ${balance}
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs px-2 py-1 rounded-md ${
+                            inv.status === "paid"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-600"
+                          }`}
                         >
-                          Mark Paid
+                          {inv.status}
+                        </span>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="px-4 py-3 text-right space-x-2">
+                        {inv.status !== "paid" && (
+                          <button
+                            onClick={() => markPaid(inv.id)}
+                            className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                          >
+                            Mark Paid
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => remove(inv.id)}
+                          className="text-xs px-2 py-1 border rounded text-red-600 hover:bg-red-50"
+                        >
+                          Delete
                         </button>
-                      )}
-
-                      <button
-                        onClick={() => remove(inv.id)}
-                        className="text-xs px-2 py-1 border rounded-md text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </td>
-
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -193,7 +213,6 @@ export default function InvoicesPage() {
         {/* PAGINATION */}
         {totalPages > 1 && (
           <div className="flex justify-between items-center text-sm">
-
             <span>
               Page {page} of {totalPages}
             </span>
@@ -215,7 +234,6 @@ export default function InvoicesPage() {
                 Next
               </button>
             </div>
-
           </div>
         )}
 

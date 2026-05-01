@@ -40,14 +40,7 @@ model Invoice {
   reminders   Reminder[]
 }
 
-model Reminder {
-  id        String    @id @default(uuid())
-  invoiceId String
-  type      String
-  sentAt    DateTime?
-  status    String
-  invoice   Invoice   @relation(fields: [invoiceId], references: [id])
-}
+
 
 model Payment {
   id        String   @id @default(uuid())
@@ -102,4 +95,22 @@ model Subscription {
   product Product @relation(fields: [productId], references: [id])
   plan    Plan    @relation(fields: [planId], references: [id])
   user    User    @relation(fields: [userId], references: [id])
+}
+
+model Reminder {
+  id        String   @id @default(uuid())
+  invoiceId String
+
+  type      String   // friendly | firm | final
+  status    String   // sent | failed
+
+  email     String   // snapshot
+  amount    Float    // snapshot
+
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  opens Int @default(0)
+  clicked Boolean @default(false)
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
 }

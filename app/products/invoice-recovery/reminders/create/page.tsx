@@ -13,12 +13,10 @@ export default function CreateReminderPage() {
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
   const [preview, setPreview] = useState<EmailPreview | null>(null);
+  const [tab, setTab] = useState<"text" | "html">("text");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
-  /* =========================
-     🔮 GENERATE EMAIL
-  ========================= */
   const generate = async () => {
     if (!amount) return alert("Amount required");
 
@@ -29,7 +27,7 @@ export default function CreateReminderPage() {
         amount: Number(amount),
       });
 
-      setPreview(res.data); // ✅ object { html, text }
+      setPreview(res.data);
     } catch {
       alert("Failed to generate");
     } finally {
@@ -37,9 +35,6 @@ export default function CreateReminderPage() {
     }
   };
 
-  /* =========================
-     📧 SEND EMAIL
-  ========================= */
   const send = async () => {
     if (!email || !preview) return alert("Missing data");
 
@@ -48,12 +43,11 @@ export default function CreateReminderPage() {
     try {
       await axios.post("/api/reminders/send-custom", {
         email,
-        html: preview.html, // ✅ correct
+        html: preview.html,
         amount: Number(amount),
       });
 
       alert("✅ Sent");
-
       window.location.href =
         "/products/invoice-recovery/reminders";
     } catch {
@@ -73,7 +67,6 @@ export default function CreateReminderPage() {
 
         <div className="bg-white border rounded-md p-6 space-y-4">
 
-          {/* EMAIL */}
           <input
             type="email"
             placeholder="Client Email"
@@ -82,7 +75,6 @@ export default function CreateReminderPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          {/* AMOUNT */}
           <input
             type="number"
             placeholder="Amount"
@@ -91,7 +83,6 @@ export default function CreateReminderPage() {
             onChange={(e) => setAmount(e.target.value)}
           />
 
-          {/* GENERATE */}
           <button
             onClick={generate}
             className="bg-blue-600 text-white px-4 py-2 rounded w-full"
@@ -99,39 +90,66 @@ export default function CreateReminderPage() {
             {loading ? "Generating..." : "Generate Email"}
           </button>
 
-          {/* PREVIEW */}
+          {/* ✅ TABS */}
           {preview && (
             <>
-              {/* HTML EDITOR */}
-              <textarea
-                value={preview.html}
-                onChange={(e) =>
-                  setPreview({
-                    ...preview,
-                    html: e.target.value,
-                  })
-                }
-                className="border p-2 w-full h-40 rounded"
-              />
+              <div className="flex gap-2 border-b">
+                <button
+                  onClick={() => setTab("text")}
+                  className={`px-3 py-1 ${
+                    tab === "text" ? "border-b-2 font-semibold" : ""
+                  }`}
+                >
+                  Text
+                </button>
 
-              {/* LIVE PREVIEW */}
-              <div className="border p-3 rounded bg-gray-50">
-                <p className="text-xs text-gray-500 mb-2">
-                  Preview:
-                </p>
-
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: preview.html,
-                  }}
-                />
+                <button
+                  onClick={() => setTab("html")}
+                  className={`px-3 py-1 ${
+                    tab === "html" ? "border-b-2 font-semibold" : ""
+                  }`}
+                >
+                  HTML
+                </button>
               </div>
 
-              {/* SEND */}
+              {/* TEXT VIEW */}
+              {tab === "text" && (
+                <textarea
+                  value={preview.text}
+                  readOnly
+                  className="border p-2 w-full h-40 rounded"
+                />
+              )}
+
+              {/* HTML EDITOR */}
+              {tab === "html" && (
+                <>
+                  <textarea
+                    value={preview.html}
+                    onChange={(e) =>
+                      setPreview({
+                        ...preview,
+                        html: e.target.value,
+                      })
+                    }
+                    className="border p-2 w-full h-40 rounded"
+                  />
+
+                  <div className="border p-3 rounded bg-gray-50">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: preview.html,
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+
               <button
                 onClick={send}
                 disabled={sending}
-                className="bg-black text-white px-4 py-2 rounded w-full disabled:opacity-50"
+                className="bg-black text-white px-4 py-2 rounded w-full"
               >
                 {sending ? "Sending..." : "Send Email"}
               </button>

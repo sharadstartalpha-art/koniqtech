@@ -18,7 +18,6 @@ type Invoice = {
 export default function CreateReminderPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState("");
-
   const [selected, setSelected] = useState<Invoice | null>(null);
 
   const [preview, setPreview] = useState<EmailPreview | null>(null);
@@ -27,6 +26,8 @@ export default function CreateReminderPage() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
+  const [showDropdown, setShowDropdown] = useState(false);
+
   /* =========================
      LOAD INVOICES
   ========================= */
@@ -34,9 +35,10 @@ export default function CreateReminderPage() {
     const loadInvoices = async () => {
       try {
         const res = await axios.get("/api/invoices");
+        console.log("INVOICES:", res.data); // 👈 DEBUG
         setInvoices(res.data);
       } catch (err) {
-        console.error("LOAD INVOICES ERROR:", err);
+        console.error(err);
       }
     };
 
@@ -44,14 +46,14 @@ export default function CreateReminderPage() {
   }, []);
 
   /* =========================
-     FILTER EMAILS
+     FILTER
   ========================= */
   const filtered = invoices.filter((inv) =>
     inv.clientEmail.toLowerCase().includes(search.toLowerCase())
   );
 
   /* =========================
-     GENERATE EMAIL
+     GENERATE
   ========================= */
   const generate = async () => {
     if (!selected) return alert("Select client");
@@ -72,7 +74,7 @@ export default function CreateReminderPage() {
   };
 
   /* =========================
-     SEND EMAIL
+     SEND
   ========================= */
   const send = async () => {
     if (!selected || !preview) return alert("Missing data");
@@ -108,16 +110,21 @@ export default function CreateReminderPage() {
         <div className="bg-white border rounded-md p-6 space-y-4">
 
           {/* SEARCHABLE DROPDOWN */}
-          <div>
+          <div className="relative">
             <input
               placeholder="Search client email..."
               className="border p-2 w-full rounded"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
             />
 
-            {search && (
-              <div className="border mt-1 rounded max-h-40 overflow-y-auto bg-white">
+            {showDropdown && (
+              <div className="absolute z-10 w-full border mt-1 rounded max-h-40 overflow-y-auto bg-white shadow">
+
                 {filtered.length === 0 ? (
                   <div className="p-2 text-sm text-gray-500">
                     No results
@@ -129,6 +136,7 @@ export default function CreateReminderPage() {
                       onClick={() => {
                         setSelected(inv);
                         setSearch(inv.clientEmail);
+                        setShowDropdown(false);
                       }}
                       className="p-2 text-sm hover:bg-gray-100 cursor-pointer"
                     >
@@ -140,7 +148,7 @@ export default function CreateReminderPage() {
             )}
           </div>
 
-          {/* TOTAL AMOUNT */}
+          {/* AMOUNT */}
           <input
             type="text"
             value={

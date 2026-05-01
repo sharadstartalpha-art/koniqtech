@@ -9,17 +9,50 @@ const connection = new IORedis(process.env.REDIS_URL!);
 new Worker(
   "reminders",
   async () => {
-    const invoices = await prisma.invoice.findMany({
-      where: { status: "unpaid" },
-    });
+    try {
+      const invoices = await prisma.invoice.findMany({
+        where: { status: "unpaid" },
+      });
 
-    for (const inv of invoices) {
-      const content = await generateEmail(inv.amount, "friendly");
+      for (const inv of invoices) {
+        /* =========================
+           🔗 REQUIRE PAYMENT LINK
+        ========================= */
+        if (!inv.paymentLink) {
+          console.warn("⚠️ Missing payment link:", inv.id);
+          continue;
+        }
 
-      await sendEmail(inv.clientEmail, "Reminder", content);
+        /* =========================
+           ✉️ GENERATE EMAIL
+        ========================= */
+        const { html, text } = generateEmail(
+          inv.amount,
+          "friendly",
+          inv.paymentLink
+        );
+
+        if (!html) {
+          console.warn("⚠️ Email generation failed:", inv.id);
+          continue;
+        }
+
+        /* =========================
+           📤 SEND EMAIL (FIXED)
+        ========================= */
+        await sendEmail({
+          to: inv.clientEmail,
+          subject: "Payment Reminder",
+          html,
+          text,
+        });
+      }
+
+      console.log("✅ reminders sent");
+    } catch (err) {
+      console.error("❌ Worker error:", err);
+      throw err;
     }
-
-    console.log("✅ reminders sent");
   },
   { connection }
 );

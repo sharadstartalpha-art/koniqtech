@@ -3,8 +3,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+type DashboardData = {
+  recovered: number;
+  pending: number;
+  count: number;
+  insights: string;
+};
+
 export default function DashboardClient() {
-  const [data, setData] = useState({
+  const [data, setData] = useState<DashboardData>({
     recovered: 0,
     pending: 0,
     count: 0,
@@ -13,18 +20,12 @@ export default function DashboardClient() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    load();
-    const i = setInterval(load, 5000);
-    return () => clearInterval(i);
-  }, []);
-
+  /* =========================
+     LOAD DATA
+  ========================= */
   const load = async () => {
     try {
       const res = await axios.get("/api/dashboard/stats");
-
-      console.log("DASHBOARD DATA:", res.data); // 🔥 DEBUG
-
       setData(res.data);
     } catch (err) {
       console.error("Dashboard error:", err);
@@ -32,6 +33,16 @@ export default function DashboardClient() {
       setLoading(false);
     }
   };
+
+  /* =========================
+     AUTO REFRESH (LIVE DASHBOARD)
+  ========================= */
+  useEffect(() => {
+    load();
+
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading) {
     return (
@@ -55,10 +66,26 @@ export default function DashboardClient() {
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card title="Recovered" value={`$${data.recovered}`} />
-        <Card title="Pending" value={`$${data.pending}`} />
-        <Card title="Invoices" value={data.count} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <StatCard
+          title="Recovered"
+          value={`$${data.recovered}`}
+          color="green"
+        />
+
+        <StatCard
+          title="Pending"
+          value={`$${data.pending}`}
+          color="red"
+        />
+
+        <StatCard
+          title="Invoices"
+          value={data.count}
+          color="default"
+        />
+
       </div>
 
       {/* AI INSIGHTS */}
@@ -76,11 +103,33 @@ export default function DashboardClient() {
   );
 }
 
-function Card({ title, value }: any) {
+/* =========================
+   CARD COMPONENT
+========================= */
+function StatCard({
+  title,
+  value,
+  color,
+}: {
+  title: string;
+  value: string | number;
+  color?: "green" | "red" | "default";
+}) {
+  const colorMap = {
+    green: "text-green-600",
+    red: "text-red-600",
+    default: "text-gray-900",
+  };
+
   return (
-    <div className="bg-white border rounded-lg px-4 py-3">
-      <p className="text-xs text-gray-500 mb-1">{title}</p>
-      <h2 className="text-lg font-semibold text-gray-900">
+    <div className="bg-white border rounded-lg px-4 py-4 shadow-sm">
+      <p className="text-xs text-gray-500 mb-1">
+        {title}
+      </p>
+
+      <h2
+        className={`text-xl font-semibold ${colorMap[color || "default"]}`}
+      >
         {value}
       </h2>
     </div>

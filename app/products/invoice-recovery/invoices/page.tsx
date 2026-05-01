@@ -18,6 +18,10 @@ export default function InvoicesPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // 🔥 pagination
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+
   useEffect(() => {
     load();
   }, []);
@@ -27,6 +31,7 @@ export default function InvoicesPage() {
       inv.clientEmail.toLowerCase().includes(search.toLowerCase())
     );
     setFiltered(result);
+    setPage(1); // reset page on search
   }, [search, data]);
 
   const load = async () => {
@@ -51,13 +56,27 @@ export default function InvoicesPage() {
     load();
   };
 
+  /* =========================
+     📊 PAGINATION LOGIC
+  ========================= */
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / limit);
+
+  const start = (page - 1) * limit;
+  const current = filtered.slice(start, start + limit);
+
   return (
     <Layout>
       <div className="space-y-6">
 
         {/* HEADER */}
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-medium">Invoices</h1>
+          <div>
+            <h1 className="text-lg font-medium">Invoices</h1>
+            <p className="text-sm text-gray-500">
+              Total: {total}
+            </p>
+          </div>
 
           <a
             href="/products/invoice-recovery/invoices/create"
@@ -67,29 +86,41 @@ export default function InvoicesPage() {
           </a>
         </div>
 
-        {/* SEARCH */}
-        <div className="relative max-w-sm">
-          <Search
-            size={16}
-            className="absolute left-3 top-2.5 text-gray-400"
-          />
+        {/* SEARCH + LIMIT */}
+        <div className="flex items-center justify-between gap-4">
 
-          <input
-            placeholder="Search emails..."
-            className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="relative max-w-sm w-full">
+            <Search
+              size={16}
+              className="absolute left-3 top-2.5 text-gray-400"
+            />
+            <input
+              placeholder="Search emails..."
+              className="w-full border border-gray-200 rounded-md pl-9 pr-3 py-2 text-sm"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <select
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+            className="text-sm border rounded-md px-2 py-1"
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+          </select>
         </div>
 
         {/* TABLE */}
-        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+        <div className="bg-white border rounded-md overflow-hidden">
 
           {loading ? (
             <div className="p-6 text-sm text-gray-500">
               Loading invoices...
             </div>
-          ) : filtered.length === 0 ? (
+          ) : current.length === 0 ? (
             <div className="p-6 text-sm text-gray-500">
               No invoices found.
             </div>
@@ -97,20 +128,24 @@ export default function InvoicesPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b text-gray-600">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium">Email</th>
-                  <th className="text-left px-4 py-3 font-medium">Amount</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-right px-4 py-3 font-medium">Actions</th>
+                  <th className="px-4 py-3 text-left">#</th>
+                  <th className="px-4 py-3 text-left">Email</th>
+                  <th className="px-4 py-3 text-left">Amount</th>
+                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {filtered.map((inv) => (
-                  <tr
-                    key={inv.id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="px-4 py-3 text-gray-800">
+                {current.map((inv, index) => (
+                  <tr key={inv.id} className="border-b hover:bg-gray-50">
+
+                    {/* SL NO */}
+                    <td className="px-4 py-3">
+                      {start + index + 1}
+                    </td>
+
+                    <td className="px-4 py-3">
                       {inv.clientEmail}
                     </td>
 
@@ -147,12 +182,43 @@ export default function InvoicesPage() {
                         Delete
                       </button>
                     </td>
+
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
         </div>
+
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center text-sm">
+
+            <span>
+              Page {page} of {totalPages}
+            </span>
+
+            <div className="space-x-2">
+              <button
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Prev
+              </button>
+
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+
+          </div>
+        )}
+
       </div>
     </Layout>
   );

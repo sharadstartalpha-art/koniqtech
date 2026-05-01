@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       },
     });
 
-    if (limit !== null && count >= limit) {
+    if (limit !== null && limit !== -1 && count >= limit) {
       return NextResponse.json(
         { error: "Invoice limit reached" },
         { status: 403 }

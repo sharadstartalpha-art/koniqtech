@@ -24,6 +24,9 @@ export default function Home() {
 
       {/* HERO */}
       <section className="text-center py-32 px-6 max-w-5xl mx-auto">
+        <p className="text-green-600 font-semibold mb-4">
+  💰 $127,430+ recovered by users
+</p>
         <h1 className="text-6xl font-bold leading-tight mb-6">
           Get Paid Without
           <br />

@@ -14,10 +14,6 @@ type Reminder = {
 };
 
 export default function RemindersPage() {
-  const [email, setEmail] = useState("");
-  const [amount, setAmount] = useState("");
-  const [preview, setPreview] = useState("");
-
   const [data, setData] = useState<Reminder[]>([]);
   const [filtered, setFiltered] = useState<Reminder[]>([]);
   const [search, setSearch] = useState("");
@@ -25,11 +21,8 @@ export default function RemindersPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
 
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
-
   /* =========================
-     📦 LOAD REMINDERS
+     LOAD DATA
   ========================= */
   const load = async () => {
     const res = await axios.get("/api/reminders/list");
@@ -42,7 +35,7 @@ export default function RemindersPage() {
   }, []);
 
   /* =========================
-     🔍 SEARCH
+     SEARCH
   ========================= */
   useEffect(() => {
     const result = data.filter((r) =>
@@ -53,56 +46,7 @@ export default function RemindersPage() {
   }, [search, data]);
 
   /* =========================
-     🔮 GENERATE EMAIL
-  ========================= */
-  const generate = async () => {
-    if (!amount) return alert("Amount required");
-
-    setLoading(true);
-
-    try {
-      const res = await axios.post("/api/reminders/preview", {
-        amount: Number(amount),
-      });
-
-      // ✅ FIX: use html not object
-      setPreview(res.data.html);
-    } catch {
-      alert("Failed to generate");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* =========================
-     📧 SEND EMAIL
-  ========================= */
-  const send = async () => {
-    if (!email || !preview) return alert("Missing data");
-
-    setSending(true);
-
-    try {
-      await axios.post("/api/reminders/send-custom", {
-        email,
-        html: preview,
-      });
-
-      alert("✅ Sent");
-      setPreview("");
-      setEmail("");
-      setAmount("");
-
-      load();
-    } catch {
-      alert("Failed to send");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  /* =========================
-     📊 PAGINATION
+     PAGINATION
   ========================= */
   const start = (page - 1) * perPage;
   const paginated = filtered.slice(start, start + perPage);
@@ -113,9 +57,18 @@ export default function RemindersPage() {
       <div className="space-y-6">
 
         {/* HEADER */}
-        <h1 className="text-xl font-semibold">Reminders</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl font-semibold">Reminders</h1>
 
-        {/* SEARCH + PER PAGE */}
+          <a
+            href="/products/invoice-recovery/reminders/create"
+            className="bg-black text-white px-3 py-2 rounded-md text-sm"
+          >
+            + Send Reminder
+          </a>
+        </div>
+
+        {/* SEARCH */}
         <div className="flex justify-between items-center">
           <input
             placeholder="Search email..."
@@ -131,44 +84,50 @@ export default function RemindersPage() {
           >
             <option value={5}>5 / page</option>
             <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
           </select>
         </div>
 
         {/* TABLE */}
         <div className="bg-white border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="p-3 text-left">#</th>
-                <th className="p-3 text-left">Email</th>
-                <th className="p-3 text-left">Amount</th>
-                <th className="p-3 text-left">Type</th>
-                <th className="p-3 text-left">Status</th>
-                <th className="p-3 text-left">Date</th>
-              </tr>
-            </thead>
 
-            <tbody>
-              {paginated.map((r, i) => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-3">{start + i + 1}</td>
-                  <td className="p-3">{r.email}</td>
-                  <td className="p-3">${r.amount}</td>
-                  <td className="p-3 capitalize">{r.type}</td>
-                  <td className="p-3">{r.status}</td>
-                  <td className="p-3">
-                    {new Date(r.createdAt).toLocaleDateString()}
-                  </td>
+          {filtered.length === 0 ? (
+            <div className="p-6 text-sm text-gray-500">
+              No reminders yet
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="p-3 text-left">#</th>
+                  <th className="p-3 text-left">Email</th>
+                  <th className="p-3 text-left">Amount</th>
+                  <th className="p-3 text-left">Type</th>
+                  <th className="p-3 text-left">Status</th>
+                  <th className="p-3 text-left">Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {paginated.map((r, i) => (
+                  <tr key={r.id} className="border-t">
+                    <td className="p-3">{start + i + 1}</td>
+                    <td className="p-3">{r.email}</td>
+                    <td className="p-3">${r.amount}</td>
+                    <td className="p-3 capitalize">{r.type}</td>
+                    <td className="p-3">{r.status}</td>
+                    <td className="p-3">
+                      {new Date(r.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
           {/* PAGINATION */}
           <div className="flex justify-between items-center p-3 text-sm">
             <span>
-              Page {page} of {totalPages}
+              Page {page} of {totalPages || 1}
             </span>
 
             <div className="space-x-2">
@@ -191,70 +150,6 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        {/* =========================
-           ⚙️ AUTO SETTINGS
-        ========================= */}
-        <div className="bg-white p-4 rounded-md border space-y-3">
-          <h2 className="font-medium">Automation</h2>
-
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" />
-            Auto reminders (Day 1 / Day 3 / Day 7)
-          </label>
-
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" defaultChecked />
-            Tone escalation (friendly → firm → final)
-          </label>
-        </div>
-
-        {/* =========================
-           ✉️ FORM (AFTER TABLE)
-        ========================= */}
-        <div className="bg-white p-6 rounded-md border space-y-4 max-w-xl">
-
-          <h2 className="font-medium">Send Manual Reminder</h2>
-
-          <input
-            type="email"
-            placeholder="Client Email"
-            className="border p-2 w-full rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            type="number"
-            placeholder="Amount"
-            className="border p-2 w-full rounded"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-
-          <button
-            onClick={generate}
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-          >
-            {loading ? "Generating..." : "Generate Email"}
-          </button>
-
-          {preview && (
-            <>
-              <textarea
-                value={preview}
-                onChange={(e) => setPreview(e.target.value)}
-                className="border w-full h-40 p-2 rounded"
-              />
-
-              <button
-                onClick={send}
-                className="bg-black text-white px-4 py-2 rounded w-full"
-              >
-                {sending ? "Sending..." : "Send Email"}
-              </button>
-            </>
-          )}
-        </div>
       </div>
     </Layout>
   );

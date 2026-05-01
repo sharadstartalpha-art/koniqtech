@@ -55,13 +55,13 @@ export async function runReminders() {
         inv.paymentLink
       );
 
-      if (!html) {
+      if (!html || !text) {
         console.error("❌ Email generation failed:", inv.id);
         continue;
       }
 
       /* =========================
-         📤 SEND EMAIL (FIXED)
+         📤 SEND EMAIL
       ========================= */
       await sendEmail({
         to: inv.clientEmail,
@@ -71,13 +71,16 @@ export async function runReminders() {
       });
 
       /* =========================
-         💾 SAVE LOG
+         💾 SAVE LOG (FIXED ✅)
       ========================= */
       await prisma.reminder.create({
         data: {
           invoiceId: inv.id,
+          email: inv.clientEmail, // ✅ REQUIRED
+          amount: inv.amount,     // ✅ REQUIRED
           type,
           status: "sent",
+          sentAt: new Date(),
         },
       });
 

@@ -26,11 +26,11 @@ export default function RemindersPage() {
   ========================= */
   const load = async () => {
     try {
-      const res = await axios.get("/api/reminders/list");
+      const res = await axios.get("/api/reminders"); // ✅ FIXED
       setData(res.data);
       setFiltered(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("LOAD ERROR:", err);
     }
   };
 
@@ -74,7 +74,7 @@ export default function RemindersPage() {
           </a>
         </div>
 
-        {/* SEARCH + LIMIT */}
+        {/* SEARCH */}
         <div className="flex justify-between items-center">
           <input
             placeholder="Search email..."
@@ -133,7 +133,9 @@ export default function RemindersPage() {
                     </td>
 
                     <td className="p-3">
-                      {r.status}
+                      <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                        {r.status}
+                      </span>
                     </td>
 
                     <td className="p-3">

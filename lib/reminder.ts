@@ -71,16 +71,20 @@ export async function runReminders() {
       });
 
       /* =========================
-         💾 SAVE LOG (FIXED ✅)
+         💾 SAVE LOG (FINAL FIX ✅)
       ========================= */
       await prisma.reminder.create({
         data: {
           invoiceId: inv.id,
-          email: inv.clientEmail, // ✅ REQUIRED
-          amount: inv.amount,     // ✅ REQUIRED
+          email: inv.clientEmail,
+          amount: inv.amount,
           type,
           status: "sent",
           sentAt: new Date(),
+
+          // ✅ REQUIRED (THIS FIXES YOUR ERROR)
+          html,
+          text,
         },
       });
 

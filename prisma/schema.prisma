@@ -110,6 +110,8 @@ model Reminder {
 
   sentAt    DateTime @default(now())
   createdAt DateTime @default(now())
+  html      String   // ✅ ADD THIS
+  text      String   // ✅ ADD THIS
 
   opens Int @default(0)
   clicked Boolean @default(false)

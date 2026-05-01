@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     if (!invoice) {
       return NextResponse.json(
-        { error: "Invoice not found for this email" },
+        { error: "Invoice not found" },
         { status: 404 }
       );
     }
@@ -34,6 +34,28 @@ export async function POST(req: Request) {
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<[^>]*>/g, "")
       .trim();
+
+    /* =========================
+       💾 CREATE REMINDER FIRST (for tracking id)
+    ========================= */
+    const reminder = await prisma.reminder.create({
+      data: {
+        invoiceId: invoice.id,
+        email: invoice.clientEmail,
+        amount: invoice.amount,
+        html,
+        text,
+        type: "friendly",
+        status: "sent",
+      },
+    });
+
+    /* =========================
+       🧠 ADD TRACKING PIXEL
+    ========================= */
+    const trackingPixel = `<img src="${process.env.NEXT_PUBLIC_BASE_URL}/api/reminders/track?id=${reminder.id}" width="1" height="1" />`;
+
+    const finalHtml = html + trackingPixel;
 
     /* =========================
        📧 SEND EMAIL
@@ -51,27 +73,13 @@ export async function POST(req: Request) {
       to: email,
       subject: "Invoice Reminder",
       text,
-      html,
-    });
-
-    /* =========================
-       💾 SAVE TO DB (FIXED ✅)
-    ========================= */
-    await prisma.reminder.create({
-      data: {
-        invoiceId: invoice.id,
-        email: invoice.clientEmail,   // ✅ REQUIRED
-        amount: invoice.amount,       // ✅ REQUIRED
-        type: "friendly",
-        status: "sent",
-        sentAt: new Date(),
-      },
+      html: finalHtml,
     });
 
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("SEND ERROR:", error);
+    console.error("SEND REMINDER ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to send reminder" },

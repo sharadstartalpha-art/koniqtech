@@ -18,7 +18,6 @@ export async function POST(req: Request) {
     ========================= */
     const invoice = await prisma.invoice.findFirst({
       where: { clientEmail: email },
-      orderBy: { createdAt: "desc" },
     });
 
     if (!invoice) {
@@ -56,20 +55,21 @@ export async function POST(req: Request) {
     });
 
     /* =========================
-       💾 SAVE REMINDER
+       💾 SAVE TO DB (FIXED)
     ========================= */
     await prisma.reminder.create({
       data: {
-        invoiceId: invoice.id, // ✅ correct relation
+        invoiceId: invoice.id, // ✅ REQUIRED
         type: "friendly",
         status: "sent",
+        sentAt: new Date(), // ✅ IMPORTANT
       },
     });
 
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error("SEND REMINDER ERROR:", error);
+    console.error("SEND ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to send reminder" },

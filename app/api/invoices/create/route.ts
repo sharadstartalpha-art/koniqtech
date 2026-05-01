@@ -20,9 +20,9 @@ export async function POST(req: Request) {
     }
 
     /* =========================
-       🔐 2. AUTH (FIXED)
+       🔐 2. AUTH
     ========================= */
-    const cookieStore = await cookies(); // ✅ FIX
+    const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -35,8 +35,10 @@ export async function POST(req: Request) {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     const userId = payload.id as string;
 
+    console.log("USER:", userId);
+
     /* =========================
-       🔍 3. GET PRODUCT
+       🔍 3. PRODUCT
     ========================= */
     const product = await prisma.product.findUnique({
       where: { slug: "invoice-recovery" },
@@ -49,14 +51,19 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("PRODUCT:", product.id);
+
     /* =========================
-       💳 4. GET ACTIVE SUB
+       💳 4. SUBSCRIPTION (DEBUG)
     ========================= */
     const sub = await prisma.subscription.findFirst({
       where: {
         userId,
         productId: product.id,
-        status: "ACTIVE",
+        status: {
+          equals: "ACTIVE",
+          mode: "insensitive", // ✅ FIX case issue
+        },
       },
       include: {
         plan: true,
@@ -65,6 +72,8 @@ export async function POST(req: Request) {
         createdAt: "desc",
       },
     });
+
+    console.log("SUB:", sub);
 
     if (!sub) {
       return NextResponse.json(
@@ -120,10 +129,7 @@ export async function POST(req: Request) {
     return NextResponse.json(updatedInvoice);
 
   } catch (error: any) {
-    console.error(
-      "CREATE INVOICE ERROR:",
-      error?.message || error
-    );
+    console.error("CREATE INVOICE ERROR:", error);
 
     return NextResponse.json(
       {

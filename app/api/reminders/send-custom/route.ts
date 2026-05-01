@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { email, html, amount } = await req.json();
+    const { email, html } = await req.json();
 
     if (!email || !html) {
       return NextResponse.json(
@@ -41,8 +41,8 @@ export async function POST(req: Request) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER!,
+        pass: process.env.EMAIL_PASS!,
       },
     });
 
@@ -55,14 +55,16 @@ export async function POST(req: Request) {
     });
 
     /* =========================
-       💾 SAVE TO DB (FIXED)
+       💾 SAVE TO DB (FIXED ✅)
     ========================= */
     await prisma.reminder.create({
       data: {
-        invoiceId: invoice.id, // ✅ REQUIRED
+        invoiceId: invoice.id,
+        email: invoice.clientEmail,   // ✅ REQUIRED
+        amount: invoice.amount,       // ✅ REQUIRED
         type: "friendly",
         status: "sent",
-        sentAt: new Date(), // ✅ IMPORTANT
+        sentAt: new Date(),
       },
     });
 

@@ -34,7 +34,9 @@ export default function Layout({ children }: any) {
       <aside className="w-[220px] border-r bg-white flex flex-col">
 
         {/* LOGO (FIXED CORRECT) */}
-        <Logo />
+        <div className="h-14 flex items-center px-4 border-b font-semibold">
+          <Logo />
+        </div>
 
         {/* NAV */}
         <div className="p-2 space-y-1">

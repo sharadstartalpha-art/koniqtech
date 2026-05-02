@@ -4,22 +4,39 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+/* =========================
+   TYPES
+========================= */
 type User = {
   id: string;
   email: string;
   hasAccess: boolean;
 };
 
+type Plan = {
+  id: string;
+  name: string;
+};
+
+/* =========================
+   COMPONENT
+========================= */
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
 
+  /* MODAL STATE */
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState("");
+
   /* =========================
-     LOAD USERS
+     LOAD USERS + PLANS
   ========================= */
   const load = async () => {
     try {
@@ -30,25 +47,44 @@ export default function UsersPage() {
     }
   };
 
+  const loadPlans = async () => {
+    try {
+      const res = await axios.get("/api/plans/invoice-recovery");
+      setPlans(res.data);
+    } catch {
+      toast.error("Failed to load plans");
+    }
+  };
+
   useEffect(() => {
     load();
+    loadPlans();
   }, []);
 
   /* =========================
-     GIVE ACCESS
+     GIVE ACCESS (WITH PLAN)
   ========================= */
   const giveAccess = async (userId: string) => {
     try {
+      if (!selectedPlan) {
+        toast.error("Select a plan");
+        return;
+      }
+
       setLoadingId(userId);
 
       await axios.post("/api/admin/give-access", {
         userId,
         productId: "invoice-recovery",
+        planId: selectedPlan, // 🔥 IMPORTANT
       });
 
       toast.success("Access granted");
 
-      await load(); // 🔥 ensure fresh data
+      setSelectedUser(null);
+      setSelectedPlan("");
+
+      await load();
 
     } catch {
       toast.error("Failed to grant access");
@@ -58,7 +94,7 @@ export default function UsersPage() {
   };
 
   /* =========================
-     FILTER + SEARCH
+     FILTER
   ========================= */
   const filtered = useMemo(() => {
     return users.filter((u) =>
@@ -113,7 +149,6 @@ export default function UsersPage() {
 
       {/* TABLE */}
       <div className="bg-white border rounded-md overflow-hidden">
-
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -128,7 +163,6 @@ export default function UsersPage() {
             {paginated.map((u, i) => (
               <tr key={u.id} className="border-t">
 
-                {/* SERIAL NUMBER */}
                 <td className="p-3">
                   {(page - 1) * limit + i + 1}
                 </td>
@@ -150,13 +184,10 @@ export default function UsersPage() {
                 <td className="p-3 text-right">
                   {!u.hasAccess && (
                     <button
-                      onClick={() => giveAccess(u.id)}
-                      disabled={loadingId === u.id}
-                      className="text-xs border px-3 py-1 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                      onClick={() => setSelectedUser(u.id)}
+                      className="text-xs border px-3 py-1 rounded-md hover:bg-gray-50"
                     >
-                      {loadingId === u.id
-                        ? "Giving..."
-                        : "Give Access"}
+                      Give Access
                     </button>
                   )}
                 </td>
@@ -166,18 +197,16 @@ export default function UsersPage() {
           </tbody>
         </table>
 
-        {/* EMPTY STATE */}
+        {/* EMPTY */}
         {paginated.length === 0 && (
           <div className="p-4 text-center text-gray-400">
             No users found
           </div>
         )}
-
       </div>
 
-      {/* PAGINATION CONTROLS */}
+      {/* PAGINATION */}
       <div className="flex justify-between items-center text-sm">
-
         <span>
           Page {page} of {totalPages || 1}
         </span>
@@ -199,8 +228,55 @@ export default function UsersPage() {
             Next
           </button>
         </div>
-
       </div>
+
+      {/* =========================
+         🔥 PLAN MODAL
+      ========================= */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-80">
+
+            <h2 className="text-lg font-semibold mb-4">
+              Select Plan
+            </h2>
+
+            <select
+              value={selectedPlan}
+              onChange={(e) => setSelectedPlan(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            >
+              <option value="">Choose plan</option>
+              {plans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setSelectedPlan("");
+                }}
+                className="px-3 py-1 border rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => giveAccess(selectedUser)}
+                className="px-3 py-1 bg-black text-white rounded"
+              >
+                Confirm
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

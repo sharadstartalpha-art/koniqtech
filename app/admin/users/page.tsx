@@ -11,6 +11,11 @@ type User = {
   id: string;
   email: string;
   hasAccess: boolean;
+  plan?: {
+    id: string;
+    name: string;
+  } | null;
+  expiresAt?: string | null;
 };
 
 type Plan = {
@@ -25,18 +30,18 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
 
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(5);
 
-  /* MODAL STATE */
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  /* MODAL */
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
 
   /* =========================
-     LOAD USERS + PLANS
+     LOAD DATA
   ========================= */
   const load = async () => {
     try {
@@ -62,32 +67,52 @@ export default function UsersPage() {
   }, []);
 
   /* =========================
-     GIVE ACCESS (WITH PLAN)
+     GIVE / CHANGE PLAN
   ========================= */
-  const giveAccess = async (userId: string) => {
+  const saveAccess = async () => {
     try {
-      if (!selectedPlan) {
+      if (!selectedUser || !selectedPlan) {
         toast.error("Select a plan");
         return;
       }
 
-      setLoadingId(userId);
+      setLoadingId(selectedUser.id);
 
       await axios.post("/api/admin/give-access", {
-        userId,
+        userId: selectedUser.id,
         productId: "invoice-recovery",
-        planId: selectedPlan, // 🔥 IMPORTANT
+        planId: selectedPlan,
       });
 
-      toast.success("Access granted");
+      toast.success("Plan updated");
 
       setSelectedUser(null);
       setSelectedPlan("");
 
       await load();
-
     } catch {
-      toast.error("Failed to grant access");
+      toast.error("Failed");
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  /* =========================
+     REVOKE ACCESS
+  ========================= */
+  const revokeAccess = async (userId: string) => {
+    try {
+      setLoadingId(userId);
+
+      await axios.post("/api/admin/revoke-access", {
+        userId,
+        productId: "invoice-recovery",
+      });
+
+      toast.success("Access revoked");
+      await load();
+    } catch {
+      toast.error("Failed");
     } finally {
       setLoadingId(null);
     }
@@ -113,6 +138,14 @@ export default function UsersPage() {
   );
 
   /* =========================
+     FORMAT DATE
+  ========================= */
+  const formatDate = (date?: string | null) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString();
+  };
+
+  /* =========================
      UI
   ========================= */
   return (
@@ -120,10 +153,9 @@ export default function UsersPage() {
 
       <h1 className="text-lg font-semibold">Users</h1>
 
-      {/* SEARCH + LIMIT */}
-      <div className="flex justify-between items-center">
+      {/* SEARCH */}
+      <div className="flex justify-between">
         <input
-          type="text"
           placeholder="Search email..."
           value={search}
           onChange={(e) => {
@@ -143,17 +175,18 @@ export default function UsersPage() {
         >
           <option value={5}>5 / page</option>
           <option value={10}>10 / page</option>
-          <option value={20}>20 / page</option>
         </select>
       </div>
 
       {/* TABLE */}
       <div className="bg-white border rounded-md overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
+          <thead className="bg-gray-50">
             <tr>
               <th className="p-3 text-left">#</th>
               <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-left">Plan</th>
+              <th className="p-3 text-left">Expiry</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-right">Actions</th>
             </tr>
@@ -169,61 +202,75 @@ export default function UsersPage() {
 
                 <td className="p-3">{u.email}</td>
 
+                {/* PLAN */}
+                <td className="p-3">
+                  {u.plan?.name || "-"}
+                </td>
+
+                {/* EXPIRY */}
+                <td className="p-3">
+                  {formatDate(u.expiresAt)}
+                </td>
+
+                {/* STATUS */}
                 <td className="p-3">
                   {u.hasAccess ? (
-                    <span className="text-green-600 text-xs font-medium">
-                      Active
-                    </span>
+                    <span className="text-green-600 text-xs">Active</span>
                   ) : (
-                    <span className="text-gray-400 text-xs">
-                      No Access
-                    </span>
+                    <span className="text-gray-400 text-xs">No Access</span>
                   )}
                 </td>
 
-                <td className="p-3 text-right">
-                  {!u.hasAccess && (
+                {/* ACTIONS */}
+                <td className="p-3 text-right space-x-2">
+
+                  {/* GIVE / CHANGE */}
+                  <button
+                    onClick={() => {
+                      setSelectedUser(u);
+                      setSelectedPlan(u.plan?.id || "");
+                    }}
+                    className="text-xs border px-3 py-1 rounded"
+                  >
+                    {u.hasAccess ? "Change Plan" : "Give Access"}
+                  </button>
+
+                  {/* REVOKE */}
+                  {u.hasAccess && (
                     <button
-                      onClick={() => setSelectedUser(u.id)}
-                      className="text-xs border px-3 py-1 rounded-md hover:bg-gray-50"
+                      onClick={() => revokeAccess(u.id)}
+                      disabled={loadingId === u.id}
+                      className="text-xs border px-3 py-1 rounded text-red-500"
                     >
-                      Give Access
+                      Revoke
                     </button>
                   )}
+
                 </td>
 
               </tr>
             ))}
           </tbody>
         </table>
-
-        {/* EMPTY */}
-        {paginated.length === 0 && (
-          <div className="p-4 text-center text-gray-400">
-            No users found
-          </div>
-        )}
       </div>
 
       {/* PAGINATION */}
-      <div className="flex justify-between items-center text-sm">
-        <span>
-          Page {page} of {totalPages || 1}
-        </span>
+      <div className="flex justify-between text-sm">
+        <span>Page {page} of {totalPages || 1}</span>
 
         <div className="space-x-2">
           <button
-            onClick={() => setPage((p) => p - 1)}
+            onClick={() => setPage(p => p - 1)}
             disabled={page === 1}
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            className="border px-3 py-1 rounded"
           >
             Prev
           </button>
 
           <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page === totalPages || totalPages === 0}
-            className="px-3 py-1 border rounded disabled:opacity-50"
+            onClick={() => setPage(p => p + 1)}
+            disabled={page === totalPages}
+            className="border px-3 py-1 rounded"
           >
             Next
           </button>
@@ -231,20 +278,20 @@ export default function UsersPage() {
       </div>
 
       {/* =========================
-         🔥 PLAN MODAL
+         MODAL
       ========================= */}
       {selectedUser && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg w-80">
 
-            <h2 className="text-lg font-semibold mb-4">
+            <h2 className="font-semibold mb-4">
               Select Plan
             </h2>
 
             <select
               value={selectedPlan}
               onChange={(e) => setSelectedPlan(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
+              className="w-full border p-2 mb-4"
             >
               <option value="">Choose plan</option>
               {plans.map((p) => (
@@ -256,20 +303,17 @@ export default function UsersPage() {
 
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => {
-                  setSelectedUser(null);
-                  setSelectedPlan("");
-                }}
-                className="px-3 py-1 border rounded"
+                onClick={() => setSelectedUser(null)}
+                className="border px-3 py-1"
               >
                 Cancel
               </button>
 
               <button
-                onClick={() => giveAccess(selectedUser)}
-                className="px-3 py-1 bg-black text-white rounded"
+                onClick={saveAccess}
+                className="bg-black text-white px-3 py-1 rounded"
               >
-                Confirm
+                Save
               </button>
             </div>
 

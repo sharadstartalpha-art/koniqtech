@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Logo from "@/components/Logo";
 import {
   LayoutDashboard,
   Users,
@@ -43,9 +44,7 @@ export default function AdminLayout({ children }: any) {
         <div>
           {/* LOGO */}
           <div className="h-14 flex items-center px-5 border-b">
-            <span className="font-semibold text-sm">
-              KoniqTech
-            </span>
+            <Logo />
           </div>
 
           {/* NAV */}
@@ -74,7 +73,7 @@ export default function AdminLayout({ children }: any) {
 
         {/* BOTTOM */}
         <div className="p-4 border-t text-xs text-gray-400">
-          KoniqTech
+          <Logo />
         </div>
       </aside>
 

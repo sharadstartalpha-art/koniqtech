@@ -4,7 +4,6 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function LoginPage() {
-  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,78 +17,91 @@ export default function LoginPage() {
 
       setLoading(true);
 
-      if (isRegister) {
-        await axios.post("/api/auth/register", {
-          email,
-          password,
-        });
+      const res = await axios.post("/api/auth/login", {
+        email,
+        password,
+      });
 
-        // 🔥 redirect to OTP page
-        window.location.href = `/verify-otp?email=${email}`;
+      window.location.href = "/dashboard";
 
-      } else {
-        const res = await axios.post("/api/auth/login", {
-          email,
-          password,
-        });
-
-        if (res.data.role === "ADMIN") {
-          window.location.href = "/admin";
-        } else {
-          window.location.href =
-            "/products/invoice-recovery/dashboard";
-        }
-      }
     } catch (err: any) {
-      alert(err?.response?.data?.error || "Something went wrong");
+      alert(err?.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fafafa]">
-      <div className="w-full max-w-sm bg-white border rounded-lg p-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#f6f6ef]">
 
-        <h1 className="text-xl font-semibold mb-4 text-center">
-          {isRegister ? "Create account" : "Sign in"}
+      <div className="w-full max-w-sm bg-white p-8 rounded-md shadow-sm">
+
+        {/* LOGO */}
+        <div className="flex justify-center mb-6">
+          <div className="bg-orange-500 text-white w-10 h-10 flex items-center justify-center font-bold text-lg">
+            Y
+          </div>
+        </div>
+
+        {/* TITLE */}
+        <h1 className="text-center text-xl font-semibold mb-6">
+          Log in
         </h1>
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className="border rounded-md p-2 w-full mb-3"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        {/* EMAIL */}
+        <div className="mb-5">
+          <label className="text-sm text-gray-500">
+            Email
+          </label>
+          <input
+            type="email"
+            className="w-full border-b outline-none py-2 focus:border-orange-500"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Enter your password"
-          className="border rounded-md p-2 w-full mb-4"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        {/* PASSWORD */}
+        <div className="mb-4">
+          <label className="text-sm text-gray-500">
+            Password
+          </label>
+          <input
+            type="password"
+            className="w-full border-b outline-none py-2 focus:border-orange-500"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
 
+        {/* FORGOT PASSWORD */}
+        <div className="text-right mb-6">
+          <a
+            href="/forgot-password"
+            className="text-sm text-orange-600 hover:underline"
+          >
+            Forgot your password?
+          </a>
+        </div>
+
+        {/* BUTTON */}
         <button
           onClick={submit}
           disabled={loading}
-          className="bg-black text-white w-full py-2 rounded-md disabled:opacity-50"
+          className="w-full bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition"
         >
-          {loading
-            ? "Loading..."
-            : isRegister
-            ? "Register"
-            : "Login"}
+          {loading ? "Logging in..." : "Log in"}
         </button>
 
-        <p
-          className="text-sm text-center text-blue-600 mt-4 cursor-pointer"
-          onClick={() => setIsRegister(!isRegister)}
-        >
-          {isRegister
-            ? "Already have an account? Login"
-            : "Create account"}
+        {/* CREATE ACCOUNT */}
+        <p className="text-center text-sm mt-6">
+          Don’t have an account?{" "}
+          <a
+            href="/register"
+            className="text-orange-600 hover:underline"
+          >
+            Create an account.
+          </a>
         </p>
 
       </div>

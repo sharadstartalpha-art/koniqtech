@@ -1,4 +1,7 @@
 "use client";
+import Logo from "@/components/Logo";
+
+
 
 export default function Home() {
   return (
@@ -6,7 +9,7 @@ export default function Home() {
 
       {/* NAVBAR */}
       <div className="flex justify-between items-center px-6 py-5 border-b">
-        <h1 className="font-semibold text-lg">KoniqTech</h1>
+        <Logo />
 
         <div className="flex gap-4 items-center">
           <a href="#pricing" className="text-sm text-gray-600">

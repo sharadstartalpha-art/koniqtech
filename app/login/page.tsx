@@ -39,7 +39,7 @@ export default function LoginPage() {
         {/* LOGO */}
         <div className="flex justify-center mb-6">
           <div className="bg-orange-500 text-white w-10 h-10 flex items-center justify-center font-bold text-lg">
-            Y
+            KoniqTech
           </div>
         </div>
 

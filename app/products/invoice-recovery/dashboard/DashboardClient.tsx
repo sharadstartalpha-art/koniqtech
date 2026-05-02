@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+
 type DashboardData = {
   recovered: number;
   pending: number;

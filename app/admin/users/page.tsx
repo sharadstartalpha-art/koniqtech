@@ -45,7 +45,9 @@ export default function UsersPage() {
   ========================= */
   const load = async () => {
     try {
-      const res = await axios.get("/api/admin/users");
+      const res = await axios.get("/api/admin/users", {
+  headers: { "Cache-Control": "no-cache" },
+});
       setUsers(res.data);
     } catch {
       toast.error("Failed to load users");

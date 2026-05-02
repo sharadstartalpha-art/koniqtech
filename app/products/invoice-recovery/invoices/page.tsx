@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 
 type Invoice = {
   id: string;
+  clientName: string;
   clientEmail: string;
   amount: number;
   status: "paid" | "unpaid";
@@ -170,6 +171,7 @@ export default function InvoicesPage() {
               <thead className="bg-gray-50 border-b text-gray-600">
                 <tr>
                   <th className="px-4 py-3 text-left">#</th>
+                  <th className="px-4 py-3 text-left">Name</th>
                   <th className="px-4 py-3 text-left">Email</th>
                   <th className="px-4 py-3 text-left">Total</th>
                   <th className="px-4 py-3 text-left">Paid</th>
@@ -192,6 +194,10 @@ export default function InvoicesPage() {
                       </td>
 
                       <td className="px-4 py-3">
+                        {inv.clientName }
+                      </td>
+
+                       <td className="px-4 py-3">
                         {inv.clientEmail}
                       </td>
 

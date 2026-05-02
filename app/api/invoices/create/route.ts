@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     /* =========================
        📥 1. INPUT
     ========================= */
-    const { clientEmail, amount, dueDate } = await req.json();
+    const { clientEmail, clientName, amount, dueDate } = await req.json();
 
     if (!clientEmail || !amount || !dueDate) {
       return NextResponse.json(
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
         userId,
         productId: product.id,
         clientEmail,
-        clientName: "",
+        clientName,
         amount: Number(amount),
         dueDate: new Date(dueDate),
         status: "UNPAID",

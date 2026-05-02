@@ -59,7 +59,7 @@ export default function SubscribePage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <p>Loading plans...</p>
+        <p>Loading plans.....</p>
       </div>
     );
   }

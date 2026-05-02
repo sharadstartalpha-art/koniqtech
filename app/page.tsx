@@ -17,6 +17,23 @@ type Plan = {
 
 export default function Home() {
    const [plans, setPlans] = useState<Plan[]>([]);
+
+    /* 🔥 THIS WAS MISSING */
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const res = await axios.get("/api/plans/invoice-recovery");
+        setPlans(res.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
+
+
   return (
     <div className="bg-white text-gray-900">
 

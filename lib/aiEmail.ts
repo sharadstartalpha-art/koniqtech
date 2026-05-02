@@ -5,23 +5,30 @@ export function generateEmail(
   type: EmailType,
   paymentLink?: string
 ) {
-  const safeLink = paymentLink || "";
+  const hasLink = !!paymentLink;
 
-  const linkHtml = safeLink
-    ? `<a href="${safeLink}">${safeLink}</a>`
-    : `<span style="color:#888">Payment link will be added</span>`;
+  /* =========================
+     LINK BLOCK (CONDITIONAL)
+  ========================= */
+  const linkHtml = hasLink
+    ? `<br/>Pay here:<br/><a href="${paymentLink}">${paymentLink}</a><br/><br/>`
+    : "";
 
-  const linkText = safeLink || "Payment link will be added";
+  const linkText = hasLink
+    ? `\nPay here:\n${paymentLink}\n`
+    : "";
 
   let html = "";
   let text = "";
 
+  /* =========================
+     FRIENDLY
+  ========================= */
   if (type === "friendly") {
     html = `
 Hi there,<br/><br/>
 Just a friendly reminder that your invoice of $${amount} is due.<br/><br/>
-Pay here:<br/>
-${linkHtml}<br/><br/>
+${linkHtml}
 Thanks!
     `;
 
@@ -29,20 +36,19 @@ Thanks!
 Hi there,
 
 Just a friendly reminder that your invoice of $${amount} is due.
-
-Pay here:
 ${linkText}
-
 Thanks!
     `;
   }
 
+  /* =========================
+     FIRM
+  ========================= */
   if (type === "firm") {
     html = `
 Hello,<br/><br/>
 Your invoice of $${amount} is overdue.<br/><br/>
-Pay here:<br/>
-${linkHtml}<br/><br/>
+${linkHtml}
 Regards
     `;
 
@@ -50,29 +56,28 @@ Regards
 Hello,
 
 Your invoice of $${amount} is overdue.
-
-Pay here:
 ${linkText}
-
 Regards
     `;
   }
 
+  /* =========================
+     FINAL
+  ========================= */
   if (type === "final") {
     html = `
 Final Notice,<br/><br/>
 Your invoice of $${amount} is seriously overdue.<br/><br/>
-Immediate payment required:<br/>
 ${linkHtml}
+Immediate payment required.
     `;
 
     text = `
 Final Notice,
 
 Your invoice of $${amount} is seriously overdue.
-
-Immediate payment required:
 ${linkText}
+Immediate payment required.
     `;
   }
 

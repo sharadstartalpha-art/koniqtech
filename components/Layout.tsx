@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Header from "./Header";
 import { LayoutDashboard, FileText, Mail } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export default function Layout({ children }: any) {
   const pathname = usePathname();
@@ -33,9 +34,7 @@ export default function Layout({ children }: any) {
       <aside className="w-[220px] border-r bg-white flex flex-col">
 
         {/* LOGO (FIXED CORRECT) */}
-        <div className="h-14 flex items-center px-4 border-b font-semibold">
-          KoniqTech
-        </div>
+        <Logo />
 
         {/* NAV */}
         <div className="p-2 space-y-1">
@@ -61,9 +60,7 @@ export default function Layout({ children }: any) {
         </div>
 
         {/* FOOTER */}
-        <div className="mt-auto p-3 border-t text-xs text-gray-400">
-          KoniqTech
-        </div>
+        <Logo />
       </aside>
 
       {/* RIGHT PANEL */}

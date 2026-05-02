@@ -7,9 +7,11 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function GET() {
   try {
-    // 🔐 GET TOKEN
-    const cookieStore = cookies();
-    const token = (await cookieStore).get("token")?.value;
+    /* =========================
+       🔐 AUTH
+    ========================= */
+    const cookieStore = await cookies(); // ✅ FIX
+    const token = cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -18,42 +20,59 @@ export async function GET() {
       );
     }
 
-    // 🔐 VERIFY JWT
     const { payload } = await jwtVerify(token, secret);
     const userId = payload.id as string;
 
-    // ✅ FETCH USER INVOICES
+    /* =========================
+       📦 FETCH INVOICES
+    ========================= */
     const invoices = await prisma.invoice.findMany({
       where: { userId },
     });
 
-    const recovered = invoices
-      .filter((i) => i.status === "paid")
-      .reduce((sum, i) => sum + i.amount, 0);
+    /* =========================
+       💰 CALCULATIONS
+    ========================= */
+    let recovered = 0;
+    let pending = 0;
 
-    const pending = invoices
-      .filter((i) => i.status === "unpaid")
-      .reduce((sum, i) => sum + i.amount, 0);
+    invoices.forEach((inv) => {
+      const amount = Number(inv.amount || 0);
+
+      if (inv.status?.toLowerCase() === "paid") {
+        recovered += amount;
+      } else {
+        pending += amount;
+      }
+    });
 
     const count = invoices.length;
 
-    // 🤖 AI INSIGHTS
+    /* =========================
+       🤖 AI INSIGHTS
+    ========================= */
     let insights = "No insights yet";
 
-    if (pending > recovered) {
+    if (pending === 0 && recovered > 0) {
+      insights = "🎉 All invoices are paid. Excellent work!";
+    } else if (pending > recovered) {
       insights =
-        "You have more pending payments than recovered. Consider sending reminders.";
+        "⚠️ You have more pending than recovered. Send reminders.";
     } else if (recovered > 0) {
       insights =
-        "Great job! Your recovery rate is healthy. Keep it up.";
+        "✅ Good recovery rate. Keep following up.";
     }
 
+    /* =========================
+       🚀 RESPONSE
+    ========================= */
     return NextResponse.json({
       recovered,
       pending,
       count,
       insights,
     });
+
   } catch (error) {
     console.error("❌ DASHBOARD ERROR:", error);
 

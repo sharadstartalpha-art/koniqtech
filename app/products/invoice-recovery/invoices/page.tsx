@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 import { Search } from "lucide-react";
+import toast from "react-hot-toast";
 
 type Invoice = {
   id: string;
@@ -40,19 +41,60 @@ export default function InvoicesPage() {
       setFiltered(res.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load invoices");
     } finally {
       setLoading(false);
     }
   };
 
   const markPaid = async (id: string) => {
-    await axios.post("/api/invoices/mark-paid", { id });
-    load();
+    try {
+      await axios.post("/api/invoices/mark-paid", { id });
+      toast.success("Marked as paid");
+      load();
+    } catch {
+      toast.error("Failed to update");
+    }
+  };
+
+  /* 🔥 CONFIRM DELETE */
+  const confirmDelete = (id: string) => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <span className="text-sm">
+          Are you sure you want to delete this invoice?
+        </span>
+
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="text-xs px-3 py-1 border rounded"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await remove(id);
+            }}
+            className="text-xs px-3 py-1 bg-red-600 text-white rounded"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const remove = async (id: string) => {
-    await axios.post("/api/invoices/delete", { id });
-    load();
+    try {
+      await axios.post("/api/invoices/delete", { id });
+      toast.success("Invoice deleted");
+      load();
+    } catch {
+      toast.error("Delete failed");
+    }
   };
 
   /* =========================
@@ -144,10 +186,7 @@ export default function InvoicesPage() {
                     inv.status === "paid" ? 0 : inv.amount;
 
                   return (
-                    <tr
-                      key={inv.id}
-                      className="border-b hover:bg-gray-50"
-                    >
+                    <tr key={inv.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">
                         {start + index + 1}
                       </td>
@@ -156,22 +195,18 @@ export default function InvoicesPage() {
                         {inv.clientEmail}
                       </td>
 
-                      {/* TOTAL */}
                       <td className="px-4 py-3 font-medium">
                         ${inv.amount}
                       </td>
 
-                      {/* PAID */}
                       <td className="px-4 py-3 font-semibold text-green-600">
                         ${paid}
                       </td>
 
-                      {/* BALANCE */}
                       <td className="px-4 py-3 font-semibold text-red-600">
                         ${balance}
                       </td>
 
-                      {/* STATUS */}
                       <td className="px-4 py-3">
                         <span
                           className={`text-xs px-2 py-1 rounded-md ${
@@ -184,7 +219,6 @@ export default function InvoicesPage() {
                         </span>
                       </td>
 
-                      {/* ACTIONS */}
                       <td className="px-4 py-3 text-right space-x-2">
                         {inv.status !== "paid" && (
                           <button
@@ -196,7 +230,7 @@ export default function InvoicesPage() {
                         )}
 
                         <button
-                          onClick={() => remove(inv.id)}
+                          onClick={() => confirmDelete(inv.id)}
                           className="text-xs px-2 py-1 border rounded text-red-600 hover:bg-red-50"
                         >
                           Delete
@@ -209,33 +243,6 @@ export default function InvoicesPage() {
             </table>
           )}
         </div>
-
-        {/* PAGINATION */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center text-sm">
-            <span>
-              Page {page} of {totalPages}
-            </span>
-
-            <div className="space-x-2">
-              <button
-                onClick={() => setPage((p) => p - 1)}
-                disabled={page === 1}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                Prev
-              </button>
-
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page === totalPages}
-                className="px-3 py-1 border rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
 
       </div>
     </Layout>

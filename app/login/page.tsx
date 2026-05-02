@@ -7,10 +7,36 @@ import PasswordInput from "@/components/PasswordInput";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    await axios.post("/api/auth/login", { email, password });
-    window.location.href = "/products/invoice-recovery/dashboard";
+    try {
+      if (!email || !password) {
+        alert("Email & password required");
+        return;
+      }
+
+      setLoading(true);
+
+      /* ✅ GET RESPONSE */
+      const res = await axios.post("/api/auth/login", {
+        email,
+        password,
+      });
+
+      /* ✅ ROLE-BASED REDIRECT */
+      if (res.data.role === "ADMIN") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href =
+          "/products/invoice-recovery/dashboard";
+      }
+
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,6 +55,7 @@ export default function LoginPage() {
         <input
           placeholder="Email"
           className="w-full border-b mb-4 py-2"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
@@ -42,9 +69,10 @@ export default function LoginPage() {
 
         <button
           onClick={submit}
+          disabled={loading}
           className="w-full bg-orange-500 text-white py-2 rounded"
         >
-          Log in
+          {loading ? "Logging in..." : "Log in"}
         </button>
 
         <p className="text-center text-sm mt-6">

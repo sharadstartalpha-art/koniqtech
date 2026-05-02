@@ -61,7 +61,7 @@ export default function Layout({ children }: any) {
 
         {/* FOOTER */}
         <div className="mt-auto p-3 border-t text-xs text-gray-400">
-          KoniqTech
+          <Logo />
         </div>
       </aside>
 

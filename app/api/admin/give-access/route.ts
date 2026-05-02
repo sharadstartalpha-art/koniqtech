@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     /* =========================
        📥 1. PARSE BODY
     ========================= */
-    const { userId, productId } = await req.json();
+    const { userId, productId, planId } = await req.json();
 
     if (!userId || !productId) {
       return NextResponse.json(
@@ -38,7 +38,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 👉 Pick default plan (first one)
-    const plan = product.plans[0];
+    const plan = await prisma.plan.findUnique({
+  where: { id: planId },
+});
+
+if (!plan) {
+  return NextResponse.json(
+    { error: "Plan not found" },
+    { status: 404 }
+  );
+}
 
     /* =========================
        🚫 3. PREVENT DUPLICATES
@@ -68,6 +77,9 @@ export async function POST(req: NextRequest) {
         planId: plan.id,
         paypalSubscriptionId: `manual-${Date.now()}`, // ✅ required for consistency
         status: "ACTIVE",
+        expiresAt: new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ),
       },
     });
 

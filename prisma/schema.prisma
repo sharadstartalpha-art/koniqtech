@@ -95,7 +95,7 @@ model Subscription {
   paypalSubscriptionId String?
   status               String
   createdAt            DateTime @default(now())
-
+  expiresAt             DateTime?   // ✅ ADD THIS
   product Product @relation(fields: [productId], references: [id])
   plan    Plan    @relation(fields: [planId], references: [id])
   user    User    @relation(fields: [userId], references: [id])

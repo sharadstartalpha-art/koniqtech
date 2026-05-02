@@ -4,16 +4,18 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+/* =========================
+   TYPES
+========================= */
 type Product = {
   id: string;
   name: string;
-  price: number;
+  slug: string;
 };
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -25,10 +27,14 @@ export default function ProductsPage() {
      LOAD
   ========================= */
   const load = async () => {
-    const res = await axios.get("/api/admin/products", {
-      headers: { "Cache-Control": "no-cache" },
-    });
-    setProducts(res.data);
+    try {
+      const res = await axios.get("/api/admin/products", {
+        headers: { "Cache-Control": "no-cache" },
+      });
+      setProducts(res.data);
+    } catch {
+      toast.error("Failed to load products");
+    }
   };
 
   useEffect(() => {
@@ -39,22 +45,15 @@ export default function ProductsPage() {
      CREATE
   ========================= */
   const create = async () => {
-    if (!name || !price) {
-      return toast.error("Fill all fields");
-    }
+    if (!name) return toast.error("Enter product name");
 
     try {
       setLoading(true);
 
-      await axios.post("/api/admin/products", {
-        name,
-        price: Number(price),
-      });
+      await axios.post("/api/admin/products", { name });
 
       toast.success("Product created");
-
       setName("");
-      setPrice("");
       load();
     } catch {
       toast.error("Failed to create product");
@@ -75,11 +74,9 @@ export default function ProductsPage() {
       await axios.put("/api/admin/products", {
         id: editing.id,
         name: editing.name,
-        price: Number(editing.price),
       });
 
-      toast.success("Product updated");
-
+      toast.success("Updated");
       setEditing(null);
       load();
     } catch {
@@ -99,7 +96,6 @@ export default function ProductsPage() {
       await axios.delete(`/api/admin/products?id=${id}`);
 
       toast.success("Product deleted");
-
       load();
     } catch {
       toast.error("Delete failed");
@@ -108,6 +104,16 @@ export default function ProductsPage() {
     }
   };
 
+  /* =========================
+     OPEN EDIT
+  ========================= */
+  const openEdit = (p: Product) => {
+    setEditing(p);
+  };
+
+  /* =========================
+     UI
+  ========================= */
   return (
     <div className="space-y-6">
 
@@ -118,27 +124,19 @@ export default function ProductsPage() {
         <button
           onClick={create}
           disabled={loading}
-          className="bg-black text-white px-4 py-1.5 text-sm rounded-md"
+          className="bg-black text-white px-4 py-1.5 text-sm rounded-md disabled:opacity-50"
         >
           {loading ? "Adding..." : "Add Product"}
         </button>
       </div>
 
       {/* CREATE FORM */}
-      <div className="flex gap-3">
+      <div>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
+          placeholder="Product name"
           className="border px-3 py-2 rounded-md text-sm w-60"
-        />
-
-        <input
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="Price"
-          type="number"
-          className="border px-3 py-2 rounded-md text-sm w-40"
         />
       </div>
 
@@ -148,7 +146,7 @@ export default function ProductsPage() {
           <thead className="bg-gray-50 text-gray-600">
             <tr>
               <th className="text-left p-3">Name</th>
-              <th className="text-left p-3">Price</th>
+              <th className="text-left p-3">Slug</th>
               <th className="text-right p-3">Actions</th>
             </tr>
           </thead>
@@ -158,33 +156,35 @@ export default function ProductsPage() {
               <tr key={p.id} className="border-t">
 
                 <td className="p-3">{p.name}</td>
-                <td className="p-3">${p.price}</td>
+                <td className="p-3 text-gray-500">{p.slug}</td>
 
                 <td className="p-3 text-right space-x-3">
-
-                  {/* EDIT */}
                   <button
-                    onClick={() => setEditing(p)}
+                    onClick={() => openEdit(p)}
                     className="text-blue-600 text-xs"
                   >
                     Edit
                   </button>
 
-                  {/* DELETE */}
                   <button
                     onClick={() => remove(p.id)}
                     disabled={deletingId === p.id}
-                    className="text-red-500 text-xs"
+                    className="text-red-500 text-xs disabled:opacity-50"
                   >
                     {deletingId === p.id ? "Deleting..." : "Delete"}
                   </button>
-
                 </td>
 
               </tr>
             ))}
           </tbody>
         </table>
+
+        {products.length === 0 && (
+          <div className="p-4 text-center text-gray-400">
+            No products found
+          </div>
+        )}
       </div>
 
       {/* =========================
@@ -200,18 +200,6 @@ export default function ProductsPage() {
               value={editing.name}
               onChange={(e) =>
                 setEditing({ ...editing, name: e.target.value })
-              }
-              className="w-full border p-2 mb-3"
-            />
-
-            <input
-              type="number"
-              value={editing.price}
-              onChange={(e) =>
-                setEditing({
-                  ...editing,
-                  price: Number(e.target.value),
-                })
               }
               className="w-full border p-2 mb-4"
             />

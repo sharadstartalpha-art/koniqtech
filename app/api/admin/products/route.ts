@@ -65,45 +65,32 @@ export async function POST(req: Request) {
 ========================= */
 export async function PUT(req: Request) {
   try {
-    const { id, name, price } = await req.json();
+    const { id, name } = await req.json();
 
-    if (!id) {
+    if (!id || !name) {
       return NextResponse.json(
-        { error: "Missing product id" },
+        { error: "Missing id or name" },
         { status: 400 }
       );
     }
 
-    /* 🔹 1. UPDATE PRODUCT NAME */
+    const slug = name.toLowerCase().replace(/\s+/g, "-");
+
     await prisma.product.update({
       where: { id },
-      data: { name },
+      data: { name, slug },
     });
-
-    /* 🔹 2. UPDATE FIRST PLAN PRICE */
-    const plan = await prisma.plan.findFirst({
-      where: { productId: id },
-    });
-
-    if (plan && price !== undefined) {
-      await prisma.plan.update({
-        where: { id: plan.id },
-        data: { price: Number(price) },
-      });
-    }
 
     return NextResponse.json({ success: true });
 
-  } catch (error) {
-    console.error("UPDATE PRODUCT ERROR:", error);
-
+  } catch (err) {
+    console.error(err);
     return NextResponse.json(
-      { error: "Failed to update product" },
+      { error: "Update failed" },
       { status: 500 }
     );
   }
 }
-
 /* =========================
    ❌ DELETE PRODUCT
 ========================= */

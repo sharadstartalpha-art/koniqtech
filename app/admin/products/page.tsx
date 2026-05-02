@@ -4,16 +4,30 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  /* EDIT STATE */
+  const [editing, setEditing] = useState<Product | null>(null);
+
+  /* =========================
+     LOAD
+  ========================= */
   const load = async () => {
-    const res = await axios.get("/api/admin/products");
+    const res = await axios.get("/api/admin/products", {
+      headers: { "Cache-Control": "no-cache" },
+    });
     setProducts(res.data);
   };
 
@@ -21,7 +35,9 @@ export default function ProductsPage() {
     load();
   }, []);
 
-  /* ➕ CREATE */
+  /* =========================
+     CREATE
+  ========================= */
   const create = async () => {
     if (!name || !price) {
       return toast.error("Fill all fields");
@@ -47,7 +63,35 @@ export default function ProductsPage() {
     }
   };
 
-  /* ❌ DELETE */
+  /* =========================
+     UPDATE
+  ========================= */
+  const update = async () => {
+    if (!editing) return;
+
+    try {
+      setLoading(true);
+
+      await axios.put("/api/admin/products", {
+        id: editing.id,
+        name: editing.name,
+        price: Number(editing.price),
+      });
+
+      toast.success("Product updated");
+
+      setEditing(null);
+      load();
+    } catch {
+      toast.error("Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* =========================
+     DELETE
+  ========================= */
   const remove = async (id: string) => {
     try {
       setDeletingId(id);
@@ -74,13 +118,13 @@ export default function ProductsPage() {
         <button
           onClick={create}
           disabled={loading}
-          className="bg-black text-white px-4 py-1.5 text-sm rounded-md disabled:opacity-50"
+          className="bg-black text-white px-4 py-1.5 text-sm rounded-md"
         >
           {loading ? "Adding..." : "Add Product"}
         </button>
       </div>
 
-      {/* FORM */}
+      {/* CREATE FORM */}
       <div className="flex gap-3">
         <input
           value={name}
@@ -100,7 +144,6 @@ export default function ProductsPage() {
 
       {/* TABLE */}
       <div className="bg-white border rounded-md overflow-hidden">
-
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -117,22 +160,81 @@ export default function ProductsPage() {
                 <td className="p-3">{p.name}</td>
                 <td className="p-3">${p.price}</td>
 
-                <td className="p-3 text-right">
+                <td className="p-3 text-right space-x-3">
+
+                  {/* EDIT */}
+                  <button
+                    onClick={() => setEditing(p)}
+                    className="text-blue-600 text-xs"
+                  >
+                    Edit
+                  </button>
+
+                  {/* DELETE */}
                   <button
                     onClick={() => remove(p.id)}
                     disabled={deletingId === p.id}
-                    className="text-red-500 text-xs disabled:opacity-50"
+                    className="text-red-500 text-xs"
                   >
                     {deletingId === p.id ? "Deleting..." : "Delete"}
                   </button>
+
                 </td>
 
               </tr>
             ))}
           </tbody>
         </table>
-
       </div>
+
+      {/* =========================
+         EDIT MODAL
+      ========================= */}
+      {editing && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-80">
+
+            <h2 className="font-semibold mb-4">Edit Product</h2>
+
+            <input
+              value={editing.name}
+              onChange={(e) =>
+                setEditing({ ...editing, name: e.target.value })
+              }
+              className="w-full border p-2 mb-3"
+            />
+
+            <input
+              type="number"
+              value={editing.price}
+              onChange={(e) =>
+                setEditing({
+                  ...editing,
+                  price: Number(e.target.value),
+                })
+              }
+              className="w-full border p-2 mb-4"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setEditing(null)}
+                className="border px-3 py-1"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={update}
+                className="bg-black text-white px-3 py-1 rounded"
+              >
+                Save
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

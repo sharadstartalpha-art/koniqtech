@@ -10,7 +10,7 @@ export default function LoginPage() {
 
   const submit = async () => {
     await axios.post("/api/auth/login", { email, password });
-    window.location.href = "/dashboard";
+    window.location.href = "/products/invoice-recovery/dashboard";
   };
 
   return (

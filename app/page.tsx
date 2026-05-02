@@ -1,9 +1,22 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
 import Logo from "@/components/Logo";
 
+/* =========================
+   TYPES
+========================= */
+type Plan = {
+  id: string;
+  name: string;
+  price: number;
+  invoiceLimit: number | null;
+};
 
 
 export default function Home() {
+   const [plans, setPlans] = useState<Plan[]>([]);
   return (
     <div className="bg-white text-gray-900">
 
@@ -171,21 +184,50 @@ export default function Home() {
       </section>
 
       {/* PRICING */}
+
+
+        {/* PRICING FROM DB */}
       <section id="pricing" className="bg-gray-50 py-24 text-center">
         <h2 className="text-4xl font-bold mb-12">
           Simple pricing
         </h2>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
-          <Plan name="Starter" price="$19" desc="For freelancers" />
-          <Plan name="Growth" price="$39" desc="For growing businesses" highlight />
-          <Plan name="Pro" price="$79" desc="For agencies" />
+          {plans.map((p: Plan) => (
+            <div
+              key={p.id}
+              className={`p-6 border rounded-lg ${
+                p.name === "Growth" ? "border-black scale-105" : ""
+              }`}
+            >
+              <h3 className="font-semibold">{p.name}</h3>
+
+              <p className="text-3xl my-4">
+                ${p.price}/mo
+              </p>
+
+              <p className="text-gray-500 text-sm">
+                {p.invoiceLimit === -1 || p.invoiceLimit === null
+                  ? "Unlimited invoices"
+                  : `${p.invoiceLimit} invoices`}
+              </p>
+
+              <a
+                href="/login"
+                className="block mt-6 bg-black text-white px-4 py-2 rounded"
+              >
+                Get Started
+              </a>
+            </div>
+          ))}
         </div>
 
         <p className="text-gray-500 mt-6 text-sm">
           Pay securely via PayPal • Cancel anytime
         </p>
       </section>
+
+
 
       {/* FINAL CTA */}
       <section className="text-center py-28 bg-black text-white">

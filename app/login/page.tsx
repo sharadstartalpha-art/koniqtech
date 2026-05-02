@@ -24,7 +24,9 @@ export default function LoginPage() {
           password,
         });
 
-        alert("Verification email sent");
+        // 🔥 redirect to OTP page
+        window.location.href = `/verify-otp?email=${email}`;
+
       } else {
         const res = await axios.post("/api/auth/login", {
           email,

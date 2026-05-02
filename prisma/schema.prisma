@@ -124,8 +124,7 @@ model PaymentLink {
   id        String   @id @default(uuid())
   userId    String
   title     String
-  amount    Float
-  link      String   @unique
+  url       String
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])

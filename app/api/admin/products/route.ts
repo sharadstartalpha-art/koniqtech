@@ -1,17 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
-/* 📦 GET ALL PRODUCTS */
+/* =========================
+   📦 GET ALL PRODUCTS
+========================= */
 export async function GET() {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: "asc" },
-    include: { plans: true }, // 👈 optional but useful
+    include: { plans: true },
   });
 
   return NextResponse.json(products);
 }
 
-/* ➕ CREATE PRODUCT + DEFAULT PLAN */
+/* =========================
+   ➕ CREATE PRODUCT + DEFAULT PLAN
+========================= */
 export async function POST(req: Request) {
   try {
     const { name, price, invoiceLimit } = await req.json();
@@ -25,7 +29,6 @@ export async function POST(req: Request) {
 
     const slug = name.toLowerCase().replace(/\s+/g, "-");
 
-    // ✅ Create product + plan together
     const product = await prisma.product.create({
       data: {
         name,
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
         plans: {
           create: [
             {
-              name: "Default", // or "Pro"
+              name: "Default",
               price: Number(price),
               invoiceLimit: invoiceLimit
                 ? Number(invoiceLimit)
@@ -57,7 +60,53 @@ export async function POST(req: Request) {
   }
 }
 
-/* ❌ DELETE PRODUCT */
+/* =========================
+   ✏️ UPDATE PRODUCT + PLAN
+========================= */
+export async function PUT(req: Request) {
+  try {
+    const { id, name, price } = await req.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing product id" },
+        { status: 400 }
+      );
+    }
+
+    /* 🔹 1. UPDATE PRODUCT NAME */
+    await prisma.product.update({
+      where: { id },
+      data: { name },
+    });
+
+    /* 🔹 2. UPDATE FIRST PLAN PRICE */
+    const plan = await prisma.plan.findFirst({
+      where: { productId: id },
+    });
+
+    if (plan && price !== undefined) {
+      await prisma.plan.update({
+        where: { id: plan.id },
+        data: { price: Number(price) },
+      });
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("UPDATE PRODUCT ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Failed to update product" },
+      { status: 500 }
+    );
+  }
+}
+
+/* =========================
+   ❌ DELETE PRODUCT
+========================= */
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url);

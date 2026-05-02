@@ -17,7 +17,7 @@ export default function LoginPage() {
 
       setLoading(true);
 
-      const res = await axios.post("/api/auth/login", {
+      await axios.post("/api/auth/login", {
         email,
         password,
       });
@@ -33,26 +33,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f6f6ef]">
-
       <div className="w-full max-w-sm bg-white p-8 rounded-md shadow-sm">
 
-        {/* LOGO */}
+        {/* ✅ LOGO FIX */}
         <div className="flex justify-center mb-6">
-          <div className="bg-orange-500 text-white w-10 h-10 flex items-center justify-center font-bold text-lg">
+          <div className="bg-orange-500 text-white px-4 py-2 font-bold text-lg rounded">
             KoniqTech
           </div>
         </div>
 
-        {/* TITLE */}
         <h1 className="text-center text-xl font-semibold mb-6">
           Log in
         </h1>
 
-        {/* EMAIL */}
         <div className="mb-5">
-          <label className="text-sm text-gray-500">
-            Email
-          </label>
+          <label className="text-sm text-gray-500">Email</label>
           <input
             type="email"
             className="w-full border-b outline-none py-2 focus:border-orange-500"
@@ -61,11 +56,8 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* PASSWORD */}
         <div className="mb-4">
-          <label className="text-sm text-gray-500">
-            Password
-          </label>
+          <label className="text-sm text-gray-500">Password</label>
           <input
             type="password"
             className="w-full border-b outline-none py-2 focus:border-orange-500"
@@ -74,32 +66,23 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* FORGOT PASSWORD */}
         <div className="text-right mb-6">
-          <a
-            href="/forgot-password"
-            className="text-sm text-orange-600 hover:underline"
-          >
+          <a href="/forgot-password" className="text-sm text-orange-600">
             Forgot your password?
           </a>
         </div>
 
-        {/* BUTTON */}
         <button
           onClick={submit}
           disabled={loading}
-          className="w-full bg-orange-500 text-white py-2 rounded-md hover:bg-orange-600 transition"
+          className="w-full bg-orange-500 text-white py-2 rounded-md"
         >
           {loading ? "Logging in..." : "Log in"}
         </button>
 
-        {/* CREATE ACCOUNT */}
         <p className="text-center text-sm mt-6">
           Don’t have an account?{" "}
-          <a
-            href="/register"
-            className="text-orange-600 hover:underline"
-          >
+          <a href="/register" className="text-orange-600">
             Create an account.
           </a>
         </p>

@@ -60,7 +60,9 @@ export default function Layout({ children }: any) {
         </div>
 
         {/* FOOTER */}
-        <Logo />
+        <div className="mt-auto p-3 border-t text-xs text-gray-400">
+          KoniqTech
+        </div>
       </aside>
 
       {/* RIGHT PANEL */}

@@ -3,24 +3,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    /* =========================
-       📥 1. PARSE BODY
-    ========================= */
     const { userId, productId, planId } = await req.json();
 
-    if (!userId || !productId) {
+    if (!userId || !productId || !planId) {
       return NextResponse.json(
-        { error: "Missing userId or productId" },
+        { error: "Missing fields" },
         { status: 400 }
       );
     }
 
     /* =========================
-       🔍 2. FIND PRODUCT (by slug)
+       1. FIND PRODUCT
     ========================= */
     const product = await prisma.product.findUnique({
       where: { slug: productId },
-      include: { plans: true },
     });
 
     if (!product) {
@@ -30,69 +26,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!product.plans || product.plans.length === 0) {
-      return NextResponse.json(
-        { error: "No plans found for this product" },
-        { status: 400 }
-      );
-    }
-
-    // 👉 Pick default plan (first one)
-    const plan = await prisma.plan.findUnique({
-  where: { id: planId },
-});
-
-if (!plan) {
-  return NextResponse.json(
-    { error: "Plan not found" },
-    { status: 404 }
-  );
-}
-
     /* =========================
-       🚫 3. PREVENT DUPLICATES
+       2. FIND ACTIVE SUB
     ========================= */
     const existing = await prisma.subscription.findFirst({
       where: {
         userId,
         productId: product.id,
-        status: "ACTIVE", // ✅ only block if already active
+        status: "ACTIVE",
       },
     });
 
+    /* =========================
+       3. UPDATE OR CREATE
+    ========================= */
     if (existing) {
-      return NextResponse.json({
-        success: true,
-        message: "User already has access",
+      // 🔁 CHANGE PLAN
+      await prisma.subscription.update({
+        where: { id: existing.id },
+        data: {
+          planId, // ✅ USE SELECTED PLAN
+          expiresAt: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ),
+        },
+      });
+    } else {
+      // ✅ NEW ACCESS
+      await prisma.subscription.create({
+        data: {
+          userId,
+          productId: product.id,
+          planId, // ✅ USE SELECTED PLAN
+          paypalSubscriptionId: `manual-${Date.now()}`,
+          status: "ACTIVE",
+          expiresAt: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ),
+        },
       });
     }
 
-    /* =========================
-       ✅ 4. CREATE SUBSCRIPTION
-    ========================= */
-    await prisma.subscription.create({
-      data: {
-        userId,
-        productId: product.id,
-        planId: plan.id,
-        paypalSubscriptionId: `manual-${Date.now()}`, // ✅ required for consistency
-        status: "ACTIVE",
-        expiresAt: new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
-    ),
-      },
-    });
-
     return NextResponse.json({
       success: true,
-      message: "Access granted",
+      message: "Plan updated",
     });
 
-  } catch (error: any) {
-    console.error("GIVE ACCESS ERROR:", error?.message || error);
-
+  } catch (error) {
+    console.error("ERROR:", error);
     return NextResponse.json(
-      { error: "Failed to grant access" },
+      { error: "Failed" },
       { status: 500 }
     );
   }

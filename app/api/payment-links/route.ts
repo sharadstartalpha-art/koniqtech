@@ -26,6 +26,7 @@ export async function GET() {
 /* =========================
    CREATE LINK
 ========================= */
+/* CREATE LINK */
 export async function POST(req: Request) {
   const token = (await cookies()).get("token")?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -33,22 +34,22 @@ export async function POST(req: Request) {
   const { payload } = await jwtVerify(token, secret);
   const userId = payload.id as string;
 
-  const { title, amount } = await req.json();
+  const { title, url } = await req.json();
 
-  const link = `https://koniqtech.com/pay/${Date.now()}`;
+  if (!title || !url) {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
 
   const created = await prisma.paymentLink.create({
     data: {
       userId,
       title,
-      amount: Number(amount),
-      link,
+      url, // ✅ user provided
     },
   });
 
   return NextResponse.json(created);
 }
-
 /* =========================
    DELETE
 ========================= */

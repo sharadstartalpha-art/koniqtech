@@ -3,8 +3,9 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Header from "./Header";
-import { LayoutDashboard, FileText, Mail } from "lucide-react";
+
 import Logo from "@/components/Logo";
+import { LayoutDashboard, FileText, Mail, Link as LinkIcon } from "lucide-react";
 
 export default function Layout({ children }: any) {
   const pathname = usePathname();
@@ -25,6 +26,11 @@ export default function Layout({ children }: any) {
       href: "/products/invoice-recovery/reminders",
       icon: Mail,
     },
+     {
+    name: "Payment Links", // ✅ NEW
+    href: "/products/invoice-recovery/links",
+    icon: LinkIcon,
+  },
   ];
 
   return (

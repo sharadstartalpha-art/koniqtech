@@ -14,37 +14,36 @@ model User {
   password String?
   role     String  @default("USER")
 
-  otp           String?
-  otpExpiry     DateTime?
+  otp       String?
+  otpExpiry DateTime?
 
   referredBy    String?
   isVerified    Boolean        @default(false)
   createdAt     DateTime       @default(now())
   verifyExpiry  DateTime?
   verifyToken   String?
+  paymentLinks  PaymentLink[]
   invoices      Invoice[]
   subscriptions Subscription[]
 }
 
 model Invoice {
-  id          String     @id @default(uuid())
-  userId      String
-  productId   String
-  clientEmail String
-  clientName  String?
-  amount      Float
-  dueDate     DateTime
-  status      String
-  paymentLink String?
-  paidAt      DateTime?
-  autoReminder Boolean @default(true)
-  createdAt   DateTime   @default(now())
-  product     Product    @relation(fields: [productId], references: [id])
-  user        User       @relation(fields: [userId], references: [id])
-  reminders   Reminder[]
+  id           String     @id @default(uuid())
+  userId       String
+  productId    String
+  clientEmail  String
+  clientName   String?
+  amount       Float
+  dueDate      DateTime
+  status       String
+  paymentLink  String?
+  paidAt       DateTime?
+  autoReminder Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  product      Product    @relation(fields: [productId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
+  reminders    Reminder[]
 }
-
-
 
 model Payment {
   id        String   @id @default(uuid())
@@ -75,48 +74,59 @@ model Product {
 }
 
 model Plan {
-  id           String   @id @default(uuid())
-  productId    String
-  name         String // Free / Pro / Business
-  price        Float
-  invoiceLimit Int?
-  paypalPlanId String? // VERY IMPORTANT
-  createdAt    DateTime @default(now())
-  active         Boolean @default(true)
+  id            String         @id @default(uuid())
+  productId     String
+  name          String // Free / Pro / Business
+  price         Float
+  invoiceLimit  Int?
+  paypalPlanId  String? // VERY IMPORTANT
+  createdAt     DateTime       @default(now())
+  active        Boolean        @default(true)
   product       Product        @relation(fields: [productId], references: [id])
   subscriptions Subscription[]
 }
 
 model Subscription {
-  id                   String   @id @default(uuid())
+  id                   String    @id @default(uuid())
   userId               String
   productId            String
   planId               String // 🔥 NEW
   paypalSubscriptionId String?
   status               String
-  createdAt            DateTime @default(now())
-  expiresAt             DateTime?   // ✅ ADD THIS
-  product Product @relation(fields: [productId], references: [id])
-  plan    Plan    @relation(fields: [planId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  createdAt            DateTime  @default(now())
+  expiresAt            DateTime? // ✅ ADD THIS
+  product              Product   @relation(fields: [productId], references: [id])
+  plan                 Plan      @relation(fields: [planId], references: [id])
+  user                 User      @relation(fields: [userId], references: [id])
 }
 
 model Reminder {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   invoiceId String
 
-  type      String   // friendly | firm | final
-  status    String   // sent | failed
+  type   String // friendly | firm | final
+  status String // sent | failed
 
-  email     String   // snapshot
-  amount    Float    // snapshot
+  email  String // snapshot
+  amount Float // snapshot
 
   sentAt    DateTime @default(now())
   createdAt DateTime @default(now())
-  html      String   // ✅ ADD THIS
-  text      String   // ✅ ADD THIS
+  html      String // ✅ ADD THIS
+  text      String // ✅ ADD THIS
 
-  opens Int @default(0)
+  opens   Int     @default(0)
   clicked Boolean @default(false)
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model PaymentLink {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  amount    Float
+  link      String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

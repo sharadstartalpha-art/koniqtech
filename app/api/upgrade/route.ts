@@ -7,10 +7,12 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export async function POST(req: Request) {
   try {
+    console.log("UPGRADE HIT ✅");
+
     /* =========================
-       🔐 AUTH
+       AUTH
     ========================= */
-    const cookieStore = await cookies();
+    const cookieStore = await cookies(); // ✅ FIXED
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -24,19 +26,19 @@ export async function POST(req: Request) {
     const userId = payload.id as string;
 
     /* =========================
-       📥 BODY
+       BODY
     ========================= */
     const { planId } = await req.json();
 
     if (!planId) {
       return NextResponse.json(
-        { error: "Plan required" },
+        { error: "Missing planId" },
         { status: 400 }
       );
     }
 
     /* =========================
-       📦 GET PLAN (IMPORTANT)
+       PLAN CHECK
     ========================= */
     const plan = await prisma.plan.findUnique({
       where: { id: planId },
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     /* =========================
-       ❌ CANCEL OLD
+       CANCEL OLD
     ========================= */
     await prisma.subscription.updateMany({
       where: {
@@ -63,7 +65,7 @@ export async function POST(req: Request) {
     });
 
     /* =========================
-       ✅ CREATE NEW SUB
+       CREATE NEW
     ========================= */
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
@@ -72,7 +74,7 @@ export async function POST(req: Request) {
       data: {
         userId,
         planId: plan.id,
-        productId: plan.productId, // ✅ FIX HERE
+        productId: plan.productId, // ✅ required
         status: "ACTIVE",
         expiresAt,
       },

@@ -59,7 +59,7 @@ export default function AccountPage() {
     try {
       setLoading(true);
 
-      await axios.post("/api/account/upgrade", {
+      await axios.post("/api/upgrade", {
         planId: "growth", // 👈 replace with real plan later
       });
 

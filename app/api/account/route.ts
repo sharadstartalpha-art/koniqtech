@@ -9,6 +9,7 @@ export async function GET() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
+    
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,13 +30,13 @@ export async function GET() {
     });
 
     const sub = user?.subscriptions[0];
-
+const hasActive = !!sub;
     return NextResponse.json({
-      plan: sub?.plan?.name || "Free",
-      expiresAt: sub?.expiresAt || null,
-      invoiceLimit: sub?.plan?.invoiceLimit || null,
-      used: user?.invoices.length || 0,
-    });
+  plan: hasActive ? sub.plan.name : "Free",
+  expiresAt: hasActive ? sub.expiresAt : null,
+  invoiceLimit: hasActive ? sub.plan.invoiceLimit : 0,
+  used: user?.invoices.length || 0,
+});
 
   } catch (err) {
     console.error(err);

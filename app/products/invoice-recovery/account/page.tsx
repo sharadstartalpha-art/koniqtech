@@ -55,10 +55,12 @@ const upgrade = async () => {
     );
   }
 
-  const remaining =
-    data.invoiceLimit === null
-      ? "Unlimited"
-      : data.invoiceLimit - data.used;
+ const remaining =
+  data.invoiceLimit === 0
+    ? 0
+    : data.invoiceLimit === null
+    ? "Unlimited"
+    : Math.max(0, data.invoiceLimit - data.used);
 
   return (
     <Layout>

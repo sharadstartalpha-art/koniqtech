@@ -41,7 +41,7 @@ export default function AccountPage() {
     try {
       setLoading(true);
 
-      await axios.post("/api/account/cancel");
+      await axios.post("/api/cancel");
 
       toast.success("Subscription cancelled");
       load();

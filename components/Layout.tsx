@@ -5,7 +5,13 @@ import Link from "next/link";
 import Header from "./Header";
 
 import Logo from "@/components/Logo";
-import { LayoutDashboard, FileText, Mail, Link as LinkIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  Mail,
+  Link as LinkIcon,
+  User
+} from "lucide-react";
 
 export default function Layout({ children }: any) {
   const pathname = usePathname();
@@ -26,11 +32,16 @@ export default function Layout({ children }: any) {
       href: "/products/invoice-recovery/reminders",
       icon: Mail,
     },
-     {
-    name: "Payment Links", // ✅ NEW
-    href: "/products/invoice-recovery/links",
-    icon: LinkIcon,
-  },
+    {
+      name: "Payment Links",
+      href: "/products/invoice-recovery/links",
+      icon: LinkIcon,
+    },
+    {
+      name: "Account", // ✅ NEW
+      href: "/products/invoice-recovery/account",
+      icon: User,
+    },
   ];
 
   return (
@@ -39,7 +50,7 @@ export default function Layout({ children }: any) {
       {/* SIDEBAR */}
       <aside className="w-[220px] border-r bg-white flex flex-col">
 
-        {/* LOGO (FIXED CORRECT) */}
+        {/* LOGO */}
         <div className="h-14 flex items-center px-4 border-b font-semibold">
           <Logo />
         </div>
@@ -75,18 +86,12 @@ export default function Layout({ children }: any) {
 
       {/* RIGHT PANEL */}
       <div className="flex-1 flex flex-col">
-
-        {/* HEADER */}
         <Header />
 
-        {/* CONTENT */}
         <main className="flex-1 overflow-auto px-8 py-6">
-
-          {/* EXACT RESEND WIDTH */}
           <div className="w-full max-w-[1100px]">
             {children}
           </div>
-
         </main>
       </div>
     </div>

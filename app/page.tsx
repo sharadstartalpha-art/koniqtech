@@ -249,7 +249,7 @@ export default function Home() {
       {/* FINAL CTA */}
       <section className="text-center py-28 bg-black text-white">
         <h2 className="text-4xl font-bold mb-6">
-          Stop losing money to unpaid invoices.
+          Stop losing money to unpaid invoices...
         </h2>
 
         <p className="text-gray-300 mb-8">

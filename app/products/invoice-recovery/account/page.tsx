@@ -15,6 +15,25 @@ type AccountData = {
 export default function AccountPage() {
   const [data, setData] = useState<AccountData | null>(null);
 
+  const cancel = async () => {
+  if (!confirm("Cancel subscription?")) return;
+
+  await axios.post("/api/account/cancel");
+
+  toast.success("Subscription cancelled");
+  load();
+};
+
+const upgrade = async () => {
+  // ⚠️ for now hardcode planId (replace later with UI)
+  const planId = "YOUR_GROWTH_PLAN_ID";
+
+  await axios.post("/api/account/upgrade", { planId });
+
+  toast.success("Upgraded!");
+  load();
+};
+
   const load = async () => {
     try {
       const res = await axios.get("/api/account");
@@ -84,18 +103,18 @@ export default function AccountPage() {
         <div className="flex gap-3">
 
           <button
-            onClick={() => toast.success("Upgrade flow coming")}
-            className="bg-black text-white px-4 py-2 text-sm rounded-md"
-          >
-            Upgrade Plan
-          </button>
+  onClick={upgrade}
+  className="bg-black text-white px-4 py-2 text-sm rounded-md"
+>
+  Upgrade Plan
+</button>
 
           <button
-            onClick={() => toast.error("Cancel logic coming")}
-            className="border px-4 py-2 text-sm rounded-md text-red-600"
-          >
-            Cancel Subscription
-          </button>
+  onClick={cancel}
+  className="border px-4 py-2 text-sm rounded-md text-red-600"
+>
+  Cancel Subscription
+</button>
 
         </div>
 

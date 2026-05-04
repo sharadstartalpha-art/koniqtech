@@ -71,18 +71,22 @@ export async function runReminders() {
       });
 
       /* =========================
-         💾 SAVE LOG (FINAL FIX ✅)
+         💾 SAVE REMINDER
       ========================= */
       await prisma.reminder.create({
         data: {
+          userId: inv.userId,          // ✅ FIX
           invoiceId: inv.id,
+
           email: inv.clientEmail,
           amount: inv.amount,
-          type,
+
+          type,                        // friendly | firm | final
+          mode: "auto",                // ✅ FIX (this is cron)
+
           status: "sent",
           sentAt: new Date(),
 
-          // ✅ REQUIRED (THIS FIXES YOUR ERROR)
           html,
           text,
         },
@@ -90,6 +94,7 @@ export async function runReminders() {
 
       console.log(`📧 ${type} reminder sent → ${inv.clientEmail}`);
     }
+
   } catch (error) {
     console.error("❌ Reminder job failed:", error);
   }

@@ -1,19 +1,43 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
 
 export async function GET() {
-  try {
-    const templates = await prisma.reminderTemplate.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+  const templates = await prisma.reminderTemplate.findMany({
+    orderBy: { createdAt: "desc" },
+  });
 
-    return NextResponse.json(templates);
-  } catch (err) {
-    console.error("GET TEMPLATES ERROR:", err);
+  return Response.json(templates);
+}
 
-    return NextResponse.json(
-      { error: "Failed to fetch templates" },
-      { status: 500 }
-    );
-  }
+export async function POST(req: Request) {
+  const body = await req.json();
+
+  const template = await prisma.reminderTemplate.upsert({
+    where: { id: body.id || "" },
+    update: {
+      name: body.name,
+      subject: body.subject,
+      html: body.html,
+    },
+    create: {
+      userId: "user-id", // replace later with auth
+      name: body.name,
+      subject: body.subject,
+      html: body.html,
+    },
+  });
+
+  return Response.json(template);
+}
+
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) return Response.json({ error: "Missing id" });
+
+  await prisma.reminderTemplate.delete({
+    where: { id },
+  });
+
+  return Response.json({ success: true });
 }

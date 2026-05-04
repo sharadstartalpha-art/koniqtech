@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     console.error("SEND REMINDER ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to send reminder" },
+      { error: "Failed to send reminder..." },
       { status: 500 }
     );
   }

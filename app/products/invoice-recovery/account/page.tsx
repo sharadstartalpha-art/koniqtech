@@ -5,6 +5,9 @@ import axios from "axios";
 import Layout from "@/components/Layout";
 import toast from "react-hot-toast";
 
+/* =========================
+   TYPES
+========================= */
 type AccountData = {
   plan: string;
   expiresAt: string | null;
@@ -12,12 +15,21 @@ type AccountData = {
   used: number;
 };
 
+type Plan = {
+  id: string;
+  name: string;
+};
+
+/* =========================
+   COMPONENT
+========================= */
 export default function AccountPage() {
   const [data, setData] = useState<AccountData | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
 
   /* =========================
-     LOAD
+     LOAD ACCOUNT
   ========================= */
   const load = async () => {
     try {
@@ -28,8 +40,21 @@ export default function AccountPage() {
     }
   };
 
+  /* =========================
+     LOAD PLANS
+  ========================= */
+  const loadPlans = async () => {
+    try {
+      const res = await axios.get("/api/plans/invoice-recovery");
+      setPlans(res.data);
+    } catch {
+      toast.error("Failed to load plans");
+    }
+  };
+
   useEffect(() => {
     load();
+    loadPlans();
   }, []);
 
   /* =========================
@@ -40,7 +65,6 @@ export default function AccountPage() {
 
     try {
       setLoading(true);
-
       await axios.post("/api/cancel");
 
       toast.success("Subscription cancelled");
@@ -55,23 +79,20 @@ export default function AccountPage() {
   /* =========================
      UPGRADE
   ========================= */
-  const upgrade = async () => {
+  const upgrade = async (planId: string) => {
     try {
-      setLoading(true);
-
-      await axios.post("/api/upgrade", {
-        planId: "growth", // 👈 replace with real plan later
-      });
+      await axios.post("/api/upgrade", { planId });
 
       toast.success("Upgraded!");
       load();
-    } catch {
-      toast.error("Upgrade failed");
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error || "Upgrade failed");
     }
   };
 
+  /* =========================
+     LOADING STATE
+  ========================= */
   if (!data) {
     return (
       <Layout>
@@ -81,7 +102,7 @@ export default function AccountPage() {
   }
 
   /* =========================
-     REMAINING LOGIC
+     REMAINING
   ========================= */
   let remaining: string | number;
 
@@ -93,6 +114,9 @@ export default function AccountPage() {
     remaining = Math.max(0, data.invoiceLimit - data.used);
   }
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <Layout>
       <div className="space-y-6">
@@ -114,22 +138,32 @@ export default function AccountPage() {
           />
 
           <Row label="Invoices Used" value={data.used} />
-
           <Row label="Remaining" value={remaining} />
 
         </div>
 
         {/* ACTIONS */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
 
-          <button
-            onClick={upgrade}
-            disabled={loading}
-            className="bg-black text-white px-4 py-2 text-sm rounded-md disabled:opacity-50"
-          >
-            {loading ? "Processing..." : "Upgrade Plan"}
-          </button>
+          {/* UPGRADE BUTTONS */}
+          {plans.map((plan) => (
+            <button
+              key={plan.id}
+              onClick={() => upgrade(plan.id)}
+              disabled={data.plan === plan.name}
+              className={`px-4 py-2 rounded-md text-sm ${
+                data.plan === plan.name
+                  ? "bg-gray-200"
+                  : "bg-black text-white"
+              }`}
+            >
+              {data.plan === plan.name
+                ? "Current Plan"
+                : `Upgrade to ${plan.name}`}
+            </button>
+          ))}
 
+          {/* CANCEL */}
           <button
             onClick={cancel}
             disabled={loading}

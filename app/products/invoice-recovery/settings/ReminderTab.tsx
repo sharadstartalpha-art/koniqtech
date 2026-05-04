@@ -6,7 +6,7 @@ import axios from "axios";
 /* ========================= */
 type Template = {
   id: string;
-  name: "friendly" | "firm" | "final";
+  name: string; // ✅ allow any name now
 };
 
 type Schedule = {
@@ -28,7 +28,9 @@ export default function ReminderTab() {
 
   const [loading, setLoading] = useState(false);
 
-  /* LOAD */
+  /* =========================
+     LOAD DATA
+  ========================= */
   const load = async () => {
     const [tRes, sRes] = await Promise.all([
       axios.get("/api/reminder-templates"),
@@ -46,7 +48,9 @@ export default function ReminderTab() {
     load();
   }, []);
 
-  /* FIXED TS ERROR */
+  /* =========================
+     UPDATE FIELD
+  ========================= */
   const updateSchedule = (
     index: number,
     field: keyof Schedule,
@@ -60,7 +64,9 @@ export default function ReminderTab() {
     setSchedules(updated);
   };
 
-  /* SAVE */
+  /* =========================
+     SAVE SETTINGS
+  ========================= */
   const save = async () => {
     try {
       setLoading(true);
@@ -70,9 +76,9 @@ export default function ReminderTab() {
         schedules,
       });
 
-      alert("Saved");
+      alert("Saved successfully 🚀");
     } catch {
-      alert("Error saving");
+      alert("Error saving settings");
     } finally {
       setLoading(false);
     }
@@ -81,25 +87,21 @@ export default function ReminderTab() {
   return (
     <div className="space-y-6">
 
-      {/* ENABLE */}
+      {/* ENABLE TOGGLE */}
       <div className="flex justify-between border p-4 rounded">
         <div>
-          <p className="font-medium">
-            Auto Reminders
-          </p>
+          <p className="font-medium">Auto Reminders</p>
         </div>
 
         <button
           onClick={() => setEnabled(!enabled)}
-          className={`w-12 h-6 rounded-full ${
+          className={`w-12 h-6 rounded-full transition ${
             enabled ? "bg-green-500" : "bg-gray-300"
           }`}
         >
           <div
             className={`w-5 h-5 bg-white rounded-full transition ${
-              enabled
-                ? "translate-x-6"
-                : "translate-x-1"
+              enabled ? "translate-x-6" : "translate-x-1"
             }`}
           />
         </button>
@@ -120,10 +122,12 @@ export default function ReminderTab() {
             {schedules.map((s, i) => (
               <tr key={s.type} className="border-t">
 
+                {/* TYPE */}
                 <td className="p-3 capitalize">
                   {s.type}
                 </td>
 
+                {/* DAYS */}
                 <td className="p-3">
                   <input
                     type="number"
@@ -139,6 +143,7 @@ export default function ReminderTab() {
                   />
                 </td>
 
+                {/* TEMPLATE (UPDATED ✅) */}
                 <td className="p-3">
                   <select
                     value={s.templateId}
@@ -151,17 +156,13 @@ export default function ReminderTab() {
                     }
                     className="border px-2 py-1 rounded w-full"
                   >
-                    <option value="">
-                      Select template
-                    </option>
+                    <option value="">Select template</option>
 
-                    {templates
-                      .filter((t) => t.name === s.type)
-                      .map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
+                    {templates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
                   </select>
                 </td>
 
@@ -171,7 +172,7 @@ export default function ReminderTab() {
         </table>
       </div>
 
-      {/* SAVE */}
+      {/* SAVE BUTTON */}
       <button
         onClick={save}
         disabled={loading}

@@ -6,8 +6,13 @@ type EmailType = "friendly" | "firm" | "final";
 
 export async function runReminders() {
   try {
+    console.log("🤖 AI Reminder Job Started");
+
     const invoices = await prisma.invoice.findMany({
-      where: { status: "unpaid" },
+      where: {
+        status: "unpaid",
+        mode: "auto", // ✅ only auto users
+      },
     });
 
     for (const inv of invoices) {
@@ -39,7 +44,7 @@ export async function runReminders() {
       if (alreadySent) continue;
 
       /* =========================
-         🔗 ENSURE PAYMENT LINK
+         🔗 VALIDATION
       ========================= */
       if (!inv.paymentLink) {
         console.error("❌ Missing payment link:", inv.id);
@@ -75,14 +80,14 @@ export async function runReminders() {
       ========================= */
       await prisma.reminder.create({
         data: {
-          userId: inv.userId,          // ✅ FIX
+          userId: inv.userId,
           invoiceId: inv.id,
 
           email: inv.clientEmail,
           amount: inv.amount,
 
-          type,                        // friendly | firm | final
-          mode: "auto",                // ✅ FIX (this is cron)
+          type,
+          mode: "auto",
 
           status: "sent",
           sentAt: new Date(),
@@ -92,8 +97,12 @@ export async function runReminders() {
         },
       });
 
-      console.log(`📧 ${type} reminder sent → ${inv.clientEmail}`);
+      console.log(
+        `📧 ${type} reminder sent → ${inv.clientEmail}`
+      );
     }
+
+    console.log("✅ AI Reminder Job Finished");
 
   } catch (error) {
     console.error("❌ Reminder job failed:", error);

@@ -94,8 +94,8 @@ export async function POST(req: Request) {
           ],
 
           application_context: {
-            return_url: `${process.env.NEXT_PUBLIC_URL}/payment-success`,
-            cancel_url: `${process.env.NEXT_PUBLIC_URL}/products/invoice-recovery/account`,
+            return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment-success`,
+            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/products/invoice-recovery/account`,
           },
         }),
       }

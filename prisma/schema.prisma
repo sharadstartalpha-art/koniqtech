@@ -141,7 +141,7 @@ model ReminderTemplate {
 model ReminderSchedule {
   id          String   @id @default(cuid())
   userId      String
-
+  type        ReminderType   // 🔥 ADD THIS
   daysAfter   Int
   templateId  String
 
@@ -149,6 +149,7 @@ model ReminderSchedule {
 
   enabled     Boolean  @default(true)
   createdAt   DateTime @default(now())
+  @@unique([userId, type]) // ✅ THIS FIXES YOUR ERROR
 }
 
 model Reminder {

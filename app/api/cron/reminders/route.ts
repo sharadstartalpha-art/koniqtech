@@ -15,7 +15,7 @@ export async function GET() {
     const invoices = await prisma.invoice.findMany({
       where: {
         status: "unpaid",
-        mode: "auto", // ✅ ONLY AUTO USERS
+        mode: "auto", // ✅ only auto invoices
       },
     });
 
@@ -23,17 +23,32 @@ export async function GET() {
 
     for (const schedule of schedules) {
       for (const invoice of invoices) {
-        const due = new Date(invoice.dueDate);
+        /* =========================
+           📅 DAYS LATE CALCULATION
+        ========================= */
+        const daysLate =
+          (now.getTime() - new Date(invoice.dueDate).getTime()) /
+          (1000 * 60 * 60 * 24);
 
-        const triggerDate = new Date(due);
-        triggerDate.setDate(
-          triggerDate.getDate() + schedule.daysAfter
-        );
+        /* =========================
+           ⏱️ MATCH SCHEDULE TYPE
+        ========================= */
+        if (daysLate < schedule.daysAfter) continue;
 
-        // ⏱️ skip if not yet time
-        if (now < triggerDate) continue;
+        // optional: match exact type stage
+        if (
+          schedule.type === "friendly" && daysLate >= 1 && daysLate < 3 ||
+          schedule.type === "firm" && daysLate >= 3 && daysLate < 7 ||
+          schedule.type === "final" && daysLate >= 7
+        ) {
+          // continue to send
+        } else {
+          continue;
+        }
 
-        // ❌ prevent duplicate
+        /* =========================
+           ❌ PREVENT DUPLICATES
+        ========================= */
         const alreadySent = await prisma.reminder.findFirst({
           where: {
             invoiceId: invoice.id,
@@ -63,7 +78,7 @@ export async function GET() {
             email: invoice.clientEmail,
             amount: invoice.amount,
 
-            type: schedule.template.name.toLowerCase() as any,
+            type: schedule.type, // ✅ enum safe
             mode: "auto",
             status: "sent",
 
@@ -78,7 +93,7 @@ export async function GET() {
         });
 
         console.log(
-          `📧 AUTO reminder sent → ${invoice.clientEmail}`
+          `📧 ${schedule.type} reminder sent → ${invoice.clientEmail}`
         );
       }
     }

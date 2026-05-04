@@ -15,7 +15,7 @@ type Reminder = {
   type: "friendly" | "firm" | "final";
   status: "sent" | "failed";
   sentAt: string;
-  mode: "manual" | "auto"; // ✅ NEW
+  mode: "manual" | "auto";
   html?: string;
 };
 
@@ -27,7 +27,7 @@ export default function RemindersPage() {
   const [filtered, setFiltered] = useState<Reminder[]>([]);
   const [search, setSearch] = useState("");
 
-  const [mode, setMode] = useState<"all" | "manual" | "auto">("all"); // ✅ toggle
+  const [mode, setMode] = useState<"all" | "manual" | "auto">("all");
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -57,14 +57,12 @@ export default function RemindersPage() {
   useEffect(() => {
     let result = data;
 
-    // search filter
     if (search) {
       result = result.filter((r) =>
         r.email.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // mode filter
     if (mode !== "all") {
       result = result.filter((r) => r.mode === mode);
     }
@@ -81,25 +79,23 @@ export default function RemindersPage() {
   const totalPages = Math.ceil(filtered.length / perPage);
 
   /* =========================
-     STATUS STYLE
+     STYLES
   ========================= */
   const getStatusStyle = (status: string) => {
-    if (status === "sent")
-      return "bg-green-100 text-green-700";
-    if (status === "failed")
-      return "bg-red-100 text-red-700";
+    if (status === "sent") return "bg-green-100 text-green-700";
+    if (status === "failed") return "bg-red-100 text-red-700";
     return "bg-gray-100 text-gray-700";
   };
 
-  /* =========================
-     MODE BADGE
-  ========================= */
   const getModeStyle = (mode: string) => {
     return mode === "auto"
       ? "bg-purple-100 text-purple-700"
       : "bg-blue-100 text-blue-700";
   };
 
+  /* =========================
+     UI
+  ========================= */
   return (
     <Layout>
       <div className="space-y-6">
@@ -110,7 +106,7 @@ export default function RemindersPage() {
 
           <a
             href="/products/invoice-recovery/reminders/create"
-            className="bg-black text-white px-3 py-2 rounded-md text-sm"
+            className="bg-black text-white px-3 py-2 rounded-md text-sm hover:opacity-90"
           >
             + Send Reminder
           </a>
@@ -127,16 +123,16 @@ export default function RemindersPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          {/* MODE TOGGLE */}
-          <div className="flex gap-2">
+          {/* 🔥 CLEAN TOGGLE SWITCH */}
+          <div className="flex bg-gray-100 p-1 rounded-lg">
             {["all", "manual", "auto"].map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m as any)}
-                className={`px-3 py-1 rounded-md text-sm capitalize ${
+                className={`px-4 py-1 text-sm rounded-md capitalize transition ${
                   mode === m
                     ? "bg-black text-white"
-                    : "border"
+                    : "text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {m}
@@ -180,25 +176,15 @@ export default function RemindersPage() {
 
               <tbody>
                 {paginated.map((r, i) => (
-                  <tr
-                    key={r.id}
-                    className="border-t hover:bg-gray-50"
-                  >
-                    <td className="p-3">
-                      {start + i + 1}
-                    </td>
+                  <tr key={r.id} className="border-t hover:bg-gray-50">
+                    <td className="p-3">{start + i + 1}</td>
 
                     <td className="p-3">{r.email}</td>
 
-                    <td className="p-3 font-medium">
-                      ${r.amount}
-                    </td>
+                    <td className="p-3 font-medium">${r.amount}</td>
 
-                    <td className="p-3 capitalize">
-                      {r.type}
-                    </td>
+                    <td className="p-3 capitalize">{r.type}</td>
 
-                    {/* MODE */}
                     <td className="p-3">
                       <span
                         className={`px-2 py-1 rounded text-xs ${getModeStyle(
@@ -226,7 +212,7 @@ export default function RemindersPage() {
                     <td className="p-3">
                       <button
                         onClick={() => setSelectedReminder(r)}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded"
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         View
                       </button>

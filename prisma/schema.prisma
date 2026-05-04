@@ -100,25 +100,7 @@ model Subscription {
   user                 User      @relation(fields: [userId], references: [id])
 }
 
-model Reminder {
-  id        String @id @default(uuid())
-  invoiceId String
 
-  type   String // friendly | firm | final
-  status String // sent | failed
-
-  email  String // snapshot
-  amount Float // snapshot
-
-  sentAt    DateTime @default(now())
-  createdAt DateTime @default(now())
-  html      String // ✅ ADD THIS
-  text      String // ✅ ADD THIS
-
-  opens   Int     @default(0)
-  clicked Boolean @default(false)
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-}
 
 model PaymentLink {
   id        String   @id @default(uuid())
@@ -128,4 +110,70 @@ model PaymentLink {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+
+
+enum ReminderMode {
+  manual
+  auto
+}
+
+enum ReminderType {
+  friendly
+  firm
+  final
+}
+
+
+model ReminderTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+
+  name      String   // "Friendly" | "Firm" | "Final"
+  subject   String
+  html      String   // full email HTML
+  schedules ReminderSchedule[]
+  createdAt DateTime @default(now())
+}
+
+model ReminderSchedule {
+  id          String   @id @default(cuid())
+  userId      String
+
+  daysAfter   Int
+  templateId  String
+
+  template    ReminderTemplate @relation(fields: [templateId], references: [id])
+
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Reminder {
+  id        String @id @default(uuid())
+
+  userId    String
+  invoiceId String
+
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  type   ReminderType
+  status String
+  mode   ReminderMode
+
+  email  String
+  amount Float
+
+  html String
+  text String
+
+  templateId String?
+  scheduleId String?
+
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  opens   Int     @default(0)
+  clicked Boolean @default(false)
 }

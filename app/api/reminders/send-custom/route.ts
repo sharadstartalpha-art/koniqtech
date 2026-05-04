@@ -36,22 +36,29 @@ export async function POST(req: Request) {
       .trim();
 
     /* =========================
-       💾 CREATE REMINDER FIRST (for tracking id)
+       💾 CREATE REMINDER
     ========================= */
     const reminder = await prisma.reminder.create({
       data: {
+        userId: invoice.userId,           // ✅ FIX
         invoiceId: invoice.id,
+
         email: invoice.clientEmail,
         amount: invoice.amount,
+
         html,
         text,
-        type: "friendly",
+
+        type: "friendly",                 // or dynamic later
+        mode: "manual",                  // ✅ FIX
+
         status: "sent",
+        sentAt: new Date(),
       },
     });
 
     /* =========================
-       🧠 ADD TRACKING PIXEL
+       🧠 TRACKING PIXEL
     ========================= */
     const trackingPixel = `<img src="${process.env.NEXT_PUBLIC_BASE_URL}/api/reminders/track?id=${reminder.id}" width="1" height="1" />`;
 

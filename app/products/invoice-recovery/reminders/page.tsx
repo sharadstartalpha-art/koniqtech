@@ -5,6 +5,9 @@ import axios from "axios";
 import Layout from "@/components/Layout";
 import EmailViewerModal from "@/components/EmailViewerModal";
 
+/* =========================
+   TYPES
+========================= */
 type Reminder = {
   id: string;
   email: string;
@@ -12,13 +15,19 @@ type Reminder = {
   type: "friendly" | "firm" | "final";
   status: "sent" | "failed";
   sentAt: string;
+  mode: "manual" | "auto"; // ✅ NEW
   html?: string;
 };
 
+/* =========================
+   COMPONENT
+========================= */
 export default function RemindersPage() {
   const [data, setData] = useState<Reminder[]>([]);
   const [filtered, setFiltered] = useState<Reminder[]>([]);
   const [search, setSearch] = useState("");
+
+  const [mode, setMode] = useState<"all" | "manual" | "auto">("all"); // ✅ toggle
 
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -33,7 +42,6 @@ export default function RemindersPage() {
     try {
       const res = await axios.get("/api/reminders");
       setData(res.data);
-      setFiltered(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -44,15 +52,26 @@ export default function RemindersPage() {
   }, []);
 
   /* =========================
-     SEARCH
+     FILTER (SEARCH + MODE)
   ========================= */
   useEffect(() => {
-    const result = data.filter((r) =>
-      r.email.toLowerCase().includes(search.toLowerCase())
-    );
+    let result = data;
+
+    // search filter
+    if (search) {
+      result = result.filter((r) =>
+        r.email.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // mode filter
+    if (mode !== "all") {
+      result = result.filter((r) => r.mode === mode);
+    }
+
     setFiltered(result);
     setPage(1);
-  }, [search, data]);
+  }, [search, data, mode]);
 
   /* =========================
      PAGINATION
@@ -72,26 +91,35 @@ export default function RemindersPage() {
     return "bg-gray-100 text-gray-700";
   };
 
+  /* =========================
+     MODE BADGE
+  ========================= */
+  const getModeStyle = (mode: string) => {
+    return mode === "auto"
+      ? "bg-purple-100 text-purple-700"
+      : "bg-blue-100 text-blue-700";
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
 
         {/* HEADER */}
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold">
-            Reminders
-          </h1>
+          <h1 className="text-xl font-semibold">Reminders</h1>
 
           <a
             href="/products/invoice-recovery/reminders/create"
-            className="bg-black text-white px-3 py-2 rounded-md text-sm hover:opacity-90"
+            className="bg-black text-white px-3 py-2 rounded-md text-sm"
           >
             + Send Reminder
           </a>
         </div>
 
-        {/* SEARCH + LIMIT */}
-        <div className="flex justify-between items-center">
+        {/* FILTER BAR */}
+        <div className="flex justify-between items-center gap-4 flex-wrap">
+
+          {/* SEARCH */}
           <input
             placeholder="Search email..."
             className="border px-3 py-2 rounded-md text-sm"
@@ -99,6 +127,24 @@ export default function RemindersPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
 
+          {/* MODE TOGGLE */}
+          <div className="flex gap-2">
+            {["all", "manual", "auto"].map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m as any)}
+                className={`px-3 py-1 rounded-md text-sm capitalize ${
+                  mode === m
+                    ? "bg-black text-white"
+                    : "border"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
+          {/* PER PAGE */}
           <select
             value={perPage}
             onChange={(e) => setPerPage(Number(e.target.value))}
@@ -107,7 +153,6 @@ export default function RemindersPage() {
             <option value={5}>5</option>
             <option value={10}>10</option>
             <option value={25}>25</option>
-            <option value={50}>50</option>
           </select>
         </div>
 
@@ -116,7 +161,7 @@ export default function RemindersPage() {
 
           {filtered.length === 0 ? (
             <div className="p-6 text-sm text-gray-500">
-              No reminders yet
+              No reminders found
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -126,6 +171,7 @@ export default function RemindersPage() {
                   <th className="p-3 text-left">Email</th>
                   <th className="p-3 text-left">Amount</th>
                   <th className="p-3 text-left">Type</th>
+                  <th className="p-3 text-left">Mode</th>
                   <th className="p-3 text-left">Status</th>
                   <th className="p-3 text-left">Date</th>
                   <th className="p-3 text-left">Action</th>
@@ -136,15 +182,13 @@ export default function RemindersPage() {
                 {paginated.map((r, i) => (
                   <tr
                     key={r.id}
-                    className="border-t hover:bg-gray-50 transition"
+                    className="border-t hover:bg-gray-50"
                   >
                     <td className="p-3">
                       {start + i + 1}
                     </td>
 
-                    <td className="p-3">
-                      {r.email}
-                    </td>
+                    <td className="p-3">{r.email}</td>
 
                     <td className="p-3 font-medium">
                       ${r.amount}
@@ -152,6 +196,17 @@ export default function RemindersPage() {
 
                     <td className="p-3 capitalize">
                       {r.type}
+                    </td>
+
+                    {/* MODE */}
+                    <td className="p-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${getModeStyle(
+                          r.mode
+                        )}`}
+                      >
+                        {r.mode}
+                      </span>
                     </td>
 
                     <td className="p-3">
@@ -168,11 +223,10 @@ export default function RemindersPage() {
                       {new Date(r.sentAt).toLocaleString()}
                     </td>
 
-                    {/* VIEW BUTTON */}
                     <td className="p-3">
                       <button
                         onClick={() => setSelectedReminder(r)}
-                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded"
                       >
                         View
                       </button>
@@ -209,7 +263,7 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        {/* EMAIL MODAL */}
+        {/* MODAL */}
         <EmailViewerModal
           isOpen={!!selectedReminder}
           onClose={() => setSelectedReminder(null)}

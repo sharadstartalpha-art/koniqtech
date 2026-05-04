@@ -3,16 +3,19 @@ import { sendEmail } from "@/lib/email";
 
 export async function GET() {
   try {
+    console.log("🔥 CRON STARTED");
+
     const schedules = await prisma.reminderSchedule.findMany({
       where: { enabled: true },
       include: {
-        template: true, // ✅ now works
+        template: true,
       },
     });
 
     const invoices = await prisma.invoice.findMany({
       where: {
-        status: "unpaid", // ✅ match your DB
+        status: "unpaid",
+        mode: "auto", // ✅ ONLY AUTO USERS
       },
     });
 
@@ -30,7 +33,7 @@ export async function GET() {
         // ⏱️ skip if not yet time
         if (now < triggerDate) continue;
 
-        // ❌ prevent duplicate reminders
+        // ❌ prevent duplicate
         const alreadySent = await prisma.reminder.findFirst({
           where: {
             invoiceId: invoice.id,
@@ -44,7 +47,7 @@ export async function GET() {
            📧 SEND EMAIL
         ========================= */
         await sendEmail({
-          to: invoice.clientEmail, // ✅ FIXED
+          to: invoice.clientEmail,
           subject: schedule.template.subject,
           html: schedule.template.html,
         });
@@ -55,17 +58,17 @@ export async function GET() {
         await prisma.reminder.create({
           data: {
             userId: invoice.userId,
-            invoiceId: invoice.id, // ✅ REQUIRED
+            invoiceId: invoice.id,
 
             email: invoice.clientEmail,
             amount: invoice.amount,
 
-            type: schedule.template.name.toLowerCase() as any, // friendly/firm/final
+            type: schedule.template.name.toLowerCase() as any,
             mode: "auto",
             status: "sent",
 
             html: schedule.template.html,
-            text: schedule.template.html.replace(/<[^>]+>/g, ""), // simple text fallback
+            text: schedule.template.html.replace(/<[^>]+>/g, ""),
 
             templateId: schedule.templateId,
             scheduleId: schedule.id,
@@ -73,16 +76,22 @@ export async function GET() {
             sentAt: new Date(),
           },
         });
+
+        console.log(
+          `📧 AUTO reminder sent → ${invoice.clientEmail}`
+        );
       }
     }
+
+    console.log("✅ CRON FINISHED");
 
     return Response.json({ success: true });
 
   } catch (err) {
-    console.error("CRON ERROR:", err);
+    console.error("❌ CRON ERROR:", err);
 
     return Response.json(
-      { error: "Cron failed...." },
+      { error: "Cron failed" },
       { status: 500 }
     );
   }

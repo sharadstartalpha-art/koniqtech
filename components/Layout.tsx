@@ -10,7 +10,8 @@ import {
   FileText,
   Mail,
   Link as LinkIcon,
-  User
+  User,
+  Settings
 } from "lucide-react";
 
 export default function Layout({ children }: any) {
@@ -41,6 +42,11 @@ export default function Layout({ children }: any) {
       name: "Account", // ✅ NEW
       href: "/products/invoice-recovery/account",
       icon: User,
+    },
+    {
+      name: "Settings", // ✅ NEW
+      href: "/products/invoice-recovery/settings",
+      icon: Settings,
     },
   ];
 

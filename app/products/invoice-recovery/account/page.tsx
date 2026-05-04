@@ -18,10 +18,11 @@ type AccountData = {
 type Plan = {
   id: string;
   name: string;
+  price: number; // ⚠️ required now
 };
 
 /* =========================
-   PLAN ORDER (IMPORTANT)
+   PLAN ORDER
 ========================= */
 const PLAN_ORDER: Record<string, number> = {
   Free: 0,
@@ -30,17 +31,12 @@ const PLAN_ORDER: Record<string, number> = {
   Pro: 3,
 };
 
-/* =========================
-   COMPONENT
-========================= */
 export default function AccountPage() {
   const [data, setData] = useState<AccountData | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
 
-  /* =========================
-     LOAD ACCOUNT
-  ========================= */
+  /* LOAD ACCOUNT */
   const load = async () => {
     try {
       const res = await axios.get("/api/account");
@@ -50,9 +46,7 @@ export default function AccountPage() {
     }
   };
 
-  /* =========================
-     LOAD PLANS
-  ========================= */
+  /* LOAD PLANS */
   const loadPlans = async () => {
     try {
       const res = await axios.get("/api/plans/invoice-recovery");
@@ -67,9 +61,7 @@ export default function AccountPage() {
     loadPlans();
   }, []);
 
-  /* =========================
-     CANCEL
-  ========================= */
+  /* CANCEL */
   const cancel = async () => {
     if (!confirm("Cancel subscription?")) return;
 
@@ -87,22 +79,31 @@ export default function AccountPage() {
   };
 
   /* =========================
-     START CHECKOUT (🔥 FIXED)
+     PAYPAL CHECKOUT
   ========================= */
-  const startCheckout = async (planId: string) => {
+  const startCheckout = async (plan: Plan) => {
     try {
-      const res = await axios.post("/api/checkout", { planId });
+      const res = await axios.post("/api/checkout", {
+        planId: plan.id,
+        amount: plan.price,
+      });
 
-      // 🔥 redirect to payment page
-      window.location.href = res.data.url;
+      // 🔥 get approval link
+      const approvalUrl = res.data.links.find(
+        (l: any) => l.rel === "approve"
+      )?.href;
+
+      if (!approvalUrl) {
+        throw new Error("No approval URL");
+      }
+
+      window.location.href = approvalUrl;
+
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Checkout failed");
+      toast.error(err?.response?.data?.error || "Payment failed");
     }
   };
 
-  /* =========================
-     LOADING STATE
-  ========================= */
   if (!data) {
     return (
       <Layout>
@@ -111,9 +112,7 @@ export default function AccountPage() {
     );
   }
 
-  /* =========================
-     REMAINING LOGIC
-  ========================= */
+  /* REMAINING */
   let remaining: string | number;
 
   if (data.invoiceLimit === 0) {
@@ -124,27 +123,19 @@ export default function AccountPage() {
     remaining = Math.max(0, data.invoiceLimit - data.used);
   }
 
-  /* =========================
-     FILTER ONLY UPGRADES
-  ========================= */
+  /* ONLY UPGRADES */
   const upgradePlans = plans.filter(
     (p) => PLAN_ORDER[p.name] > PLAN_ORDER[data.plan]
   );
 
-  /* =========================
-     UI
-  ========================= */
   return (
     <Layout>
       <div className="space-y-6">
 
         <h1 className="text-lg font-semibold">My Account</h1>
 
-        {/* CARD */}
         <div className="bg-white border rounded-lg p-5 space-y-3">
-
           <Row label="Plan" value={data.plan} />
-
           <Row
             label="Expiry"
             value={
@@ -153,29 +144,26 @@ export default function AccountPage() {
                 : "—"
             }
           />
-
           <Row label="Invoices Used" value={data.used} />
           <Row label="Remaining" value={remaining} />
-
         </div>
 
-        {/* ACTIONS */}
         <div className="flex gap-3 flex-wrap">
 
-          {/* 🔥 ONLY VALID UPGRADES */}
+          {/* UPGRADE */}
           {upgradePlans.length > 0 ? (
             upgradePlans.map((plan) => (
               <button
                 key={plan.id}
-                onClick={() => startCheckout(plan.id)}
+                onClick={() => startCheckout(plan)}
                 className="bg-black text-white px-4 py-2 rounded-md text-sm"
               >
-                Upgrade to {plan.name}
+                Upgrade to {plan.name} (${plan.price})
               </button>
             ))
           ) : (
             <div className="text-sm text-gray-400">
-              You are on the highest plan
+              You are on highest plan
             </div>
           )}
 
@@ -183,7 +171,7 @@ export default function AccountPage() {
           <button
             onClick={cancel}
             disabled={loading}
-            className="border px-4 py-2 text-sm rounded-md text-red-600 disabled:opacity-50"
+            className="border px-4 py-2 text-sm rounded-md text-red-600"
           >
             Cancel Subscription
           </button>
@@ -195,9 +183,6 @@ export default function AccountPage() {
   );
 }
 
-/* =========================
-   ROW COMPONENT
-========================= */
 function Row({ label, value }: any) {
   return (
     <div className="flex justify-between">

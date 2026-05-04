@@ -21,6 +21,16 @@ type Plan = {
 };
 
 /* =========================
+   PLAN ORDER (IMPORTANT)
+========================= */
+const PLAN_ORDER: Record<string, number> = {
+  Free: 0,
+  Starter: 1,
+  Growth: 2,
+  Pro: 3,
+};
+
+/* =========================
    COMPONENT
 ========================= */
 export default function AccountPage() {
@@ -77,16 +87,16 @@ export default function AccountPage() {
   };
 
   /* =========================
-     UPGRADE
+     START CHECKOUT (🔥 FIXED)
   ========================= */
-  const upgrade = async (planId: string) => {
+  const startCheckout = async (planId: string) => {
     try {
-      await axios.post("/api/upgrade", { planId });
+      const res = await axios.post("/api/checkout", { planId });
 
-      toast.success("Upgraded!");
-      load();
+      // 🔥 redirect to payment page
+      window.location.href = res.data.url;
     } catch (err: any) {
-      toast.error(err?.response?.data?.error || "Upgrade failed");
+      toast.error(err?.response?.data?.error || "Checkout failed");
     }
   };
 
@@ -102,7 +112,7 @@ export default function AccountPage() {
   }
 
   /* =========================
-     REMAINING
+     REMAINING LOGIC
   ========================= */
   let remaining: string | number;
 
@@ -113,6 +123,13 @@ export default function AccountPage() {
   } else {
     remaining = Math.max(0, data.invoiceLimit - data.used);
   }
+
+  /* =========================
+     FILTER ONLY UPGRADES
+  ========================= */
+  const upgradePlans = plans.filter(
+    (p) => PLAN_ORDER[p.name] > PLAN_ORDER[data.plan]
+  );
 
   /* =========================
      UI
@@ -145,23 +162,22 @@ export default function AccountPage() {
         {/* ACTIONS */}
         <div className="flex gap-3 flex-wrap">
 
-          {/* UPGRADE BUTTONS */}
-          {plans.map((plan) => (
-            <button
-              key={plan.id}
-              onClick={() => upgrade(plan.id)}
-              disabled={data.plan === plan.name}
-              className={`px-4 py-2 rounded-md text-sm ${
-                data.plan === plan.name
-                  ? "bg-gray-200"
-                  : "bg-black text-white"
-              }`}
-            >
-              {data.plan === plan.name
-                ? "Current Plan"
-                : `Upgrade to ${plan.name}`}
-            </button>
-          ))}
+          {/* 🔥 ONLY VALID UPGRADES */}
+          {upgradePlans.length > 0 ? (
+            upgradePlans.map((plan) => (
+              <button
+                key={plan.id}
+                onClick={() => startCheckout(plan.id)}
+                className="bg-black text-white px-4 py-2 rounded-md text-sm"
+              >
+                Upgrade to {plan.name}
+              </button>
+            ))
+          ) : (
+            <div className="text-sm text-gray-400">
+              You are on the highest plan
+            </div>
+          )}
 
           {/* CANCEL */}
           <button

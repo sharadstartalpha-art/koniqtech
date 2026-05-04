@@ -82,7 +82,7 @@ export async function GET() {
     console.error("CRON ERROR:", err);
 
     return Response.json(
-      { error: "Cron failed" },
+      { error: "Cron failed...." },
       { status: 500 }
     );
   }

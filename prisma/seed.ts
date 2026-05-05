@@ -4,7 +4,11 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  // ✅ ADMIN (keep as is)
+  console.log("🌱 Seeding started...");
+
+  // ===============================
+  // ✅ ADMIN
+  // ===============================
   const email = "admin@koniqtech.com";
   const password = await bcrypt.hash("admin123", 10);
 
@@ -24,7 +28,6 @@ async function main() {
   // ===============================
   // ✅ PRODUCTS
   // ===============================
-
   const invoiceRecovery = await prisma.product.upsert({
     where: { slug: "invoice-recovery" },
     update: {},
@@ -46,13 +49,12 @@ async function main() {
   console.log("✅ Products created");
 
   // ===============================
-  // ✅ PLANS (IMPORTANT)
+  // ✅ PLANS
   // ===============================
 
   // 🚀 Invoice Recovery Plans
   await prisma.plan.createMany({
     data: [
-      
       {
         name: "Starter",
         price: 19,
@@ -78,7 +80,7 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 🚀 Agencies Tool Plans (example)
+  // 🚀 Agencies Tool Plans
   await prisma.plan.createMany({
     data: [
       {
@@ -98,8 +100,50 @@ async function main() {
   });
 
   console.log("✅ Plans created");
+
+  // ===============================
+  // ✅ REMINDER TEMPLATES
+  // ===============================
+  await prisma.reminderTemplate.createMany({
+    data: [
+      {
+        userId: "system",
+        name: "Friendly",
+        type: "friendly",
+        subject: "Friendly Reminder",
+        html: "<p>Hi {{name}}, gentle reminder...</p>",
+        isDefault: true,
+      },
+      {
+        userId: "system",
+        name: "Firm",
+        type: "firm",
+        subject: "Payment Reminder",
+        html: "<p>Hi {{name}}, your invoice is overdue...</p>",
+        isDefault: true,
+      },
+      {
+        userId: "system",
+        name: "Final",
+        type: "final",
+        subject: "Final Notice",
+        html: "<p>Final reminder before action...</p>",
+        isDefault: true,
+      },
+    ],
+    skipDuplicates: true, // ✅ important
+  });
+
+  console.log("✅ Reminder templates created");
+
+  console.log("🎉 Seeding finished successfully");
 }
 
 main()
-  .catch((e) => console.error(e))
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error("❌ Seeding error:", e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -134,6 +134,10 @@ model ReminderTemplate {
   name      String   // "Friendly" | "Firm" | "Final"
   subject   String
   html      String   // full email HTML
+
+  type      String   // 🔥 "friendly" | "firm" | "final" | "custom"
+  isDefault Boolean  @default(false)
+
   schedules ReminderSchedule[]
   createdAt DateTime @default(now())
 }

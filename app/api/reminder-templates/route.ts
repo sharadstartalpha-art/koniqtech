@@ -11,18 +11,29 @@ export async function GET() {
 export async function POST(req: Request) {
   const body = await req.json();
 
-  const template = await prisma.reminderTemplate.upsert({
-    where: { id: body.id || "" },
-    update: {
+  // If no ID → create new
+  if (!body.id) {
+    const template = await prisma.reminderTemplate.create({
+      data: {
+        userId: "user-id", // replace with auth later
+        name: body.name,
+        subject: body.subject,
+        html: body.html,
+        type: body.type, // ✅ REQUIRED FIELD
+      },
+    });
+
+    return Response.json(template);
+  }
+
+  // If ID exists → update
+  const template = await prisma.reminderTemplate.update({
+    where: { id: body.id },
+    data: {
       name: body.name,
       subject: body.subject,
       html: body.html,
-    },
-    create: {
-      userId: "user-id", // replace later with auth
-      name: body.name,
-      subject: body.subject,
-      html: body.html,
+      type: body.type, // ✅ keep consistent
     },
   });
 
@@ -33,7 +44,9 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
-  if (!id) return Response.json({ error: "Missing id" });
+  if (!id) {
+    return Response.json({ error: "Missing id" }, { status: 400 });
+  }
 
   await prisma.reminderTemplate.delete({
     where: { id },

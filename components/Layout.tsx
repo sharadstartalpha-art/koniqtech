@@ -13,6 +13,7 @@ import {
   User,
   Settings
 } from "lucide-react";
+import { write } from "fs";
 
 export default function Layout({ children }: any) {
   const pathname = usePathname();
@@ -46,6 +47,12 @@ export default function Layout({ children }: any) {
     {
       name: "Settings", // ✅ NEW
       href: "/products/invoice-recovery/settings",
+      icon: Settings,
+    },
+
+    {
+      name: "Templates", // ✅ NEW
+      href: "/products/invoice-recovery/templates",
       icon: Settings,
     },
   ];

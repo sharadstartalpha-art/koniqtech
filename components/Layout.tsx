@@ -52,7 +52,7 @@ export default function Layout({ children }: any) {
 
     {
       name: "Templates", // ✅ NEW
-      href: "/products/invoice-recovery/templates",
+      href: "/products/invoice-recovery/settings/templates",
       icon: Settings,
     },
   ];

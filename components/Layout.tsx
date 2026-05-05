@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Header from "./Header";
+import { LayoutTemplate } from "lucide-react";
 
 import Logo from "@/components/Logo";
 import {
@@ -53,7 +54,7 @@ export default function Layout({ children }: any) {
     {
       name: "Templates", // ✅ NEW
       href: "/products/invoice-recovery/settings/templates",
-      icon: Settings,
+      icon: LayoutTemplate,
     },
   ];
 

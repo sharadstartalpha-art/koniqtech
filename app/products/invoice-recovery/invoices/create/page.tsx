@@ -7,8 +7,11 @@ import toast from "react-hot-toast";
 
 export default function CreateInvoicePage() {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState(""); // ✅ NEW
+  const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
+
+  const [mode, setMode] = useState<"manual" | "auto">("manual"); // ✅ NEW
+
   const [loading, setLoading] = useState(false);
 
   const create = async () => {
@@ -22,9 +25,11 @@ export default function CreateInvoicePage() {
 
       await axios.post("/api/invoices/create", {
         clientEmail: email,
-        clientName: name || null, // ✅ send name
+        clientName: name || null,
         amount: Number(amount),
         dueDate: new Date(),
+
+        mode, // ✅ SAVE MODE
       });
 
       toast.success("Invoice created");
@@ -54,7 +59,7 @@ export default function CreateInvoicePage() {
             </p>
           </div>
 
-          {/* CLIENT NAME ✅ */}
+          {/* CLIENT NAME */}
           <div>
             <label className="text-sm text-gray-600">
               Client name
@@ -94,6 +99,35 @@ export default function CreateInvoicePage() {
               onChange={(e) => setAmount(e.target.value)}
               className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
             />
+          </div>
+
+          {/* MODE SELECTOR ✅🔥 */}
+          <div>
+            <label className="text-sm text-gray-600">
+              Reminder Mode
+            </label>
+
+            <div className="flex gap-2 mt-2">
+              {["manual", "auto"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m as any)}
+                  className={`flex-1 px-3 py-2 rounded-md text-sm capitalize ${
+                    mode === m
+                      ? "bg-black text-white"
+                      : "border"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            <p className="text-xs text-gray-500 mt-2">
+              {mode === "auto"
+                ? "System will automatically send reminders based on your schedule"
+                : "You will manually send reminders"}
+            </p>
           </div>
 
           {/* ACTIONS */}

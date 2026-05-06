@@ -25,38 +25,103 @@ export async function POST(req: Request) {
     /* =========================
        🔢 GENERATE OTP
     ========================= */
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiry = new Date(Date.now() + 1000 * 60 * 5); // 5 minutes
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    const expiry = new Date(
+      Date.now() + 1000 * 60 * 5
+    ); // 5 mins
 
     /* =========================
        👤 UPSERT USER
     ========================= */
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email },
+
       update: {
         password: hashed,
         isVerified: false,
-        otp: otp,
+        otp,
         otpExpiry: expiry,
       },
+
       create: {
         email,
         password: hashed,
         isVerified: false,
-        otp: otp,
+        otp,
         otpExpiry: expiry,
       },
     });
 
     /* =========================
-       📧 EMAIL CONTENT (OTP)
+       🎁 ASSIGN FREE PLAN
+       (ONLY IF NOT EXISTS)
+    ========================= */
+    const product = await prisma.product.findUnique({
+      where: {
+        slug: "invoice-recovery",
+      },
+    });
+
+    if (product) {
+      const freePlan = await prisma.plan.findFirst({
+        where: {
+          productId: product.id,
+          name: "Free",
+        },
+      });
+
+      if (freePlan) {
+        // check existing subscription
+        const existingSub =
+          await prisma.subscription.findFirst({
+            where: {
+              userId: user.id,
+              productId: product.id,
+            },
+          });
+
+        // create only once
+        if (!existingSub) {
+          await prisma.subscription.create({
+            data: {
+              userId: user.id,
+              productId: product.id,
+              planId: freePlan.id,
+
+              status: "ACTIVE",
+
+              // ✅ 7 DAY FREE TRIAL
+              currentPeriodEnd: new Date(
+                Date.now() +
+                  1000 * 60 * 60 * 24 * 7
+              ),
+            },
+          });
+        }
+      }
+    }
+
+    /* =========================
+       📧 EMAIL CONTENT
     ========================= */
     const html = `
       <div style="font-family: Arial;">
         <h2>Your OTP Code</h2>
-        <p>Use this OTP to verify your account:</p>
-        <h1 style="letter-spacing:4px;">${otp}</h1>
-        <p>This OTP will expire in 5 minutes.</p>
+
+        <p>
+          Use this OTP to verify your account:
+        </p>
+
+        <h1 style="letter-spacing:4px;">
+          ${otp}
+        </h1>
+
+        <p>
+          This OTP will expire in 5 minutes.
+        </p>
       </div>
     `;
 
@@ -72,14 +137,20 @@ export async function POST(req: Request) {
       text,
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+    });
 
   } catch (err) {
     console.error("REGISTER ERROR:", err);
 
     return NextResponse.json(
-      { error: "Registration failed" },
-      { status: 500 }
+      {
+        error: "Registration failed",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

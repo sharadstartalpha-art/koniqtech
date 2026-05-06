@@ -319,45 +319,41 @@ export default function InvoicesPage() {
                         ${balance}
                       </td>
 
-                      {/* ✅ MODE SWITCHER */}
-                      <td className="px-4 py-3">
+                      {/* ✅ MODE TOGGLE*/}
+                     
+<td className="px-4 py-3">
+  <button
+    onClick={() =>
+      switchMode(
+        inv.id,
+        inv.mode === "manual"
+          ? "auto"
+          : "manual"
+      )
+    }
+    className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
+      inv.mode === "auto"
+        ? "bg-green-500"
+        : "bg-blue-500"
+    }`}
+  >
+    {/* TOGGLE CIRCLE */}
+    <span
+      className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
+        inv.mode === "auto"
+          ? "translate-x-[68px]"
+          : "translate-x-0"
+      }`}
+    />
 
-                        <div className="flex gap-2">
-
-                          <button
-                            onClick={() =>
-                              switchMode(
-                                inv.id,
-                                "manual"
-                              )
-                            }
-                            className={`text-xs px-2 py-1 rounded border ${
-                              inv.mode === "manual"
-                                ? "bg-blue-100 text-blue-700 border-blue-200"
-                                : "bg-white"
-                            }`}
-                          >
-                            Manual
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              switchMode(
-                                inv.id,
-                                "auto"
-                              )
-                            }
-                            className={`text-xs px-2 py-1 rounded border ${
-                              inv.mode === "auto"
-                                ? "bg-purple-100 text-purple-700 border-purple-200"
-                                : "bg-white"
-                            }`}
-                          >
-                            Auto
-                          </button>
-
-                        </div>
-                      </td>
+    {/* LABEL */}
+    <span className="w-full text-center text-xs font-medium text-white z-10">
+      {inv.mode === "auto"
+        ? "AUTO"
+        : "MANUAL"}
+    </span>
+  </button>
+</td>
 
                       <td className="px-4 py-3">
                         <span

@@ -124,9 +124,18 @@ export default function AccountPage() {
   }
 
   /* ONLY UPGRADES */
-  const upgradePlans = plans.filter(
-    (p) => PLAN_ORDER[p.name] > PLAN_ORDER[data.plan]
-  );
+  /* =========================
+   ONLY NEXT UPGRADE PLAN
+========================= */
+const sortedPlans = [...plans].sort(
+  (a, b) => PLAN_ORDER[a.name] - PLAN_ORDER[b.name]
+);
+
+const currentLevel = PLAN_ORDER[data.plan];
+
+const nextUpgrade = sortedPlans.find(
+  (p) => PLAN_ORDER[p.name] > currentLevel
+);
 
   return (
     <Layout>
@@ -151,21 +160,19 @@ export default function AccountPage() {
         <div className="flex gap-3 flex-wrap">
 
           {/* UPGRADE */}
-          {upgradePlans.length > 0 ? (
-            upgradePlans.map((plan) => (
-              <button
-                key={plan.id}
-                onClick={() => startCheckout(plan)}
-                className="bg-black text-white px-4 py-2 rounded-md text-sm"
-              >
-                Upgrade to {plan.name} (${plan.price})
-              </button>
-            ))
-          ) : (
-            <div className="text-sm text-gray-400">
-              You are on highest plan
-            </div>
-          )}
+         {/* NEXT UPGRADE ONLY */}
+{nextUpgrade ? (
+  <button
+    onClick={() => startCheckout(nextUpgrade)}
+    className="bg-black text-white px-4 py-2 rounded-md text-sm"
+  >
+    Upgrade to {nextUpgrade.name} (${nextUpgrade.price})
+  </button>
+) : (
+  <div className="text-sm text-gray-400">
+    You are on highest plan
+  </div>
+)}
 
           {/* CANCEL */}
           <button

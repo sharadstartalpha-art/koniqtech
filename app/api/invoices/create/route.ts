@@ -3,14 +3,24 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET!
+);
 
 export async function POST(req: Request) {
   try {
     /* =========================
        📥 1. INPUT
     ========================= */
-    const { clientEmail, clientName, amount, dueDate } = await req.json();
+    const body = await req.json();
+
+    const {
+      clientEmail,
+      clientName,
+      amount,
+      dueDate,
+      mode, // ✅ NEW
+    } = body;
 
     if (!clientEmail || !amount || !dueDate) {
       return NextResponse.json(
@@ -23,7 +33,9 @@ export async function POST(req: Request) {
        🔐 2. AUTH
     ========================= */
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
+
+    const token =
+      cookieStore.get("token")?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -32,17 +44,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const userId = payload.id as string;
+    const { payload } = await jwtVerify(
+      token,
+      JWT_SECRET
+    );
 
-    console.log("USER:", userId);
+    const userId = payload.id as string;
 
     /* =========================
        🔍 3. PRODUCT
     ========================= */
-    const product = await prisma.product.findUnique({
-      where: { slug: "invoice-recovery" },
-    });
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          slug: "invoice-recovery",
+        },
+      });
 
     if (!product) {
       return NextResponse.json(
@@ -51,29 +68,28 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("PRODUCT:", product.id);
-
     /* =========================
-       💳 4. SUBSCRIPTION (DEBUG)
+       💳 4. SUBSCRIPTION
     ========================= */
-    const sub = await prisma.subscription.findFirst({
-      where: {
-        userId,
-        productId: product.id,
-        status: {
-          equals: "ACTIVE",
-          mode: "insensitive", // ✅ FIX case issue
+    const sub =
+      await prisma.subscription.findFirst({
+        where: {
+          userId,
+          productId: product.id,
+          status: {
+            equals: "ACTIVE",
+            mode: "insensitive",
+          },
         },
-      },
-      include: {
-        plan: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
 
-    console.log("SUB:", sub);
+        include: {
+          plan: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
     if (!sub) {
       return NextResponse.json(
@@ -85,7 +101,8 @@ export async function POST(req: Request) {
     /* =========================
        📊 5. LIMIT CHECK
     ========================= */
-    const limit = sub.plan?.invoiceLimit ?? null;
+    const limit =
+      sub.plan?.invoiceLimit ?? null;
 
     const count = await prisma.invoice.count({
       where: {
@@ -94,7 +111,11 @@ export async function POST(req: Request) {
       },
     });
 
-    if (limit !== null && limit !== -1 && count >= limit) {
+    if (
+      limit !== null &&
+      limit !== -1 &&
+      count >= limit
+    ) {
       return NextResponse.json(
         { error: "Invoice limit reached" },
         { status: 403 }
@@ -104,32 +125,51 @@ export async function POST(req: Request) {
     /* =========================
        💾 6. CREATE INVOICE
     ========================= */
-    const invoice = await prisma.invoice.create({
-      data: {
-        userId,
-        productId: product.id,
-        clientEmail,
-        clientName,
-        amount: Number(amount),
-        dueDate: new Date(dueDate),
-        status: "UNPAID",
-      },
-    });
+    const invoice =
+      await prisma.invoice.create({
+        data: {
+          userId,
+          productId: product.id,
+
+          clientEmail,
+          clientName,
+
+          amount: Number(amount),
+
+          dueDate: new Date(dueDate),
+
+          status: "UNPAID",
+
+          // ✅ FIXED
+          mode: mode || "manual",
+        },
+      });
 
     /* =========================
        💳 7. PAYMENT LINK
     ========================= */
     const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
-    const updatedInvoice = await prisma.invoice.update({
-      where: { id: invoice.id },
-      data: { paymentLink },
-    });
+    const updatedInvoice =
+      await prisma.invoice.update({
+        where: {
+          id: invoice.id,
+        },
 
-    return NextResponse.json(updatedInvoice);
+        data: {
+          paymentLink,
+        },
+      });
+
+    return NextResponse.json(
+      updatedInvoice
+    );
 
   } catch (error: any) {
-    console.error("CREATE INVOICE ERROR:", error);
+    console.error(
+      "CREATE INVOICE ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {

@@ -680,3 +680,62 @@ function FaqItem({
   );
 }
 
+<footer className="border-t border-gray-200 py-12 bg-white">
+
+  <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-10">
+
+    <div>
+      <Logo />
+
+      <p className="text-gray-500 mt-4 max-w-sm">
+        AI-powered invoice recovery for freelancers and agencies.
+      </p>
+    </div>
+
+    <div className="flex gap-16">
+
+      <div>
+        <h4 className="font-semibold mb-4">
+          Product
+        </h4>
+
+        <div className="space-y-3 text-gray-500 text-sm">
+          <a href="#features" className="block hover:text-orange-500">
+            Features
+          </a>
+
+          <a href="#pricing" className="block hover:text-orange-500">
+            Pricing
+          </a>
+
+          <a href="#faq" className="block hover:text-orange-500">
+            FAQ
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold mb-4">
+          Company
+        </h4>
+
+        <div className="space-y-3 text-gray-500 text-sm">
+          <a href="#contact" className="block hover:text-orange-500">
+            Contact
+          </a>
+
+          <a href="/privacy" className="block hover:text-orange-500">
+            Privacy
+          </a>
+
+          <a href="/terms" className="block hover:text-orange-500">
+            Terms
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</footer>

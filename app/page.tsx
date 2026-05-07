@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -40,14 +41,12 @@ export default function Home() {
 
   return (
     <div className="bg-white text-gray-900 overflow-hidden">
-
       {/* =========================
           NAVBAR
       ========================= */}
 
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-
           <Logo />
 
           <div className="flex items-center gap-8">
@@ -73,11 +72,9 @@ export default function Home() {
       ========================= */}
 
       <section className="relative py-32 px-6">
-
         <div className="absolute inset-0 bg-gradient-to-b from-orange-50 via-white to-white" />
 
         <div className="relative max-w-7xl mx-auto text-center">
-
           <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-5 py-2 rounded-full text-sm font-semibold mb-8">
             💰 $127,430+ recovered by users
           </div>
@@ -96,7 +93,6 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
-
             <a
               href="/login"
               className="bg-black hover:bg-gray-800 transition text-white px-8 py-4 rounded-2xl text-lg font-medium shadow-2xl inline-flex items-center justify-center gap-2"
@@ -111,21 +107,16 @@ export default function Home() {
             >
               See How It Works
             </a>
-
           </div>
 
           <p className="text-sm text-gray-500 mt-5">
             No credit card required • Cancel anytime • Works worldwide
           </p>
 
-          {/* DASHBOARD MOCKUP */}
-
           <div className="mt-24 relative max-w-6xl mx-auto">
-
             <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full" />
 
             <div className="relative bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden">
-
               <div className="bg-gray-100 border-b px-6 py-4 flex items-center gap-2">
                 <div className="w-3 h-3 bg-red-400 rounded-full" />
                 <div className="w-3 h-3 bg-yellow-400 rounded-full" />
@@ -133,7 +124,6 @@ export default function Home() {
               </div>
 
               <div className="p-10 grid md:grid-cols-3 gap-6 text-left">
-
                 <DashboardCard
                   title="$18,430"
                   label="Recovered This Month"
@@ -148,7 +138,6 @@ export default function Home() {
                   title="87%"
                   label="Recovery Rate"
                 />
-
               </div>
             </div>
           </div>
@@ -161,7 +150,6 @@ export default function Home() {
 
       <section className="border-y border-gray-100 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6 py-10 text-center">
-
           <p className="text-gray-500 mb-8">
             Trusted by freelancers, consultants & agencies worldwide
           </p>
@@ -185,7 +173,6 @@ export default function Home() {
         className="py-28 px-6 max-w-7xl mx-auto"
       >
         <div className="text-center mb-20">
-
           <h2 className="text-5xl font-bold tracking-tight mb-6">
             Everything you need
             <br />
@@ -198,7 +185,6 @@ export default function Home() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-
           <FeatureCard
             icon={<BellRing size={30} />}
             title="Smart Follow-ups"
@@ -216,7 +202,6 @@ export default function Home() {
             title="Advanced Tracking"
             desc="Track opens, replies, payments, and invoice recovery."
           />
-
         </div>
       </section>
 
@@ -226,15 +211,10 @@ export default function Home() {
 
       <section className="bg-black text-white py-28">
         <div className="max-w-6xl mx-auto px-6">
-
           <div className="grid md:grid-cols-3 gap-10 text-center">
-
             <Stat number="70%" label="Invoices recovered" />
-
             <Stat number="3x" label="Faster payments" />
-
             <Stat number="10+ hrs" label="Saved every month" />
-
           </div>
         </div>
       </section>
@@ -244,9 +224,7 @@ export default function Home() {
       ========================= */}
 
       <section className="py-28 bg-gray-50">
-
         <div className="max-w-7xl mx-auto px-6">
-
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold tracking-tight mb-4">
               Loved by freelancers
@@ -258,7 +236,6 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-
             <Testimonial
               text="Recovered $4,200 in one week. Completely changed my cash flow."
               name="Alex — USA"
@@ -273,7 +250,6 @@ export default function Home() {
               text="Feels like having an accounts receivable assistant working 24/7."
               name="Sophie — Germany"
             />
-
           </div>
         </div>
       </section>
@@ -282,15 +258,9 @@ export default function Home() {
           PRICING
       ========================= */}
 
-      <section
-        id="pricing"
-        className="py-32 px-6"
-      >
-
+      <section id="pricing" className="py-32 px-6">
         <div className="max-w-7xl mx-auto">
-
           <div className="text-center mb-20">
-
             <h2 className="text-5xl font-bold tracking-tight mb-5">
               Simple pricing
             </h2>
@@ -301,9 +271,7 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-4 gap-8">
-
             {plans.map((p: Plan) => {
-
               const isPopular = p.name === "Growth";
 
               return (
@@ -315,19 +283,15 @@ export default function Home() {
                       : "bg-white border-gray-200"
                   }`}
                 >
-
                   {isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-semibold px-4 py-2 rounded-full">
                       MOST POPULAR
                     </div>
                   )}
 
-                  <h3 className="text-2xl font-bold">
-                    {p.name}
-                  </h3>
+                  <h3 className="text-2xl font-bold">{p.name}</h3>
 
                   <div className="my-8">
-
                     <span className="text-6xl font-bold tracking-tight">
                       ${p.price}
                     </span>
@@ -341,11 +305,9 @@ export default function Home() {
                     >
                       /mo
                     </span>
-
                   </div>
 
                   <div className="space-y-4 mb-10">
-
                     <PricingFeature
                       text={
                         p.invoiceLimit === -1 ||
@@ -358,7 +320,6 @@ export default function Home() {
                     <PricingFeature text="AI email reminders" />
                     <PricingFeature text="Invoice tracking" />
                     <PricingFeature text="Payment recovery dashboard" />
-
                   </div>
 
                   <a
@@ -369,11 +330,8 @@ export default function Home() {
                         : "bg-black text-white hover:bg-gray-800"
                     }`}
                   >
-                    {p.price === 0
-                      ? "Start Free"
-                      : "Get Started"}
+                    {p.price === 0 ? "Start Free" : "Get Started"}
                   </a>
-
                 </div>
               );
             })}
@@ -386,13 +344,116 @@ export default function Home() {
       </section>
 
       {/* =========================
+          FAQ SECTION
+      ========================= */}
+
+      <section className="py-28 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold tracking-tight mb-5">
+              Frequently Asked Questions
+            </h2>
+
+            <p className="text-xl text-gray-600">
+              Everything you need to know about KoniqTech.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <FaqItem
+              question="How does KoniqTech recover unpaid invoices?"
+              answer="KoniqTech automatically sends intelligent follow-up emails to clients with unpaid invoices. The system escalates reminders professionally over time to improve payment recovery."
+            />
+
+            <FaqItem
+              question="Can I use my own PayPal account?"
+              answer="Yes. You can connect your own PayPal account and receive payments directly from clients."
+            />
+
+            <FaqItem
+              question="Do clients know emails are automated?"
+              answer="No. Emails are written naturally and professionally using AI, making them feel personal and human."
+            />
+
+            <FaqItem
+              question="Can I cancel anytime?"
+              answer="Absolutely. There are no contracts or hidden fees. You can cancel your subscription anytime."
+            />
+
+            <FaqItem
+              question="Does KoniqTech work worldwide?"
+              answer="Yes. KoniqTech works globally and supports freelancers, consultants, and agencies from any country."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* =========================
+          CONTACT SECTION
+      ========================= */}
+
+      <section className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                Contact Us
+              </div>
+
+              <h2 className="text-5xl font-bold tracking-tight leading-tight mb-6">
+                Need help or have
+                <br />
+                questions?
+              </h2>
+
+              <p className="text-xl text-gray-600 leading-relaxed mb-10">
+                Our team is here to help you recover payments faster
+                and grow your business with confidence.
+              </p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-xl">
+              <h3 className="text-2xl font-bold mb-6">
+                Send us a message
+              </h3>
+
+              <form className="space-y-5">
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+                />
+
+                <input
+                  type="email"
+                  placeholder="john@example.com"
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+                />
+
+                <textarea
+                  rows={5}
+                  placeholder="Tell us how we can help..."
+                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition resize-none"
+                />
+
+                <button
+                  type="submit"
+                  className="w-full bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition"
+                >
+                  Send Message
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =========================
           FINAL CTA
       ========================= */}
 
       <section className="bg-black text-white py-32 text-center">
-
         <div className="max-w-4xl mx-auto px-6">
-
           <h2 className="text-6xl font-bold tracking-tight leading-tight mb-6">
             Stop losing money
             <br />
@@ -410,7 +471,6 @@ export default function Home() {
             Start Free Trial
             <ArrowRight size={20} />
           </a>
-
         </div>
       </section>
     </div>
@@ -430,13 +490,9 @@ function DashboardCard({
 }) {
   return (
     <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
-      <p className="text-4xl font-bold mb-2">
-        {title}
-      </p>
+      <p className="text-4xl font-bold mb-2">{title}</p>
 
-      <p className="text-gray-500">
-        {label}
-      </p>
+      <p className="text-gray-500">{label}</p>
     </div>
   );
 }
@@ -445,21 +501,20 @@ function FeatureCard({
   icon,
   title,
   desc,
-}: any) {
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="p-8 rounded-3xl border border-gray-200 bg-white hover:shadow-xl transition">
-
       <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-500 flex items-center justify-center mb-6">
         {icon}
       </div>
 
-      <h3 className="text-2xl font-bold mb-4">
-        {title}
-      </h3>
+      <h3 className="text-2xl font-bold mb-4">{title}</h3>
 
-      <p className="text-gray-600 leading-relaxed">
-        {desc}
-      </p>
+      <p className="text-gray-600 leading-relaxed">{desc}</p>
     </div>
   );
 }
@@ -471,13 +526,9 @@ function PricingFeature({
 }) {
   return (
     <div className="flex items-center gap-3">
-
       <Check size={18} />
 
-      <span className="text-sm">
-        {text}
-      </span>
-
+      <span className="text-sm">{text}</span>
     </div>
   );
 }
@@ -491,13 +542,9 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-6xl font-bold mb-3">
-        {number}
-      </p>
+      <p className="text-6xl font-bold mb-3">{number}</p>
 
-      <p className="text-gray-400 text-lg">
-        {label}
-      </p>
+      <p className="text-gray-400 text-lg">{label}</p>
     </div>
   );
 }
@@ -511,15 +558,26 @@ function Testimonial({
 }) {
   return (
     <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
+      <p className="text-lg leading-relaxed mb-6">"{text}"</p>
 
-      <p className="text-lg leading-relaxed mb-6">
-        "{text}"
-      </p>
-
-      <p className="font-semibold">
-        {name}
-      </p>
-
+      <p className="font-semibold">{name}</p>
     </div>
   );
 }
+
+function FaqItem({
+  question,
+  answer,
+}: {
+  question: string;
+  answer: string;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-3xl p-8">
+      <h3 className="text-xl font-bold mb-3">{question}</h3>
+
+      <p className="text-gray-600 leading-relaxed">{answer}</p>
+    </div>
+  );
+}
+

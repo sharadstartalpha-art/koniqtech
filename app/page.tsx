@@ -169,7 +169,7 @@ export default function Home() {
               className="relative rounded-3xl overflow-hidden border border-gray-200 shadow-2xl"
             >
               <img
-                src="/dashboard.png"
+                src="/dashboardn.png"
                 alt="Dashboard Preview"
                 className="w-full object-cover"
               />

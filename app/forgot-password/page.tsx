@@ -17,7 +17,16 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#f6f6ef]">
       <div className="w-full max-w-sm bg-white p-8 rounded-md">
 
-        <h1 className="text-xl font-semibold mb-6 text-center">
+ {/* LOGO */}
+
+        <div className="flex justify-center mb-6">
+          <div className="bg-orange-500 text-white px-5 py-2 font-bold rounded-lg">
+            KoniqTech
+          </div>
+        </div>
+
+
+        <h1 className="text-center text-2xl font-semibold mb-2">
           Reset Password
         </h1>
 
@@ -33,6 +42,18 @@ export default function ForgotPasswordPage() {
         >
           Send OTP
         </button>
+
+
+ {/* LOGIN */}
+
+        <p className="text-center text-sm mt-6">
+          <a
+            href="/login"
+            className="text-orange-600 hover:text-orange-700"
+          >
+            ← Back to login
+          </a>
+        </p>
 
       </div>
     </div>

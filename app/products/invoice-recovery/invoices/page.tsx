@@ -65,7 +65,7 @@ export default function InvoicesPage() {
       */
 
       const res = await axios.get(
-        "/api/invoices/my-invoices"
+        "/api/invoices/list"
       );
 
       setData(res.data);

@@ -1,9 +1,11 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
+
 import Logo from "@/components/Logo";
+
 import {
   ArrowRight,
   BellRing,
@@ -22,6 +24,10 @@ type Plan = {
   price: number;
   invoiceLimit: number | null;
 };
+
+/* =========================
+   HOME
+========================= */
 
 export default function Home() {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -44,80 +50,77 @@ export default function Home() {
       {/* =========================
           NAVBAR
       ========================= */}
-<header className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-2xl shadow-sm border-b border-gray-100/50">
 
-  <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+      <header className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-2xl shadow-sm border-b border-gray-100/50">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          {/* LEFT */}
 
-    {/* LOGO */}
+          <div className="flex items-center gap-12">
+            <Logo />
 
-    <div className="flex items-center gap-12">
+            <nav className="hidden md:flex items-center gap-8">
+              <a
+                href="#features"
+                className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+              >
+                Features
+              </a>
 
-      <Logo />
+              <a
+                href="#pricing"
+                className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+              >
+                Pricing
+              </a>
 
-      {/* NAV LINKS */}
+              <a
+                href="#faq"
+                className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+              >
+                FAQ
+              </a>
 
-      <nav className="hidden md:flex items-center gap-8">
+              <a
+                href="#contact"
+                className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+              >
+                Contact
+              </a>
+            </nav>
+          </div>
 
-        <a
-          href="#features"
-          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
-        >
-          Features
-        </a>
+          {/* RIGHT */}
 
-        <a
-          href="#pricing"
-          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
-        >
-          Pricing
-        </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="/login"
+              className="hidden md:block text-sm font-medium text-gray-600 hover:text-black transition"
+            >
+              Sign In
+            </a>
 
-        <a
-          href="#faq"
-          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
-        >
-          FAQ
-        </a>
-
-        <a
-          href="#contact"
-          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
-        >
-          Contact
-        </a>
-
-      </nav>
-    </div>
-
-    {/* RIGHT SIDE */}
-
-    <div className="flex items-center gap-4">
-
-      <a
-        href="/login"
-        className="hidden md:block text-sm font-medium text-gray-600 hover:text-black transition"
-      >
-        Sign In
-      </a>
-
-      <a
-        href="/login"
-        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg shadow-orange-500/20 transition-all duration-300 hover:scale-105"
-      >
-        Get Started
-      </a>
-
-    </div>
-
-  </div>
-</header>
+            <a
+              href="/login"
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg shadow-orange-500/20 transition-all duration-300 hover:scale-105"
+            >
+              Get Started
+            </a>
+          </div>
+        </div>
+      </header>
 
       {/* =========================
           HERO
       ========================= */}
 
-      <section className="relative py-32 px-6">
+      <section className="relative py-32 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-orange-50 via-white to-white" />
+
+        {/* BLUR EFFECTS */}
+
+        <div className="absolute top-40 left-20 w-72 h-72 bg-orange-200 rounded-full blur-3xl opacity-30" />
+
+        <div className="absolute bottom-20 right-20 w-72 h-72 bg-emerald-200 rounded-full blur-3xl opacity-20" />
 
         <div className="relative max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-5 py-2 rounded-full text-sm font-semibold mb-8">
@@ -133,8 +136,8 @@ export default function Home() {
 
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mt-8 leading-relaxed">
             KoniqTech helps freelancers and agencies recover unpaid invoices
-            with AI-powered follow-ups, intelligent escalation,
-            and automated payment reminders.
+            with AI-powered follow-ups, intelligent escalation, and automated
+            payment reminders.
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
@@ -158,33 +161,19 @@ export default function Home() {
             No credit card required • Cancel anytime • Works worldwide
           </p>
 
+          {/* DASHBOARD */}
+
           <div className="mt-24 relative max-w-6xl mx-auto">
-            <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full" />
-
-            <div className="relative bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="bg-gray-100 border-b px-6 py-4 flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-400 rounded-full" />
-                <div className="w-3 h-3 bg-yellow-400 rounded-full" />
-                <div className="w-3 h-3 bg-green-400 rounded-full" />
-              </div>
-
-              <div className="p-10 grid md:grid-cols-3 gap-6 text-left">
-                <DashboardCard
-                  title="$18,430"
-                  label="Recovered This Month"
-                />
-
-                <DashboardCard
-                  title="42"
-                  label="Pending Invoices"
-                />
-
-                <DashboardCard
-                  title="87%"
-                  label="Recovery Rate"
-                />
-              </div>
-            </div>
+            <motion.div
+              whileHover={{ y: -6 }}
+              className="relative rounded-3xl overflow-hidden border border-gray-200 shadow-2xl"
+            >
+              <img
+                src="/dashboard.png"
+                alt="Dashboard Preview"
+                className="w-full object-cover"
+              />
+            </motion.div>
           </div>
         </div>
       </section>
@@ -225,7 +214,8 @@ export default function Home() {
           </h2>
 
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Powerful automation tools designed for modern freelancers and agencies.
+            Powerful automation tools designed for modern freelancers and
+            agencies.
           </p>
         </div>
 
@@ -258,7 +248,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-10 text-center">
             <Stat number="70%" label="Invoices recovered" />
+
             <Stat number="3x" label="Faster payments" />
+
             <Stat number="10+ hrs" label="Saved every month" />
           </div>
         </div>
@@ -320,21 +312,24 @@ export default function Home() {
               const isPopular = p.name === "Growth";
 
               return (
-                <div
+                <motion.div
+                  whileHover={{ y: -6 }}
                   key={p.id}
-                  className={`relative rounded-3xl p-8 border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
+                  className={`relative rounded-3xl p-8 border transition-all duration-300 hover:shadow-2xl ${
                     isPopular
                       ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white border-black scale-105"
                       : "bg-white border-gray-200"
                   }`}
                 >
                   {isPopular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-semibold px-4 py-2 rounded-full">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white text-xs font-semibold px-4 py-2 rounded-full">
                       MOST POPULAR
                     </div>
                   )}
 
-                  <h3 className="text-2xl font-bold">{p.name}</h3>
+                  <h3 className="text-2xl font-bold">
+                    {p.name}
+                  </h3>
 
                   <div className="my-8">
                     <span className="text-6xl font-bold tracking-tight">
@@ -344,7 +339,7 @@ export default function Home() {
                     <span
                       className={`${
                         isPopular
-                          ? "text-gray-300"
+                          ? "text-orange-100"
                           : "text-gray-500"
                       }`}
                     >
@@ -353,43 +348,33 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-4 mb-10">
-                    <PricingFeature
-                      text={
-                        p.invoiceLimit === -1 ||
-                        p.invoiceLimit === null
-                          ? "Unlimited invoices"
-                          : `${p.invoiceLimit} invoices`
-                      }
-                    />
-
-                    <PricingFeature text="AI email reminders" />
-                    <PricingFeature text="Invoice tracking" />
-                    <PricingFeature text="Payment recovery dashboard" />
+                    <PricingFeature text="Unlimited reminders" />
+                    <PricingFeature text="AI escalation" />
+                    <PricingFeature text="Analytics dashboard" />
+                    <PricingFeature text="Priority support" />
                   </div>
 
                   <a
                     href="/login"
                     className={`block text-center w-full py-4 rounded-2xl font-semibold transition ${
                       isPopular
-                        ? "bg-white text-black hover:bg-gray-200"
+                        ? "bg-white text-black hover:bg-gray-100"
                         : "bg-black text-white hover:bg-gray-800"
                     }`}
                   >
-                    {p.price === 0 ? "Start Free" : "Get Started"}
+                    {p.price === 0
+                      ? "Start Free"
+                      : "Get Started"}
                   </a>
-                </div>
+                </motion.div>
               );
             })}
           </div>
-
-          <p className="text-center text-sm text-gray-500 mt-10">
-            Pay securely via PayPal • Cancel anytime
-          </p>
         </div>
       </section>
 
       {/* =========================
-          FAQ SECTION
+          FAQ
       ========================= */}
 
       <section id="faq" className="py-28 bg-gray-50">
@@ -407,39 +392,31 @@ export default function Home() {
           <div className="space-y-6">
             <FaqItem
               question="How does KoniqTech recover unpaid invoices?"
-              answer="KoniqTech automatically sends intelligent follow-up emails to clients with unpaid invoices. The system escalates reminders professionally over time to improve payment recovery."
+              answer="KoniqTech automatically sends intelligent follow-up emails to clients with unpaid invoices."
             />
 
             <FaqItem
               question="Can I use my own PayPal account?"
-              answer="Yes. You can connect your own PayPal account and receive payments directly from clients."
-            />
-
-            <FaqItem
-              question="Do clients know emails are automated?"
-              answer="No. Emails are written naturally and professionally using AI, making them feel personal and human."
+              answer="Yes. You can connect your own PayPal account."
             />
 
             <FaqItem
               question="Can I cancel anytime?"
-              answer="Absolutely. There are no contracts or hidden fees. You can cancel your subscription anytime."
-            />
-
-            <FaqItem
-              question="Does KoniqTech work worldwide?"
-              answer="Yes. KoniqTech works globally and supports freelancers, consultants, and agencies from any country."
+              answer="Absolutely. There are no contracts or hidden fees."
             />
           </div>
         </div>
       </section>
 
       {/* =========================
-          CONTACT SECTION
+          CONTACT
       ========================= */}
 
       <section id="contact" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
+            {/* LEFT */}
+
             <div>
               <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-semibold mb-6">
                 Contact Us
@@ -452,96 +429,96 @@ export default function Home() {
               </h2>
 
               <p className="text-xl text-gray-600 leading-relaxed mb-10">
-                Our team is here to help you recover payments faster
-                and grow your business with confidence.
+                Our team is here to help you recover payments faster and grow
+                your business with confidence.
               </p>
             </div>
+
+            {/* RIGHT */}
 
             <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-xl">
               <h3 className="text-2xl font-bold mb-6">
                 Send us a message
               </h3>
 
-             <form
-  action="https://formsubmit.co/info@koniqtech.com"
-  method="POST"
-  className="space-y-5"
->
+              <form
+                action="https://formsubmit.co/info@koniqtech.com"
+                method="POST"
+                className="space-y-5"
+              >
+                <input
+                  type="hidden"
+                  name="_subject"
+                  value="New Contact Form Message - KoniqTech"
+                />
 
-  <input
-    type="hidden"
-    name="_subject"
-    value="New Contact Form Message - KoniqTech"
-  />
+                <input
+                  type="hidden"
+                  name="_captcha"
+                  value="false"
+                />
 
-  <input
-    type="hidden"
-    name="_captcha"
-    value="false"
-  />
+                <input
+                  type="hidden"
+                  name="_template"
+                  value="table"
+                />
 
-  <input
-    type="hidden"
-    name="_template"
-    value="table"
-  />
+                <input
+                  type="hidden"
+                  name="_next"
+                  value="https://koniqtech.com/thanks"
+                />
 
-  <div>
-    <label className="text-sm font-medium mb-2 block">
-      Full Name
-    </label>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Full Name
+                  </label>
 
-    <input
-      type="text"
-      name="name"
-      required
-      placeholder="John Doe"
-      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
-    />
-  </div>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="John Doe"
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+                  />
+                </div>
 
-  <div>
-    <label className="text-sm font-medium mb-2 block">
-      Email Address
-    </label>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Email Address
+                  </label>
 
-    <input
-      type="email"
-      name="email"
-      required
-      placeholder="john@example.com"
-      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
-    />
-  </div>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder="john@example.com"
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+                  />
+                </div>
 
-  <div>
-    <label className="text-sm font-medium mb-2 block">
-      Message
-    </label>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Message
+                  </label>
 
-    <textarea
-      rows={5}
-      name="message"
-      required
-      placeholder="Tell us how we can help..."
-      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition resize-none"
-    />
-  </div>
+                  <textarea
+                    rows={5}
+                    name="message"
+                    required
+                    placeholder="Tell us how we can help..."
+                    className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition resize-none"
+                  />
+                </div>
 
-<input
-  type="hidden"
-  name="_next"
-  value="https://koniqtech.com/thanks"
-/>
-
-  <button
-    type="submit"
-    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition"
-  >
-    Send Message
-  </button>
-
-</form>
+                <button
+                  type="submit"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition"
+                >
+                  Send Message
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -551,7 +528,7 @@ export default function Home() {
           FINAL CTA
       ========================= */}
 
-      <section className="bg-orange-500 hover:bg-orange-600 text-white py-32 text-center">
+      <section className="bg-orange-500 text-white py-32 text-center">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-6xl font-bold tracking-tight leading-tight mb-6">
             Stop losing money
@@ -559,19 +536,95 @@ export default function Home() {
             to unpaid invoices.
           </h2>
 
-          <p className="text-xl text-gray-300 mb-10">
+          <p className="text-xl text-orange-100 mb-10">
             Start recovering payments automatically today.
           </p>
 
           <a
             href="/login"
-            className="bg-white text-black px-10 py-5 rounded-2xl text-lg font-semibold inline-flex items-center gap-2 hover:bg-gray-200 transition"
+            className="bg-white text-black px-10 py-5 rounded-2xl text-lg font-semibold inline-flex items-center gap-2 hover:bg-gray-100 transition"
           >
             Start Free Trial
             <ArrowRight size={20} />
           </a>
         </div>
       </section>
+
+      {/* =========================
+          FOOTER
+      ========================= */}
+
+      <footer className="border-t border-gray-200 py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-10">
+          <div>
+            <Logo />
+
+            <p className="text-gray-500 mt-4 max-w-sm">
+              AI-powered invoice recovery for freelancers and agencies.
+            </p>
+          </div>
+
+          <div className="flex gap-16">
+            <div>
+              <h4 className="font-semibold mb-4">
+                Product
+              </h4>
+
+              <div className="space-y-3 text-gray-500 text-sm">
+                <a
+                  href="#features"
+                  className="block hover:text-orange-500"
+                >
+                  Features
+                </a>
+
+                <a
+                  href="#pricing"
+                  className="block hover:text-orange-500"
+                >
+                  Pricing
+                </a>
+
+                <a
+                  href="#faq"
+                  className="block hover:text-orange-500"
+                >
+                  FAQ
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">
+                Company
+              </h4>
+
+              <div className="space-y-3 text-gray-500 text-sm">
+                <a
+                  href="#contact"
+                  className="block hover:text-orange-500"
+                >
+                  Contact
+                </a>
+
+                <a
+                  href="/privacy"
+                  className="block hover:text-orange-500"
+                >
+                  Privacy
+                </a>
+
+                <a
+                  href="/terms"
+                  className="block hover:text-orange-500"
+                >
+                  Terms
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
@@ -579,22 +632,6 @@ export default function Home() {
 /* =========================
    COMPONENTS
 ========================= */
-
-function DashboardCard({
-  title,
-  label,
-}: {
-  title: string;
-  label: string;
-}) {
-  return (
-    <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
-      <p className="text-4xl font-bold mb-2">{title}</p>
-
-      <p className="text-gray-500">{label}</p>
-    </div>
-  );
-}
 
 function FeatureCard({
   icon,
@@ -606,15 +643,22 @@ function FeatureCard({
   desc: string;
 }) {
   return (
-    <div className="p-8 rounded-3xl border border-gray-200 bg-white hover:shadow-xl transition">
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="p-8 rounded-3xl border border-gray-200 bg-white hover:shadow-xl transition"
+    >
       <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-500 flex items-center justify-center mb-6">
         {icon}
       </div>
 
-      <h3 className="text-2xl font-bold mb-4">{title}</h3>
+      <h3 className="text-2xl font-bold mb-4">
+        {title}
+      </h3>
 
-      <p className="text-gray-600 leading-relaxed">{desc}</p>
-    </div>
+      <p className="text-gray-600 leading-relaxed">
+        {desc}
+      </p>
+    </motion.div>
   );
 }
 
@@ -625,9 +669,11 @@ function PricingFeature({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <Check size={18} />
+      <Check size={18} className="text-green-500" />
 
-      <span className="text-sm">{text}</span>
+      <span className="text-sm font-medium">
+        {text}
+      </span>
     </div>
   );
 }
@@ -641,9 +687,13 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-6xl font-bold mb-3">{number}</p>
+      <p className="text-6xl font-bold mb-3">
+        {number}
+      </p>
 
-      <p className="text-gray-400 text-lg">{label}</p>
+      <p className="text-gray-400 text-lg">
+        {label}
+      </p>
     </div>
   );
 }
@@ -656,11 +706,18 @@ function Testimonial({
   name: string;
 }) {
   return (
-    <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
-      <p className="text-lg leading-relaxed mb-6">"{text}"</p>
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm"
+    >
+      <p className="text-lg leading-relaxed mb-6">
+        "{text}"
+      </p>
 
-      <p className="font-semibold">{name}</p>
-    </div>
+      <p className="font-semibold">
+        {name}
+      </p>
+    </motion.div>
   );
 }
 
@@ -672,70 +729,17 @@ function FaqItem({
   answer: string;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-3xl p-8">
-      <h3 className="text-xl font-bold mb-3">{question}</h3>
+    <motion.div
+      whileHover={{ y: -6 }}
+      className="bg-white border border-gray-200 rounded-3xl p-8"
+    >
+      <h3 className="text-xl font-bold mb-3">
+        {question}
+      </h3>
 
-      <p className="text-gray-600 leading-relaxed">{answer}</p>
-    </div>
+      <p className="text-gray-600 leading-relaxed">
+        {answer}
+      </p>
+    </motion.div>
   );
 }
-
-<footer className="border-t border-gray-200 py-12 bg-white">
-
-  <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-10">
-
-    <div>
-      <Logo />
-
-      <p className="text-gray-500 mt-4 max-w-sm">
-        AI-powered invoice recovery for freelancers and agencies.
-      </p>
-    </div>
-
-    <div className="flex gap-16">
-
-      <div>
-        <h4 className="font-semibold mb-4">
-          Product
-        </h4>
-
-        <div className="space-y-3 text-gray-500 text-sm">
-          <a href="#features" className="block hover:text-orange-500">
-            Features
-          </a>
-
-          <a href="#pricing" className="block hover:text-orange-500">
-            Pricing
-          </a>
-
-          <a href="#faq" className="block hover:text-orange-500">
-            FAQ
-          </a>
-        </div>
-      </div>
-
-      <div>
-        <h4 className="font-semibold mb-4">
-          Company
-        </h4>
-
-        <div className="space-y-3 text-gray-500 text-sm">
-          <a href="#contact" className="block hover:text-orange-500">
-            Contact
-          </a>
-
-          <a href="/privacy" className="block hover:text-orange-500">
-            Privacy
-          </a>
-
-          <a href="/terms" className="block hover:text-orange-500">
-            Terms
-          </a>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-</footer>

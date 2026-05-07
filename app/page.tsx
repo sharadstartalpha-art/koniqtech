@@ -44,28 +44,73 @@ export default function Home() {
       {/* =========================
           NAVBAR
       ========================= */}
+<header className="fixed top-0 left-0 w-full z-50 bg-white/70 backdrop-blur-2xl shadow-sm border-b border-gray-100/50">
 
-      <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Logo />
+  <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
-          <div className="flex items-center gap-8">
-            <a
-              href="#pricing"
-              className="text-sm text-gray-600 hover:text-black transition"
-            >
-              Pricing
-            </a>
+    {/* LOGO */}
 
-            <a
-              href="/login"
-              className="bg-black text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition"
-            >
-              Get Started
-            </a>
-          </div>
-        </div>
-      </header>
+    <div className="flex items-center gap-12">
+
+      <Logo />
+
+      {/* NAV LINKS */}
+
+      <nav className="hidden md:flex items-center gap-8">
+
+        <a
+          href="#features"
+          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+        >
+          Features
+        </a>
+
+        <a
+          href="#pricing"
+          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+        >
+          Pricing
+        </a>
+
+        <a
+          href="#faq"
+          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+        >
+          FAQ
+        </a>
+
+        <a
+          href="#contact"
+          className="text-sm font-medium text-gray-600 hover:text-orange-500 transition"
+        >
+          Contact
+        </a>
+
+      </nav>
+    </div>
+
+    {/* RIGHT SIDE */}
+
+    <div className="flex items-center gap-4">
+
+      <a
+        href="/login"
+        className="hidden md:block text-sm font-medium text-gray-600 hover:text-black transition"
+      >
+        Sign In
+      </a>
+
+      <a
+        href="/login"
+        className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg shadow-orange-500/20 transition-all duration-300 hover:scale-105"
+      >
+        Get Started
+      </a>
+
+    </div>
+
+  </div>
+</header>
 
       {/* =========================
           HERO
@@ -347,7 +392,7 @@ export default function Home() {
           FAQ SECTION
       ========================= */}
 
-      <section className="py-28 bg-gray-50">
+      <section id="faq" className="py-28 bg-gray-50">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold tracking-tight mb-5">
@@ -392,7 +437,7 @@ export default function Home() {
           CONTACT SECTION
       ========================= */}
 
-      <section className="py-32 bg-white">
+      <section id="contact" className="py-32 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>

@@ -27,24 +27,7 @@ model User {
   subscriptions Subscription[]
 }
 
-model Invoice {
-  id           String     @id @default(uuid())
-  userId       String
-  productId    String
-  clientEmail  String
-  clientName   String?
-  amount       Float
-  mode         String   @default("manual") // 👈 ADD THIS
-  dueDate      DateTime
-  status       String
-  paymentLink  String?
-  paidAt       DateTime?
-  autoReminder Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  product      Product    @relation(fields: [productId], references: [id])
-  user         User       @relation(fields: [userId], references: [id])
-  reminders    Reminder[]
-}
+
 
 model Payment {
   id        String   @id @default(uuid())
@@ -183,4 +166,61 @@ model Reminder {
 
   opens   Int     @default(0)
   clicked Boolean @default(false)
+}
+
+
+model Invoice {
+  id            String      @id @default(uuid())
+
+  userId        String
+  productId     String
+
+  clientEmail   String
+  clientName    String?
+
+  // Financials
+
+  amount        Float
+
+  paidAmount    Float       @default(0)
+
+  balanceAmount Float?
+
+  currency      String      @default("USD")
+
+  // Status
+
+  status        String      @default("unpaid")
+
+  mode          String      @default("manual")
+
+  // Dates
+
+  dueDate       DateTime
+
+  paidAt        DateTime?
+
+  createdAt     DateTime    @default(now())
+
+  updatedAt     DateTime    @updatedAt
+
+  // Payment
+
+  paymentLink   String?
+
+  transactionId String?
+
+  paymentMethod String?
+
+  // Automation
+
+  autoReminder  Boolean     @default(true)
+
+  // Relations
+
+  product       Product     @relation(fields: [productId], references: [id])
+
+  user          User        @relation(fields: [userId], references: [id])
+
+  reminders     Reminder[]
 }

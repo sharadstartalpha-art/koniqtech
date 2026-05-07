@@ -89,24 +89,95 @@ export default function InvoicesPage() {
   ========================= */
 
   const markPaid = async (
-    id: string
-  ) => {
-    try {
-      await axios.post(
-        "/api/invoices/mark-paid",
-        {
-          id,
-        }
-      );
+  id: string,
+  totalAmount: number
+) => {
+  let paidAmount = "";
 
-      toast.success("Marked as paid");
+  toast(
+    (t) => (
+      <div className="flex flex-col gap-4 w-72">
 
-      load();
+        <div>
+          <h3 className="font-semibold text-sm mb-1">
+            Enter Paid Amount
+          </h3>
 
-    } catch {
-      toast.error("Failed to update");
+          <p className="text-xs text-gray-500">
+            Total invoice: ${totalAmount}
+          </p>
+        </div>
+
+        <input
+          type="number"
+          placeholder="Enter amount"
+          className="border rounded-md px-3 py-2 text-sm outline-none focus:border-black"
+          onChange={(e) => {
+            paidAmount = e.target.value;
+          }}
+        />
+
+        <div className="flex justify-end gap-2">
+
+          <button
+            onClick={() =>
+              toast.dismiss(t.id)
+            }
+            className="text-xs px-3 py-1 border rounded"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                if (
+                  !paidAmount ||
+                  Number(paidAmount) <= 0
+                ) {
+                  toast.error(
+                    "Enter valid amount"
+                  );
+
+                  return;
+                }
+
+                await axios.post(
+                  "/api/invoices/mark-paid",
+                  {
+                    id,
+                    paidAmount:
+                      Number(paidAmount),
+                  }
+                );
+
+                toast.dismiss(t.id);
+
+                toast.success(
+                  "Payment updated"
+                );
+
+                load();
+
+              } catch {
+                toast.error(
+                  "Failed to update"
+                );
+              }
+            }}
+            className="text-xs px-3 py-1 bg-black text-white rounded"
+          >
+            Update
+          </button>
+
+        </div>
+      </div>
+    ),
+    {
+      duration: 10000,
     }
-  };
+  );
+};
 
   /* =========================
      SWITCH MODE
@@ -465,10 +536,11 @@ export default function InvoicesPage() {
                             "paid" && (
                             <button
                               onClick={() =>
-                                markPaid(
-                                  inv.id
-                                )
-                              }
+  markPaid(
+    inv.id,
+    inv.amount
+  )
+}
                               className="text-xs px-3 py-1.5 border rounded hover:bg-gray-100"
                             >
                               Mark Paid

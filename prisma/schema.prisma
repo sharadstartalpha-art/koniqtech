@@ -80,7 +80,7 @@ model Plan {
   name          String // Free / Pro / Business
   price         Float
   invoiceLimit  Int?
-  paypalPlanId  String? // VERY IMPORTANT
+  paypalPlanId String? @unique
   createdAt     DateTime       @default(now())
   active        Boolean        @default(true)
   product       Product        @relation(fields: [productId], references: [id])

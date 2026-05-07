@@ -8,28 +8,38 @@ import toast from "react-hot-toast";
 
 type Invoice = {
   id: string;
+  userId: string;
+
   clientName: string;
   clientEmail: string;
+
   amount: number;
 
   status: "paid" | "unpaid";
 
-  // ✅ NEW
   mode: "manual" | "auto";
 };
 
 export default function InvoicesPage() {
   const [data, setData] = useState<Invoice[]>([]);
-  const [filtered, setFiltered] = useState<Invoice[]>([]);
+
+  const [filtered, setFiltered] = useState<
+    Invoice[]
+  >([]);
+
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] =
+    useState(true);
 
   const [page, setPage] = useState(1);
+
   const [limit, setLimit] = useState(5);
 
   /* =========================
-     LOAD
+     LOAD USER INVOICES ONLY
   ========================= */
+
   useEffect(() => {
     load();
   }, []);
@@ -42,18 +52,33 @@ export default function InvoicesPage() {
     );
 
     setFiltered(result);
+
     setPage(1);
+
   }, [search, data]);
 
   const load = async () => {
     try {
-      const res = await axios.get("/api/invoices/list");
+      /* ✅ IMPORTANT:
+         THIS MUST RETURN ONLY
+         LOGGED-IN USER INVOICES
+      */
+
+      const res = await axios.get(
+        "/api/invoices/my-invoices"
+      );
 
       setData(res.data);
+
       setFiltered(res.data);
+
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load invoices");
+
+      toast.error(
+        "Failed to load invoices"
+      );
+
     } finally {
       setLoading(false);
     }
@@ -62,34 +87,47 @@ export default function InvoicesPage() {
   /* =========================
      MARK PAID
   ========================= */
-  const markPaid = async (id: string) => {
+
+  const markPaid = async (
+    id: string
+  ) => {
     try {
-      await axios.post("/api/invoices/mark-paid", {
-        id,
-      });
+      await axios.post(
+        "/api/invoices/mark-paid",
+        {
+          id,
+        }
+      );
 
       toast.success("Marked as paid");
 
       load();
+
     } catch {
       toast.error("Failed to update");
     }
   };
 
   /* =========================
-     SWITCH MODE ✅
+     SWITCH MODE
   ========================= */
+
   const switchMode = async (
     id: string,
     mode: "manual" | "auto"
   ) => {
     try {
-      await axios.post("/api/invoices/update-mode", {
-        id,
-        mode,
-      });
+      await axios.post(
+        "/api/invoices/update-mode",
+        {
+          id,
+          mode,
+        }
+      );
 
-      toast.success(`Switched to ${mode}`);
+      toast.success(
+        `Switched to ${mode}`
+      );
 
       setData((prev) =>
         prev.map((inv) =>
@@ -98,15 +136,21 @@ export default function InvoicesPage() {
             : inv
         )
       );
+
     } catch {
-      toast.error("Failed to update mode");
+      toast.error(
+        "Failed to update mode"
+      );
     }
   };
 
   /* =========================
      DELETE
   ========================= */
-  const confirmDelete = (id: string) => {
+
+  const confirmDelete = (
+    id: string
+  ) => {
     toast(
       (t) => (
         <div className="flex flex-col gap-3">
@@ -116,7 +160,9 @@ export default function InvoicesPage() {
 
           <div className="flex gap-2 justify-end">
             <button
-              onClick={() => toast.dismiss(t.id)}
+              onClick={() =>
+                toast.dismiss(t.id)
+              }
               className="text-xs px-3 py-1 border rounded"
             >
               Cancel
@@ -125,6 +171,7 @@ export default function InvoicesPage() {
             <button
               onClick={async () => {
                 toast.dismiss(t.id);
+
                 await remove(id);
               }}
               className="text-xs px-3 py-1 bg-red-600 text-white rounded"
@@ -138,15 +185,23 @@ export default function InvoicesPage() {
     );
   };
 
-  const remove = async (id: string) => {
+  const remove = async (
+    id: string
+  ) => {
     try {
-      await axios.post("/api/invoices/delete", {
-        id,
-      });
+      await axios.post(
+        "/api/invoices/delete",
+        {
+          id,
+        }
+      );
 
-      toast.success("Invoice deleted");
+      toast.success(
+        "Invoice deleted"
+      );
 
       load();
+
     } catch {
       toast.error("Delete failed");
     }
@@ -155,9 +210,12 @@ export default function InvoicesPage() {
   /* =========================
      PAGINATION
   ========================= */
+
   const total = filtered.length;
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(
+    total / limit
+  );
 
   const start = (page - 1) * limit;
 
@@ -171,10 +229,11 @@ export default function InvoicesPage() {
       <div className="space-y-6">
 
         {/* HEADER */}
+
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-medium">
-              Invoices
+            <h1 className="text-xl font-semibold">
+              My Invoices
             </h1>
 
             <p className="text-sm text-gray-500">
@@ -184,15 +243,15 @@ export default function InvoicesPage() {
 
           <a
             href="/products/invoice-recovery/invoices/create"
-            className="text-sm bg-black text-white px-3 py-1.5 rounded-md"
+            className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
           >
             + Create
           </a>
         </div>
 
         {/* SEARCH */}
-        <div className="flex items-center justify-between gap-4">
 
+        <div className="flex items-center justify-between gap-4">
           <div className="relative max-w-sm w-full">
             <Search
               size={16}
@@ -201,7 +260,7 @@ export default function InvoicesPage() {
 
             <input
               placeholder="Search emails..."
-              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm"
+              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none focus:border-black"
               value={search}
               onChange={(e) =>
                 setSearch(e.target.value)
@@ -212,28 +271,44 @@ export default function InvoicesPage() {
           <select
             value={limit}
             onChange={(e) =>
-              setLimit(Number(e.target.value))
+              setLimit(
+                Number(e.target.value)
+              )
             }
-            className="text-sm border rounded-md px-2 py-1"
+            className="text-sm border rounded-md px-3 py-2 outline-none"
           >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
+            <option value={5}>
+              5
+            </option>
+
+            <option value={10}>
+              10
+            </option>
+
+            <option value={25}>
+              25
+            </option>
+
+            <option value={50}>
+              50
+            </option>
           </select>
         </div>
 
         {/* TABLE */}
-        <div className="bg-white border rounded-md overflow-hidden">
+
+        <div className="bg-white border rounded-xl overflow-hidden">
 
           {loading ? (
             <div className="p-6 text-sm text-gray-500">
               Loading invoices...
             </div>
+
           ) : current.length === 0 ? (
             <div className="p-6 text-sm text-gray-500">
               No invoices found.
             </div>
+
           ) : (
             <table className="w-full text-sm">
 
@@ -263,7 +338,6 @@ export default function InvoicesPage() {
                     Balance
                   </th>
 
-                  {/* ✅ NEW */}
                   <th className="px-4 py-3 text-left">
                     Reminder Mode
                   </th>
@@ -279,130 +353,156 @@ export default function InvoicesPage() {
               </thead>
 
               <tbody>
-                {current.map((inv, index) => {
-                  const paid =
-                    inv.status === "paid"
-                      ? inv.amount
-                      : 0;
+                {current.map(
+                  (inv, index) => {
+                    const paid =
+                      inv.status ===
+                      "paid"
+                        ? inv.amount
+                        : 0;
 
-                  const balance =
-                    inv.status === "paid"
-                      ? 0
-                      : inv.amount;
+                    const balance =
+                      inv.status ===
+                      "paid"
+                        ? 0
+                        : inv.amount;
 
-                  return (
-                    <tr
-                      key={inv.id}
-                      className="border-b hover:bg-gray-50"
-                    >
-                      <td className="px-4 py-3">
-                        {start + index + 1}
-                      </td>
+                    return (
+                      <tr
+                        key={inv.id}
+                        className="border-b hover:bg-gray-50 transition"
+                      >
+                        <td className="px-4 py-3">
+                          {start +
+                            index +
+                            1}
+                        </td>
 
-                      <td className="px-4 py-3">
-                        {inv.clientName || "-"}
-                      </td>
+                        <td className="px-4 py-3 font-medium">
+                          {inv.clientName ||
+                            "-"}
+                        </td>
 
-                      <td className="px-4 py-3">
-                        {inv.clientEmail}
-                      </td>
+                        <td className="px-4 py-3">
+                          {
+                            inv.clientEmail
+                          }
+                        </td>
 
-                      <td className="px-4 py-3 font-medium">
-                        ${inv.amount}
-                      </td>
+                        <td className="px-4 py-3 font-semibold">
+                          $
+                          {inv.amount}
+                        </td>
 
-                      <td className="px-4 py-3 font-semibold text-green-600">
-                        ${paid}
-                      </td>
+                        <td className="px-4 py-3 font-semibold text-green-600">
+                          ${paid}
+                        </td>
 
-                      <td className="px-4 py-3 font-semibold text-red-600">
-                        ${balance}
-                      </td>
+                        <td className="px-4 py-3 font-semibold text-red-600">
+                          ${balance}
+                        </td>
 
-                      {/* ✅ MODE TOGGLE*/}
-                     
-<td className="px-4 py-3">
-  <button
-    onClick={() =>
-      switchMode(
-        inv.id,
-        inv.mode === "manual"
-          ? "auto"
-          : "manual"
-      )
-    }
-    className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
-      inv.mode === "auto"
-        ? "bg-green-500"
-        : "bg-blue-500"
-    }`}
-  >
-    {/* TOGGLE CIRCLE */}
-    <span
-      className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
-        inv.mode === "auto"
-          ? "translate-x-[68px]"
-          : "translate-x-0"
-      }`}
-    />
+                        {/* MODE */}
 
-    {/* LABEL */}
-    <span className="w-full text-center text-xs font-medium text-white z-10">
-      {inv.mode === "auto"
-        ? "AUTO"
-        : "MANUAL"}
-    </span>
-  </button>
-</td>
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-md ${
-                            inv.status === "paid"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-600"
-                          }`}
-                        >
-                          {inv.status}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3 text-right space-x-2">
-
-                        {inv.status !== "paid" && (
+                        <td className="px-4 py-3">
                           <button
                             onClick={() =>
-                              markPaid(inv.id)
+                              switchMode(
+                                inv.id,
+                                inv.mode ===
+                                  "manual"
+                                  ? "auto"
+                                  : "manual"
+                              )
                             }
-                            className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                            className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
+                              inv.mode ===
+                              "auto"
+                                ? "bg-green-500"
+                                : "bg-blue-500"
+                            }`}
                           >
-                            Mark Paid
+                            <span
+                              className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
+                                inv.mode ===
+                                "auto"
+                                  ? "translate-x-[68px]"
+                                  : "translate-x-0"
+                              }`}
+                            />
+
+                            <span className="w-full text-center text-xs font-medium text-white z-10">
+                              {inv.mode ===
+                              "auto"
+                                ? "AUTO"
+                                : "MANUAL"}
+                            </span>
                           </button>
-                        )}
+                        </td>
 
-                        <button
-                          onClick={() =>
-                            confirmDelete(inv.id)
-                          }
-                          className="text-xs px-2 py-1 border rounded text-red-600 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        {/* STATUS */}
 
-                      </td>
-                    </tr>
-                  );
-                })}
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-md font-medium ${
+                              inv.status ===
+                              "paid"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-600"
+                            }`}
+                          >
+                            {
+                              inv.status
+                            }
+                          </span>
+                        </td>
+
+                        {/* ACTIONS */}
+
+                        <td className="px-4 py-3 text-right space-x-2">
+
+                          {inv.status !==
+                            "paid" && (
+                            <button
+                              onClick={() =>
+                                markPaid(
+                                  inv.id
+                                )
+                              }
+                              className="text-xs px-3 py-1.5 border rounded hover:bg-gray-100"
+                            >
+                              Mark Paid
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() =>
+                              confirmDelete(
+                                inv.id
+                              )
+                            }
+                            className="text-xs px-3 py-1.5 border rounded text-red-600 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+
+                        </td>
+                      </tr>
+                    );
+                  }
+                )}
               </tbody>
             </table>
           )}
         </div>
 
         {/* PAGINATION */}
+
         <div className="flex justify-between items-center">
 
           <p className="text-sm text-gray-500">
-            Page {page} of {totalPages || 1}
+            Page {page} of{" "}
+            {totalPages || 1}
           </p>
 
           <div className="flex gap-2">
@@ -419,7 +519,8 @@ export default function InvoicesPage() {
 
             <button
               disabled={
-                page === totalPages ||
+                page ===
+                  totalPages ||
                 totalPages === 0
               }
               onClick={() =>

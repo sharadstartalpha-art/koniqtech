@@ -11,10 +11,7 @@ type Invoice = {
   clientName: string;
   clientEmail: string;
   amount: number;
-
   status: "paid" | "unpaid";
-
-  // ✅ NEW
   mode: "manual" | "auto";
 };
 
@@ -28,8 +25,9 @@ export default function InvoicesPage() {
   const [limit, setLimit] = useState(5);
 
   /* =========================
-     LOAD
+     LOAD USER INVOICES ONLY
   ========================= */
+
   useEffect(() => {
     load();
   }, []);
@@ -47,10 +45,14 @@ export default function InvoicesPage() {
 
   const load = async () => {
     try {
-      const res = await axios.get("/api/invoices/list");
+      /* ✅ USER ONLY */
+      const res = await axios.get(
+        "/api/invoices/my-invoices"
+      );
 
       setData(res.data);
       setFiltered(res.data);
+
     } catch (err) {
       console.error(err);
       toast.error("Failed to load invoices");
@@ -62,6 +64,7 @@ export default function InvoicesPage() {
   /* =========================
      MARK PAID
   ========================= */
+
   const markPaid = async (id: string) => {
     try {
       await axios.post("/api/invoices/mark-paid", {
@@ -71,14 +74,16 @@ export default function InvoicesPage() {
       toast.success("Marked as paid");
 
       load();
+
     } catch {
       toast.error("Failed to update");
     }
   };
 
   /* =========================
-     SWITCH MODE ✅
+     SWITCH MODE
   ========================= */
+
   const switchMode = async (
     id: string,
     mode: "manual" | "auto"
@@ -98,6 +103,7 @@ export default function InvoicesPage() {
             : inv
         )
       );
+
     } catch {
       toast.error("Failed to update mode");
     }
@@ -106,6 +112,7 @@ export default function InvoicesPage() {
   /* =========================
      DELETE
   ========================= */
+
   const confirmDelete = (id: string) => {
     toast(
       (t) => (
@@ -147,6 +154,7 @@ export default function InvoicesPage() {
       toast.success("Invoice deleted");
 
       load();
+
     } catch {
       toast.error("Delete failed");
     }
@@ -155,6 +163,7 @@ export default function InvoicesPage() {
   /* =========================
      PAGINATION
   ========================= */
+
   const total = filtered.length;
 
   const totalPages = Math.ceil(total / limit);
@@ -171,28 +180,29 @@ export default function InvoicesPage() {
       <div className="space-y-6">
 
         {/* HEADER */}
+
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-medium">
-              Invoices
+            <h1 className="text-xl font-semibold">
+              My Invoices
             </h1>
 
             <p className="text-sm text-gray-500">
-              Total: {total}
+              Total invoices: {total}
             </p>
           </div>
 
           <a
             href="/products/invoice-recovery/invoices/create"
-            className="text-sm bg-black text-white px-3 py-1.5 rounded-md"
+            className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
           >
-            + Create
+            + Create Invoice
           </a>
         </div>
 
         {/* SEARCH */}
-        <div className="flex items-center justify-between gap-4">
 
+        <div className="flex items-center justify-between gap-4">
           <div className="relative max-w-sm w-full">
             <Search
               size={16}
@@ -200,8 +210,8 @@ export default function InvoicesPage() {
             />
 
             <input
-              placeholder="Search emails..."
-              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm"
+              placeholder="Search email..."
+              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none focus:border-black"
               value={search}
               onChange={(e) =>
                 setSearch(e.target.value)
@@ -214,7 +224,7 @@ export default function InvoicesPage() {
             onChange={(e) =>
               setLimit(Number(e.target.value))
             }
-            className="text-sm border rounded-md px-2 py-1"
+            className="text-sm border rounded-md px-3 py-2 outline-none"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -224,8 +234,8 @@ export default function InvoicesPage() {
         </div>
 
         {/* TABLE */}
-        <div className="bg-white border rounded-md overflow-hidden">
 
+        <div className="bg-white border rounded-xl overflow-hidden">
           {loading ? (
             <div className="p-6 text-sm text-gray-500">
               Loading invoices...
@@ -236,7 +246,6 @@ export default function InvoicesPage() {
             </div>
           ) : (
             <table className="w-full text-sm">
-
               <thead className="bg-gray-50 border-b text-gray-600">
                 <tr>
                   <th className="px-4 py-3 text-left">
@@ -244,7 +253,7 @@ export default function InvoicesPage() {
                   </th>
 
                   <th className="px-4 py-3 text-left">
-                    Name
+                    Client
                   </th>
 
                   <th className="px-4 py-3 text-left">
@@ -252,7 +261,7 @@ export default function InvoicesPage() {
                   </th>
 
                   <th className="px-4 py-3 text-left">
-                    Total
+                    Amount
                   </th>
 
                   <th className="px-4 py-3 text-left">
@@ -263,7 +272,6 @@ export default function InvoicesPage() {
                     Balance
                   </th>
 
-                  {/* ✅ NEW */}
                   <th className="px-4 py-3 text-left">
                     Reminder Mode
                   </th>
@@ -293,13 +301,13 @@ export default function InvoicesPage() {
                   return (
                     <tr
                       key={inv.id}
-                      className="border-b hover:bg-gray-50"
+                      className="border-b hover:bg-gray-50 transition"
                     >
                       <td className="px-4 py-3">
                         {start + index + 1}
                       </td>
 
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 font-medium">
                         {inv.clientName || "-"}
                       </td>
 
@@ -307,57 +315,57 @@ export default function InvoicesPage() {
                         {inv.clientEmail}
                       </td>
 
-                      <td className="px-4 py-3 font-medium">
+                      <td className="px-4 py-3 font-semibold">
                         ${inv.amount}
                       </td>
 
-                      <td className="px-4 py-3 font-semibold text-green-600">
+                      <td className="px-4 py-3 text-green-600 font-semibold">
                         ${paid}
                       </td>
 
-                      <td className="px-4 py-3 font-semibold text-red-600">
+                      <td className="px-4 py-3 text-red-600 font-semibold">
                         ${balance}
                       </td>
 
-                      {/* ✅ MODE TOGGLE*/}
-                     
-<td className="px-4 py-3">
-  <button
-    onClick={() =>
-      switchMode(
-        inv.id,
-        inv.mode === "manual"
-          ? "auto"
-          : "manual"
-      )
-    }
-    className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
-      inv.mode === "auto"
-        ? "bg-green-500"
-        : "bg-blue-500"
-    }`}
-  >
-    {/* TOGGLE CIRCLE */}
-    <span
-      className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
-        inv.mode === "auto"
-          ? "translate-x-[68px]"
-          : "translate-x-0"
-      }`}
-    />
+                      {/* MODE */}
 
-    {/* LABEL */}
-    <span className="w-full text-center text-xs font-medium text-white z-10">
-      {inv.mode === "auto"
-        ? "AUTO"
-        : "MANUAL"}
-    </span>
-  </button>
-</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() =>
+                            switchMode(
+                              inv.id,
+                              inv.mode === "manual"
+                                ? "auto"
+                                : "manual"
+                            )
+                          }
+                          className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
+                            inv.mode === "auto"
+                              ? "bg-green-500"
+                              : "bg-blue-500"
+                          }`}
+                        >
+                          <span
+                            className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
+                              inv.mode === "auto"
+                                ? "translate-x-[68px]"
+                                : "translate-x-0"
+                            }`}
+                          />
+
+                          <span className="w-full text-center text-xs font-medium text-white z-10">
+                            {inv.mode === "auto"
+                              ? "AUTO"
+                              : "MANUAL"}
+                          </span>
+                        </button>
+                      </td>
+
+                      {/* STATUS */}
 
                       <td className="px-4 py-3">
                         <span
-                          className={`text-xs px-2 py-1 rounded-md ${
+                          className={`text-xs px-2 py-1 rounded-md font-medium ${
                             inv.status === "paid"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-600"
@@ -367,14 +375,15 @@ export default function InvoicesPage() {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3 text-right space-x-2">
+                      {/* ACTIONS */}
 
+                      <td className="px-4 py-3 text-right space-x-2">
                         {inv.status !== "paid" && (
                           <button
                             onClick={() =>
                               markPaid(inv.id)
                             }
-                            className="text-xs px-2 py-1 border rounded hover:bg-gray-100"
+                            className="text-xs px-3 py-1.5 border rounded hover:bg-gray-100"
                           >
                             Mark Paid
                           </button>
@@ -384,11 +393,10 @@ export default function InvoicesPage() {
                           onClick={() =>
                             confirmDelete(inv.id)
                           }
-                          className="text-xs px-2 py-1 border rounded text-red-600 hover:bg-red-50"
+                          className="text-xs px-3 py-1.5 border rounded text-red-600 hover:bg-red-50"
                         >
                           Delete
                         </button>
-
                       </td>
                     </tr>
                   );
@@ -399,14 +407,13 @@ export default function InvoicesPage() {
         </div>
 
         {/* PAGINATION */}
-        <div className="flex justify-between items-center">
 
+        <div className="flex justify-between items-center">
           <p className="text-sm text-gray-500">
             Page {page} of {totalPages || 1}
           </p>
 
           <div className="flex gap-2">
-
             <button
               disabled={page === 1}
               onClick={() =>
@@ -429,7 +436,6 @@ export default function InvoicesPage() {
             >
               Next
             </button>
-
           </div>
         </div>
       </div>

@@ -483,6 +483,12 @@ export default function Home() {
     />
   </div>
 
+<input
+  type="hidden"
+  name="_next"
+  value="https://koniqtech.com/thanks"
+/>
+
   <button
     type="submit"
     className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition"

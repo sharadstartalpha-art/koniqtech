@@ -3,10 +3,18 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Logo from "@/components/Logo";
+import {
+  ArrowRight,
+  BellRing,
+  ShieldCheck,
+  BarChart3,
+  Check,
+} from "lucide-react";
 
 /* =========================
    TYPES
 ========================= */
+
 type Plan = {
   id: string;
   name: string;
@@ -14,11 +22,9 @@ type Plan = {
   invoiceLimit: number | null;
 };
 
-
 export default function Home() {
-   const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
 
-    /* 🔥 THIS WAS MISSING */
   useEffect(() => {
     const fetchPlans = async () => {
       try {
@@ -32,306 +38,488 @@ export default function Home() {
     fetchPlans();
   }, []);
 
-
-
   return (
-    <div className="bg-white text-gray-900">
+    <div className="bg-white text-gray-900 overflow-hidden">
 
-      {/* NAVBAR */}
-      <div className="flex justify-between items-center px-6 py-5 border-b">
-        <Logo />
+      {/* =========================
+          NAVBAR
+      ========================= */}
 
-        <div className="flex gap-4 items-center">
-          <a href="#pricing" className="text-sm text-gray-600">
-            Pricing
-          </a>
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
-          <a
-            href="/login"
-            className="bg-black text-white px-4 py-2 rounded-md text-sm"
-          >
-            Get Started
-          </a>
+          <Logo />
+
+          <div className="flex items-center gap-8">
+            <a
+              href="#pricing"
+              className="text-sm text-gray-600 hover:text-black transition"
+            >
+              Pricing
+            </a>
+
+            <a
+              href="/login"
+              className="bg-black text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-gray-800 transition"
+            >
+              Get Started
+            </a>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* HERO */}
-      <section className="text-center py-32 px-6 max-w-5xl mx-auto">
-        <p className="text-green-600 font-semibold mb-4">
-  💰 $127,430+ recovered by users
-</p>
-        <h1 className="text-6xl font-bold leading-tight mb-6">
-          Get Paid Without
-          <br />
-          Chasing Clients.
-        </h1>
+      {/* =========================
+          HERO
+      ========================= */}
 
-        <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-          KoniqTech automatically follows up on unpaid invoices,
-          escalates emails intelligently, and helps you recover money
-          faster — without awkward conversations.
-        </p>
+      <section className="relative py-32 px-6">
 
-        <div className="flex justify-center gap-4">
-          <a
-            href="/login"
-            className="bg-black text-white px-8 py-4 rounded-lg text-lg"
-          >
-            Start Free Trial
-          </a>
+        <div className="absolute inset-0 bg-gradient-to-b from-orange-50 via-white to-white" />
 
-          <a
-            href="#demo"
-            className="border px-8 py-4 rounded-lg text-lg"
-          >
-            See How It Works
-          </a>
+        <div className="relative max-w-7xl mx-auto text-center">
+
+          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-5 py-2 rounded-full text-sm font-semibold mb-8">
+            💰 $127,430+ recovered by users
+          </div>
+
+          <h1 className="text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] max-w-5xl mx-auto">
+            Recover Unpaid
+            <span className="block text-orange-500">
+              Invoices Automatically
+            </span>
+          </h1>
+
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mt-8 leading-relaxed">
+            KoniqTech helps freelancers and agencies recover unpaid invoices
+            with AI-powered follow-ups, intelligent escalation,
+            and automated payment reminders.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-10">
+
+            <a
+              href="/login"
+              className="bg-black hover:bg-gray-800 transition text-white px-8 py-4 rounded-2xl text-lg font-medium shadow-2xl inline-flex items-center justify-center gap-2"
+            >
+              Start Free Trial
+              <ArrowRight size={20} />
+            </a>
+
+            <a
+              href="#features"
+              className="border border-gray-300 hover:border-black transition px-8 py-4 rounded-2xl text-lg font-medium bg-white"
+            >
+              See How It Works
+            </a>
+
+          </div>
+
+          <p className="text-sm text-gray-500 mt-5">
+            No credit card required • Cancel anytime • Works worldwide
+          </p>
+
+          {/* DASHBOARD MOCKUP */}
+
+          <div className="mt-24 relative max-w-6xl mx-auto">
+
+            <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full" />
+
+            <div className="relative bg-white border border-gray-200 rounded-3xl shadow-2xl overflow-hidden">
+
+              <div className="bg-gray-100 border-b px-6 py-4 flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-400 rounded-full" />
+                <div className="w-3 h-3 bg-yellow-400 rounded-full" />
+                <div className="w-3 h-3 bg-green-400 rounded-full" />
+              </div>
+
+              <div className="p-10 grid md:grid-cols-3 gap-6 text-left">
+
+                <DashboardCard
+                  title="$18,430"
+                  label="Recovered This Month"
+                />
+
+                <DashboardCard
+                  title="42"
+                  label="Pending Invoices"
+                />
+
+                <DashboardCard
+                  title="87%"
+                  label="Recovery Rate"
+                />
+
+              </div>
+            </div>
+          </div>
         </div>
-
-        <p className="text-sm text-gray-500 mt-4">
-          No credit card required • Works worldwide • Pay via PayPal
-        </p>
       </section>
 
-      {/* SOCIAL PROOF */}
-      <section className="text-center py-10 border-t border-b">
-        <p className="text-gray-500 text-sm mb-4">
-          Freelancers & agencies use KoniqTech to recover payments faster
-        </p>
+      {/* =========================
+          SOCIAL PROOF
+      ========================= */}
 
-        <div className="flex justify-center gap-12 text-gray-400 text-sm">
-          <span>Web Developers</span>
-          <span>Design Agencies</span>
-          <span>Consultants</span>
-          <span>Freelancers</span>
+      <section className="border-y border-gray-100 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-10 text-center">
+
+          <p className="text-gray-500 mb-8">
+            Trusted by freelancers, consultants & agencies worldwide
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-10 text-gray-400 font-medium">
+            <span>Web Developers</span>
+            <span>Marketing Agencies</span>
+            <span>Consultants</span>
+            <span>Freelancers</span>
+            <span>Design Studios</span>
+          </div>
         </div>
       </section>
 
-      {/* PROBLEM */}
-      <section className="py-24 max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl font-bold mb-6">
-          Unpaid invoices kill your cash flow.
-        </h2>
+      {/* =========================
+          FEATURES
+      ========================= */}
 
-        <p className="text-gray-600 text-lg">
-          Clients forget. Emails get ignored. Follow-ups feel awkward.
-          Most freelancers lose thousands every year just because they
-          don’t follow up consistently.
-        </p>
-      </section>
+      <section
+        id="features"
+        className="py-28 px-6 max-w-7xl mx-auto"
+      >
+        <div className="text-center mb-20">
 
-      {/* SOLUTION */}
-      <section className="bg-gray-50 py-24">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-6">
-            We fix that automatically.
+          <h2 className="text-5xl font-bold tracking-tight mb-6">
+            Everything you need
+            <br />
+            to recover payments faster
           </h2>
 
-          <p className="text-gray-600 mb-12">
-            KoniqTech follows up for you — politely, professionally,
-            and persistently.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Powerful automation tools designed for modern freelancers and agencies.
           </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+
+          <FeatureCard
+            icon={<BellRing size={30} />}
+            title="Smart Follow-ups"
+            desc="Automatic reminders based on payment behavior and timing."
+          />
+
+          <FeatureCard
+            icon={<ShieldCheck size={30} />}
+            title="AI Escalation"
+            desc="Friendly → firm → final reminders sent automatically."
+          />
+
+          <FeatureCard
+            icon={<BarChart3 size={30} />}
+            title="Advanced Tracking"
+            desc="Track opens, replies, payments, and invoice recovery."
+          />
+
+        </div>
+      </section>
+
+      {/* =========================
+          STATS
+      ========================= */}
+
+      <section className="bg-black text-white py-28">
+        <div className="max-w-6xl mx-auto px-6">
+
+          <div className="grid md:grid-cols-3 gap-10 text-center">
+
+            <Stat number="70%" label="Invoices recovered" />
+
+            <Stat number="3x" label="Faster payments" />
+
+            <Stat number="10+ hrs" label="Saved every month" />
+
+          </div>
+        </div>
+      </section>
+
+      {/* =========================
+          TESTIMONIALS
+      ========================= */}
+
+      <section className="py-28 bg-gray-50">
+
+        <div className="max-w-7xl mx-auto px-6">
+
+          <div className="text-center mb-16">
+            <h2 className="text-5xl font-bold tracking-tight mb-4">
+              Loved by freelancers
+            </h2>
+
+            <p className="text-gray-600 text-lg">
+              Thousands of businesses use KoniqTech to recover revenue.
+            </p>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Step
-              title="Add Invoice"
-              desc="Create or import your invoice in seconds"
+
+            <Testimonial
+              text="Recovered $4,200 in one week. Completely changed my cash flow."
+              name="Alex — USA"
             />
-            <Step
-              title="Auto Follow-ups"
-              desc="AI sends reminders (friendly → firm → final)"
+
+            <Testimonial
+              text="Clients actually respond now. The automation feels incredibly professional."
+              name="Daniel — UK"
             />
-            <Step
-              title="Get Paid"
-              desc="Recover payments faster without effort"
+
+            <Testimonial
+              text="Feels like having an accounts receivable assistant working 24/7."
+              name="Sophie — Germany"
             />
+
           </div>
         </div>
       </section>
 
-      {/* RESULTS */}
-      <section className="py-24 text-center max-w-5xl mx-auto px-6">
-        <h2 className="text-4xl font-bold mb-12">
-          Real Results
-        </h2>
+      {/* =========================
+          PRICING
+      ========================= */}
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <Stat number="70%" label="Invoices recovered" />
-          <Stat number="3x" label="Faster payments" />
-          <Stat number="10+ hrs" label="Saved monthly" />
-        </div>
-      </section>
+      <section
+        id="pricing"
+        className="py-32 px-6"
+      >
 
-      {/* TESTIMONIALS */}
-      <section className="bg-gray-50 py-24">
-        <h2 className="text-4xl font-bold text-center mb-12">
-          Loved by freelancers
-        </h2>
+        <div className="max-w-7xl mx-auto">
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto px-6">
-          <Testimonial
-            text="Recovered $4,200 in one week. Worth every dollar."
-            name="Alex — USA"
-          />
-          <Testimonial
-            text="Clients actually respond now. No more ghosting."
-            name="Daniel — UK"
-          />
-          <Testimonial
-            text="Feels like having a full-time assistant."
-            name="Sophie — Germany"
-          />
-        </div>
-      </section>
+          <div className="text-center mb-20">
 
-      {/* FEATURES */}
-      <section className="py-24 max-w-6xl mx-auto px-6">
-        <h2 className="text-4xl font-bold text-center mb-12">
-          Everything you need to get paid
-        </h2>
+            <h2 className="text-5xl font-bold tracking-tight mb-5">
+              Simple pricing
+            </h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <Feature title="Smart Reminders" desc="Automatic follow-ups based on timing" />
-          <Feature title="AI Emails" desc="Human-like email generation" />
-          <Feature title="Tracking" desc="See who opens your emails" />
-          <Feature title="Escalation" desc="Friendly → firm → final reminders" />
-          <Feature title="Dashboard" desc="Track recovery & revenue" />
-          <Feature title="No Spam" desc="Prevents duplicate emails" />
-        </div>
-      </section>
-
-      {/* PRICING */}
-
-
-        {/* PRICING FROM DB */}
-      <section id="pricing" className="bg-gray-50 py-24 text-center">
-  <h2 className="text-4xl font-bold mb-12">
-    Simple pricing
-  </h2>
-
-  <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto px-6">
-
-    {plans.map((p: Plan) => {
-
-      const isPopular = p.name === "Growth";
-
-      return (
-        <div
-          key={p.id}
-          className={`relative bg-white p-8 rounded-2xl border transition ${
-            isPopular
-              ? "border-black scale-105 shadow-xl"
-              : "border-gray-200"
-          }`}
-        >
-
-          {/* POPULAR */}
-          {isPopular && (
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-3 py-1 rounded-full">
-              MOST POPULAR
-            </div>
-          )}
-
-          <h3 className="font-semibold text-xl">
-            {p.name}
-          </h3>
-
-          <div className="my-6">
-            <span className="text-5xl font-bold">
-              ${p.price}
-            </span>
-
-            <span className="text-gray-500">
-              /mo
-            </span>
+            <p className="text-xl text-gray-600">
+              Start free. Upgrade when you grow.
+            </p>
           </div>
 
-          <p className="text-gray-500 text-sm mb-8">
-            {p.invoiceLimit === -1 || p.invoiceLimit === null
-              ? "Unlimited invoices"
-              : `${p.invoiceLimit} invoices`}
+          <div className="grid md:grid-cols-4 gap-8">
+
+            {plans.map((p: Plan) => {
+
+              const isPopular = p.name === "Growth";
+
+              return (
+                <div
+                  key={p.id}
+                  className={`relative rounded-3xl p-8 border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
+                    isPopular
+                      ? "bg-black text-white border-black scale-105"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-semibold px-4 py-2 rounded-full">
+                      MOST POPULAR
+                    </div>
+                  )}
+
+                  <h3 className="text-2xl font-bold">
+                    {p.name}
+                  </h3>
+
+                  <div className="my-8">
+
+                    <span className="text-6xl font-bold tracking-tight">
+                      ${p.price}
+                    </span>
+
+                    <span
+                      className={`${
+                        isPopular
+                          ? "text-gray-300"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      /mo
+                    </span>
+
+                  </div>
+
+                  <div className="space-y-4 mb-10">
+
+                    <PricingFeature
+                      text={
+                        p.invoiceLimit === -1 ||
+                        p.invoiceLimit === null
+                          ? "Unlimited invoices"
+                          : `${p.invoiceLimit} invoices`
+                      }
+                    />
+
+                    <PricingFeature text="AI email reminders" />
+                    <PricingFeature text="Invoice tracking" />
+                    <PricingFeature text="Payment recovery dashboard" />
+
+                  </div>
+
+                  <a
+                    href="/login"
+                    className={`block text-center w-full py-4 rounded-2xl font-semibold transition ${
+                      isPopular
+                        ? "bg-white text-black hover:bg-gray-200"
+                        : "bg-black text-white hover:bg-gray-800"
+                    }`}
+                  >
+                    {p.price === 0
+                      ? "Start Free"
+                      : "Get Started"}
+                  </a>
+
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-center text-sm text-gray-500 mt-10">
+            Pay securely via PayPal • Cancel anytime
+          </p>
+        </div>
+      </section>
+
+      {/* =========================
+          FINAL CTA
+      ========================= */}
+
+      <section className="bg-black text-white py-32 text-center">
+
+        <div className="max-w-4xl mx-auto px-6">
+
+          <h2 className="text-6xl font-bold tracking-tight leading-tight mb-6">
+            Stop losing money
+            <br />
+            to unpaid invoices.
+          </h2>
+
+          <p className="text-xl text-gray-300 mb-10">
+            Start recovering payments automatically today.
           </p>
 
           <a
             href="/login"
-            className={`block w-full py-3 rounded-lg font-medium transition ${
-              isPopular
-                ? "bg-black text-white"
-                : "border"
-            }`}
+            className="bg-white text-black px-10 py-5 rounded-2xl text-lg font-semibold inline-flex items-center gap-2 hover:bg-gray-200 transition"
           >
-            {p.price === 0
-              ? "Start Free"
-              : "Get Started"}
+            Start Free Trial
+            <ArrowRight size={20} />
           </a>
+
         </div>
-      );
-    })}
-  </div>
-
-  <p className="text-gray-500 mt-8 text-sm">
-    Pay securely via PayPal • Cancel anytime
-  </p>
-</section>
-
-
-      {/* FINAL CTA */}
-      <section className="text-center py-28 bg-black text-white">
-        <h2 className="text-4xl font-bold mb-6">
-          Stop losing money to unpaid invoices.
-        </h2>
-
-        <p className="text-gray-300 mb-8">
-          Start recovering payments today.
-        </p>
-
-        <a
-          href="/login"
-          className="bg-white text-black px-10 py-4 rounded-lg text-lg"
-        >
-          Start Free Trial
-        </a>
       </section>
+    </div>
+  );
+}
+
+/* =========================
+   COMPONENTS
+========================= */
+
+function DashboardCard({
+  title,
+  label,
+}: {
+  title: string;
+  label: string;
+}) {
+  return (
+    <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
+      <p className="text-4xl font-bold mb-2">
+        {title}
+      </p>
+
+      <p className="text-gray-500">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  desc,
+}: any) {
+  return (
+    <div className="p-8 rounded-3xl border border-gray-200 bg-white hover:shadow-xl transition">
+
+      <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-500 flex items-center justify-center mb-6">
+        {icon}
+      </div>
+
+      <h3 className="text-2xl font-bold mb-4">
+        {title}
+      </h3>
+
+      <p className="text-gray-600 leading-relaxed">
+        {desc}
+      </p>
+    </div>
+  );
+}
+
+function PricingFeature({
+  text,
+}: {
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+
+      <Check size={18} />
+
+      <span className="text-sm">
+        {text}
+      </span>
 
     </div>
   );
 }
 
-/* COMPONENTS */
-
-function Step({ title, desc }: any) {
+function Stat({
+  number,
+  label,
+}: {
+  number: string;
+  label: string;
+}) {
   return (
     <div>
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-gray-500 text-sm">{desc}</p>
+      <p className="text-6xl font-bold mb-3">
+        {number}
+      </p>
+
+      <p className="text-gray-400 text-lg">
+        {label}
+      </p>
     </div>
   );
 }
 
-function Feature({ title, desc }: any) {
+function Testimonial({
+  text,
+  name,
+}: {
+  text: string;
+  name: string;
+}) {
   return (
-    <div className="border p-6 rounded-lg">
-      <h3 className="font-semibold mb-2">{title}</h3>
-      <p className="text-gray-500 text-sm">{desc}</p>
+    <div className="bg-white p-8 rounded-3xl border border-gray-200 shadow-sm">
+
+      <p className="text-lg leading-relaxed mb-6">
+        "{text}"
+      </p>
+
+      <p className="font-semibold">
+        {name}
+      </p>
+
     </div>
   );
 }
-
-function Stat({ number, label }: any) {
-  return (
-    <div>
-      <p className="text-3xl font-bold">{number}</p>
-      <p className="text-gray-500 text-sm">{label}</p>
-    </div>
-  );
-}
-
-function Testimonial({ text, name }: any) {
-  return (
-    <div className="bg-white p-6 border rounded-lg">
-      <p className="mb-4">"{text}"</p>
-      <p className="text-sm font-semibold">{name}</p>
-    </div>
-  );
-}
-

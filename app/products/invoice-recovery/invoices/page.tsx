@@ -8,12 +8,16 @@ import toast from "react-hot-toast";
 
 type Invoice = {
   id: string;
+
   userId: string;
 
   clientName: string;
+
   clientEmail: string;
 
   amount: number;
+
+  paidAmount: number;
 
   status: "paid" | "unpaid";
 
@@ -426,17 +430,12 @@ export default function InvoicesPage() {
               <tbody>
                 {current.map(
                   (inv, index) => {
-                    const paid =
-                      inv.status ===
-                      "paid"
-                        ? inv.amount
-                        : 0;
+                    const paid = Number(
+  inv.paidAmount || 0
+);
 
-                    const balance =
-                      inv.status ===
-                      "paid"
-                        ? 0
-                        : inv.amount;
+const balance =
+  Number(inv.amount) - paid;
 
                     return (
                       <tr

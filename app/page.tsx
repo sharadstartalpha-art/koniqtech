@@ -40,12 +40,12 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-white text-gray-900 overflow-hidden">
+    <div className="bg-white text-gray-900 overflow-hidden pt-24">
       {/* =========================
           NAVBAR
       ========================= */}
 
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100">
+      <header className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/80 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <Logo />
 
@@ -417,32 +417,80 @@ export default function Home() {
                 Send us a message
               </h3>
 
-              <form className="space-y-5">
-                <input
-                  type="text"
-                  placeholder="John Doe"
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
-                />
+             <form
+  action="https://formsubmit.co/info@koniqtech.com"
+  method="POST"
+  className="space-y-5"
+>
 
-                <input
-                  type="email"
-                  placeholder="john@example.com"
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
-                />
+  <input
+    type="hidden"
+    name="_subject"
+    value="New Contact Form Message - KoniqTech"
+  />
 
-                <textarea
-                  rows={5}
-                  placeholder="Tell us how we can help..."
-                  className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition resize-none"
-                />
+  <input
+    type="hidden"
+    name="_captcha"
+    value="false"
+  />
 
-                <button
-                  type="submit"
-                  className="w-full bg-black text-white py-4 rounded-2xl font-semibold hover:bg-gray-800 transition"
-                >
-                  Send Message
-                </button>
-              </form>
+  <input
+    type="hidden"
+    name="_template"
+    value="table"
+  />
+
+  <div>
+    <label className="text-sm font-medium mb-2 block">
+      Full Name
+    </label>
+
+    <input
+      type="text"
+      name="name"
+      required
+      placeholder="John Doe"
+      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm font-medium mb-2 block">
+      Email Address
+    </label>
+
+    <input
+      type="email"
+      name="email"
+      required
+      placeholder="john@example.com"
+      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm font-medium mb-2 block">
+      Message
+    </label>
+
+    <textarea
+      rows={5}
+      name="message"
+      required
+      placeholder="Tell us how we can help..."
+      className="w-full border border-gray-200 rounded-2xl px-4 py-4 outline-none focus:border-orange-500 transition resize-none"
+    />
+  </div>
+
+  <button
+    type="submit"
+    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition"
+  >
+    Send Message
+  </button>
+
+</form>
             </div>
           </div>
         </div>

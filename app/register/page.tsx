@@ -9,9 +9,25 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
 
   const register = async () => {
-    await axios.post("/api/auth/register", { email, password });
-    window.location.href = `/verify-otp?email=${email}`;
-  };
+  try {
+    await axios.post(
+      "/api/auth/register",
+      {
+        email,
+        password,
+      }
+    );
+
+    window.location.href =
+      `/verify-otp?email=${email}`;
+
+  } catch (err: any) {
+    alert(
+      err?.response?.data?.error ||
+      "Registration failed"
+    );
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f6f6ef]">

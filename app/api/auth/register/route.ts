@@ -6,75 +6,125 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     /* =========================
-       📥 INPUT
+       INPUT
     ========================= */
+
     const { email, password } = await req.json();
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "Email & password required" },
-        { status: 400 }
+        {
+          error: "Email & password required",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
     /* =========================
-       🔐 HASH PASSWORD
+       CHECK EXISTING USER
     ========================= */
-    const hashed = await bcrypt.hash(password, 10);
+
+    const existingUser =
+      await prisma.user.findUnique({
+        where: {
+          email,
+        },
+      });
 
     /* =========================
-       🔢 GENERATE OTP
+       ALREADY REGISTERED
     ========================= */
+
+    if (existingUser?.isVerified) {
+      return NextResponse.json(
+        {
+          error: "User already registered",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /* =========================
+       HASH PASSWORD
+    ========================= */
+
+    const hashed = await bcrypt.hash(
+      password,
+      10
+    );
+
+    /* =========================
+       GENERATE OTP
+    ========================= */
+
     const otp = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
 
     const expiry = new Date(
       Date.now() + 1000 * 60 * 5
-    ); // 5 mins
+    );
 
     /* =========================
-       👤 UPSERT USER
+       CREATE / UPDATE USER
     ========================= */
-    const user = await prisma.user.upsert({
-      where: { email },
 
-      update: {
-        password: hashed,
-        isVerified: false,
-        otp,
-        otpExpiry: expiry,
-      },
+    let user;
 
-      create: {
-        email,
-        password: hashed,
-        isVerified: false,
-        otp,
-        otpExpiry: expiry,
-      },
-    });
+    if (existingUser) {
+      /* UPDATE UNVERIFIED USER */
 
-    /* =========================
-       🎁 ASSIGN FREE PLAN
-       (ONLY IF NOT EXISTS)
-    ========================= */
-    const product = await prisma.product.findUnique({
-      where: {
-        slug: "invoice-recovery",
-      },
-    });
-
-    if (product) {
-      const freePlan = await prisma.plan.findFirst({
+      user = await prisma.user.update({
         where: {
-          productId: product.id,
-          name: "Free",
+          email,
+        },
+
+        data: {
+          password: hashed,
+          otp,
+          otpExpiry: expiry,
         },
       });
 
+    } else {
+      /* CREATE NEW USER */
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: hashed,
+          isVerified: false,
+          otp,
+          otpExpiry: expiry,
+        },
+      });
+    }
+
+    /* =========================
+       ASSIGN FREE PLAN
+    ========================= */
+
+    const product =
+      await prisma.product.findUnique({
+        where: {
+          slug: "invoice-recovery",
+        },
+      });
+
+    if (product) {
+      const freePlan =
+        await prisma.plan.findFirst({
+          where: {
+            productId: product.id,
+            name: "Free",
+          },
+        });
+
       if (freePlan) {
-        // check existing subscription
         const existingSub =
           await prisma.subscription.findFirst({
             where: {
@@ -83,7 +133,6 @@ export async function POST(req: Request) {
             },
           });
 
-        // create only once
         if (!existingSub) {
           await prisma.subscription.create({
             data: {
@@ -93,11 +142,15 @@ export async function POST(req: Request) {
 
               status: "ACTIVE",
 
-              // ✅ 7 DAY FREE TRIAL
-              currentPeriodEnd: new Date(
-                Date.now() +
-                  1000 * 60 * 60 * 24 * 7
-              ),
+              currentPeriodEnd:
+                new Date(
+                  Date.now() +
+                    1000 *
+                      60 *
+                      60 *
+                      24 *
+                      7
+                ),
             },
           });
         }
@@ -105,8 +158,9 @@ export async function POST(req: Request) {
     }
 
     /* =========================
-       📧 EMAIL CONTENT
+       EMAIL TEMPLATE
     ========================= */
+
     const html = `
       <div style="font-family: Arial;">
         <h2>Your OTP Code</h2>
@@ -128,8 +182,9 @@ export async function POST(req: Request) {
     const text = `Your OTP is: ${otp}`;
 
     /* =========================
-       📤 SEND EMAIL
+       SEND EMAIL
     ========================= */
+
     await sendEmail({
       to: email,
       subject: "Your OTP Code",
@@ -137,12 +192,19 @@ export async function POST(req: Request) {
       text,
     });
 
+    /* =========================
+       SUCCESS
+    ========================= */
+
     return NextResponse.json({
       success: true,
     });
 
   } catch (err) {
-    console.error("REGISTER ERROR:", err);
+    console.error(
+      "REGISTER ERROR:",
+      err
+    );
 
     return NextResponse.json(
       {

@@ -279,7 +279,7 @@ export default function Home() {
                   key={p.id}
                   className={`relative rounded-3xl p-8 border transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
                     isPopular
-                      ? "bg-black text-white border-black scale-105"
+                      ? "bg-gradient-to-br from-orange-500 to-orange-600 text-white border-black scale-105"
                       : "bg-white border-gray-200"
                   }`}
                 >
@@ -452,7 +452,7 @@ export default function Home() {
           FINAL CTA
       ========================= */}
 
-      <section className="bg-black text-white py-32 text-center">
+      <section className="bg-orange-500 hover:bg-orange-600 text-white py-32 text-center">
         <div className="max-w-4xl mx-auto px-6">
           <h2 className="text-6xl font-bold tracking-tight leading-tight mb-6">
             Stop losing money

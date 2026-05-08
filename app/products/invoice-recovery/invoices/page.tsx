@@ -88,255 +88,238 @@ export default function InvoicesPage() {
     }
   };
 
-  /* =========================
-     MARK PAID
-  ========================= */
+  
+
+/* =========================
+   MARK PAID
+========================= */
 
 const markPaid = async (
   id: string,
   totalAmount: number
 ) => {
+  let paidAmount = "";
+
+  const setQuickAmount = (
+    percent: number
+  ) => {
+    const value = (
+      totalAmount *
+      (percent / 100)
+    ).toFixed(2);
+
+    paidAmount = value;
+
+    const input =
+      document.getElementById(
+        "paid-amount-input"
+      ) as HTMLInputElement;
+
+    if (input) {
+      input.value = value;
+    }
+  };
+
   toast.custom(
-    (t) => {
-      const PaymentModal = () => {
-        const [
-          paidAmount,
-          setPaidAmount,
-        ] = useState("");
+    (t) => (
+      <div className="w-[440px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
 
-        const setPercentage = (
-          percent: number
-        ) => {
-          const value = (
-            totalAmount *
-            (percent / 100)
-          ).toFixed(2);
+        {/* HEADER */}
 
-          setPaidAmount(value);
-        };
+        <div className="px-6 py-5 border-b border-gray-100">
 
-        return (
-          <div
-            className={`w-[420px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden transition-all ${
-              t.visible
-                ? "animate-enter"
-                : "animate-leave"
-            }`}
-          >
-            {/* HEADER */}
+          <div className="flex items-center gap-4">
 
-            <div className="px-6 py-5 border-b border-gray-100">
+            <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center">
+              <DollarSign className="w-6 h-6 text-green-600" />
+            </div>
 
-              <div className="flex items-center gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Update Payment
+              </h2>
 
-                <div className="w-11 h-11 rounded-2xl bg-green-100 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
+              <p className="text-sm text-gray-500 mt-1">
+                Record client payment for this invoice
+              </p>
+            </div>
 
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Update Payment
-                  </h3>
+          </div>
 
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Record a client payment for this invoice
-                  </p>
-                </div>
+        </div>
 
-              </div>
+        {/* BODY */}
+
+        <div className="p-6 space-y-6">
+
+          {/* TOTAL */}
+
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+
+            <div className="flex items-center justify-between">
+
+              <span className="text-sm text-gray-500">
+                Invoice Total
+              </span>
+
+              <span className="text-3xl font-bold text-gray-900">
+                ${totalAmount}
+              </span>
 
             </div>
 
-            {/* BODY */}
+          </div>
 
-            <div className="p-6 space-y-5">
+          {/* INPUT */}
 
-              {/* TOTAL */}
+          <div>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Paid Amount
+            </label>
 
-                <div className="flex items-center justify-between">
+            <div className="relative">
 
-                  <span className="text-sm text-gray-500">
-                    Invoice Total
-                  </span>
+              <DollarSign className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
 
-                  <span className="text-2xl font-bold text-gray-900">
-                    ${totalAmount}
-                  </span>
-
-                </div>
-
-              </div>
-
-              {/* INPUT */}
-
-              <div>
-
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Paid Amount
-                </label>
-
-                <div className="relative">
-
-                  <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-
-                  <input
-                    type="number"
-                    autoFocus
-                    value={
-                      paidAmount
-                    }
-                    onChange={(e) =>
-                      setPaidAmount(
-                        e.target.value
-                      )
-                    }
-                    placeholder="Enter amount"
-                    className="w-full h-12 border border-gray-300 rounded-2xl pl-11 pr-4 text-base font-medium outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition"
-                  />
-
-                </div>
-
-              </div>
-
-              {/* QUICK ACTIONS */}
-
-              <div>
-
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
-                  Quick Actions
-                </p>
-
-                <div className="grid grid-cols-3 gap-2">
-
-                  {[25, 50, 100].map(
-                    (
-                      percent
-                    ) => (
-                      <button
-                        key={
-                          percent
-                        }
-                        type="button"
-                        onClick={() =>
-                          setPercentage(
-                            percent
-                          )
-                        }
-                        className={`h-10 rounded-xl border text-sm font-medium transition ${
-                          Number(
-                            paidAmount
-                          ) ===
-                          Number(
-                            (
-                              totalAmount *
-                              (percent /
-                                100)
-                            ).toFixed(
-                              2
-                            )
-                          )
-                            ? "bg-black text-white border-black"
-                            : "border-gray-200 hover:border-black hover:bg-black hover:text-white"
-                        }`}
-                      >
-                        {percent}%
-                      </button>
-                    )
-                  )}
-
-                </div>
-
-              </div>
+              <input
+                id="paid-amount-input"
+                type="number"
+                autoFocus
+                placeholder="Enter paid amount"
+                onChange={(e) => {
+                  paidAmount =
+                    e.target.value;
+                }}
+                className="w-full h-14 border border-gray-300 rounded-2xl pl-12 pr-4 text-lg font-medium outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition"
+              />
 
             </div>
 
-            {/* FOOTER */}
+          </div>
 
-            <div className="px-6 py-5 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
+          {/* QUICK ACTIONS */}
+
+          <div>
+
+            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase mb-3">
+              Quick Actions
+            </p>
+
+            <div className="grid grid-cols-3 gap-3">
 
               <button
+                type="button"
                 onClick={() =>
-                  toast.dismiss(
-                    t.id
-                  )
+                  setQuickAmount(25)
                 }
-                className="h-11 px-5 rounded-2xl border border-gray-300 text-sm font-medium hover:bg-white transition"
+                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
               >
-                Cancel
+                25%
               </button>
 
               <button
-                onClick={async () => {
-                  try {
-                    if (
-                      !paidAmount ||
-                      Number(
-                        paidAmount
-                      ) <= 0
-                    ) {
-                      toast.error(
-                        "Enter valid amount"
-                      );
-
-                      return;
-                    }
-
-                    await axios.post(
-                      "/api/invoices/mark-paid",
-                      {
-                        id,
-
-                        paidAmount:
-                          Number(
-                            paidAmount
-                          ),
-                      }
-                    );
-
-                    toast.dismiss(
-                      t.id
-                    );
-
-                    toast.success(
-                      "Payment updated successfully"
-                    );
-
-                    load();
-
-                  } catch (
-                    error
-                  ) {
-                    console.error(
-                      error
-                    );
-
-                    toast.error(
-                      "Failed to update payment"
-                    );
-                  }
-                }}
-                className="h-11 px-6 rounded-2xl bg-black hover:bg-gray-900 text-white text-sm font-semibold transition"
+                type="button"
+                onClick={() =>
+                  setQuickAmount(50)
+                }
+                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
               >
-                Save Payment
+                50%
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setQuickAmount(100)
+                }
+                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
+              >
+                Full
               </button>
 
             </div>
 
           </div>
-        );
-      };
 
-      return <PaymentModal />;
-    },
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="px-6 py-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+
+          <button
+            onClick={() =>
+              toast.dismiss(t.id)
+            }
+            className="h-11 px-5 rounded-2xl border border-gray-300 text-sm font-medium hover:bg-white transition"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                if (
+                  !paidAmount ||
+                  Number(
+                    paidAmount
+                  ) <= 0
+                ) {
+                  toast.error(
+                    "Enter valid amount"
+                  );
+
+                  return;
+                }
+
+                await axios.post(
+                  "/api/invoices/mark-paid",
+                  {
+                    id,
+
+                    paidAmount:
+                      Number(
+                        paidAmount
+                      ),
+                  }
+                );
+
+                toast.dismiss(
+                  t.id
+                );
+
+                toast.success(
+                  "Payment updated successfully"
+                );
+
+                load();
+
+              } catch (err) {
+                console.error(
+                  err
+                );
+
+                toast.error(
+                  "Failed to update payment"
+                );
+              }
+            }}
+            className="h-11 px-6 rounded-2xl bg-black hover:bg-gray-900 text-white text-sm font-semibold transition"
+          >
+            Save Payment
+          </button>
+
+        </div>
+
+      </div>
+    ),
     {
-      duration: 15000,
+      duration: 20000,
       position: "top-center",
     }
   );
 };
-
   /* =========================
      SWITCH MODE
   ========================= */

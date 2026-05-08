@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
-import { Search } from "lucide-react";
+import { DollarSign, Search } from "lucide-react";
 import toast from "react-hot-toast";
 
 type Invoice = {
@@ -92,42 +92,154 @@ export default function InvoicesPage() {
      MARK PAID
   ========================= */
 
-  const markPaid = async (
+const markPaid = async (
   id: string,
   totalAmount: number
 ) => {
   let paidAmount = "";
 
-  toast(
+  toast.custom(
     (t) => (
-      <div className="flex flex-col gap-4 w-72">
+      <div
+        className={`w-[420px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden transition-all ${
+          t.visible
+            ? "animate-enter"
+            : "animate-leave"
+        }`}
+      >
+        {/* HEADER */}
 
-        <div>
-          <h3 className="font-semibold text-sm mb-1">
-            Enter Paid Amount
-          </h3>
+        <div className="px-6 py-5 border-b border-gray-100">
 
-          <p className="text-xs text-gray-500">
-            Total invoice: ${totalAmount}
-          </p>
+          <div className="flex items-center gap-3">
+
+            <div className="w-11 h-11 rounded-2xl bg-green-100 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Update Payment
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-0.5">
+                Record a client payment for this invoice
+              </p>
+            </div>
+
+          </div>
+
         </div>
 
-        <input
-          type="number"
-          placeholder="Enter amount"
-          className="border rounded-md px-3 py-2 text-sm outline-none focus:border-black"
-          onChange={(e) => {
-            paidAmount = e.target.value;
-          }}
-        />
+        {/* BODY */}
 
-        <div className="flex justify-end gap-2">
+        <div className="p-6 space-y-5">
+
+          {/* TOTAL */}
+
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+
+            <div className="flex items-center justify-between">
+
+              <span className="text-sm text-gray-500">
+                Invoice Total
+              </span>
+
+              <span className="text-2xl font-bold text-gray-900">
+                ${totalAmount}
+              </span>
+
+            </div>
+
+          </div>
+
+          {/* INPUT */}
+
+          <div>
+
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Paid Amount
+            </label>
+
+            <div className="relative">
+
+              <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+
+              <input
+                type="number"
+                autoFocus
+                placeholder="Enter amount"
+                onChange={(e) => {
+                  paidAmount =
+                    e.target.value;
+                }}
+                className="w-full h-12 border border-gray-300 rounded-2xl pl-11 pr-4 text-base font-medium outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition"
+              />
+
+            </div>
+
+          </div>
+
+          {/* QUICK SELECT */}
+
+          <div>
+
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+              Quick Actions
+            </p>
+
+            <div className="grid grid-cols-3 gap-2">
+
+              {[25, 50, 100].map(
+                (percent) => (
+                  <button
+                    key={percent}
+                    onClick={() => {
+                      paidAmount =
+                        String(
+                          (
+                            totalAmount *
+                            (percent /
+                              100)
+                          ).toFixed(
+                            2
+                          )
+                        );
+
+                      const input =
+                        document.querySelector(
+                          "#paid-amount-input"
+                        ) as HTMLInputElement;
+
+                      if (
+                        input
+                      ) {
+                        input.value =
+                          paidAmount;
+                      }
+                    }}
+                    className="h-10 rounded-xl border border-gray-200 hover:border-black hover:bg-black hover:text-white transition text-sm font-medium"
+                  >
+                    {percent}%
+                  </button>
+                )
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* FOOTER */}
+
+        <div className="px-6 py-5 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
 
           <button
             onClick={() =>
               toast.dismiss(t.id)
             }
-            className="text-xs px-3 py-1 border rounded"
+            className="h-11 px-5 rounded-2xl border border-gray-300 text-sm font-medium hover:bg-white transition"
           >
             Cancel
           </button>
@@ -137,7 +249,9 @@ export default function InvoicesPage() {
               try {
                 if (
                   !paidAmount ||
-                  Number(paidAmount) <= 0
+                  Number(
+                    paidAmount
+                  ) <= 0
                 ) {
                   toast.error(
                     "Enter valid amount"
@@ -150,35 +264,48 @@ export default function InvoicesPage() {
                   "/api/invoices/mark-paid",
                   {
                     id,
+
                     paidAmount:
-                      Number(paidAmount),
+                      Number(
+                        paidAmount
+                      ),
                   }
                 );
 
-                toast.dismiss(t.id);
+                toast.dismiss(
+                  t.id
+                );
 
                 toast.success(
-                  "Payment updated"
+                  "Payment updated successfully"
                 );
 
                 load();
 
-              } catch {
+              } catch (
+                error
+              ) {
+                console.error(
+                  error
+                );
+
                 toast.error(
-                  "Failed to update"
+                  "Failed to update payment"
                 );
               }
             }}
-            className="text-xs px-3 py-1 bg-black text-white rounded"
+            className="h-11 px-6 rounded-2xl bg-black hover:bg-gray-900 text-white text-sm font-semibold transition"
           >
-            Update
+            Save Payment
           </button>
 
         </div>
+
       </div>
     ),
     {
-      duration: 10000,
+      duration: 15000,
+      position: "top-center",
     }
   );
 };

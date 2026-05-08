@@ -5,6 +5,9 @@ import axios from "axios";
 import PasswordInput from "@/components/PasswordInput";
 
 export default function RegisterPage() {
+  const [name, setName] =
+    useState("");
+
   const [email, setEmail] =
     useState("");
 
@@ -17,19 +20,33 @@ export default function RegisterPage() {
   const [acceptedTerms, setAcceptedTerms] =
     useState(false);
 
+  const [showPasswordHint, setShowPasswordHint] =
+    useState(false);
+
   const register = async () => {
     try {
       /* =========================
-         VALIDATION
+         CLEAN INPUT
       ========================= */
+
+      const cleanName =
+        name.trim();
 
       const cleanEmail = email
         .trim()
         .toLowerCase();
 
-      if (!cleanEmail || !password) {
+      /* =========================
+         REQUIRED
+      ========================= */
+
+      if (
+        !cleanName ||
+        !cleanEmail ||
+        !password
+      ) {
         alert(
-          "Email & password required"
+          "All fields are required"
         );
 
         return;
@@ -53,7 +70,7 @@ export default function RegisterPage() {
       }
 
       /* =========================
-         STRONG PASSWORD
+         PASSWORD VALIDATION
       ========================= */
 
       const strongPassword =
@@ -64,9 +81,7 @@ export default function RegisterPage() {
           password
         )
       ) {
-        alert(
-          "Password must contain:\n\n• 8+ characters\n• 1 uppercase\n• 1 lowercase\n• 1 number"
-        );
+        setShowPasswordHint(true);
 
         return;
       }
@@ -77,7 +92,7 @@ export default function RegisterPage() {
 
       if (!acceptedTerms) {
         alert(
-          "Please accept terms & privacy policy"
+          "Please accept Terms & Privacy Policy"
         );
 
         return;
@@ -92,6 +107,7 @@ export default function RegisterPage() {
       await axios.post(
         "/api/auth/register",
         {
+          name: cleanName,
           email: cleanEmail,
           password,
           acceptedTerms: true,
@@ -140,6 +156,18 @@ export default function RegisterPage() {
           Start your SaaS journey
         </p>
 
+        {/* NAME */}
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          value={name}
+          onChange={(e) =>
+            setName(e.target.value)
+          }
+          className="w-full border-b border-gray-300 focus:border-orange-500 outline-none py-3 mb-5 bg-transparent transition"
+        />
+
         {/* EMAIL */}
 
         <input
@@ -154,30 +182,53 @@ export default function RegisterPage() {
 
         {/* PASSWORD */}
 
-        <div className="mb-5">
+        <div className="mb-2">
           <PasswordInput
             value={password}
-            onChange={setPassword}
+            onChange={(value) => {
+              setPassword(value);
+
+              const strongPassword =
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+              if (
+                value.length > 0 &&
+                !strongPassword.test(
+                  value
+                )
+              ) {
+                setShowPasswordHint(
+                  true
+                );
+              } else {
+                setShowPasswordHint(
+                  false
+                );
+              }
+            }}
           />
         </div>
 
         {/* PASSWORD HINT */}
 
-        <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-          Password must contain at least:
-          <br />
-          • 8 characters
-          <br />
-          • 1 uppercase letter
-          <br />
-          • 1 lowercase letter
-          <br />
-          • 1 number
-        </p>
+        {showPasswordHint && (
+          <div className="text-xs text-red-500 mb-5 leading-6">
+            Password must contain:
+            <br />
+            • 8+ characters
+            <br />
+            • 1 uppercase letter
+            <br />
+            • 1 lowercase letter
+            <br />
+            • 1 number
+          </div>
+        )}
 
         {/* TERMS */}
 
         <label className="flex items-start gap-3 mb-6 cursor-pointer">
+
           <input
             type="checkbox"
             checked={acceptedTerms}
@@ -205,6 +256,7 @@ export default function RegisterPage() {
               Privacy Policy
             </a>
           </span>
+
         </label>
 
         {/* BUTTON */}
@@ -223,6 +275,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm mt-6 text-gray-600">
           Already have an account?{" "}
+
           <a
             href="/login"
             className="text-orange-600 hover:underline"

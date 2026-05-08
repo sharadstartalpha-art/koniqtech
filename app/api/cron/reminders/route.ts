@@ -109,7 +109,7 @@ export async function GET() {
            APPLY VARIABLES
         ========================= */
 
-        const paymentLink = `#`;
+        const paymentLink = "#";
 
         const html =
           template.html
@@ -167,10 +167,6 @@ export async function GET() {
 
           replyTo:
             user?.email,
-
-          fromName:
-            user?.name ||
-            "KoniqTech",
         });
 
         console.log(

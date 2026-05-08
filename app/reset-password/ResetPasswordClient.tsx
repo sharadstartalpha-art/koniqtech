@@ -163,7 +163,7 @@ export default function ResetPasswordClient() {
         </h1>
 
         <p className="text-center text-sm text-gray-500 mb-8">
-          Enter the 6-digit OTP sent to your email
+          Enter the 6-digit OTP sent to your email 
         </p>
 
         {/* OTP */}

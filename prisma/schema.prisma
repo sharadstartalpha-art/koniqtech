@@ -7,25 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  name     String?
-  password String?
-  role     String  @default("USER")
 
-  otp       String?
-  otpExpiry DateTime?
-
-  referredBy    String?
-  isVerified    Boolean        @default(false)
-  createdAt     DateTime       @default(now())
-  verifyExpiry  DateTime?
-  verifyToken   String?
-  paymentLinks  PaymentLink[]
-  invoices      Invoice[]
-  subscriptions Subscription[]
-}
 
 
 
@@ -223,4 +205,42 @@ model Invoice {
   user          User        @relation(fields: [userId], references: [id])
 
   reminders     Reminder[]
+}
+
+
+model User {
+  id          String   @id @default(uuid())
+
+  email       String   @unique
+  password    String?
+
+  name        String?
+  avatar      String?
+
+  role        String   @default("USER")
+
+  isVerified  Boolean  @default(false)
+
+  otp         String?
+  otpExpiry   DateTime?
+
+  verifyToken String?
+  verifyExpiry DateTime?
+
+  referredBy  String?
+
+  acceptedTerms Boolean @default(false)
+  acceptedAt     DateTime?
+
+  lastLoginAt  DateTime?
+  lastActiveAt DateTime?
+
+  timezone     String? @default("UTC")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  paymentLinks  PaymentLink[]
+  invoices      Invoice[]
+  subscriptions Subscription[]
 }

@@ -6,7 +6,6 @@ import axios from "axios";
 
 import {
   ChevronDown,
-  User,
   LogOut,
   Mail,
 } from "lucide-react";
@@ -62,14 +61,29 @@ export default function Header() {
   ========================= */
 
   useEffect(() => {
-    axios
-      .get("/api/auth/me")
-      .then((res) =>
-        setUser(res.data)
-      )
-      .catch(() =>
-        setUser(null)
-      );
+    const fetchUser =
+      async () => {
+        try {
+          const res =
+            await axios.get(
+              "/api/auth/me"
+            );
+
+          console.log(
+            "USER:",
+            res.data
+          );
+
+          setUser(res.data);
+
+        } catch (err) {
+          console.error(err);
+
+          setUser(null);
+        }
+      };
+
+    fetchUser();
   }, []);
 
   /* =========================
@@ -86,46 +100,53 @@ export default function Header() {
         "/login";
     };
 
+  /* =========================
+     SAFE NAME
+  ========================= */
+
+  const displayName =
+    user?.name &&
+    user.name !== "null"
+      ? user.name
+      : user?.email
+          ?.split("@")[0] ||
+        "User";
+
   return (
     <header className="h-14 border-b bg-white flex items-center justify-between px-6">
 
-      {/* =========================
-          LEFT
-      ========================= */}
+      {/* LEFT */}
 
       <div className="text-sm font-semibold text-gray-900">
         {title}
       </div>
 
-      {/* =========================
-          RIGHT
-      ========================= */}
+      {/* RIGHT */}
 
       <div className="relative">
         {user ? (
           <>
-            {/* USER BUTTON */}
+            {/* BUTTON */}
 
             <button
               onClick={() =>
                 setOpen(!open)
               }
-              className="flex items-center gap-2 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition"
+              className="flex items-center gap-3 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 px-3 py-1.5 rounded-xl transition"
             >
               {/* AVATAR */}
 
               <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold uppercase">
-                {user?.name
-                  ?.charAt(0) ||
-                  "U"}
+                {displayName.charAt(
+                  0
+                )}
               </div>
 
               {/* NAME */}
 
-              <div className="text-left hidden sm:block">
-                <p className="text-sm font-medium text-gray-900 leading-none">
-                  {user?.name ||
-                    "User"}
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-semibold text-gray-900 leading-none">
+                  {displayName}
                 </p>
               </div>
 
@@ -142,31 +163,32 @@ export default function Header() {
             {/* DROPDOWN */}
 
             {open && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden z-50">
 
                 {/* USER INFO */}
 
-                <div className="px-4 py-4 border-b bg-gray-50">
+                <div className="px-5 py-4 border-b bg-gray-50">
                   <div className="flex items-center gap-3">
 
-                    <div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center font-semibold uppercase">
-                      {user?.name
-                        ?.charAt(
-                          0
-                        ) ||
-                        "U"}
+                    <div className="w-11 h-11 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-bold uppercase">
+                      {displayName.charAt(
+                        0
+                      )}
                     </div>
 
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {user?.name ||
-                          "User"}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {
+                          displayName
+                        }
                       </p>
 
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                        <Mail size={12} />
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-1 truncate">
+                        <Mail
+                          size={12}
+                        />
 
-                        <span>
+                        <span className="truncate">
                           {
                             user?.email
                           }
@@ -183,7 +205,7 @@ export default function Header() {
                   onClick={
                     logout
                   }
-                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition"
+                  className="w-full flex items-center gap-2 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition"
                 >
                   <LogOut
                     size={16}

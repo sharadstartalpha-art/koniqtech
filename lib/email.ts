@@ -45,9 +45,7 @@ export async function sendEmail({
 
     const { error, data } =
       await resend.emails.send({
-        from: fromName
-          ? `${fromName} <no-reply@koniqtech.com>`
-          : FROM_EMAIL,
+        from: FROM_EMAIL,
 
         to,
 

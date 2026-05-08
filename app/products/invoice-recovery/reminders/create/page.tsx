@@ -30,6 +30,12 @@ type Template = {
   type: string;
 };
 
+type AutoReminder = {
+  step: number;
+  templateId: string;
+  delay: number;
+};
+
 /* =========================
    PAGE
 ========================= */
@@ -41,12 +47,8 @@ export default function CreateReminderPage() {
   const [templates, setTemplates] =
     useState<Template[]>([]);
 
-  const [
-    selectedTemplate,
-    setSelectedTemplate,
-  ] = useState<Template | null>(
-    null
-  );
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<Template | null>(null);
 
   const [search, setSearch] =
     useState("");
@@ -58,14 +60,10 @@ export default function CreateReminderPage() {
     useState("");
 
   const [preview, setPreview] =
-    useState<EmailPreview | null>(
-      null
-    );
+    useState<EmailPreview | null>(null);
 
   const [tab, setTab] =
-    useState<"text" | "html">(
-      "html"
-    );
+    useState<"text" | "html">("html");
 
   const [loading, setLoading] =
     useState(false);
@@ -73,134 +71,116 @@ export default function CreateReminderPage() {
   const [sending, setSending] =
     useState(false);
 
-  const [
-    showDropdown,
-    setShowDropdown,
-  ] = useState(false);
-
-  const [mode, setMode] =
-    useState<
-      "manual" | "auto"
-    >("manual");
+  const [showDropdown, setShowDropdown] =
+    useState(false);
 
   /* =========================
-     LOAD DATA
+     SEND MODE
+  ========================= */
+
+  const [sendMode, setSendMode] =
+    useState<"manual" | "auto">(
+      "manual"
+    );
+
+  /* =========================
+     MANUAL / AUTO AMOUNT
+  ========================= */
+
+  const [amountMode, setAmountMode] =
+    useState<"manual" | "auto">(
+      "manual"
+    );
+
+  /* =========================
+     AUTO REMINDERS
+  ========================= */
+
+  const [autoReminders, setAutoReminders] =
+    useState<AutoReminder[]>([
+      {
+        step: 1,
+        templateId: "",
+        delay: 0,
+      },
+      {
+        step: 2,
+        templateId: "",
+        delay: 3,
+      },
+      {
+        step: 3,
+        templateId: "",
+        delay: 7,
+      },
+    ]);
+
+  /* =========================
+     LOAD
   ========================= */
 
   useEffect(() => {
     loadInvoices();
-
     loadTemplates();
   }, []);
 
-  /* =========================
-     LOAD INVOICES
-  ========================= */
+  const loadInvoices = async () => {
+    try {
+      const res =
+        await axios.get("/api/invoices");
 
-  const loadInvoices =
-    async () => {
-      try {
-        const res =
-          await axios.get(
-            "/api/invoices"
-          );
+      setInvoices(
+        Array.isArray(res.data)
+          ? res.data
+          : []
+      );
 
-        setInvoices(
-          Array.isArray(
-            res.data
-          )
-            ? res.data
-            : []
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const res =
+        await axios.get(
+          "/api/reminder-templates"
         );
 
-      } catch (err) {
-        console.error(err);
+      let templateData = [];
+
+      if (Array.isArray(res.data)) {
+        templateData = res.data;
+
+      } else if (
+        Array.isArray(res.data.templates)
+      ) {
+        templateData =
+          res.data.templates;
+
+      } else if (
+        Array.isArray(res.data.data)
+      ) {
+        templateData =
+          res.data.data;
       }
-    };
 
-  /* =========================
-     LOAD TEMPLATES
-  ========================= */
+      setTemplates(templateData);
 
-  const loadTemplates =
-    async () => {
-      try {
-        /* IMPORTANT:
-           YOUR API IS:
-           /api/reminder-templates
-        */
-
-        const res =
-          await axios.get(
-            "/api/reminder-templates"
-          );
-
-        console.log(
-          "RAW TEMPLATE RESPONSE:",
-          res.data
-        );
-
-        /* HANDLE ALL POSSIBLE RESPONSES */
-
-        let templateData =
-          [];
-
-        if (
-          Array.isArray(
-            res.data
-          )
-        ) {
-          templateData =
-            res.data;
-
-        } else if (
-          Array.isArray(
-            res.data.templates
-          )
-        ) {
-          templateData =
-            res.data.templates;
-
-        } else if (
-          Array.isArray(
-            res.data.data
-          )
-        ) {
-          templateData =
-            res.data.data;
-        }
-
-        console.log(
-          "FINAL TEMPLATES:",
-          templateData
-        );
-
-        setTemplates(
-          templateData
-        );
-
-      } catch (err) {
-        console.error(
-          "TEMPLATE ERROR:",
-          err
-        );
-
-        setTemplates([]);
-      }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   /* =========================
      FILTER CLIENTS
   ========================= */
 
-  const filtered =
-    invoices.filter((inv) =>
-      inv.clientEmail
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    );
+  const filtered = invoices.filter((inv) =>
+    inv.clientEmail
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
   /* =========================
      APPLY VARIABLES
@@ -215,27 +195,21 @@ export default function CreateReminderPage() {
     return content
       .replaceAll(
         "{{name}}",
-        selected?.clientEmail?.split(
-          "@"
-        )[0] || "Customer"
+        selected?.clientEmail?.split("@")[0] ||
+          "Customer"
       )
-
       .replaceAll(
         "{{amount}}",
         finalAmount
       )
-
       .replaceAll(
         "{{email}}",
-        selected?.clientEmail ||
-          ""
+        selected?.clientEmail || ""
       )
-
       .replaceAll(
         "{{dueDate}}",
         new Date().toLocaleDateString()
       )
-
       .replaceAll(
         "{{link}}",
         "#"
@@ -243,56 +217,43 @@ export default function CreateReminderPage() {
   };
 
   /* =========================
-     GENERATE EMAIL
+     GENERATE
   ========================= */
 
-  const generate =
-    async () => {
-      if (!selected) {
-        return alert(
-          "Select client"
+  const generate = async () => {
+    if (!selected) {
+      return alert("Select client");
+    }
+
+    if (
+      amountMode === "manual" &&
+      !amount
+    ) {
+      return alert("Enter amount");
+    }
+
+    if (!selectedTemplate) {
+      return alert("Select template");
+    }
+
+    setLoading(true);
+
+    try {
+      const finalAmount =
+        amountMode === "manual"
+          ? amount
+          : String(selected.amount);
+
+      const html =
+        applyVariables(
+          selectedTemplate.html,
+          finalAmount
         );
-      }
 
-      if (
-        mode === "manual" &&
-        !amount
-      ) {
-        return alert(
-          "Enter amount"
-        );
-      }
-
-      if (
-        !selectedTemplate
-      ) {
-        return alert(
-          "Select template"
-        );
-      }
-
-      setLoading(true);
-
-      try {
-        const finalAmount =
-          mode === "manual"
-            ? amount
-            : String(
-                selected.amount
-              );
-
-        const html =
-          applyVariables(
-            selectedTemplate.html,
-            finalAmount
-          );
-
-        const text = `
+      const text = `
 Hi ${
-          selected.clientEmail.split(
-            "@"
-          )[0]
-        },
+        selected.clientEmail.split("@")[0]
+      },
 
 This is a reminder that your payment of $${finalAmount} is pending.
 
@@ -300,169 +261,188 @@ Thank you,
 KoniqTech
 `;
 
-        setPreview({
-          html,
-          text,
-        });
+      setPreview({
+        html,
+        text,
+      });
 
-      } catch (err) {
-        console.error(err);
+    } catch (err) {
+      console.error(err);
 
-        alert(
-          "Failed to generate"
-        );
-
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* =========================
-     SEND EMAIL
+     SEND
   ========================= */
 
-  const send =
-    async () => {
-      if (
-        !selected ||
-        !preview
-      ) {
-        return alert(
-          "Missing data"
-        );
-      }
-
+  const send = async () => {
+    try {
       setSending(true);
 
-      try {
+      /* =====================
+         AUTO SEQUENCE
+      ===================== */
+
+      if (sendMode === "auto") {
         await axios.post(
-          "/api/reminders/send-custom",
+          "/api/reminders/auto-sequence",
           {
-            email:
-              selected.clientEmail,
+            invoiceId: selected?.id,
 
-            subject:
-              selectedTemplate?.subject ||
-              "Invoice Reminder",
+            reminders: autoReminders,
 
-            html:
-              preview.html,
-
-            text:
-              preview.text,
+            amountMode,
 
             amount:
-              mode ===
-              "manual"
-                ? Number(
-                    amount
-                  )
-                : selected.amount,
+              amountMode === "manual"
+                ? Number(amount)
+                : selected?.amount,
           }
         );
 
         alert(
-          "Reminder sent"
+          "Auto reminder sequence created"
         );
 
-        window.location.href =
-          "/products/invoice-recovery/reminders";
+      } else {
+        /* =====================
+           MANUAL SEND
+        ===================== */
 
-      } catch (err) {
-        console.error(err);
+        await axios.post(
+          "/api/reminders/send-custom",
+          {
+            email:
+              selected?.clientEmail,
 
-        alert(
-          "Failed to send email"
+            subject:
+              selectedTemplate?.subject,
+
+            html: preview?.html,
+
+            text: preview?.text,
+
+            amount:
+              amountMode === "manual"
+                ? Number(amount)
+                : selected?.amount,
+          }
         );
 
-      } finally {
-        setSending(false);
+        alert("Reminder sent");
       }
-    };
+
+      window.location.href =
+        "/products/invoice-recovery/reminders";
+
+    } catch (err) {
+      console.error(err);
+
+      alert("Failed");
+
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
 
         {/* HEADER */}
 
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold">
             Send Reminder
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Send reminders using
-            saved templates
+            Manual & automated invoice reminders
           </p>
         </div>
 
         {/* CARD */}
 
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm space-y-6">
+        <div className="bg-white border rounded-3xl p-8 space-y-6">
+
+          {/* SEND TYPE */}
+
+          <div>
+            <label className="block text-sm font-semibold mb-3">
+              Send Type
+            </label>
+
+            <div className="flex gap-3">
+
+              <button
+                onClick={() =>
+                  setSendMode("manual")
+                }
+                className={`px-5 py-2 rounded-xl border ${
+                  sendMode === "manual"
+                    ? "bg-black text-white"
+                    : "bg-white"
+                }`}
+              >
+                Manual Send
+              </button>
+
+              <button
+                onClick={() =>
+                  setSendMode("auto")
+                }
+                className={`px-5 py-2 rounded-xl border ${
+                  sendMode === "auto"
+                    ? "bg-black text-white"
+                    : "bg-white"
+                }`}
+              >
+                Auto Sequence
+              </button>
+
+            </div>
+          </div>
 
           {/* CLIENT */}
 
           <div className="relative">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+
+            <label className="block text-sm font-semibold mb-2">
               Client Email
             </label>
 
             <input
-              placeholder="Search client email..."
+              placeholder="Search client..."
               value={search}
               onChange={(e) => {
-                setSearch(
-                  e.target.value
-                );
-
-                setShowDropdown(
-                  true
-                );
+                setSearch(e.target.value);
+                setShowDropdown(true);
               }}
-              onFocus={() =>
-                setShowDropdown(
-                  true
-                )
-              }
-              className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500"
+              className="w-full border rounded-2xl px-4 py-3"
             />
 
             {showDropdown && (
-              <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg max-h-52 overflow-y-auto">
+              <div className="absolute z-20 mt-2 w-full bg-white border rounded-2xl shadow-lg max-h-52 overflow-y-auto">
 
-                {filtered.length ===
-                0 ? (
-                  <div className="p-4 text-sm text-gray-500">
-                    No clients found
+                {filtered.map((inv) => (
+                  <div
+                    key={inv.id}
+                    onClick={() => {
+                      setSelected(inv);
+                      setSearch(
+                        inv.clientEmail
+                      );
+                      setShowDropdown(false);
+                    }}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                  >
+                    {inv.clientEmail}
                   </div>
-                ) : (
-                  filtered.map(
-                    (inv) => (
-                      <div
-                        key={inv.id}
-                        onClick={() => {
-                          setSelected(
-                            inv
-                          );
+                ))}
 
-                          setSearch(
-                            inv.clientEmail
-                          );
-
-                          setShowDropdown(
-                            false
-                          );
-                        }}
-                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm"
-                      >
-                        {
-                          inv.clientEmail
-                        }
-                      </div>
-                    )
-                  )
-                )}
               </div>
             )}
           </div>
@@ -471,37 +451,31 @@ KoniqTech
 
           {selected && (
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
-              <p className="text-sm text-orange-700">
-                Total Due
-              </p>
+              <p>Total Due</p>
 
-              <p className="text-4xl font-bold text-orange-600 mt-1">
-                $
-                {selected.amount}
+              <p className="text-4xl font-bold text-orange-600">
+                ${selected.amount}
               </p>
             </div>
           )}
 
-          {/* MODE */}
+          {/* AMOUNT MODE */}
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Reminder Mode
+            <label className="block text-sm font-semibold mb-3">
+              Amount Mode
             </label>
 
             <div className="flex gap-3">
 
               <button
                 onClick={() =>
-                  setMode(
-                    "manual"
-                  )
+                  setAmountMode("manual")
                 }
                 className={`px-5 py-2 rounded-xl border ${
-                  mode ===
-                  "manual"
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white border-gray-300"
+                  amountMode === "manual"
+                    ? "bg-orange-500 text-white"
+                    : ""
                 }`}
               >
                 Manual Amount
@@ -509,237 +483,222 @@ KoniqTech
 
               <button
                 onClick={() =>
-                  setMode("auto")
+                  setAmountMode("auto")
                 }
                 className={`px-5 py-2 rounded-xl border ${
-                  mode ===
-                  "auto"
-                    ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white border-gray-300"
+                  amountMode === "auto"
+                    ? "bg-orange-500 text-white"
+                    : ""
                 }`}
               >
-                Auto Full Amount
+                Full Invoice Amount
               </button>
 
             </div>
           </div>
 
-          {/* AMOUNT */}
+          {/* MANUAL AMOUNT */}
 
-          {mode ===
-            "manual" && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Reminder Amount
-              </label>
+          {amountMode === "manual" && (
+            <input
+              type="number"
+              placeholder="Reminder amount"
+              value={amount}
+              onChange={(e) =>
+                setAmount(e.target.value)
+              }
+              className="w-full border rounded-2xl px-4 py-3"
+            />
+          )}
 
-              <input
-                type="number"
-                placeholder="Enter amount"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(
-                    e.target.value
-                  )
-                }
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500"
+          {/* =========================
+              MANUAL EMAIL
+          ========================= */}
+
+          {sendMode === "manual" && (
+            <>
+              <div>
+
+                <label className="block text-sm font-semibold mb-2">
+                  Template
+                </label>
+
+                <select
+                  value={
+                    selectedTemplate?.id || ""
+                  }
+                  onChange={(e) => {
+                    const found =
+                      templates.find(
+                        (t) =>
+                          t.id ===
+                          e.target.value
+                      );
+
+                    setSelectedTemplate(
+                      found || null
+                    );
+                  }}
+                  className="w-full border rounded-2xl px-4 py-3"
+                >
+                  <option value="">
+                    Choose template
+                  </option>
+
+                  {templates.map((template) => (
+                    <option
+                      key={template.id}
+                      value={template.id}
+                    >
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+
+              </div>
+
+              <button
+                onClick={generate}
+                className="w-full bg-orange-500 text-white py-3 rounded-2xl"
+              >
+                Generate Email
+              </button>
+            </>
+          )}
+
+          {/* =========================
+              AUTO REMINDERS
+          ========================= */}
+
+          {sendMode === "auto" && (
+            <div className="space-y-5">
+
+              <div>
+                <h2 className="text-lg font-semibold">
+                  Auto Reminder Sequence
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  Configure automatic reminders
+                </p>
+              </div>
+
+              {autoReminders.map(
+                (reminder, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-2xl p-5 grid grid-cols-3 gap-4"
+                  >
+
+                    {/* TEMPLATE */}
+
+                    <div>
+                      <label className="text-sm font-medium">
+                        Template
+                      </label>
+
+                      <select
+                        value={
+                          reminder.templateId
+                        }
+                        onChange={(e) => {
+                          const updated = [
+                            ...autoReminders,
+                          ];
+
+                          updated[index].templateId =
+                            e.target.value;
+
+                          setAutoReminders(
+                            updated
+                          );
+                        }}
+                        className="w-full mt-2 border rounded-xl px-3 py-2"
+                      >
+                        <option value="">
+                          Select template
+                        </option>
+
+                        {templates.map((t) => (
+                          <option
+                            key={t.id}
+                            value={t.id}
+                          >
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* DELAY */}
+
+                    <div>
+                      <label className="text-sm font-medium">
+                        Send After (Days)
+                      </label>
+
+                      <input
+                        type="number"
+                        value={reminder.delay}
+                        onChange={(e) => {
+                          const updated = [
+                            ...autoReminders,
+                          ];
+
+                          updated[index].delay =
+                            Number(
+                              e.target.value
+                            );
+
+                          setAutoReminders(
+                            updated
+                          );
+                        }}
+                        className="w-full mt-2 border rounded-xl px-3 py-2"
+                      />
+                    </div>
+
+                    {/* STEP */}
+
+                    <div className="flex items-end">
+                      <div className="bg-gray-100 rounded-xl px-4 py-2 w-full text-center font-medium">
+                        Reminder #{reminder.step}
+                      </div>
+                    </div>
+
+                  </div>
+                )
+              )}
+
+            </div>
+          )}
+
+          {/* PREVIEW */}
+
+          {preview && sendMode === "manual" && (
+            <div className="border rounded-2xl p-6">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: preview.html,
+                }}
               />
             </div>
           )}
 
-          {/* TEMPLATE */}
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Select Template
-            </label>
-
-            <select
-              value={
-                selectedTemplate?.id ||
-                ""
-              }
-              onChange={(e) => {
-                const found =
-                  templates.find(
-                    (t) =>
-                      t.id ===
-                      e.target.value
-                  );
-
-                setSelectedTemplate(
-                  found || null
-                );
-              }}
-              className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500"
-            >
-              <option value="">
-                Choose template
-              </option>
-
-              {templates.map(
-                (template) => (
-                  <option
-                    key={
-                      template.id
-                    }
-                    value={
-                      template.id
-                    }
-                  >
-                    {
-                      template.name
-                    }{" "}
-                    (
-                    {
-                      template.type
-                    }
-                    )
-                  </option>
-                )
-              )}
-            </select>
-
-            {/* DEBUG */}
-
-            <div className="mt-2 text-xs text-gray-500">
-              Templates loaded:
-              {" "}
-              {
-                templates.length
-              }
-            </div>
-
-            {templates.length ===
-              0 && (
-              <p className="text-sm text-red-500 mt-1">
-                No templates found
-              </p>
-            )}
-          </div>
-
-          {/* GENERATE */}
+          {/* SEND */}
 
           <button
-            onClick={generate}
-            disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-semibold transition"
+            onClick={send}
+            disabled={sending}
+            className="w-full bg-black text-white py-4 rounded-2xl font-semibold"
           >
-            {loading
-              ? "Generating..."
-              : "Generate Email"}
+            {sending
+              ? "Processing..."
+              : sendMode === "auto"
+              ? "Save Auto Sequence"
+              : "Send Reminder"}
           </button>
 
-          {/* PREVIEW */}
-
-          {preview && (
-            <div className="space-y-5 pt-4">
-
-              {/* TABS */}
-
-              <div className="flex gap-6 border-b border-gray-200">
-
-                <button
-                  onClick={() =>
-                    setTab(
-                      "html"
-                    )
-                  }
-                  className={`pb-3 text-sm font-medium ${
-                    tab ===
-                    "html"
-                      ? "border-b-2 border-orange-500 text-orange-600"
-                      : "text-gray-500"
-                  }`}
-                >
-                  HTML Preview
-                </button>
-
-                <button
-                  onClick={() =>
-                    setTab(
-                      "text"
-                    )
-                  }
-                  className={`pb-3 text-sm font-medium ${
-                    tab ===
-                    "text"
-                      ? "border-b-2 border-orange-500 text-orange-600"
-                      : "text-gray-500"
-                  }`}
-                >
-                  Text Version
-                </button>
-
-              </div>
-
-              {/* TEXT */}
-
-              {tab ===
-                "text" && (
-                <textarea
-                  value={
-                    preview.text
-                  }
-                  onChange={(e) =>
-                    setPreview({
-                      ...preview,
-                      text: e
-                        .target
-                        .value,
-                    })
-                  }
-                  className="w-full border border-gray-300 rounded-2xl p-4 h-60"
-                />
-              )}
-
-              {/* HTML */}
-
-              {tab ===
-                "html" && (
-                <div className="space-y-4">
-
-                  <textarea
-                    value={
-                      preview.html
-                    }
-                    onChange={(e) =>
-                      setPreview({
-                        ...preview,
-                        html: e
-                          .target
-                          .value,
-                      })
-                    }
-                    className="w-full border border-gray-300 rounded-2xl p-4 h-60 font-mono text-sm"
-                  />
-
-                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50">
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          preview.html,
-                      }}
-                    />
-                  </div>
-
-                </div>
-              )}
-
-              {/* SEND */}
-
-              <button
-                onClick={send}
-                disabled={sending}
-                className="w-full bg-black hover:bg-gray-900 text-white py-3 rounded-2xl font-semibold transition"
-              >
-                {sending
-                  ? "Sending..."
-                  : "Send Reminder"}
-              </button>
-
-            </div>
-          )}
         </div>
       </div>
     </Layout>

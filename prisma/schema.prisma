@@ -259,5 +259,5 @@ model ReminderSchedule {
 
   template     ReminderTemplate @relation(fields: [templateId], references: [id])
 
-  @@unique([userId, type])
+  @@unique([invoiceId, step])
 }

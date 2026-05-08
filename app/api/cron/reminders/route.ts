@@ -1,113 +1,235 @@
 import { prisma } from "@/lib/prisma";
+
 import { sendEmail } from "@/lib/email";
+
+import {
+  ReminderMode,
+  ReminderType,
+} from "@prisma/client";
 
 export async function GET() {
   try {
-    console.log("🔥 CRON STARTED");
+    console.log(
+      "🔥 AUTO REMINDER CRON STARTED"
+    );
 
-    const schedules = await prisma.reminderSchedule.findMany({
-      where: { enabled: true },
-      include: {
-        template: true,
-      },
-    });
+    /* =========================
+       GET PENDING SCHEDULES
+    ========================= */
 
-    const invoices = await prisma.invoice.findMany({
-      where: {
-        status: "unpaid",
-        mode: "auto", // ✅ only auto invoices
-      },
-    });
+    const schedules =
+      await prisma.reminderSchedule.findMany(
+        {
+          where: {
+            status: "pending",
 
-    const now = new Date();
+            sendAt: {
+              lte: new Date(),
+            },
+          },
+
+          include: {
+            template: true,
+            invoice: true,
+          },
+
+          orderBy: {
+            sendAt: "asc",
+          },
+        }
+      );
+
+    console.log(
+      `📦 Found ${schedules.length} pending reminders`
+    );
+
+    /* =========================
+       LOOP
+    ========================= */
 
     for (const schedule of schedules) {
-      for (const invoice of invoices) {
-        /* =========================
-           📅 DAYS LATE CALCULATION
-        ========================= */
-        const daysLate =
-          (now.getTime() - new Date(invoice.dueDate).getTime()) /
-          (1000 * 60 * 60 * 24);
+      try {
+        const invoice =
+          schedule.invoice;
 
-        /* =========================
-           ⏱️ MATCH SCHEDULE TYPE
-        ========================= */
-        if (daysLate < schedule.daysAfter) continue;
+        const template =
+          schedule.template;
 
-        // optional: match exact type stage
-        if (
-          schedule.type === "friendly" && daysLate >= 1 && daysLate < 3 ||
-          schedule.type === "firm" && daysLate >= 3 && daysLate < 7 ||
-          schedule.type === "final" && daysLate >= 7
-        ) {
-          // continue to send
-        } else {
+        if (!invoice) {
+          console.log(
+            "❌ Invoice missing"
+          );
+
+          continue;
+        }
+
+        if (!template) {
+          console.log(
+            "❌ Template missing"
+          );
+
           continue;
         }
 
         /* =========================
-           ❌ PREVENT DUPLICATES
+           APPLY VARIABLES
         ========================= */
-        const alreadySent = await prisma.reminder.findFirst({
-          where: {
-            invoiceId: invoice.id,
-            scheduleId: schedule.id,
-          },
-        });
 
-        if (alreadySent) continue;
+        const html =
+          template.html
+            .replaceAll(
+              "{{name}}",
+              invoice.clientEmail.split(
+                "@"
+              )[0]
+            )
+
+            .replaceAll(
+              "{{amount}}",
+              String(
+                schedule.amount
+              )
+            )
+
+            .replaceAll(
+              "{{email}}",
+              invoice.clientEmail
+            )
+
+            .replaceAll(
+              "{{dueDate}}",
+              new Date().toLocaleDateString()
+            )
+
+            .replaceAll(
+              "{{link}}",
+              "#"
+            );
+
+        const text =
+          html.replace(
+            /<[^>]+>/g,
+            ""
+          );
 
         /* =========================
-           📧 SEND EMAIL
+           SEND EMAIL
         ========================= */
+
         await sendEmail({
           to: invoice.clientEmail,
-          subject: schedule.template.subject,
-          html: schedule.template.html,
-        });
 
-        /* =========================
-           💾 SAVE REMINDER
-        ========================= */
-        await prisma.reminder.create({
-          data: {
-            userId: invoice.userId,
-            invoiceId: invoice.id,
+          subject:
+            template.subject,
 
-            email: invoice.clientEmail,
-            amount: invoice.amount,
-
-            type: schedule.type, // ✅ enum safe
-            mode: "auto",
-            status: "sent",
-
-            html: schedule.template.html,
-            text: schedule.template.html.replace(/<[^>]+>/g, ""),
-
-            templateId: schedule.templateId,
-            scheduleId: schedule.id,
-
-            sentAt: new Date(),
-          },
+          html,
         });
 
         console.log(
-          `📧 ${schedule.type} reminder sent → ${invoice.clientEmail}`
+          `📧 Reminder sent → ${invoice.clientEmail}`
+        );
+
+        /* =========================
+           SAVE REMINDER
+        ========================= */
+
+        await prisma.reminder.create(
+          {
+            data: {
+              userId:
+                schedule.userId,
+
+              invoiceId:
+                invoice.id,
+
+              email:
+                invoice.clientEmail,
+
+              amount:
+                schedule.amount,
+
+              type:
+                template.type as ReminderType,
+
+              mode:
+                schedule.mode as ReminderMode,
+
+              status: "sent",
+
+              html,
+
+              text,
+
+              templateId:
+                template.id,
+
+              scheduleId:
+                schedule.id,
+
+              sentAt:
+                new Date(),
+            },
+          }
+        );
+
+        /* =========================
+           UPDATE SCHEDULE
+        ========================= */
+
+        await prisma.reminderSchedule.update(
+          {
+            where: {
+              id: schedule.id,
+            },
+
+            data: {
+              status: "sent",
+            },
+          }
+        );
+
+      } catch (error) {
+        console.error(
+          "❌ SINGLE REMINDER FAILED:",
+          error
+        );
+
+        await prisma.reminderSchedule.update(
+          {
+            where: {
+              id: schedule.id,
+            },
+
+            data: {
+              status: "failed",
+            },
+          }
         );
       }
     }
 
-    console.log("✅ CRON FINISHED");
+    console.log(
+      "✅ CRON FINISHED"
+    );
 
-    return Response.json({ success: true });
+    return Response.json({
+      success: true,
+    });
 
   } catch (err) {
-    console.error("❌ CRON ERROR:", err);
+    console.error(
+      "❌ CRON ERROR:",
+      err
+    );
 
     return Response.json(
-      { error: "Cron failed" },
-      { status: 500 }
+      {
+        error:
+          "Cron failed",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

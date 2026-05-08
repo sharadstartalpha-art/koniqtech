@@ -104,23 +104,11 @@ model ReminderTemplate {
   type      String   // 🔥 "friendly" | "firm" | "final" | "custom"
   isDefault Boolean  @default(false)
 
-  schedules ReminderSchedule[]
+  
   createdAt DateTime @default(now())
+  reminderSchedules  ReminderSchedule[]
 }
 
-model ReminderSchedule {
-  id          String   @id @default(cuid())
-  userId      String
-  type        ReminderType   // 🔥 ADD THIS
-  daysAfter   Int
-  templateId  String
-
-  template    ReminderTemplate @relation(fields: [templateId], references: [id])
-
-  enabled     Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  @@unique([userId, type]) // ✅ THIS FIXES YOUR ERROR
-}
 
 model Reminder {
   id        String @id @default(uuid())
@@ -205,6 +193,7 @@ model Invoice {
   user          User        @relation(fields: [userId], references: [id])
 
   reminders     Reminder[]
+  reminderSchedules  ReminderSchedule[]
 }
 
 
@@ -243,4 +232,32 @@ model User {
   paymentLinks  PaymentLink[]
   invoices      Invoice[]
   subscriptions Subscription[]
+}
+
+
+
+model ReminderSchedule {
+  id          String   @id @default(cuid())
+
+  userId      String
+  invoiceId   String
+  templateId  String
+
+  type        String
+
+  step        Int
+  amount      Float
+  mode        String
+
+  sendAt      DateTime
+
+  status      String   @default("pending")
+
+  createdAt   DateTime @default(now())
+
+  invoice      Invoice          @relation(fields: [invoiceId], references: [id])
+
+  template     ReminderTemplate @relation(fields: [templateId], references: [id])
+
+  @@unique([userId, type])
 }

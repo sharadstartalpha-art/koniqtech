@@ -30,7 +30,12 @@ export async function GET() {
 
           include: {
             template: true,
-            invoice: true,
+
+            invoice: {
+              include: {
+                user: true,
+              },
+            },
           },
 
           orderBy: {
@@ -55,6 +60,13 @@ export async function GET() {
         const template =
           schedule.template;
 
+        const user =
+          invoice?.user;
+
+        /* =========================
+           VALIDATION
+        ========================= */
+
         if (!invoice) {
           console.log(
             "❌ Invoice missing"
@@ -72,16 +84,41 @@ export async function GET() {
         }
 
         /* =========================
+           DUPLICATE CHECK
+        ========================= */
+
+        const alreadySent =
+          await prisma.reminder.findFirst(
+            {
+              where: {
+                scheduleId:
+                  schedule.id,
+              },
+            }
+          );
+
+        if (alreadySent) {
+          console.log(
+            "⏭️ Reminder already sent"
+          );
+
+          continue;
+        }
+
+        /* =========================
            APPLY VARIABLES
         ========================= */
+
+        const paymentLink = `#`;
 
         const html =
           template.html
             .replaceAll(
               "{{name}}",
-              invoice.clientEmail.split(
-                "@"
-              )[0]
+              invoice.clientName ||
+                invoice.clientEmail.split(
+                  "@"
+                )[0]
             )
 
             .replaceAll(
@@ -98,12 +135,14 @@ export async function GET() {
 
             .replaceAll(
               "{{dueDate}}",
-              new Date().toLocaleDateString()
+              new Date(
+                invoice.dueDate
+              ).toLocaleDateString()
             )
 
             .replaceAll(
               "{{link}}",
-              "#"
+              paymentLink
             );
 
         const text =
@@ -123,6 +162,15 @@ export async function GET() {
             template.subject,
 
           html,
+
+          text,
+
+          replyTo:
+            user?.email,
+
+          fromName:
+            user?.name ||
+            "KoniqTech",
         });
 
         console.log(
@@ -186,6 +234,10 @@ export async function GET() {
               status: "sent",
             },
           }
+        );
+
+        console.log(
+          `✅ Reminder completed → ${invoice.clientEmail}`
         );
 
       } catch (error) {

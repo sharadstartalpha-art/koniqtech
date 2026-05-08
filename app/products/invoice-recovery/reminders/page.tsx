@@ -64,7 +64,10 @@ export default function RemindersPage() {
     useState(5);
 
   const [user, setUser] =
-    useState<User | null>(null);
+  useState<User | null>(null);
+
+const [userLoading, setUserLoading] =
+  useState(true);
 
   const [
     selectedReminder,
@@ -78,20 +81,23 @@ export default function RemindersPage() {
      LOAD CURRENT USER
   ========================= */
 
-  const loadUser =
-    async () => {
-      try {
-        const res =
-          await axios.get(
-            "/api/auth/me"
-          );
+  const loadUser = async () => {
+  try {
+    setUserLoading(true);
 
-        setUser(res.data);
+    const res = await axios.get(
+      "/api/auth/me"
+    );
 
-      } catch (err) {
-        console.error(err);
-      }
-    };
+    setUser(res.data);
+
+  } catch (err) {
+    console.error(err);
+
+  } finally {
+    setUserLoading(false);
+  }
+};
 
   /* =========================
      LOAD REMINDERS
@@ -138,67 +144,56 @@ export default function RemindersPage() {
      FILTER REMINDERS
   ========================= */
 
-  const filtered =
-    useMemo(() => {
-      let result = [...data];
+  const filtered = useMemo(() => {
+  /* WAIT FOR USER */
 
-      /* ONLY CURRENT USER */
+  if (userLoading || !user) {
+    return [];
+  }
 
-      if (user?.id) {
-        result =
-          result.filter(
-            (r) =>
-              r.userId ===
-              user.id
-          );
-      }
+  /* ONLY CURRENT USER */
 
-      /* SEARCH */
+  let result = data.filter(
+    (r) => r.userId === user.id
+  );
 
-      if (search) {
-        result =
-          result.filter((r) =>
-            r.email
-              .toLowerCase()
-              .includes(
-                search.toLowerCase()
-              )
-          );
-      }
+  /* SEARCH */
 
-      /* MODE */
+  if (search) {
+    result = result.filter((r) =>
+      r.email
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    );
+  }
 
-      if (
-        mode !== "all"
-      ) {
-        result =
-          result.filter(
-            (r) =>
-              r.mode ===
-              mode
-          );
-      }
+  /* MODE */
 
-      /* NEWEST FIRST */
+  if (mode !== "all") {
+    result = result.filter(
+      (r) => r.mode === mode
+    );
+  }
 
-      result.sort(
-        (a, b) =>
-          new Date(
-            b.sentAt
-          ).getTime() -
-          new Date(
-            a.sentAt
-          ).getTime()
-      );
+  /* SORT */
 
-      return result;
-    }, [
-      data,
-      search,
-      mode,
-      user,
-    ]);
+  result.sort(
+    (a, b) =>
+      new Date(b.sentAt).getTime() -
+      new Date(a.sentAt).getTime()
+  );
 
+  return result;
+
+}, [
+  data,
+  user,
+  userLoading,
+  search,
+  mode,
+]);
   /* =========================
      PAGINATION
   ========================= */
@@ -371,7 +366,7 @@ export default function RemindersPage() {
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
-          {loading ? (
+          {loading || userLoading ? (
             <div className="p-10 text-center text-gray-500">
               Loading reminders...
             </div>

@@ -25,8 +25,6 @@ type SendEmailProps = {
   text?: string;
 
   replyTo?: string;
-
-  fromName?: string;
 };
 
 export async function sendEmail({
@@ -35,7 +33,6 @@ export async function sendEmail({
   html,
   text,
   replyTo,
-  fromName,
 }: SendEmailProps) {
   try {
     console.log(
@@ -157,7 +154,6 @@ export async function sendReminderEmail({
   amount,
   paymentLink,
   replyTo,
-  senderName,
 }: {
   to: string;
 
@@ -166,8 +162,6 @@ export async function sendReminderEmail({
   paymentLink: string;
 
   replyTo?: string;
-
-  senderName?: string;
 }) {
   const html = `
     <div style="
@@ -257,8 +251,5 @@ Sent via KoniqTech
     text,
 
     replyTo,
-
-    fromName:
-      senderName || "KoniqTech",
   });
 }

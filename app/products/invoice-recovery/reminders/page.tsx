@@ -12,7 +12,7 @@ import EmailViewerModal from "@/components/EmailViewerModal";
    TYPES
 ========================= */
 
-type Reminder = {
+type ReminderItem = {
   id: string;
 
   email: string;
@@ -25,7 +25,9 @@ type Reminder = {
 
   mode: "manual" | "auto";
 
-  sentAt: string;
+  sentAt?: string;
+
+  sendAt?: string;
 
   html?: string;
 
@@ -43,8 +45,9 @@ type User = {
 ========================= */
 
 export default function RemindersPage() {
-  const [data, setData] =
-    useState<Reminder[]>([]);
+  const [data, setData] = useState<
+    ReminderItem[]
+  >([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -64,71 +67,121 @@ export default function RemindersPage() {
     useState(5);
 
   const [user, setUser] =
-  useState<User | null>(null);
+    useState<User | null>(null);
 
-const [userLoading, setUserLoading] =
-  useState(true);
+  const [userLoading, setUserLoading] =
+    useState(true);
 
   const [
     selectedReminder,
     setSelectedReminder,
   ] =
-    useState<Reminder | null>(
+    useState<ReminderItem | null>(
       null
     );
 
   /* =========================
-     LOAD CURRENT USER
+     LOAD USER
   ========================= */
 
   const loadUser = async () => {
-  try {
-    setUserLoading(true);
+    try {
+      setUserLoading(true);
 
-    const res = await axios.get(
-      "/api/auth/me"
-    );
+      const res =
+        await axios.get(
+          "/api/auth/me"
+        );
 
-    setUser(res.data);
+      setUser(res.data);
 
-  } catch (err) {
-    console.error(err);
+    } catch (err) {
+      console.error(err);
 
-  } finally {
-    setUserLoading(false);
-  }
-};
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   /* =========================
-     LOAD REMINDERS
+     LOAD REMINDERS + SCHEDULES
   ========================= */
 
-  const loadReminders =
-    async () => {
-      try {
-        setLoading(true);
+  const loadData = async () => {
+    try {
+      setLoading(true);
 
-        const res =
-          await axios.get(
-            "/api/reminders"
-          );
+      const [
+        remindersRes,
+        schedulesRes,
+      ] = await Promise.all([
+        axios.get("/api/reminders"),
 
-        const reminders =
-          Array.isArray(
-            res.data
-          )
-            ? res.data
-            : res.data.data || [];
+        axios.get(
+          "/api/reminder-schedule"
+        ),
+      ]);
 
-        setData(reminders);
+      const reminders =
+        Array.isArray(
+          remindersRes.data
+        )
+          ? remindersRes.data
+          : remindersRes.data.data || [];
 
-      } catch (err) {
-        console.error(err);
+      const schedules =
+        Array.isArray(
+          schedulesRes.data
+        )
+          ? schedulesRes.data
+          : schedulesRes.data.data || [];
 
-      } finally {
-        setLoading(false);
-      }
-    };
+      /* =========================
+         FORMAT SCHEDULES
+      ========================= */
+
+      const formattedSchedules =
+        schedules.map((s: any) => ({
+          id: s.id,
+
+          email:
+            s.invoice
+              ?.clientEmail || "-",
+
+          amount:
+            s.amount || 0,
+
+          type:
+            s.type || "auto",
+
+          status:
+            s.status || "pending",
+
+          mode:
+            s.mode || "auto",
+
+          sendAt:
+            s.sendAt,
+
+          html:
+            s.template?.html || "",
+
+          userId:
+            s.userId,
+        }));
+
+      setData([
+        ...reminders,
+        ...formattedSchedules,
+      ]);
+
+    } catch (err) {
+      console.error(err);
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* =========================
      INITIAL LOAD
@@ -137,63 +190,75 @@ const [userLoading, setUserLoading] =
   useEffect(() => {
     loadUser();
 
-    loadReminders();
+    loadData();
   }, []);
 
   /* =========================
-     FILTER REMINDERS
+     FILTER
   ========================= */
 
   const filtered = useMemo(() => {
-  /* WAIT FOR USER */
+    if (
+      userLoading ||
+      !user
+    ) {
+      return [];
+    }
 
-  if (userLoading || !user) {
-    return [];
-  }
-
-  /* ONLY CURRENT USER */
-
-  let result = data.filter(
-    (r) => r.userId === user.id
-  );
-
-  /* SEARCH */
-
-  if (search) {
-    result = result.filter((r) =>
-      r.email
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
+    let result = data.filter(
+      (r) => r.userId === user.id
     );
-  }
 
-  /* MODE */
+    /* SEARCH */
 
-  if (mode !== "all") {
-    result = result.filter(
-      (r) => r.mode === mode
-    );
-  }
+    if (search) {
+      result = result.filter((r) =>
+        r.email
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+      );
+    }
 
-  /* SORT */
+    /* MODE */
 
-  result.sort(
-    (a, b) =>
-      new Date(b.sentAt).getTime() -
-      new Date(a.sentAt).getTime()
-  );
+    if (mode !== "all") {
+      result = result.filter(
+        (r) => r.mode === mode
+      );
+    }
 
-  return result;
+    /* SORT */
 
-}, [
-  data,
-  user,
-  userLoading,
-  search,
-  mode,
-]);
+    result.sort((a, b) => {
+      const aDate =
+        new Date(
+          a.sentAt ||
+            a.sendAt ||
+            0
+        ).getTime();
+
+      const bDate =
+        new Date(
+          b.sentAt ||
+            b.sendAt ||
+            0
+        ).getTime();
+
+      return bDate - aDate;
+    });
+
+    return result;
+
+  }, [
+    data,
+    user,
+    userLoading,
+    search,
+    mode,
+  ]);
+
   /* =========================
      PAGINATION
   ========================= */
@@ -212,10 +277,6 @@ const [userLoading, setUserLoading] =
       start,
       start + perPage
     );
-
-  /* =========================
-     RESET PAGE
-  ========================= */
 
   useEffect(() => {
     setPage(1);
@@ -240,6 +301,9 @@ const [userLoading, setUserLoading] =
 
       case "failed":
         return "bg-red-100 text-red-700";
+
+      case "pending":
+        return "bg-yellow-100 text-yellow-700";
 
       default:
         return "bg-gray-100 text-gray-700";
@@ -272,7 +336,7 @@ const [userLoading, setUserLoading] =
             </h1>
 
             <p className="text-gray-500 mt-1">
-              View reminders sent by you
+              Sent + scheduled reminders
             </p>
           </div>
 
@@ -285,28 +349,20 @@ const [userLoading, setUserLoading] =
 
         </div>
 
-        {/* FILTER BAR */}
+        {/* FILTERS */}
 
         <div className="flex flex-wrap gap-4 items-center justify-between">
 
-          {/* SEARCH */}
-
-          <div className="flex-1 min-w-[240px]">
-
-            <input
-              placeholder="Search email..."
-              value={search}
-              onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
-              }
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-            />
-
-          </div>
-
-          {/* MODE FILTER */}
+          <input
+            placeholder="Search email..."
+            value={search}
+            onChange={(e) =>
+              setSearch(
+                e.target.value
+              )
+            }
+            className="flex-1 min-w-[240px] border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+          />
 
           <div className="flex bg-gray-100 p-1 rounded-xl">
 
@@ -333,8 +389,6 @@ const [userLoading, setUserLoading] =
             ))}
 
           </div>
-
-          {/* PER PAGE */}
 
           <select
             value={perPage}
@@ -366,19 +420,16 @@ const [userLoading, setUserLoading] =
 
         <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
-          {loading || userLoading ? (
+          {loading ||
+          userLoading ? (
             <div className="p-10 text-center text-gray-500">
               Loading reminders...
             </div>
 
           ) : filtered.length ===
             0 ? (
-            <div className="p-10 text-center">
-
-              <p className="text-gray-500">
-                No reminders found
-              </p>
-
+            <div className="p-10 text-center text-gray-500">
+              No reminders found
             </div>
 
           ) : (
@@ -386,43 +437,39 @@ const [userLoading, setUserLoading] =
               <table className="w-full text-sm">
 
                 <thead className="bg-gray-50 text-gray-600">
-
                   <tr>
-
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       #
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Email
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Amount
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Type
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Mode
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Status
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Date
+                    <th className="px-6 py-4 text-left">
+                      Scheduled
                     </th>
 
-                    <th className="px-6 py-4 text-left font-semibold">
+                    <th className="px-6 py-4 text-left">
                       Action
                     </th>
-
                   </tr>
-
                 </thead>
 
                 <tbody>
@@ -445,7 +492,7 @@ const [userLoading, setUserLoading] =
                             1}
                         </td>
 
-                        <td className="px-6 py-4 font-medium text-gray-900">
+                        <td className="px-6 py-4 font-medium">
                           {
                             reminder.email
                           }
@@ -493,9 +540,13 @@ const [userLoading, setUserLoading] =
                         </td>
 
                         <td className="px-6 py-4 text-gray-500 whitespace-nowrap">
+
                           {new Date(
-                            reminder.sentAt
+                            reminder.sentAt ||
+                              reminder.sendAt ||
+                              ""
                           ).toLocaleString()}
+
                         </td>
 
                         <td className="px-6 py-4">
@@ -527,18 +578,8 @@ const [userLoading, setUserLoading] =
 
                 <p className="text-sm text-gray-500">
                   Showing{" "}
-                  <span className="font-medium text-gray-900">
-                    {
-                      paginated.length
-                    }
-                  </span>{" "}
-                  of{" "}
-                  <span className="font-medium text-gray-900">
-                    {
-                      filtered.length
-                    }
-                  </span>{" "}
-                  reminders
+                  {paginated.length} of{" "}
+                  {filtered.length}
                 </p>
 
                 <div className="flex gap-2">
@@ -552,8 +593,7 @@ const [userLoading, setUserLoading] =
                         (
                           prev
                         ) =>
-                          prev -
-                          1
+                          prev - 1
                       )
                     }
                     className="border border-gray-300 px-4 py-2 rounded-lg text-sm disabled:opacity-40"
@@ -571,8 +611,7 @@ const [userLoading, setUserLoading] =
                         (
                           prev
                         ) =>
-                          prev +
-                          1
+                          prev + 1
                       )
                     }
                     className="border border-gray-300 px-4 py-2 rounded-lg text-sm disabled:opacity-40"
@@ -608,6 +647,7 @@ const [userLoading, setUserLoading] =
           }
           date={
             selectedReminder?.sentAt ||
+            selectedReminder?.sendAt ||
             ""
           }
         />

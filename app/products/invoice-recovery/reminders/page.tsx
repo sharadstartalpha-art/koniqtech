@@ -32,6 +32,12 @@ type Reminder = {
   userId?: string;
 };
 
+type User = {
+  id: string;
+
+  email: string;
+};
+
 /* =========================
    PAGE
 ========================= */
@@ -57,6 +63,9 @@ export default function RemindersPage() {
   const [perPage, setPerPage] =
     useState(5);
 
+  const [user, setUser] =
+    useState<User | null>(null);
+
   const [
     selectedReminder,
     setSelectedReminder,
@@ -66,28 +75,37 @@ export default function RemindersPage() {
     );
 
   /* =========================
+     LOAD CURRENT USER
+  ========================= */
+
+  const loadUser =
+    async () => {
+      try {
+        const res =
+          await axios.get(
+            "/api/auth/me"
+          );
+
+        setUser(res.data);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+  /* =========================
      LOAD REMINDERS
   ========================= */
 
-  const load =
+  const loadReminders =
     async () => {
       try {
         setLoading(true);
-
-        /* IMPORTANT:
-           API MUST RETURN
-           ONLY CURRENT USER DATA
-        */
 
         const res =
           await axios.get(
             "/api/reminders"
           );
-
-        console.log(
-          "REMINDERS:",
-          res.data
-        );
 
         const reminders =
           Array.isArray(
@@ -106,17 +124,34 @@ export default function RemindersPage() {
       }
     };
 
+  /* =========================
+     INITIAL LOAD
+  ========================= */
+
   useEffect(() => {
-    load();
+    loadUser();
+
+    loadReminders();
   }, []);
 
   /* =========================
-     FILTERED DATA
+     FILTER REMINDERS
   ========================= */
 
   const filtered =
     useMemo(() => {
       let result = [...data];
+
+      /* ONLY CURRENT USER */
+
+      if (user?.id) {
+        result =
+          result.filter(
+            (r) =>
+              r.userId ===
+              user.id
+          );
+      }
 
       /* SEARCH */
 
@@ -131,7 +166,7 @@ export default function RemindersPage() {
           );
       }
 
-      /* MODE FILTER */
+      /* MODE */
 
       if (
         mode !== "all"
@@ -144,7 +179,7 @@ export default function RemindersPage() {
           );
       }
 
-      /* SORT NEWEST FIRST */
+      /* NEWEST FIRST */
 
       result.sort(
         (a, b) =>
@@ -157,7 +192,12 @@ export default function RemindersPage() {
       );
 
       return result;
-    }, [data, search, mode]);
+    }, [
+      data,
+      search,
+      mode,
+      user,
+    ]);
 
   /* =========================
      PAGINATION
@@ -178,14 +218,20 @@ export default function RemindersPage() {
       start + perPage
     );
 
-  /* RESET PAGE */
+  /* =========================
+     RESET PAGE
+  ========================= */
 
   useEffect(() => {
     setPage(1);
-  }, [search, mode, perPage]);
+  }, [
+    search,
+    mode,
+    perPage,
+  ]);
 
   /* =========================
-     BADGES
+     STYLES
   ========================= */
 
   const statusStyle = (
@@ -231,7 +277,7 @@ export default function RemindersPage() {
             </h1>
 
             <p className="text-gray-500 mt-1">
-              View all reminder emails
+              View reminders sent by you
             </p>
           </div>
 
@@ -251,6 +297,7 @@ export default function RemindersPage() {
           {/* SEARCH */}
 
           <div className="flex-1 min-w-[240px]">
+
             <input
               placeholder="Search email..."
               value={search}
@@ -261,6 +308,7 @@ export default function RemindersPage() {
               }
               className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
             />
+
           </div>
 
           {/* MODE FILTER */}
@@ -475,9 +523,10 @@ export default function RemindersPage() {
                   )}
 
                 </tbody>
+
               </table>
 
-              {/* PAGINATION */}
+              {/* FOOTER */}
 
               <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
 
@@ -543,7 +592,7 @@ export default function RemindersPage() {
           )}
         </div>
 
-        {/* EMAIL VIEWER */}
+        {/* EMAIL MODAL */}
 
         <EmailViewerModal
           isOpen={

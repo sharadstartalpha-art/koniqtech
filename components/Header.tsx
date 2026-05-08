@@ -70,11 +70,25 @@ export default function Header() {
             );
 
           console.log(
-            "USER:",
+            "FULL USER:",
             res.data
           );
 
-          setUser(res.data);
+          /*
+            IMPORTANT:
+            your API is probably returning:
+            {
+              user: {...}
+            }
+
+            so we safely support both
+          */
+
+          const userData =
+            res.data.user ||
+            res.data;
+
+          setUser(userData);
 
         } catch (err) {
           console.error(err);
@@ -101,12 +115,11 @@ export default function Header() {
     };
 
   /* =========================
-     SAFE NAME
+     DISPLAY NAME
   ========================= */
 
   const displayName =
-    user?.name &&
-    user.name !== "null"
+    user?.name?.trim()
       ? user.name
       : user?.email
           ?.split("@")[0] ||
@@ -126,7 +139,7 @@ export default function Header() {
       <div className="relative">
         {user ? (
           <>
-            {/* BUTTON */}
+            {/* USER BUTTON */}
 
             <button
               onClick={() =>

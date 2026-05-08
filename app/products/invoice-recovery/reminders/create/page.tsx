@@ -6,6 +6,10 @@ import axios from "axios";
 
 import Layout from "@/components/Layout";
 
+/* =========================
+   TYPES
+========================= */
+
 type EmailPreview = {
   html: string;
   text: string;
@@ -25,6 +29,10 @@ type Template = {
   text?: string;
   type: string;
 };
+
+/* =========================
+   PAGE
+========================= */
 
 export default function CreateReminderPage() {
   const [invoices, setInvoices] =
@@ -65,12 +73,10 @@ export default function CreateReminderPage() {
   const [sending, setSending] =
     useState(false);
 
-  const [showDropdown, setShowDropdown] =
-    useState(false);
-
-  /* =========================
-     REMINDER MODE
-  ========================= */
+  const [
+    showDropdown,
+    setShowDropdown,
+  ] = useState(false);
 
   const [mode, setMode] =
     useState<
@@ -99,7 +105,13 @@ export default function CreateReminderPage() {
             "/api/invoices"
           );
 
-        setInvoices(res.data);
+        setInvoices(
+          Array.isArray(
+            res.data
+          )
+            ? res.data
+            : []
+        );
 
       } catch (err) {
         console.error(err);
@@ -113,26 +125,65 @@ export default function CreateReminderPage() {
   const loadTemplates =
     async () => {
       try {
+        /* IMPORTANT:
+           YOUR API IS:
+           /api/reminder-templates
+        */
+
         const res =
           await axios.get(
-            "/api/templates"
+            "/api/reminder-templates"
           );
 
         console.log(
-          "TEMPLATES:",
+          "RAW TEMPLATE RESPONSE:",
           res.data
         );
 
-        setTemplates(
+        /* HANDLE ALL POSSIBLE RESPONSES */
+
+        let templateData =
+          [];
+
+        if (
           Array.isArray(
             res.data
           )
-            ? res.data
-            : []
+        ) {
+          templateData =
+            res.data;
+
+        } else if (
+          Array.isArray(
+            res.data.templates
+          )
+        ) {
+          templateData =
+            res.data.templates;
+
+        } else if (
+          Array.isArray(
+            res.data.data
+          )
+        ) {
+          templateData =
+            res.data.data;
+        }
+
+        console.log(
+          "FINAL TEMPLATES:",
+          templateData
+        );
+
+        setTemplates(
+          templateData
         );
 
       } catch (err) {
-        console.error(err);
+        console.error(
+          "TEMPLATE ERROR:",
+          err
+        );
 
         setTemplates([]);
       }
@@ -156,7 +207,8 @@ export default function CreateReminderPage() {
   ========================= */
 
   const applyVariables = (
-    content: string
+    content: string,
+    finalAmount: string
   ) => {
     if (!content) return "";
 
@@ -170,10 +222,7 @@ export default function CreateReminderPage() {
 
       .replaceAll(
         "{{amount}}",
-        amount ||
-          String(
-            selected?.amount || 0
-          )
+        finalAmount
       )
 
       .replaceAll(
@@ -210,7 +259,7 @@ export default function CreateReminderPage() {
         !amount
       ) {
         return alert(
-          "Enter reminder amount"
+          "Enter amount"
         );
       }
 
@@ -234,30 +283,18 @@ export default function CreateReminderPage() {
 
         const html =
           applyVariables(
-            selectedTemplate.html
-          ).replaceAll(
-            "{{amount}}",
+            selectedTemplate.html,
             finalAmount
           );
 
-        const text =
-          selectedTemplate.text
-            ? applyVariables(
-                selectedTemplate.text
-              ).replaceAll(
-                "{{amount}}",
-                finalAmount
-              )
-            : `
+        const text = `
 Hi ${
-                selected.clientEmail.split(
-                  "@"
-                )[0]
-              },
+          selected.clientEmail.split(
+            "@"
+          )[0]
+        },
 
-This is a reminder that your invoice payment of $${finalAmount} is pending.
-
-Please complete the payment before the due date.
+This is a reminder that your payment of $${finalAmount} is pending.
 
 Thank you,
 KoniqTech
@@ -272,7 +309,7 @@ KoniqTech
         console.error(err);
 
         alert(
-          "Failed to generate email"
+          "Failed to generate"
         );
 
       } finally {
@@ -325,7 +362,7 @@ KoniqTech
         );
 
         alert(
-          "✅ Reminder sent"
+          "Reminder sent"
         );
 
         window.location.href =
@@ -345,7 +382,7 @@ KoniqTech
 
   return (
     <Layout>
-      <div className="max-w-4xl space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
 
         {/* HEADER */}
 
@@ -355,13 +392,14 @@ KoniqTech
           </h1>
 
           <p className="text-gray-500 mt-1">
-            Send invoice reminders using saved templates
+            Send reminders using
+            saved templates
           </p>
         </div>
 
         {/* CARD */}
 
-        <div className="bg-white border border-gray-200 rounded-3xl p-8 space-y-6 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm space-y-6">
 
           {/* CLIENT */}
 
@@ -387,11 +425,11 @@ KoniqTech
                   true
                 )
               }
-              className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500"
             />
 
             {showDropdown && (
-              <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-2xl shadow-xl mt-2 max-h-52 overflow-y-auto">
+              <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg max-h-52 overflow-y-auto">
 
                 {filtered.length ===
                 0 ? (
@@ -432,17 +470,15 @@ KoniqTech
           {/* TOTAL */}
 
           {selected && (
-            <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-5">
-
+            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
               <p className="text-sm text-orange-700">
-                Total Invoice Due
+                Total Due
               </p>
 
               <p className="text-4xl font-bold text-orange-600 mt-1">
                 $
                 {selected.amount}
               </p>
-
             </div>
           )}
 
@@ -461,11 +497,11 @@ KoniqTech
                     "manual"
                   )
                 }
-                className={`px-5 py-2 rounded-xl border text-sm font-medium transition ${
+                className={`px-5 py-2 rounded-xl border ${
                   mode ===
                   "manual"
                     ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white text-gray-700 border-gray-300"
+                    : "bg-white border-gray-300"
                 }`}
               >
                 Manual Amount
@@ -475,11 +511,11 @@ KoniqTech
                 onClick={() =>
                   setMode("auto")
                 }
-                className={`px-5 py-2 rounded-xl border text-sm font-medium transition ${
+                className={`px-5 py-2 rounded-xl border ${
                   mode ===
                   "auto"
                     ? "bg-orange-500 text-white border-orange-500"
-                    : "bg-white text-gray-700 border-gray-300"
+                    : "bg-white border-gray-300"
                 }`}
               >
                 Auto Full Amount
@@ -488,7 +524,7 @@ KoniqTech
             </div>
           </div>
 
-          {/* MANUAL AMOUNT */}
+          {/* AMOUNT */}
 
           {mode ===
             "manual" && (
@@ -499,14 +535,14 @@ KoniqTech
 
               <input
                 type="number"
-                placeholder="Enter reminder amount"
+                placeholder="Enter amount"
                 value={amount}
                 onChange={(e) =>
                   setAmount(
                     e.target.value
                   )
                 }
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500"
               />
             </div>
           )}
@@ -535,7 +571,7 @@ KoniqTech
                   found || null
                 );
               }}
-              className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500"
             >
               <option value="">
                 Choose template
@@ -564,9 +600,19 @@ KoniqTech
               )}
             </select>
 
+            {/* DEBUG */}
+
+            <div className="mt-2 text-xs text-gray-500">
+              Templates loaded:
+              {" "}
+              {
+                templates.length
+              }
+            </div>
+
             {templates.length ===
               0 && (
-              <p className="text-sm text-red-500 mt-2">
+              <p className="text-sm text-red-500 mt-1">
                 No templates found
               </p>
             )}
@@ -577,7 +623,7 @@ KoniqTech
           <button
             onClick={generate}
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-2xl transition"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-semibold transition"
           >
             {loading
               ? "Generating..."
@@ -643,7 +689,7 @@ KoniqTech
                         .value,
                     })
                   }
-                  className="w-full border border-gray-300 rounded-2xl p-4 h-64 outline-none"
+                  className="w-full border border-gray-300 rounded-2xl p-4 h-60"
                 />
               )}
 
@@ -665,10 +711,10 @@ KoniqTech
                           .value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-2xl p-4 h-64 outline-none font-mono text-sm"
+                    className="w-full border border-gray-300 rounded-2xl p-4 h-60 font-mono text-sm"
                   />
 
-                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50 overflow-hidden">
+                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50">
                     <div
                       dangerouslySetInnerHTML={{
                         __html:
@@ -685,7 +731,7 @@ KoniqTech
               <button
                 onClick={send}
                 disabled={sending}
-                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 rounded-2xl transition"
+                className="w-full bg-black hover:bg-gray-900 text-white py-3 rounded-2xl font-semibold transition"
               >
                 {sending
                   ? "Sending..."

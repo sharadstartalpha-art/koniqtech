@@ -22,7 +22,8 @@ type Template = {
   name: string;
   subject: string;
   html: string;
-  text: string;
+  text?: string;
+  type: string;
 };
 
 export default function CreateReminderPage() {
@@ -32,8 +33,12 @@ export default function CreateReminderPage() {
   const [templates, setTemplates] =
     useState<Template[]>([]);
 
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<Template | null>(null);
+  const [
+    selectedTemplate,
+    setSelectedTemplate,
+  ] = useState<Template | null>(
+    null
+  );
 
   const [search, setSearch] =
     useState("");
@@ -51,7 +56,7 @@ export default function CreateReminderPage() {
 
   const [tab, setTab] =
     useState<"text" | "html">(
-      "text"
+      "html"
     );
 
   const [loading, setLoading] =
@@ -62,6 +67,15 @@ export default function CreateReminderPage() {
 
   const [showDropdown, setShowDropdown] =
     useState(false);
+
+  /* =========================
+     REMINDER MODE
+  ========================= */
+
+  const [mode, setMode] =
+    useState<
+      "manual" | "auto"
+    >("manual");
 
   /* =========================
      LOAD DATA
@@ -104,15 +118,28 @@ export default function CreateReminderPage() {
             "/api/templates"
           );
 
-        setTemplates(res.data);
+        console.log(
+          "TEMPLATES:",
+          res.data
+        );
+
+        setTemplates(
+          Array.isArray(
+            res.data
+          )
+            ? res.data
+            : []
+        );
 
       } catch (err) {
         console.error(err);
+
+        setTemplates([]);
       }
     };
 
   /* =========================
-     FILTER
+     FILTER CLIENTS
   ========================= */
 
   const filtered =
@@ -131,6 +158,8 @@ export default function CreateReminderPage() {
   const applyVariables = (
     content: string
   ) => {
+    if (!content) return "";
+
     return content
       .replaceAll(
         "{{name}}",
@@ -138,63 +167,112 @@ export default function CreateReminderPage() {
           "@"
         )[0] || "Customer"
       )
+
       .replaceAll(
         "{{amount}}",
-        amount
+        amount ||
+          String(
+            selected?.amount || 0
+          )
       )
+
       .replaceAll(
         "{{email}}",
         selected?.clientEmail ||
           ""
       )
+
       .replaceAll(
         "{{dueDate}}",
         new Date().toLocaleDateString()
+      )
+
+      .replaceAll(
+        "{{link}}",
+        "#"
       );
   };
 
   /* =========================
-     GENERATE
+     GENERATE EMAIL
   ========================= */
 
   const generate =
     async () => {
-      if (!selected)
+      if (!selected) {
         return alert(
           "Select client"
         );
+      }
 
-      if (!amount)
+      if (
+        mode === "manual" &&
+        !amount
+      ) {
         return alert(
           "Enter reminder amount"
         );
+      }
 
-      if (!selectedTemplate)
+      if (
+        !selectedTemplate
+      ) {
         return alert(
           "Select template"
         );
+      }
 
       setLoading(true);
 
       try {
-        const finalHtml =
+        const finalAmount =
+          mode === "manual"
+            ? amount
+            : String(
+                selected.amount
+              );
+
+        const html =
           applyVariables(
             selectedTemplate.html
+          ).replaceAll(
+            "{{amount}}",
+            finalAmount
           );
 
-        const finalText =
-          applyVariables(
-            selectedTemplate.text
-          );
+        const text =
+          selectedTemplate.text
+            ? applyVariables(
+                selectedTemplate.text
+              ).replaceAll(
+                "{{amount}}",
+                finalAmount
+              )
+            : `
+Hi ${
+                selected.clientEmail.split(
+                  "@"
+                )[0]
+              },
+
+This is a reminder that your invoice payment of $${finalAmount} is pending.
+
+Please complete the payment before the due date.
+
+Thank you,
+KoniqTech
+`;
 
         setPreview({
-          html: finalHtml,
-          text: finalText,
+          html,
+          text,
         });
 
-      } catch {
+      } catch (err) {
+        console.error(err);
+
         alert(
-          "Failed to generate"
+          "Failed to generate email"
         );
 
       } finally {
@@ -203,7 +281,7 @@ export default function CreateReminderPage() {
     };
 
   /* =========================
-     SEND
+     SEND EMAIL
   ========================= */
 
   const send =
@@ -226,6 +304,10 @@ export default function CreateReminderPage() {
             email:
               selected.clientEmail,
 
+            subject:
+              selectedTemplate?.subject ||
+              "Invoice Reminder",
+
             html:
               preview.html,
 
@@ -233,22 +315,27 @@ export default function CreateReminderPage() {
               preview.text,
 
             amount:
-              Number(amount),
-
-            subject:
-              selectedTemplate?.subject ||
-              "Invoice Reminder",
+              mode ===
+              "manual"
+                ? Number(
+                    amount
+                  )
+                : selected.amount,
           }
         );
 
-        alert("✅ Sent");
+        alert(
+          "✅ Reminder sent"
+        );
 
         window.location.href =
           "/products/invoice-recovery/reminders";
 
-      } catch {
+      } catch (err) {
+        console.error(err);
+
         alert(
-          "Failed to send"
+          "Failed to send email"
         );
 
       } finally {
@@ -258,35 +345,33 @@ export default function CreateReminderPage() {
 
   return (
     <Layout>
-      <div className="max-w-3xl space-y-6">
+      <div className="max-w-4xl space-y-6">
 
         {/* HEADER */}
 
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900">
             Send Reminder
           </h1>
 
-          <p className="text-sm text-gray-500 mt-1">
-            Send branded invoice reminders
-            using saved templates
+          <p className="text-gray-500 mt-1">
+            Send invoice reminders using saved templates
           </p>
         </div>
 
         {/* CARD */}
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-5">
+        <div className="bg-white border border-gray-200 rounded-3xl p-8 space-y-6 shadow-sm">
 
           {/* CLIENT */}
 
           <div className="relative">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Client Email
             </label>
 
             <input
               placeholder="Search client email..."
-              className="border border-gray-300 p-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
               value={search}
               onChange={(e) => {
                 setSearch(
@@ -302,15 +387,16 @@ export default function CreateReminderPage() {
                   true
                 )
               }
+              className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
             />
 
             {showDropdown && (
-              <div className="absolute z-20 w-full border border-gray-200 mt-2 rounded-xl max-h-48 overflow-y-auto bg-white shadow-lg">
+              <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-2xl shadow-xl mt-2 max-h-52 overflow-y-auto">
 
                 {filtered.length ===
                 0 ? (
-                  <div className="p-3 text-sm text-gray-500">
-                    No results
+                  <div className="p-4 text-sm text-gray-500">
+                    No clients found
                   </div>
                 ) : (
                   filtered.map(
@@ -330,7 +416,7 @@ export default function CreateReminderPage() {
                             false
                           );
                         }}
-                        className="p-3 text-sm hover:bg-gray-50 cursor-pointer"
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer text-sm"
                       >
                         {
                           inv.clientEmail
@@ -346,42 +432,89 @@ export default function CreateReminderPage() {
           {/* TOTAL */}
 
           {selected && (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <p className="text-sm text-gray-500">
-                Total Amount Due
+            <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-5">
+
+              <p className="text-sm text-orange-700">
+                Total Invoice Due
               </p>
 
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-4xl font-bold text-orange-600 mt-1">
                 $
                 {selected.amount}
               </p>
+
             </div>
           )}
 
-          {/* REMINDER AMOUNT */}
+          {/* MODE */}
 
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Reminder Amount
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Reminder Mode
             </label>
 
-            <input
-              type="number"
-              placeholder="Enter reminder amount"
-              className="border border-gray-300 p-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-              value={amount}
-              onChange={(e) =>
-                setAmount(
-                  e.target.value
-                )
-              }
-            />
+            <div className="flex gap-3">
+
+              <button
+                onClick={() =>
+                  setMode(
+                    "manual"
+                  )
+                }
+                className={`px-5 py-2 rounded-xl border text-sm font-medium transition ${
+                  mode ===
+                  "manual"
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white text-gray-700 border-gray-300"
+                }`}
+              >
+                Manual Amount
+              </button>
+
+              <button
+                onClick={() =>
+                  setMode("auto")
+                }
+                className={`px-5 py-2 rounded-xl border text-sm font-medium transition ${
+                  mode ===
+                  "auto"
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-white text-gray-700 border-gray-300"
+                }`}
+              >
+                Auto Full Amount
+              </button>
+
+            </div>
           </div>
+
+          {/* MANUAL AMOUNT */}
+
+          {mode ===
+            "manual" && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Reminder Amount
+              </label>
+
+              <input
+                type="number"
+                placeholder="Enter reminder amount"
+                value={amount}
+                onChange={(e) =>
+                  setAmount(
+                    e.target.value
+                  )
+                }
+                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+              />
+            </div>
+          )}
 
           {/* TEMPLATE */}
 
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
               Select Template
             </label>
 
@@ -391,7 +524,7 @@ export default function CreateReminderPage() {
                 ""
               }
               onChange={(e) => {
-                const template =
+                const found =
                   templates.find(
                     (t) =>
                       t.id ===
@@ -399,11 +532,10 @@ export default function CreateReminderPage() {
                   );
 
                 setSelectedTemplate(
-                  template ||
-                    null
+                  found || null
                 );
               }}
-              className="border border-gray-300 p-3 w-full rounded-xl outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-500 bg-white"
+              className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
             >
               <option value="">
                 Choose template
@@ -421,11 +553,23 @@ export default function CreateReminderPage() {
                   >
                     {
                       template.name
+                    }{" "}
+                    (
+                    {
+                      template.type
                     }
+                    )
                   </option>
                 )
               )}
             </select>
+
+            {templates.length ===
+              0 && (
+              <p className="text-sm text-red-500 mt-2">
+                No templates found
+              </p>
+            )}
           </div>
 
           {/* GENERATE */}
@@ -433,7 +577,7 @@ export default function CreateReminderPage() {
           <button
             onClick={generate}
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 rounded-xl transition"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-2xl transition"
           >
             {loading
               ? "Generating..."
@@ -443,25 +587,11 @@ export default function CreateReminderPage() {
           {/* PREVIEW */}
 
           {preview && (
-            <div className="space-y-4 pt-4">
+            <div className="space-y-5 pt-4">
 
               {/* TABS */}
 
-              <div className="flex gap-5 border-b border-gray-200">
-                <button
-                  onClick={() =>
-                    setTab(
-                      "text"
-                    )
-                  }
-                  className={`pb-2 text-sm ${
-                    tab === "text"
-                      ? "border-b-2 border-orange-500 text-orange-600 font-semibold"
-                      : "text-gray-500"
-                  }`}
-                >
-                  Text
-                </button>
+              <div className="flex gap-6 border-b border-gray-200">
 
                 <button
                   onClick={() =>
@@ -469,14 +599,32 @@ export default function CreateReminderPage() {
                       "html"
                     )
                   }
-                  className={`pb-2 text-sm ${
-                    tab === "html"
-                      ? "border-b-2 border-orange-500 text-orange-600 font-semibold"
+                  className={`pb-3 text-sm font-medium ${
+                    tab ===
+                    "html"
+                      ? "border-b-2 border-orange-500 text-orange-600"
                       : "text-gray-500"
                   }`}
                 >
-                  HTML
+                  HTML Preview
                 </button>
+
+                <button
+                  onClick={() =>
+                    setTab(
+                      "text"
+                    )
+                  }
+                  className={`pb-3 text-sm font-medium ${
+                    tab ===
+                    "text"
+                      ? "border-b-2 border-orange-500 text-orange-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Text Version
+                </button>
+
               </div>
 
               {/* TEXT */}
@@ -495,7 +643,7 @@ export default function CreateReminderPage() {
                         .value,
                     })
                   }
-                  className="border border-gray-300 p-4 w-full h-56 rounded-xl outline-none"
+                  className="w-full border border-gray-300 rounded-2xl p-4 h-64 outline-none"
                 />
               )}
 
@@ -517,12 +665,10 @@ export default function CreateReminderPage() {
                           .value,
                       })
                     }
-                    className="border border-gray-300 p-4 w-full h-56 rounded-xl outline-none font-mono text-sm"
+                    className="w-full border border-gray-300 rounded-2xl p-4 h-64 outline-none font-mono text-sm"
                   />
 
-                  {/* LIVE PREVIEW */}
-
-                  <div className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+                  <div className="border border-gray-200 rounded-2xl p-6 bg-gray-50 overflow-hidden">
                     <div
                       dangerouslySetInnerHTML={{
                         __html:
@@ -539,11 +685,11 @@ export default function CreateReminderPage() {
               <button
                 onClick={send}
                 disabled={sending}
-                className="w-full bg-black hover:bg-gray-900 text-white font-medium py-3 rounded-xl transition"
+                className="w-full bg-black hover:bg-gray-900 text-white font-semibold py-3 rounded-2xl transition"
               >
                 {sending
                   ? "Sending..."
-                  : "Send Email"}
+                  : "Send Reminder"}
               </button>
 
             </div>

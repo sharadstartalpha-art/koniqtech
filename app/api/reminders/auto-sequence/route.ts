@@ -43,7 +43,6 @@ export async function POST(
       invoiceId,
       reminders,
       amount,
-      amountMode,
     } = body;
 
     /* =========================
@@ -107,12 +106,23 @@ export async function POST(
        CREATE SCHEDULES
     ========================= */
 
-    for (const reminder of reminders) {
+    for (
+      let i = 0;
+      i < reminders.length;
+      i++
+    ) {
+      const reminder =
+        reminders[i];
+
       if (
         !reminder.templateId
       ) {
         continue;
       }
+
+      /* =========================
+         SEND DATE
+      ========================= */
 
       const sendDate =
         new Date();
@@ -120,10 +130,36 @@ export async function POST(
       sendDate.setDate(
         sendDate.getDate() +
           Number(
-            reminder.delay ||
-              0
+            reminder.delay || 0
           )
       );
+
+      /* =========================
+         TYPE
+      ========================= */
+
+      let type: ReminderType =
+        ReminderType.friendly;
+
+      if (
+        reminder.type ===
+        "firm"
+      ) {
+        type =
+          ReminderType.firm;
+      }
+
+      if (
+        reminder.type ===
+        "final"
+      ) {
+        type =
+          ReminderType.final;
+      }
+
+      /* =========================
+         CREATE
+      ========================= */
 
       await prisma.reminderSchedule.create(
         {
@@ -137,29 +173,27 @@ export async function POST(
             templateId:
               reminder.templateId,
 
-            step: Number(
-              reminder.step ||
-                1
-            ),
+            step:
+              Number(
+                reminder.step ||
+                  i + 1
+              ),
 
             amount:
               Number(
                 amount || 0
               ),
 
+            type,
+
             mode:
-              (amountMode ||
-                "auto") as ReminderMode,
-
-            type:
-              (reminder.type ||
-                "friendly") as ReminderType,
-
-            sendAt:
-              sendDate,
+              ReminderMode.auto,
 
             status:
               "pending",
+
+            sendAt:
+              sendDate,
           },
         }
       );

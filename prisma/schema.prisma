@@ -81,16 +81,7 @@ model PaymentLink {
 
 
 
-enum ReminderMode {
-  manual
-  auto
-}
 
-enum ReminderType {
-  friendly
-  firm
-  final
-}
 
 
 model ReminderTemplate {
@@ -236,28 +227,40 @@ model User {
 
 
 
+enum ReminderMode {
+  manual
+  auto
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  failed
+}
+enum ReminderType {
+  friendly
+  firm
+  final
+}
+
 model ReminderSchedule {
-  id          String   @id @default(cuid())
+  id         String @id @default(cuid())
 
-  userId      String
-  invoiceId   String
-  templateId  String
+  userId     String
+  invoiceId  String
+  templateId String
 
-  type        String
+  type       ReminderType
+  mode       ReminderMode
+  status     ReminderStatus @default(pending)
 
-  step        Int
-  amount      Float
-  mode        String
+  step       Int
+  amount     Float
 
-  sendAt      DateTime
+  sendAt     DateTime
 
-  status      String   @default("pending")
+  createdAt  DateTime @default(now())
 
-  createdAt   DateTime @default(now())
-
-  invoice      Invoice          @relation(fields: [invoiceId], references: [id])
-
-  template     ReminderTemplate @relation(fields: [templateId], references: [id])
-
-  
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  template    ReminderTemplate @relation(fields: [templateId], references: [id])
 }

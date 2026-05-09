@@ -49,10 +49,10 @@ const PLAN_ORDER: Record<
   string,
   number
 > = {
-  Free: 0,
-  Starter: 1,
-  Growth: 2,
-  Pro: 3,
+  free: 0,
+  starter: 1,
+  growth: 2,
+  pro: 3,
 };
 
 export default function AccountPage() {
@@ -87,7 +87,9 @@ export default function AccountPage() {
 
       setData(res.data);
 
-    } catch {
+    } catch (err) {
+      console.error(err);
+
       toast.error(
         "Failed to load account"
       );
@@ -106,9 +108,15 @@ export default function AccountPage() {
             "/api/plans/invoice-recovery"
           );
 
-        setPlans(res.data);
+        setPlans(
+          Array.isArray(res.data)
+            ? res.data
+            : []
+        );
 
-      } catch {
+      } catch (err) {
+        console.error(err);
+
         toast.error(
           "Failed to load plans"
         );
@@ -122,7 +130,7 @@ export default function AccountPage() {
   }, []);
 
   /* =========================
-     CANCEL
+     CANCEL SUBSCRIPTION
   ========================= */
 
   const cancel = async () => {
@@ -147,7 +155,9 @@ export default function AccountPage() {
 
       load();
 
-    } catch {
+    } catch (err) {
+      console.error(err);
+
       toast.error(
         "Cancel failed"
       );
@@ -179,24 +189,26 @@ export default function AccountPage() {
           );
 
         const approvalUrl =
-          res.data.links.find(
+          res.data?.links?.find(
             (l: any) =>
               l.rel ===
               "approve"
           )?.href;
 
         if (!approvalUrl) {
-          throw new Error(
-            "No approval URL"
+          toast.error(
+            "Payment link missing"
           );
+
+          return;
         }
 
         window.location.href =
           approvalUrl;
 
-      } catch (
-        err: any
-      ) {
+      } catch (err: any) {
+        console.error(err);
+
         toast.error(
           err?.response?.data
             ?.error ||
@@ -217,8 +229,8 @@ export default function AccountPage() {
   if (!data) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-[70vh]">
-          <div className="text-gray-500 text-sm">
+        <div className="h-[70vh] flex items-center justify-center">
+          <div className="text-gray-500">
             Loading account...
           </div>
         </div>
@@ -251,40 +263,50 @@ export default function AccountPage() {
       : 0;
 
   /* =========================
-     UPGRADE
+     SAFE PLAN SORTING
   ========================= */
 
   const sortedPlans =
     [...plans].sort(
       (a, b) =>
-        PLAN_ORDER[a.name] -
-        PLAN_ORDER[b.name]
+        (PLAN_ORDER[
+          a.name?.toLowerCase()
+        ] ?? 999) -
+        (PLAN_ORDER[
+          b.name?.toLowerCase()
+        ] ?? 999)
     );
 
   const currentLevel =
-    PLAN_ORDER[data.plan];
+    PLAN_ORDER[
+      data.plan?.toLowerCase()
+    ] ?? 0;
 
   const nextUpgrade =
     sortedPlans.find(
       (p) =>
-        PLAN_ORDER[p.name] >
+        (PLAN_ORDER[
+          p.name?.toLowerCase()
+        ] ?? 0) >
         currentLevel
     );
 
   /* =========================
-     PLAN COLOR
+     PLAN STYLE
   ========================= */
 
   const planStyle =
     useMemo(() => {
-      switch (data.plan) {
-        case "Starter":
+      switch (
+        data.plan?.toLowerCase()
+      ) {
+        case "starter":
           return "from-blue-500 to-indigo-600";
 
-        case "Growth":
+        case "growth":
           return "from-orange-500 to-red-500";
 
-        case "Pro":
+        case "pro":
           return "from-purple-600 to-pink-600";
 
         default:
@@ -296,9 +318,7 @@ export default function AccountPage() {
     <Layout>
       <div className="space-y-8">
 
-        {/* =========================
-            HEADER
-        ========================= */}
+        {/* HEADER */}
 
         <div>
           <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 px-3 py-1 rounded-full text-sm font-medium mb-4">
@@ -315,38 +335,34 @@ export default function AccountPage() {
           </p>
         </div>
 
-        {/* =========================
-            HERO CARD
-        ========================= */}
+        {/* HERO */}
 
         <div
-          className={`relative overflow-hidden rounded-[32px] bg-gradient-to-br ${planStyle} p-8 text-white shadow-2xl`}
+          className={`rounded-[30px] bg-gradient-to-br ${planStyle} p-8 text-white shadow-xl`}
         >
-          <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-
-          <div className="relative z-10 grid lg:grid-cols-2 gap-10">
+          <div className="grid lg:grid-cols-2 gap-10">
 
             {/* LEFT */}
 
             <div>
-              <div className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-xl">
+              <div className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm">
                 <Crown size={16} />
-                Active Subscription
+                Active Plan
               </div>
 
               <h2 className="text-5xl font-bold mt-6">
                 {data.plan}
               </h2>
 
-              <p className="text-white/80 mt-4 text-lg">
-                Powerful invoice recovery tools for modern businesses.
+              <p className="text-white/80 mt-4">
+                Professional invoice recovery tools for modern businesses.
               </p>
 
-              <div className="flex flex-wrap gap-8 mt-10">
+              <div className="flex gap-10 mt-10">
 
                 <div>
-                  <p className="text-white/70 text-sm">
-                    Renewal Date
+                  <p className="text-sm text-white/70">
+                    Expiry
                   </p>
 
                   <p className="font-semibold mt-1">
@@ -359,8 +375,8 @@ export default function AccountPage() {
                 </div>
 
                 <div>
-                  <p className="text-white/70 text-sm">
-                    Invoice Limit
+                  <p className="text-sm text-white/70">
+                    Limit
                   </p>
 
                   <p className="font-semibold mt-1">
@@ -376,11 +392,11 @@ export default function AccountPage() {
 
             {/* RIGHT */}
 
-            <div className="bg-white/10 border border-white/10 backdrop-blur-2xl rounded-3xl p-6">
+            <div className="bg-white/10 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-white/80 text-sm">
-                  Invoice Usage
+              <div className="flex justify-between mb-4">
+                <span className="text-white/70 text-sm">
+                  Usage
                 </span>
 
                 <span className="font-semibold">
@@ -391,11 +407,10 @@ export default function AccountPage() {
                 </span>
               </div>
 
-              {/* PROGRESS */}
+              <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
 
-              <div className="w-full h-3 rounded-full bg-white/20 overflow-hidden">
                 <div
-                  className="h-full bg-white rounded-full transition-all duration-500"
+                  className="h-full bg-white rounded-full transition-all"
                   style={{
                     width:
                       data.invoiceLimit ===
@@ -404,29 +419,24 @@ export default function AccountPage() {
                         : `${usagePercentage}%`,
                   }}
                 />
+
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-6">
 
-                <div className="bg-white/10 rounded-2xl p-4">
-                  <p className="text-white/70 text-xs">
-                    Used
-                  </p>
+                <StatCard
+                  title="Used"
+                  value={String(
+                    data.used
+                  )}
+                />
 
-                  <h3 className="text-3xl font-bold mt-2">
-                    {data.used}
-                  </h3>
-                </div>
-
-                <div className="bg-white/10 rounded-2xl p-4">
-                  <p className="text-white/70 text-xs">
-                    Remaining
-                  </p>
-
-                  <h3 className="text-3xl font-bold mt-2">
-                    {remaining}
-                  </h3>
-                </div>
+                <StatCard
+                  title="Remaining"
+                  value={String(
+                    remaining
+                  )}
+                />
 
               </div>
             </div>
@@ -434,17 +444,13 @@ export default function AccountPage() {
           </div>
         </div>
 
-        {/* =========================
-            GRID
-        ========================= */}
+        {/* CONTENT */}
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="grid xl:grid-cols-3 gap-6">
 
-          {/* =========================
-              OVERVIEW
-          ========================= */}
+          {/* LEFT */}
 
-          <div className="xl:col-span-2 bg-white border border-gray-200 rounded-[28px] p-8 shadow-sm">
+          <div className="xl:col-span-2 bg-white border rounded-3xl p-8">
 
             <div className="flex items-center gap-3 mb-8">
 
@@ -458,7 +464,7 @@ export default function AccountPage() {
                 </h3>
 
                 <p className="text-sm text-gray-500">
-                  Your current account information
+                  Subscription details
                 </p>
               </div>
 
@@ -479,7 +485,7 @@ export default function AccountPage() {
                 icon={
                   <Calendar size={20} />
                 }
-                title="Expiry Date"
+                title="Expiry"
                 value={
                   data.expiresAt
                     ? new Date(
@@ -515,11 +521,9 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* =========================
-              ACTIONS
-          ========================= */}
+          {/* RIGHT */}
 
-          <div className="bg-white border border-gray-200 rounded-[28px] p-8 shadow-sm space-y-6">
+          <div className="bg-white border rounded-3xl p-8 space-y-6">
 
             <div>
               <h3 className="text-xl font-bold">
@@ -527,26 +531,22 @@ export default function AccountPage() {
               </h3>
 
               <p className="text-sm text-gray-500 mt-2">
-                Upgrade your plan anytime
+                Upgrade or manage your plan
               </p>
             </div>
 
-            {/* UPGRADE */}
-
             {nextUpgrade ? (
-              <div className="border border-gray-200 rounded-3xl p-6 bg-gradient-to-br from-orange-50 to-white">
+              <div className="border rounded-3xl p-6 bg-gradient-to-br from-orange-50 to-white">
 
-                <div className="flex items-center justify-between">
+                <div className="flex justify-between items-center">
 
                   <div>
                     <p className="text-sm text-gray-500">
-                      Next Upgrade
+                      Next Plan
                     </p>
 
                     <h4 className="text-2xl font-bold mt-1">
-                      {
-                        nextUpgrade.name
-                      }
+                      {nextUpgrade.name}
                     </h4>
                   </div>
 
@@ -556,24 +556,20 @@ export default function AccountPage() {
 
                 </div>
 
-                <div className="mt-5">
-                  <p className="text-4xl font-bold">
-                    $
-                    {
-                      nextUpgrade.price
-                    }
+                <p className="text-4xl font-bold mt-5">
+                  $
+                  {nextUpgrade.price}
 
-                    <span className="text-lg text-gray-500 font-medium">
-                      /month
-                    </span>
-                  </p>
-                </div>
+                  <span className="text-lg text-gray-500">
+                    /month
+                  </span>
+                </p>
 
                 <div className="space-y-3 mt-6">
 
-                  <Feature text="Unlimited automated reminders" />
+                  <Feature text="Unlimited reminders" />
 
-                  <Feature text="Recovery analytics dashboard" />
+                  <Feature text="Analytics dashboard" />
 
                   <Feature text="Priority support" />
 
@@ -589,7 +585,7 @@ export default function AccountPage() {
                     checkoutLoading ===
                     nextUpgrade.id
                   }
-                  className="w-full h-12 rounded-2xl bg-black hover:bg-gray-900 text-white font-semibold transition mt-6"
+                  className="w-full mt-6 h-12 rounded-2xl bg-black hover:bg-gray-900 text-white font-semibold"
                 >
                   {checkoutLoading ===
                   nextUpgrade.id
@@ -600,9 +596,7 @@ export default function AccountPage() {
               </div>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
-
                 <div className="flex items-center gap-3">
-
                   <CheckCircle2 className="text-green-600" />
 
                   <div>
@@ -610,22 +604,19 @@ export default function AccountPage() {
                       Highest Plan Active
                     </h4>
 
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-sm text-green-600">
                       You already have full access.
                     </p>
                   </div>
 
                 </div>
-
               </div>
             )}
-
-            {/* CANCEL */}
 
             <button
               onClick={cancel}
               disabled={loading}
-              className="w-full h-12 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 font-medium transition"
+              className="w-full h-12 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50"
             >
               {loading
                 ? "Cancelling..."
@@ -650,7 +641,7 @@ function InfoCard({
   color,
 }: any) {
   return (
-    <div className="border border-gray-200 rounded-3xl p-5 hover:shadow-md transition">
+    <div className="border rounded-3xl p-5">
 
       <div
         className={`w-11 h-11 rounded-2xl flex items-center justify-center ${color}`}
@@ -662,10 +653,34 @@ function InfoCard({
         {title}
       </p>
 
-      <h4 className="text-2xl font-bold text-gray-900 mt-1">
+      <h4 className="text-2xl font-bold mt-1">
         {value}
       </h4>
 
+    </div>
+  );
+}
+
+/* =========================
+   STAT CARD
+========================= */
+
+function StatCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-white/10 rounded-2xl p-4">
+      <p className="text-sm text-white/70">
+        {title}
+      </p>
+
+      <h3 className="text-3xl font-bold mt-2">
+        {value}
+      </h3>
     </div>
   );
 }

@@ -240,6 +240,140 @@ export default function Home() {
         </div>
       </section>
 
+
+{/* HOW IT WORKS */}
+
+<section className="py-28 bg-white">
+  <div className="max-w-7xl mx-auto px-6">
+    <div className="text-center mb-20">
+      <h2 className="text-5xl font-bold tracking-tight mb-6">
+        Recover invoices in 3 simple steps
+      </h2>
+
+      <p className="text-xl text-gray-600">
+        Fully automated collections for freelancers & agencies.
+      </p>
+    </div>
+
+    <div className="grid md:grid-cols-3 gap-8">
+      <div className="p-8 rounded-3xl border border-gray-200">
+        <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center text-xl font-bold mb-6">
+          1
+        </div>
+
+        <h3 className="text-2xl font-bold mb-4">
+          Create Invoice
+        </h3>
+
+        <p className="text-gray-600 leading-relaxed">
+          Add your invoice amount, client email, and due date in seconds.
+        </p>
+      </div>
+
+      <div className="p-8 rounded-3xl border border-gray-200">
+        <div className="w-14 h-14 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-xl font-bold mb-6">
+          2
+        </div>
+
+        <h3 className="text-2xl font-bold mb-4">
+          Enable Automation
+        </h3>
+
+        <p className="text-gray-600 leading-relaxed">
+          KoniqTech automatically sends smart reminders and escalations.
+        </p>
+      </div>
+
+      <div className="p-8 rounded-3xl border border-gray-200">
+        <div className="w-14 h-14 rounded-2xl bg-green-500 text-white flex items-center justify-center text-xl font-bold mb-6">
+          3
+        </div>
+
+        <h3 className="text-2xl font-bold mb-4">
+          Get Paid Faster
+        </h3>
+
+        <p className="text-gray-600 leading-relaxed">
+          Track opens, responses, and payments from your dashboard.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+{/* INTEGRATIONS */}
+
+<section className="py-24 border-y border-gray-100 bg-gray-50">
+  <div className="max-w-6xl mx-auto px-6 text-center">
+    <p className="text-sm font-semibold uppercase tracking-wider text-orange-500 mb-6">
+      Integrations
+    </p>
+
+    <h2 className="text-5xl font-bold tracking-tight mb-8">
+      Works with your existing workflow
+    </h2>
+
+    <div className="flex flex-wrap justify-center gap-6">
+      {[
+        "PayPal",
+        "Stripe",
+        "Gmail",
+        "Outlook",
+        "Zapier",
+        "Slack",
+      ].map((item) => (
+        <div
+          key={item}
+          className="px-8 py-5 bg-white border border-gray-200 rounded-2xl font-semibold shadow-sm"
+        >
+          {item}
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+
+{/* ROI */}
+
+<section className="py-28 bg-black text-white">
+  <div className="max-w-5xl mx-auto px-6 text-center">
+    <h2 className="text-5xl font-bold tracking-tight mb-8">
+      One recovered invoice
+      pays for your subscription.
+    </h2>
+
+    <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+      Most freelancers lose thousands every year from unpaid invoices.
+      KoniqTech automates collections so you recover revenue without awkward follow-ups.
+    </p>
+
+    <div className="grid md:grid-cols-3 gap-8 mt-16">
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+        <p className="text-5xl font-bold mb-3">$4,200</p>
+        <p className="text-gray-400">
+          Average recovered revenue
+        </p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+        <p className="text-5xl font-bold mb-3">8 hrs</p>
+        <p className="text-gray-400">
+          Saved every month
+        </p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+        <p className="text-5xl font-bold mb-3">70%</p>
+        <p className="text-gray-400">
+          Faster payment recovery
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
       {/* =========================
           STATS
       ========================= */}
@@ -290,6 +424,45 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+
+      {/* TRUST */}
+
+<section className="py-20 bg-white">
+  <div className="max-w-6xl mx-auto px-6">
+    <div className="grid md:grid-cols-3 gap-8">
+      <div className="border border-gray-200 rounded-3xl p-8">
+        <h3 className="text-xl font-bold mb-3">
+          Secure Infrastructure
+        </h3>
+
+        <p className="text-gray-600">
+          Your invoices and reminders are protected with enterprise-grade security.
+        </p>
+      </div>
+
+      <div className="border border-gray-200 rounded-3xl p-8">
+        <h3 className="text-xl font-bold mb-3">
+          Global Payments
+        </h3>
+
+        <p className="text-gray-600">
+          Accept payments from clients worldwide using PayPal and Stripe.
+        </p>
+      </div>
+
+      <div className="border border-gray-200 rounded-3xl p-8">
+        <h3 className="text-xl font-bold mb-3">
+          AI-Powered Automation
+        </h3>
+
+        <p className="text-gray-600">
+          Automated escalation sequences increase response and recovery rates.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* =========================
           PRICING
@@ -549,6 +722,17 @@ export default function Home() {
           </a>
         </div>
       </section>
+
+
+<div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+  <a
+    href="/login"
+    className="bg-black text-white px-8 py-4 rounded-full shadow-2xl hover:scale-105 transition inline-flex items-center gap-2"
+  >
+    Start Recovering Invoices
+    <ArrowRight size={18} />
+  </a>
+</div>
 
       {/* =========================
           FOOTER

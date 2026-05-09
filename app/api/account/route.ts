@@ -1,80 +1,126 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+import { prisma } from "@/lib/prisma";
+
+import { getUser } from "@/lib/auth";
 
 export async function GET() {
   try {
     /* =========================
        AUTH
     ========================= */
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
 
-    if (!token) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const { payload } = await jwtVerify(token, secret);
-    const userId = payload.id as string;
-
-    /* =========================
-       FETCH USER
-    ========================= */
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        subscriptions: {
-          where: { status: "ACTIVE" },
-          include: { plan: true },
-        },
-        invoices: true,
-      },
-    });
+    const user =
+      await getUser();
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const sub = user.subscriptions[0];
-    const hasActive = !!sub;
+    /* =========================
+       GET ACTIVE SUBSCRIPTION
+    ========================= */
+
+    const subscription =
+      await prisma.subscription.findFirst(
+        {
+          where: {
+            userId: user.id,
+
+            status: "active",
+          },
+
+          include: {
+            plan: true,
+          },
+
+          orderBy: {
+            createdAt: "desc",
+          },
+        }
+      );
 
     /* =========================
-       RESPONSE LOGIC
+       DEFAULT VALUES
     ========================= */
-    let plan = "Free";
-    let expiresAt: Date | null = null;
-    let invoiceLimit: number | null = 0;
 
-    if (hasActive) {
-      plan = sub.plan.name;
-      expiresAt = sub.expiresAt;
-      invoiceLimit = sub.plan.invoiceLimit;
+    let plan = "Free";
+
+    let invoiceLimit:
+      | number
+      | null = 10;
+
+    let expiresAt:
+      | Date
+      | null = null;
+
+    /* =========================
+       SAFE PLAN ACCESS
+    ========================= */
+
+    if (
+      subscription &&
+      subscription.plan
+    ) {
+      plan =
+        subscription.plan.name;
+
+      invoiceLimit =
+        subscription.plan
+          .invoiceLimit ?? null;
+
+      expiresAt =
+        subscription.expiresAt;
     }
 
-    const used = user.invoices.length;
+    /* =========================
+       USED INVOICES
+    ========================= */
+
+    const used =
+      await prisma.invoice.count(
+        {
+          where: {
+            userId: user.id,
+          },
+        }
+      );
+
+    /* =========================
+       RESPONSE
+    ========================= */
 
     return NextResponse.json({
       plan,
-      expiresAt,
+
       invoiceLimit,
+
+      expiresAt,
+
       used,
     });
 
-  } catch (err) {
-    console.error("ACCOUNT ERROR:", err);
+  } catch (error) {
+    console.error(
+      "ACCOUNT API ERROR:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
+      {
+        error:
+          "Failed to load account",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }

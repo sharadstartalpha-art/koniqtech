@@ -377,6 +377,9 @@ export default function InvoicesPage() {
                       Client
                     </th>
 
+<th className="px-6 py-4">
+  Invoice ID
+</th>
                     <th className="px-6 py-4">
                       Total
                     </th>
@@ -464,6 +467,39 @@ export default function InvoicesPage() {
                           </div>
 
                         </td>
+
+
+                        {/* INVOICE ID */}
+
+<td className="px-6 py-5">
+
+  <div className="space-y-2">
+
+    <p className="text-sm font-mono text-gray-900">
+      {inv.id.slice(0, 8)}...
+    </p>
+
+    <button
+      onClick={() => {
+        navigator.clipboard.writeText(
+          inv.id
+        );
+
+        toast.success(
+          "Invoice ID copied"
+        );
+      }}
+      className="
+        text-xs text-orange-600
+        hover:text-orange-700
+      "
+    >
+      Copy ID
+    </button>
+
+  </div>
+
+</td>
 
                         {/* TOTAL */}
 

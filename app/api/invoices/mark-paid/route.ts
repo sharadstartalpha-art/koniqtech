@@ -34,13 +34,11 @@ export async function POST(
     ========================= */
 
     const invoice =
-      await prisma.invoice.findUnique(
-        {
-          where: {
-            id,
-          },
-        }
-      );
+      await prisma.invoice.findUnique({
+        where: {
+          id,
+        },
+      });
 
     if (!invoice) {
       return NextResponse.json(
@@ -55,24 +53,21 @@ export async function POST(
     }
 
     /* =========================
-       CURRENT VALUES
+       VALUES
     ========================= */
 
     const currentPaid =
-      Number(
-        invoice.paidAmount || 0
-      );
+      Number(invoice.paidAmount || 0);
 
     const totalAmount =
       Number(invoice.amount);
 
-    /* =========================
-       PAYMENT LOGIC
-    ========================= */
-
     let paymentToAdd = 0;
 
-    // ✅ partial payment
+    /* =========================
+       PARTIAL / FULL PAYMENT
+    ========================= */
+
     if (
       paidAmount !== undefined &&
       paidAmount !== null
@@ -96,46 +91,28 @@ export async function POST(
       }
 
     } else {
-      // ✅ full remaining balance
       paymentToAdd =
         totalAmount -
         currentPaid;
     }
 
     /* =========================
-       PREVENT OVERPAYMENT
-    ========================= */
-
-    const remainingBalance =
-      totalAmount -
-      currentPaid;
-
-    if (
-      paymentToAdd >
-      remainingBalance
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Payment exceeds remaining balance",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    /* =========================
-       FINAL VALUES
+       CALCULATE
     ========================= */
 
     const updatedPaid =
       currentPaid +
       paymentToAdd;
 
+    const cappedPaid =
+      Math.min(
+        updatedPaid,
+        totalAmount
+      );
+
     const balance =
       totalAmount -
-      updatedPaid;
+      cappedPaid;
 
     const status =
       balance <= 0
@@ -143,76 +120,61 @@ export async function POST(
         : "unpaid";
 
     /* =========================
-       UPDATE INVOICE
+       TRANSACTION
     ========================= */
 
     const updatedInvoice =
-      await prisma.invoice.update(
-        {
-          where: {
-            id,
-          },
+      await prisma.$transaction(
+        async (tx) => {
 
-          data: {
-            paidAmount:
-              updatedPaid,
+          /* UPDATE INVOICE */
 
-            status,
+          const invoiceUpdated =
+            await tx.invoice.update({
+              where: {
+                id,
+              },
 
-            paidAt:
-              status === "paid"
-                ? new Date()
-                : null,
-          },
+              data: {
+                paidAmount:
+                  cappedPaid,
+
+                status,
+
+                paidAt:
+                  status === "paid"
+                    ? new Date()
+                    : null,
+              },
+            });
+
+          /* CREATE PAYMENT HISTORY */
+
+          await tx.payment.create({
+            data: {
+              userId:
+                invoice.userId,
+
+              productId:
+                invoice.productId,
+
+              invoiceId:
+                invoice.id,
+
+              amount:
+                paymentToAdd,
+
+              status: "paid",
+            },
+          });
+
+          return invoiceUpdated;
         }
       );
 
-    /* =========================
-       SAVE PAYMENT HISTORY
-    ========================= */
-
-    await prisma.payment.create(
-      {
-        data: {
-          userId:
-            invoice.userId,
-
-          productId:
-            invoice.productId,
-
-          invoiceId:
-            invoice.id,
-
-          amount:
-            paymentToAdd,
-
-          status:
-            "completed",
-        },
-      }
+    return NextResponse.json(
+      updatedInvoice
     );
-
-    /* =========================
-       RESPONSE
-    ========================= */
-
-    return NextResponse.json({
-      success: true,
-
-      invoice:
-        updatedInvoice,
-
-      payment: {
-        added:
-          paymentToAdd,
-
-        totalPaid:
-          updatedPaid,
-
-        remaining:
-          balance,
-      },
-    });
 
   } catch (err) {
     console.error(

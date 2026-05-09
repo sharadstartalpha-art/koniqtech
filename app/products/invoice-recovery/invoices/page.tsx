@@ -607,39 +607,48 @@ export default function InvoicesPage() {
       </button>
 
       {/* FULL */}
+<button
+  onClick={async () => {
 
-      <button
-        onClick={async () => {
-          try {
-            await axios.post(
-              "/api/invoices/mark-paid",
-              {
-                id: inv.id,
-                paidAmount:
-                  balance,
-              }
-            );
+    const confirmPay =
+      confirm(
+        `Mark invoice as fully paid?\n\nRemaining: $${balance}`
+      );
 
-            toast.success(
-              "Invoice fully paid"
-            );
+    if (!confirmPay) return;
 
-            load();
+    try {
 
-          } catch {
-            toast.error(
-              "Failed to update"
-            );
-          }
-        }}
-        className="
-          h-10 px-4 rounded-xl
-          bg-green-600 text-white
-          text-sm font-medium
-        "
-      >
-        Pay Full
-      </button>
+      await axios.post(
+        "/api/invoices/mark-paid",
+        {
+          id: inv.id,
+          paidAmount:
+            balance,
+        }
+      );
+
+      toast.success(
+        "Invoice fully paid"
+      );
+
+      load();
+
+    } catch {
+
+      toast.error(
+        "Failed to update"
+      );
+    }
+  }}
+  className="
+    h-10 px-4 rounded-xl
+    bg-green-600 text-white
+    text-sm font-medium
+  "
+>
+  Pay Full
+</button>
     </>
   )}
 

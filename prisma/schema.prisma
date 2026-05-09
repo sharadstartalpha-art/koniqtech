@@ -118,63 +118,6 @@ model Reminder {
   clicked Boolean @default(false)
 }
 
-model Invoice {
-  id String @id @default(uuid())
-
-  userId    String
-  productId String
-
-  clientEmail String
-  clientName  String?
-
-  // Financials
-
-  amount Float
-
-  paidAmount Float @default(0)
-
-  balanceAmount Float?
-
-  currency String @default("USD")
-
-  // Status
-
-  status String @default("unpaid")
-
-  mode String @default("manual")
-
-  // Dates
-
-  dueDate DateTime
-
-  paidAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  // Payment
-  payments    Payment[]
-  paymentLink String?
-
-  transactionId String?
-
-  paymentMethod String?
-
-  // Automation
-
-  autoReminder Boolean @default(true)
-
-  // Relations
-
-  product Product @relation(fields: [productId], references: [id])
-
-  user User @relation(fields: [userId], references: [id])
-
-  reminders         Reminder[]
-  reminderSchedules ReminderSchedule[]
-}
-
 model User {
   id String @id @default(uuid())
 
@@ -249,4 +192,108 @@ model ReminderSchedule {
 
   invoice  Invoice          @relation(fields: [invoiceId], references: [id])
   template ReminderTemplate @relation(fields: [templateId], references: [id])
+}
+
+model ReminderSettings {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  emailEnabled    Boolean @default(true)
+  whatsappEnabled Boolean @default(false)
+  smsEnabled      Boolean @default(false)
+
+  autoReminders Boolean @default(true)
+
+  whatsappTemplate String?
+  smsTemplate      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invoice {
+  id String @id @default(uuid())
+
+  userId    String
+  productId String
+
+  clientEmail String
+  clientName  String?
+
+  // Financials
+
+  amount Float
+
+  paidAmount Float @default(0)
+
+  balanceAmount Float?
+
+  currency String @default("USD")
+
+  // Status
+
+  status String @default("unpaid")
+
+  mode String @default("manual")
+
+  // Dates
+
+  dueDate DateTime
+
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  // Payment
+
+  payments Payment[]
+
+  paymentLink String?
+
+  transactionId String?
+
+  paymentMethod String?
+
+  // Automation
+
+  autoReminder Boolean @default(true)
+
+  // Relations
+
+  product Product @relation(fields: [productId], references: [id])
+
+  user User @relation(fields: [userId], references: [id])
+
+  reminders Reminder[]
+
+  reminderSchedules ReminderSchedule[]
+
+  reminderLogs ReminderLog[]
+}
+
+model ReminderLog {
+  id String @id @default(uuid())
+
+  userId String
+
+  invoiceId String
+
+  channel String
+
+  status String
+
+  recipient String
+
+  subject String?
+
+  message String
+
+  providerId String?
+
+  createdAt DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
 }

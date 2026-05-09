@@ -18,6 +18,12 @@ import {
   Sparkles,
   CreditCard,
   ShieldCheck,
+  Bell,
+  MessageCircle,
+  Smartphone,
+  Bot,
+  BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 type LayoutProps = {
@@ -30,48 +36,116 @@ export default function Layout({
   const pathname = usePathname();
 
   const nav = [
-    {
-      name: "Dashboard",
-      href: "/products/invoice-recovery/dashboard",
-      icon: LayoutDashboard,
-    },
+  {
+    section: "Core",
+    items: [
+      {
+        name: "Dashboard",
+        href: "/products/invoice-recovery/dashboard",
+        icon: LayoutDashboard,
+      },
 
-    {
-      name: "Invoices",
-      href: "/products/invoice-recovery/invoices",
-      icon: FileText,
-    },
+      {
+        name: "Invoices",
+        href: "/products/invoice-recovery/invoices",
+        icon: FileText,
+      },
 
-    {
-      name: "Reminders",
-      href: "/products/invoice-recovery/reminders",
-      icon: Mail,
-    },
+      {
+        name: "Automation",
+        href: "/products/invoice-recovery/automation",
+        icon: Sparkles,
+        badge: "NEW",
+      },
 
-    {
-      name: "Payment Links",
-      href: "/products/invoice-recovery/links",
-      icon: LinkIcon,
-    },
+      {
+        name: "Reminders",
+        href: "/products/invoice-recovery/reminders",
+        icon: Mail,
+      },
 
-    {
-      name: "Templates",
-      href: "/products/invoice-recovery/settings/templates",
-      icon: LayoutTemplate,
-    },
+      {
+        name: "Reminder Center",
+        href: "/products/invoice-recovery/reminder-center",
+        icon: Bell,
+        progress: true,
+      },
 
-    {
-      name: "Account",
-      href: "/products/invoice-recovery/account",
-      icon: User,
-    },
+      {
+        name: "Payment Links",
+        href: "/products/invoice-recovery/links",
+        icon: LinkIcon,
+      },
+    ],
+  },
 
-    {
-      name: "Settings",
-      href: "/products/invoice-recovery/settings",
-      icon: Settings,
-    },
-  ];
+  {
+    section: "Recovery Channels",
+    items: [
+      {
+        name: "WhatsApp",
+        href: "/products/invoice-recovery/whatsapp",
+        icon: MessageCircle,
+        progress: true,
+      },
+
+      {
+        name: "SMS",
+        href: "/products/invoice-recovery/sms",
+        icon: Smartphone,
+        progress: true,
+      },
+
+      {
+        name: "AI Recovery",
+        href: "/products/invoice-recovery/ai-assistant",
+        icon: Bot,
+        badge: "AI",
+      },
+    ],
+  },
+
+  {
+    section: "Analytics",
+    items: [
+      {
+        name: "Recovery Analytics",
+        href: "/products/invoice-recovery/recovery-analytics",
+        icon: BarChart3,
+      },
+
+      {
+        name: "Campaigns",
+        href: "/products/invoice-recovery/campaigns",
+        icon: Megaphone,
+        progress: true,
+      },
+    ],
+  },
+
+  {
+    section: "Workspace",
+    items: [
+      {
+        name: "Templates",
+        href: "/products/invoice-recovery/settings/templates",
+        icon: LayoutTemplate,
+      },
+
+      {
+        name: "Account",
+        href: "/products/invoice-recovery/account",
+        icon: User,
+      },
+
+      {
+        name: "Settings",
+        href: "/products/invoice-recovery/settings",
+        icon: Settings,
+      },
+    ],
+  },
+];
 
   return (
     <div className="flex min-h-screen bg-[#f7f8fc] text-sm text-gray-900">
@@ -104,57 +178,88 @@ export default function Layout({
             </p>
           </div>
 
-          <nav className="space-y-1.5">
+          <div className="space-y-7">
 
-            {nav.map((item) => {
-              const active =
-                pathname === item.href;
+  {nav.map((group) => (
 
-              const Icon = item.icon;
+    <div key={group.section}>
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 ${
+      <div className="mb-3 px-3">
+        <p className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
+          {group.section}
+        </p>
+      </div>
+
+      <nav className="space-y-1.5">
+
+        {group.items.map((item) => {
+          const active =
+            pathname === item.href;
+
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`group flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 ${
+                active
+                  ? "bg-black text-white shadow-lg shadow-black/10"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-black"
+              }`}
+            >
+
+              <div className="flex items-center gap-3">
+
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
                     active
-                      ? "bg-black text-white shadow-lg shadow-black/10"
-                      : "text-gray-600 hover:bg-gray-100 hover:text-black"
+                      ? "bg-white/10"
+                      : "bg-gray-100 group-hover:bg-white"
                   }`}
                 >
+                  <Icon size={18} />
+                </div>
 
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col">
 
-                    <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                        active
-                          ? "bg-white/10"
-                          : "bg-gray-100 group-hover:bg-white"
-                      }`}
-                    >
+                  <span className="font-medium flex items-center gap-2">
 
-                      <Icon size={18} />
+                    {item.name}
 
-                    </div>
+                    {item.badge && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500 text-white">
+                        {item.badge}
+                      </span>
+                    )}
 
-                    <span className="font-medium">
-                      {item.name}
+                  </span>
+
+                  {item.progress && (
+                    <span className="text-[10px] text-gray-400">
+                      Coming soon
                     </span>
-
-                  </div>
-
-                  {active && (
-                    <ChevronRight
-                      size={16}
-                    />
                   )}
 
-                </Link>
-              );
-            })}
+                </div>
 
-          </nav>
+              </div>
 
+              {active && (
+                <ChevronRight size={16} />
+              )}
+
+            </Link>
+          );
+        })}
+
+      </nav>
+
+    </div>
+
+  ))}
+
+</div>
           {/* PRO CARD */}
 
           <div className="mt-8 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 p-5 text-white overflow-hidden relative">

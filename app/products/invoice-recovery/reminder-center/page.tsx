@@ -2,7 +2,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import axios from "axios";
 
 import Layout from "@/components/Layout";
 
@@ -23,54 +25,145 @@ import {
 
 export default function ReminderCenterPage() {
 
+  /* =========================================
+     STATES
+  ========================================= */
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [data, setData] =
+    useState<any>(null);
+
   const [openCreate, setOpenCreate] =
     useState(false);
 
   const [openAnalytics, setOpenAnalytics] =
     useState(false);
 
-  const reminders = [
-    {
-      id: 1,
-      client: "Acme Inc",
-      channel: "Email",
-      tone: "Friendly",
-      status: "Sent",
-      amount: "$2,500",
-      time: "2 hours ago",
-      icon: Mail,
-    },
+  /* =========================================
+     FORM
+  ========================================= */
 
-    {
-      id: 2,
-      client: "Start Alpha",
-      channel: "WhatsApp",
-      tone: "Firm",
-      status: "Pending",
-      amount: "$8,400",
-      time: "In 4 hours",
-      icon: MessageCircle,
-    },
+  const [invoiceId, setInvoiceId] =
+    useState("");
 
-    {
-      id: 3,
-      client: "Nova Studio",
-      channel: "SMS",
-      tone: "Final Notice",
-      status: "Failed",
-      amount: "$1,200",
-      time: "Yesterday",
-      icon: Smartphone,
-    },
-  ];
+  const [email, setEmail] =
+    useState("");
 
-  const createReminder = () => {
-    toast.success(
-      "Reminder created successfully"
-    );
+  const [amount, setAmount] =
+    useState("");
 
-    setOpenCreate(false);
+  const [mode, setMode] =
+    useState("email");
+
+  const [message, setMessage] =
+    useState("");
+
+  /* =========================================
+     LOAD DATA
+  ========================================= */
+
+  const loadData = async () => {
+    try {
+
+      const res =
+        await axios.get(
+          "/api/reminder-center"
+        );
+
+      setData(res.data);
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast.error(
+        "Failed to load reminder center"
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  /* =========================================
+     CREATE REMINDER
+  ========================================= */
+
+  const createReminder =
+    async () => {
+      try {
+
+        if (!invoiceId) {
+          toast.error(
+            "Invoice ID required"
+          );
+
+          return;
+        }
+
+        await axios.post(
+          "/api/reminder-center",
+          {
+            invoiceId,
+            email,
+            amount,
+            mode,
+            type: "friendly",
+            html: `<p>${message}</p>`,
+            text: message,
+          }
+        );
+
+        toast.success(
+          "Reminder sent successfully"
+        );
+
+        setOpenCreate(false);
+
+        loadData();
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast.error(
+          "Failed to send reminder"
+        );
+      }
+    };
+
+  /* =========================================
+     LOADING
+  ========================================= */
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="p-10">
+          Loading...
+        </div>
+      </Layout>
+    );
+  }
+
+  /* =========================================
+     DATA
+  ========================================= */
+
+  const reminders =
+    data?.reminders || [];
+
+  const logs =
+    data?.logs || [];
+
+  const stats =
+    data?.stats || {};
 
   return (
     <Layout>
@@ -78,6 +171,7 @@ export default function ReminderCenterPage() {
       <div className="space-y-6">
 
         {/* HERO */}
+
         <div className="rounded-[28px] overflow-hidden bg-gradient-to-r from-black via-zinc-950 to-slate-900 text-white p-8 border border-zinc-800">
 
           <div className="flex items-start justify-between flex-wrap gap-6">
@@ -100,6 +194,7 @@ export default function ReminderCenterPage() {
               <div className="flex gap-3 mt-6 flex-wrap">
 
                 {/* CREATE */}
+
                 <button
                   onClick={() =>
                     setOpenCreate(true)
@@ -110,6 +205,7 @@ export default function ReminderCenterPage() {
                 </button>
 
                 {/* ANALYTICS */}
+
                 <button
                   onClick={() =>
                     setOpenAnalytics(true)
@@ -123,29 +219,30 @@ export default function ReminderCenterPage() {
             </div>
 
             {/* STATS */}
+
             <div className="grid grid-cols-2 gap-4 min-w-[320px]">
 
               <StatCard
-                title="Sent Today"
-                value="148"
+                title="Sent"
+                value={stats.sent || 0}
                 icon={CheckCircle2}
               />
 
               <StatCard
                 title="Pending"
-                value="23"
+                value={stats.pending || 0}
                 icon={Clock3}
               />
 
               <StatCard
                 title="Failed"
-                value="4"
+                value={stats.failed || 0}
                 icon={AlertTriangle}
               />
 
               <StatCard
-                title="AI Recovery"
-                value="82%"
+                title="Opened"
+                value={stats.opened || 0}
                 icon={BrainCircuit}
               />
 
@@ -154,55 +251,70 @@ export default function ReminderCenterPage() {
         </div>
 
         {/* CHANNELS */}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
           <ChannelCard
             title="Email Recovery"
             desc="Automated invoice reminders via email."
             icon={Mail}
-            active="124 active"
+            active={`${stats?.channels?.email || 0} sent`}
           />
 
           <ChannelCard
             title="WhatsApp Recovery"
             desc="High-open recovery campaigns."
             icon={MessageCircle}
-            active="42 active"
+            active={`${stats?.channels?.whatsapp || 0} sent`}
           />
 
           <ChannelCard
             title="SMS Recovery"
             desc="Fast payment nudges via SMS."
             icon={Smartphone}
-            active="18 active"
+            active={`${stats?.channels?.sms || 0} sent`}
           />
 
         </div>
 
         {/* TABLE */}
+
         <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden">
 
-          <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+          <div className="p-6 border-b border-zinc-100">
 
-            <div>
-              <h2 className="text-xl font-semibold">
-                Recent Reminder Activity
-              </h2>
+            <h2 className="text-xl font-semibold">
+              Recent Reminder Activity
+            </h2>
 
-              <p className="text-sm text-zinc-500 mt-1">
-                Track all reminder delivery events
-              </p>
-            </div>
+            <p className="text-sm text-zinc-500 mt-1">
+              Track all reminder delivery events
+            </p>
 
           </div>
 
           <div className="divide-y">
-            {reminders.map((r) => {
-              const Icon = r.icon;
+
+            {logs.length === 0 && (
+              <div className="p-10 text-center text-zinc-500">
+                No reminders yet
+              </div>
+            )}
+
+            {logs.map((log: any) => {
+
+              const Icon =
+                log.channel ===
+                "whatsapp"
+                  ? MessageCircle
+                  : log.channel ===
+                    "sms"
+                  ? Smartphone
+                  : Mail;
 
               return (
                 <div
-                  key={r.id}
+                  key={log.id}
                   className="p-5 flex items-center justify-between hover:bg-zinc-50 transition"
                 >
 
@@ -213,28 +325,47 @@ export default function ReminderCenterPage() {
                     </div>
 
                     <div>
+
                       <h3 className="font-semibold text-[15px]">
-                        {r.client}
+                        {
+                          log.invoice
+                            ?.clientName
+                        }
                       </h3>
 
                       <p className="text-sm text-zinc-500 mt-1">
-                        {r.channel} • {r.tone}
+                        {
+                          log.channel
+                        }{" "}
+                        •{" "}
+                        {
+                          log.subject
+                        }
                       </p>
+
                     </div>
 
                   </div>
 
                   <div className="hidden md:block text-sm font-medium">
-                    {r.amount}
+                    $
+                    {
+                      log.invoice
+                        ?.amount
+                    }
                   </div>
 
                   <div className="hidden md:block text-sm text-zinc-500">
-                    {r.time}
+                    {new Date(
+                      log.createdAt
+                    ).toLocaleString()}
                   </div>
 
                   <div>
                     <StatusBadge
-                      status={r.status}
+                      status={
+                        log.status
+                      }
                     />
                   </div>
 
@@ -250,7 +381,7 @@ export default function ReminderCenterPage() {
       </div>
 
       {/* ===================================
-          CREATE REMINDER MODAL
+          CREATE MODAL
       =================================== */}
 
       {openCreate && (
@@ -261,6 +392,7 @@ export default function ReminderCenterPage() {
             <div className="flex items-center justify-between mb-6">
 
               <div>
+
                 <h2 className="text-2xl font-bold">
                   Create Reminder
                 </h2>
@@ -268,6 +400,7 @@ export default function ReminderCenterPage() {
                 <p className="text-sm text-zinc-500 mt-1">
                   Send reminder manually
                 </p>
+
               </div>
 
               <button
@@ -283,23 +416,69 @@ export default function ReminderCenterPage() {
             <div className="space-y-4">
 
               <input
+                placeholder="Invoice ID"
+                value={invoiceId}
+                onChange={(e) =>
+                  setInvoiceId(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-2xl px-4 py-3 outline-none"
+              />
+
+              <input
                 placeholder="Client email"
+                value={email}
+                onChange={(e) =>
+                  setEmail(
+                    e.target.value
+                  )
+                }
                 className="w-full border rounded-2xl px-4 py-3 outline-none"
               />
 
               <input
                 placeholder="Invoice amount"
+                value={amount}
+                onChange={(e) =>
+                  setAmount(
+                    e.target.value
+                  )
+                }
                 className="w-full border rounded-2xl px-4 py-3 outline-none"
               />
 
-              <select className="w-full border rounded-2xl px-4 py-3 outline-none">
-                <option>Email</option>
-                <option>WhatsApp</option>
-                <option>SMS</option>
+              <select
+                value={mode}
+                onChange={(e) =>
+                  setMode(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-2xl px-4 py-3 outline-none"
+              >
+                <option value="email">
+                  Email
+                </option>
+
+                <option value="whatsapp">
+                  WhatsApp
+                </option>
+
+                <option value="sms">
+                  SMS
+                </option>
+
               </select>
 
               <textarea
                 rows={5}
+                value={message}
+                onChange={(e) =>
+                  setMessage(
+                    e.target.value
+                  )
+                }
                 placeholder="Reminder message..."
                 className="w-full border rounded-2xl px-4 py-3 outline-none"
               />
@@ -318,7 +497,9 @@ export default function ReminderCenterPage() {
               </button>
 
               <button
-                onClick={createReminder}
+                onClick={
+                  createReminder
+                }
                 className="bg-black text-white px-5 py-3 rounded-2xl"
               >
                 Send Reminder
@@ -342,13 +523,15 @@ export default function ReminderCenterPage() {
             <div className="flex items-center justify-between mb-8">
 
               <div>
+
                 <h2 className="text-2xl font-bold">
                   Recovery Analytics
                 </h2>
 
                 <p className="text-sm text-zinc-500 mt-1">
-                  Performance overview
+                  Real performance overview
                 </p>
+
               </div>
 
               <button
@@ -365,28 +548,33 @@ export default function ReminderCenterPage() {
 
               <AnalyticsCard
                 title="Emails"
-                value="482"
+                value={
+                  stats?.channels
+                    ?.email || 0
+                }
               />
 
               <AnalyticsCard
-                title="Opened"
-                value="71%"
+                title="WhatsApp"
+                value={
+                  stats?.channels
+                    ?.whatsapp || 0
+                }
               />
 
               <AnalyticsCard
-                title="Recovered"
-                value="$18.4k"
+                title="SMS"
+                value={
+                  stats?.channels
+                    ?.sms || 0
+                }
               />
 
               <AnalyticsCard
                 title="Success"
-                value="82%"
+                value={`${stats.sent || 0}`}
               />
 
-            </div>
-
-            <div className="mt-8 bg-zinc-100 rounded-3xl p-10 text-center text-zinc-500">
-              Charts & graphs area
             </div>
 
           </div>
@@ -408,9 +596,11 @@ function StatCard({
 }: any) {
   return (
     <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5">
+
       <div className="flex items-center justify-between">
 
         <div>
+
           <p className="text-zinc-400 text-sm">
             {title}
           </p>
@@ -418,6 +608,7 @@ function StatCard({
           <h3 className="text-3xl font-bold mt-2">
             {value}
           </h3>
+
         </div>
 
         <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
@@ -425,12 +616,13 @@ function StatCard({
         </div>
 
       </div>
+
     </div>
   );
 }
 
 /* ===================================
-   CHANNEL CARD
+   CHANNEL
 =================================== */
 
 function ChannelCard({
@@ -455,8 +647,11 @@ function ChannelCard({
       </p>
 
       <div className="mt-5 inline-flex items-center gap-2 text-green-600 text-sm font-medium">
+
         <div className="w-2 h-2 rounded-full bg-green-500" />
+
         {active}
+
       </div>
 
     </div>
@@ -472,7 +667,8 @@ function StatusBadge({
 }: {
   status: string;
 }) {
-  if (status === "Sent") {
+
+  if (status === "sent") {
     return (
       <div className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-medium">
         Sent
@@ -480,7 +676,7 @@ function StatusBadge({
     );
   }
 
-  if (status === "Pending") {
+  if (status === "pending") {
     return (
       <div className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full font-medium">
         Pending
@@ -496,7 +692,7 @@ function StatusBadge({
 }
 
 /* ===================================
-   ANALYTICS CARD
+   ANALYTICS
 =================================== */
 
 function AnalyticsCard({
@@ -505,6 +701,7 @@ function AnalyticsCard({
 }: any) {
   return (
     <div className="border rounded-2xl p-5">
+
       <p className="text-sm text-zinc-500">
         {title}
       </p>
@@ -512,6 +709,7 @@ function AnalyticsCard({
       <h3 className="text-3xl font-bold mt-2">
         {value}
       </h3>
+
     </div>
   );
 }

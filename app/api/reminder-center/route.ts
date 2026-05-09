@@ -223,39 +223,39 @@ export async function POST(
     ========================================= */
 
     const reminder =
-      await prisma.reminder.create({
-        data: {
-          userId:
-            user.id,
+  await prisma.reminder.create({
+    data: {
+      userId: user.id,
 
-          invoiceId,
+      invoiceId,
 
-          email,
+      email,
 
-          amount:
-            Number(amount) || 0,
+      amount:
+        Number(amount) || 0,
 
-          type:
-            type || "friendly",
+      type:
+        type || "friendly",
 
-          mode:
-            mode || "manual",
+      mode: "manual",
 
-          status: "sent",
+      channel:
+        mode || "email",
 
-          html:
-            html ||
-            "<p>Reminder sent</p>",
+      status: "sent",
 
-          text:
-            text ||
-            "Reminder sent",
+      html:
+        html ||
+        "<p>Reminder sent</p>",
 
-          sentAt:
-            new Date(),
-        },
-      });
+      text:
+        text ||
+        "Reminder sent",
 
+      sentAt:
+        new Date(),
+    },
+  });
     /* =========================================
        CREATE LOG ENTRY
     ========================================= */

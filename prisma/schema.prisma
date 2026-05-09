@@ -102,8 +102,9 @@ model Reminder {
   status String
   mode   ReminderMode
 
-  email  String
-  amount Float
+  channel String @default("email")
+  email   String
+  amount  Float
 
   html String
   text String

@@ -72,7 +72,7 @@ export async function POST(
 
     let paymentToAdd = 0;
 
-    // ✅ if frontend sends amount
+    // ✅ partial payment
     if (
       paidAmount !== undefined &&
       paidAmount !== null
@@ -96,10 +96,33 @@ export async function POST(
       }
 
     } else {
-      // ✅ ONE CLICK FULL PAYMENT
+      // ✅ full remaining balance
       paymentToAdd =
         totalAmount -
         currentPaid;
+    }
+
+    /* =========================
+       PREVENT OVERPAYMENT
+    ========================= */
+
+    const remainingBalance =
+      totalAmount -
+      currentPaid;
+
+    if (
+      paymentToAdd >
+      remainingBalance
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Payment exceeds remaining balance",
+        },
+        {
+          status: 400,
+        }
+      );
     }
 
     /* =========================
@@ -110,15 +133,9 @@ export async function POST(
       currentPaid +
       paymentToAdd;
 
-    const cappedPaid =
-      Math.min(
-        updatedPaid,
-        totalAmount
-      );
-
     const balance =
       totalAmount -
-      cappedPaid;
+      updatedPaid;
 
     const status =
       balance <= 0
@@ -126,7 +143,7 @@ export async function POST(
         : "unpaid";
 
     /* =========================
-       UPDATE
+       UPDATE INVOICE
     ========================= */
 
     const updatedInvoice =
@@ -138,7 +155,7 @@ export async function POST(
 
           data: {
             paidAmount:
-              cappedPaid,
+              updatedPaid,
 
             status,
 
@@ -150,9 +167,52 @@ export async function POST(
         }
       );
 
-    return NextResponse.json(
-      updatedInvoice
+    /* =========================
+       SAVE PAYMENT HISTORY
+    ========================= */
+
+    await prisma.payment.create(
+      {
+        data: {
+          userId:
+            invoice.userId,
+
+          productId:
+            invoice.productId,
+
+          invoiceId:
+            invoice.id,
+
+          amount:
+            paymentToAdd,
+
+          status:
+            "completed",
+        },
+      }
     );
+
+    /* =========================
+       RESPONSE
+    ========================= */
+
+    return NextResponse.json({
+      success: true,
+
+      invoice:
+        updatedInvoice,
+
+      payment: {
+        added:
+          paymentToAdd,
+
+        totalPaid:
+          updatedPaid,
+
+        remaining:
+          balance,
+      },
+    });
 
   } catch (err) {
     console.error(

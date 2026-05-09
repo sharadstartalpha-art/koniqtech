@@ -7,17 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
-
-
 model Payment {
   id        String   @id @default(uuid())
   userId    String
   productId String
+  invoiceId String
   amount    Float
   status    String
   createdAt DateTime @default(now())
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
 }
 
 model MagicLink {
@@ -45,7 +43,7 @@ model Plan {
   name          String // Free / Pro / Business
   price         Float
   invoiceLimit  Int?
-  paypalPlanId String? @unique
+  paypalPlanId  String?        @unique
   createdAt     DateTime       @default(now())
   active        Boolean        @default(true)
   product       Product        @relation(fields: [productId], references: [id])
@@ -61,53 +59,44 @@ model Subscription {
   status               String
   createdAt            DateTime  @default(now())
   expiresAt            DateTime? // ✅ ADD THIS
-  currentPeriodEnd DateTime?   // ✅ ADD THIS
+  currentPeriodEnd     DateTime? // ✅ ADD THIS
   product              Product   @relation(fields: [productId], references: [id])
   plan                 Plan      @relation(fields: [planId], references: [id])
   user                 User      @relation(fields: [userId], references: [id])
 }
 
-
-
 model PaymentLink {
   id        String   @id @default(uuid())
   userId    String
   title     String
-  url       String?   // 👈 TEMP OPTIONAL
+  url       String? // 👈 TEMP OPTIONAL
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
 }
 
-
-
-
-
-
 model ReminderTemplate {
-  id        String   @id @default(cuid())
-  userId    String
+  id     String @id @default(cuid())
+  userId String
 
-  name      String   // "Friendly" | "Firm" | "Final"
-  subject   String
-  html      String   // full email HTML
+  name    String // "Friendly" | "Firm" | "Final"
+  subject String
+  html    String // full email HTML
 
-  type      String   // 🔥 "friendly" | "firm" | "final" | "custom"
-  isDefault Boolean  @default(false)
+  type      String // 🔥 "friendly" | "firm" | "final" | "custom"
+  isDefault Boolean @default(false)
 
-  
-  createdAt DateTime @default(now())
-  reminderSchedules  ReminderSchedule[]
+  createdAt         DateTime           @default(now())
+  reminderSchedules ReminderSchedule[]
 }
 
-
 model Reminder {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
   userId    String
   invoiceId String
 
-  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
 
   type   ReminderType
   status String
@@ -129,45 +118,44 @@ model Reminder {
   clicked Boolean @default(false)
 }
 
-
 model Invoice {
-  id            String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId        String
-  productId     String
+  userId    String
+  productId String
 
-  clientEmail   String
-  clientName    String?
+  clientEmail String
+  clientName  String?
 
   // Financials
 
-  amount        Float
+  amount Float
 
-  paidAmount    Float       @default(0)
+  paidAmount Float @default(0)
 
   balanceAmount Float?
 
-  currency      String      @default("USD")
+  currency String @default("USD")
 
   // Status
 
-  status        String      @default("unpaid")
+  status String @default("unpaid")
 
-  mode          String      @default("manual")
+  mode String @default("manual")
 
   // Dates
 
-  dueDate       DateTime
+  dueDate DateTime
 
-  paidAt        DateTime?
+  paidAt DateTime?
 
-  createdAt     DateTime    @default(now())
+  createdAt DateTime @default(now())
 
-  updatedAt     DateTime    @updatedAt
+  updatedAt DateTime @updatedAt
 
   // Payment
-
-  paymentLink   String?
+  payments    Payment[]
+  paymentLink String?
 
   transactionId String?
 
@@ -175,57 +163,54 @@ model Invoice {
 
   // Automation
 
-  autoReminder  Boolean     @default(true)
+  autoReminder Boolean @default(true)
 
   // Relations
 
-  product       Product     @relation(fields: [productId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
-  user          User        @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
-  reminders     Reminder[]
-  reminderSchedules  ReminderSchedule[]
+  reminders         Reminder[]
+  reminderSchedules ReminderSchedule[]
 }
 
-
 model User {
-  id          String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  email       String   @unique
-  password    String?
+  email    String  @unique
+  password String?
 
-  name        String?
-  avatar      String?
+  name   String?
+  avatar String?
 
-  role        String   @default("USER")
+  role String @default("USER")
 
-  isVerified  Boolean  @default(false)
+  isVerified Boolean @default(false)
 
-  otp         String?
-  otpExpiry   DateTime?
+  otp       String?
+  otpExpiry DateTime?
 
-  verifyToken String?
+  verifyToken  String?
   verifyExpiry DateTime?
 
-  referredBy  String?
+  referredBy String?
 
-  acceptedTerms Boolean @default(false)
-  acceptedAt     DateTime?
+  acceptedTerms Boolean   @default(false)
+  acceptedAt    DateTime?
 
   lastLoginAt  DateTime?
   lastActiveAt DateTime?
 
-  timezone     String? @default("UTC")
+  timezone String? @default("UTC")
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   paymentLinks  PaymentLink[]
   invoices      Invoice[]
   subscriptions Subscription[]
 }
-
-
 
 enum ReminderMode {
   manual
@@ -237,6 +222,7 @@ enum ReminderStatus {
   sent
   failed
 }
+
 enum ReminderType {
   friendly
   firm
@@ -244,23 +230,23 @@ enum ReminderType {
 }
 
 model ReminderSchedule {
-  id         String @id @default(cuid())
+  id String @id @default(cuid())
 
   userId     String
   invoiceId  String
   templateId String
 
-  type       ReminderType
-  mode       ReminderMode
-  status     ReminderStatus @default(pending)
+  type   ReminderType
+  mode   ReminderMode
+  status ReminderStatus @default(pending)
 
-  step       Int
-  amount     Float
+  step   Int
+  amount Float
 
-  sendAt     DateTime
+  sendAt DateTime
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  invoice     Invoice @relation(fields: [invoiceId], references: [id])
-  template    ReminderTemplate @relation(fields: [templateId], references: [id])
+  invoice  Invoice          @relation(fields: [invoiceId], references: [id])
+  template ReminderTemplate @relation(fields: [templateId], references: [id])
 }

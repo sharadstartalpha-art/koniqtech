@@ -22,6 +22,16 @@ import {
    TYPES
 ========================= */
 
+type Payment = {
+  id: string;
+
+  amount: number;
+
+  createdAt: string;
+
+  status: string;
+};
+
 type Invoice = {
   id: string;
 
@@ -36,6 +46,8 @@ type Invoice = {
   status: "paid" | "unpaid";
 
   mode: "manual" | "auto";
+
+  payments: Payment[];
 };
 
 /* =========================
@@ -513,6 +525,33 @@ export default function InvoicesPage() {
                             {inv.status}
                           </span>
 
+
+{(inv.payments?.length || 0) > 0 && (
+  <div className="mt-3 space-y-1">
+
+    {inv.payments?.map(
+      (
+        p: Payment,
+        idx: number
+      ) => (
+        <div
+          key={idx}
+          className="
+            text-xs text-gray-500
+          "
+        >
+          Paid ${p.amount} on{" "}
+          {new Date(
+            p.createdAt
+          ).toLocaleDateString()}
+        </div>
+      )
+    )}
+
+  </div>
+)}
+
+
                         </td>
 
                         {/* ACTIONS */}
@@ -521,44 +560,108 @@ export default function InvoicesPage() {
 
                           <div className="flex justify-end gap-2">
 
-                            {inv.status !==
-                              "paid" && (
-                              <button
-                                onClick={() =>
-                                  markPaid(
-                                    inv.id
-                                  )
-                                }
-                                className="
-                                  h-10 px-4 rounded-xl
-                                  bg-black text-white
-                                  text-sm font-medium
-                                  hover:opacity-90
-                                "
-                              >
-                                Mark Paid
-                              </button>
-                            )}
+  {inv.status !== "paid" && (
 
-                            <button
-                              onClick={() =>
-                                remove(inv.id)
-                              }
-                              className="
-                                h-10 w-10 rounded-xl
-                                border border-red-200
-                                text-red-600
-                                hover:bg-red-50
-                                flex items-center
-                                justify-center
-                              "
-                            >
-                              <Trash2
-                                size={16}
-                              />
-                            </button>
+    <>
+      {/* PARTIAL */}
 
-                          </div>
+      <button
+        onClick={async () => {
+          const amount = prompt(
+            "Enter payment amount"
+          );
+
+          if (!amount) return;
+
+          try {
+            await axios.post(
+              "/api/invoices/mark-paid",
+              {
+                id: inv.id,
+                paidAmount:
+                  Number(amount),
+              }
+            );
+
+            toast.success(
+              "Payment updated"
+            );
+
+            load();
+
+          } catch (err: any) {
+            toast.error(
+              err?.response?.data
+                ?.error ||
+                "Failed to update"
+            );
+          }
+        }}
+        className="
+          h-10 px-4 rounded-xl
+          bg-black text-white
+          text-sm font-medium
+        "
+      >
+        Partial Pay
+      </button>
+
+      {/* FULL */}
+
+      <button
+        onClick={async () => {
+          try {
+            await axios.post(
+              "/api/invoices/mark-paid",
+              {
+                id: inv.id,
+                paidAmount:
+                  balance,
+              }
+            );
+
+            toast.success(
+              "Invoice fully paid"
+            );
+
+            load();
+
+          } catch {
+            toast.error(
+              "Failed to update"
+            );
+          }
+        }}
+        className="
+          h-10 px-4 rounded-xl
+          bg-green-600 text-white
+          text-sm font-medium
+        "
+      >
+        Pay Full
+      </button>
+    </>
+  )}
+
+  {/* DELETE */}
+
+  <button
+    onClick={() =>
+      remove(inv.id)
+    }
+    className="
+      h-10 w-10 rounded-xl
+      border border-red-200
+      text-red-600
+      hover:bg-red-50
+      flex items-center
+      justify-center
+    "
+  >
+    <Trash2 size={16} />
+  </button>
+
+</div>
 
                         </td>
 

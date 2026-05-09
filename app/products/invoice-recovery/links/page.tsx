@@ -5,9 +5,19 @@ import axios from "axios";
 import Layout from "@/components/Layout";
 import toast from "react-hot-toast";
 
+import {
+  Link2,
+  Copy,
+  Trash2,
+  ExternalLink,
+  CreditCard,
+  Plus,
+} from "lucide-react";
+
 /* =========================
    TYPES
 ========================= */
+
 type LinkType = {
   id: string;
   title: string;
@@ -17,20 +27,31 @@ type LinkType = {
 /* =========================
    PAGE
 ========================= */
+
 export default function PaymentLinksPage() {
   const [links, setLinks] = useState<LinkType[]>([]);
+
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
 
+  const [loading, setLoading] = useState(false);
+
   /* =========================
-     LOAD
+     LOAD LINKS
   ========================= */
+
   const load = async () => {
     try {
-      const res = await axios.get("/api/payment-links");
+      const res = await axios.get(
+        "/api/payment-links"
+      );
+
       setLinks(res.data);
+
     } catch {
-      toast.error("Failed to load links");
+      toast.error(
+        "Failed to load payment links"
+      );
     }
   };
 
@@ -39,133 +60,336 @@ export default function PaymentLinksPage() {
   }, []);
 
   /* =========================
-     CREATE
+     CREATE LINK
   ========================= */
+
   const create = async () => {
     if (!title || !url) {
-      return toast.error("Fill all fields");
+      return toast.error(
+        "Fill all fields"
+      );
     }
 
     try {
-      await axios.post("/api/payment-links", {
-        title,
-        url,
-      });
+      setLoading(true);
 
-      toast.success("Link saved");
+      await axios.post(
+        "/api/payment-links",
+        {
+          title,
+          url,
+        }
+      );
+
+      toast.success(
+        "Payment link created"
+      );
 
       setTitle("");
       setUrl("");
+
       load();
+
     } catch {
-      toast.error("Failed to create link");
+      toast.error(
+        "Failed to create link"
+      );
+
+    } finally {
+      setLoading(false);
     }
   };
 
   /* =========================
      DELETE
   ========================= */
-  const remove = async (id: string) => {
-    if (!confirm("Delete this link?")) return;
+
+  const remove = async (
+    id: string
+  ) => {
+    if (
+      !confirm(
+        "Delete this payment link?"
+      )
+    ) {
+      return;
+    }
 
     try {
-      await axios.delete(`/api/payment-links?id=${id}`);
-      toast.success("Deleted");
+      await axios.delete(
+        `/api/payment-links?id=${id}`
+      );
+
+      toast.success(
+        "Payment link deleted"
+      );
+
       load();
+
     } catch {
-      toast.error("Delete failed");
+      toast.error(
+        "Delete failed"
+      );
     }
   };
 
   /* =========================
-     UI
+     COPY
   ========================= */
+
+  const copy = async (
+    url: string
+  ) => {
+    await navigator.clipboard.writeText(
+      url
+    );
+
+    toast.success("Copied!");
+  };
+
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-8">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-lg font-semibold">Payment Links</h1>
+
+        <div className="flex items-start justify-between flex-wrap gap-4">
+
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Payment Links
+            </h1>
+
+            <p className="text-gray-500 mt-2 max-w-2xl">
+              Save and reuse Stripe,
+              PayPal, Razorpay, Wise,
+              or custom payment links
+              inside invoices and
+              reminder emails.
+            </p>
+          </div>
+
+          <div className="bg-white border rounded-2xl px-5 py-4 min-w-[180px]">
+            <p className="text-sm text-gray-500">
+              Total Links
+            </p>
+
+            <h2 className="text-3xl font-bold mt-1">
+              {links.length}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* CREATE FORM */}
+
+        <div className="bg-white border border-gray-200 rounded-3xl p-6">
+
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Plus
+                size={18}
+                className="text-orange-600"
+              />
+            </div>
+
+            <div>
+              <h2 className="font-semibold text-gray-900">
+                Add Payment Link
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Store reusable payment
+                destinations for clients.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+
+            <input
+              placeholder="Stripe / PayPal / Bank Transfer"
+              value={title}
+              onChange={(e) =>
+                setTitle(e.target.value)
+              }
+              className="
+                h-12 rounded-xl border
+                border-gray-200 px-4
+                outline-none
+                focus:ring-2
+                focus:ring-orange-500
+              "
+            />
+
+            <input
+              placeholder="https://..."
+              value={url}
+              onChange={(e) =>
+                setUrl(e.target.value)
+              }
+              className="
+                h-12 rounded-xl border
+                border-gray-200 px-4
+                outline-none
+                focus:ring-2
+                focus:ring-orange-500
+              "
+            />
+
+          </div>
 
           <button
             onClick={create}
-            className="bg-black text-white px-4 py-1.5 text-sm rounded-md"
+            disabled={loading}
+            className="
+              mt-5 h-11 px-6 rounded-xl
+              bg-black text-white
+              font-medium hover:opacity-90
+              transition
+            "
           >
-            Create Link
+            {loading
+              ? "Creating..."
+              : "Create Payment Link"}
           </button>
+
         </div>
 
-        {/* FORM */}
-        <div className="flex gap-3">
-          <input
-            placeholder="Title (PayPal / Stripe)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border px-3 py-2 rounded-md text-sm w-60"
-          />
+        {/* LINKS */}
 
-          <input
-            placeholder="Paste payment link"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            className="border px-3 py-2 rounded-md text-sm w-80"
-          />
-        </div>
+        {links.length === 0 ? (
 
-        {/* TABLE */}
-        <div className="bg-white border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="p-3 text-left">Title</th>
-                <th className="p-3 text-left">Link</th>
-                <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
+          <div className="bg-white border border-dashed rounded-3xl p-14 text-center">
 
-            <tbody>
-              {links.map((l) => (
-                <tr key={l.id} className="border-t">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 mx-auto flex items-center justify-center mb-5">
+              <Link2
+                size={28}
+                className="text-gray-500"
+              />
+            </div>
 
-                  <td className="p-3">{l.title}</td>
+            <h2 className="text-xl font-semibold text-gray-900">
+              No payment links yet
+            </h2>
 
-                  <td className="p-3 text-blue-600 text-xs">
-                    <a href={l.url} target="_blank">
+            <p className="text-gray-500 mt-2 max-w-md mx-auto">
+              Add Stripe, PayPal,
+              Razorpay, Wise or bank
+              transfer links to quickly
+              attach them to invoices
+              and reminders.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="grid gap-4">
+
+            {links.map((l) => (
+              <div
+                key={l.id}
+                className="
+                  bg-white border
+                  border-gray-200
+                  rounded-3xl p-5
+                  flex items-center
+                  justify-between
+                  gap-4 flex-wrap
+                "
+              >
+
+                {/* LEFT */}
+
+                <div className="flex items-start gap-4">
+
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center">
+                    <CreditCard
+                      size={20}
+                      className="text-orange-600"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {l.title}
+                    </h3>
+
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      className="
+                        text-sm text-blue-600
+                        hover:underline
+                        break-all
+                      "
+                    >
                       {l.url}
                     </a>
-                  </td>
+                  </div>
 
-                  <td className="p-3 text-right space-x-2">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(l.url);
-                        toast.success("Copied!");
-                      }}
-                      className="text-xs border px-2 py-1 rounded"
-                    >
-                      Copy
-                    </button>
+                </div>
 
-                    <button
-                      onClick={() => remove(l.id)}
-                      className="text-xs text-red-500"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                {/* ACTIONS */}
 
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                <div className="flex items-center gap-2">
 
-          {links.length === 0 && (
-            <div className="p-4 text-center text-gray-400">
-              No links yet
-            </div>
-          )}
-        </div>
+                  <button
+                    onClick={() =>
+                      copy(l.url)
+                    }
+                    className="
+                      h-10 px-4 rounded-xl
+                      border border-gray-200
+                      hover:bg-gray-50
+                      flex items-center gap-2
+                      text-sm
+                    "
+                  >
+                    <Copy size={15} />
+                    Copy
+                  </button>
+
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    className="
+                      h-10 px-4 rounded-xl
+                      border border-gray-200
+                      hover:bg-gray-50
+                      flex items-center gap-2
+                      text-sm
+                    "
+                  >
+                    <ExternalLink size={15} />
+                    Open
+                  </a>
+
+                  <button
+                    onClick={() =>
+                      remove(l.id)
+                    }
+                    className="
+                      h-10 px-4 rounded-xl
+                      border border-red-200
+                      text-red-600
+                      hover:bg-red-50
+                      flex items-center gap-2
+                      text-sm
+                    "
+                  >
+                    <Trash2 size={15} />
+                    Delete
+                  </button>
+
+                </div>
+
+              </div>
+            ))}
+
+          </div>
+        )}
 
       </div>
     </Layout>

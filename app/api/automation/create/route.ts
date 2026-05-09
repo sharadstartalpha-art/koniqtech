@@ -8,9 +8,8 @@ export async function POST(
   req: Request
 ) {
   try {
-
     /* =========================
-       USER
+       AUTH USER
     ========================= */
 
     const user = await getUser();
@@ -37,10 +36,15 @@ export async function POST(
       steps,
     } = body;
 
+    /* =========================
+       VALIDATION
+    ========================= */
+
     if (!invoiceId) {
       return NextResponse.json(
         {
-          error: "Invoice ID required",
+          error:
+            "Invoice ID required",
         },
         {
           status: 400,
@@ -91,7 +95,7 @@ export async function POST(
     }
 
     /* =========================
-       CREATE STEPS
+       CREATE WORKFLOW STEPS
     ========================= */
 
     const created = [];
@@ -103,29 +107,64 @@ export async function POST(
     ) {
       const step = steps[i];
 
+      /* =========================
+         SEND DATE
+      ========================= */
+
       const sendAt = new Date();
 
       sendAt.setDate(
         sendAt.getDate() +
-          Number(step.delayDays || 0)
+          Number(
+            step.delayDays || 0
+          )
       );
+
+      /* =========================
+         FIND TEMPLATE
+      ========================= */
+
+      const template =
+        await prisma.reminderTemplate.findFirst(
+          {
+            where: {
+              userId: user.id,
+
+              type:
+                step.tone?.toLowerCase() ||
+                "friendly",
+            },
+          }
+        );
+
+      /* =========================
+         CREATE SCHEDULE
+      ========================= */
 
       const workflow =
         await prisma.reminderSchedule.create(
           {
             data: {
-              userId: user.id,
+              userId:
+                user.id,
 
-              invoiceId,
+              invoiceId:
+                invoice.id,
 
               templateId:
-                "default-template",
+                template?.id || "",
 
               type:
                 step.tone?.toLowerCase() ||
                 "friendly",
 
-              mode: "auto",
+              mode:
+                step.channel?.toLowerCase() ===
+                "manual"
+                  ? "manual"
+                  : "auto",
+
+              status: "pending",
 
               step: i + 1,
 
@@ -153,7 +192,7 @@ export async function POST(
   } catch (err) {
 
     console.error(
-      "WORKFLOW CREATE ERROR:",
+      "AUTOMATION CREATE ERROR:",
       err
     );
 

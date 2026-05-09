@@ -64,22 +64,36 @@ export async function GET() {
            GET TEMPLATE
         ========================= */
 
-        const template =
-          await prisma.reminderTemplate.findUnique(
-            {
-              where: {
-                id: schedule.templateId,
-              },
-            }
-          );
+       
 
-        if (!template) {
-          console.log(
-            "❌ Template missing"
-          );
+if (!schedule.templateId) {
 
-          continue;
-        }
+  console.log(
+    "❌ Template missing"
+  );
+
+  continue;
+}
+
+
+
+const template =
+  await prisma.reminderTemplate.findUnique(
+    {
+      where: {
+        id: schedule.templateId,
+      },
+    }
+  );
+
+if (!template) {
+
+  console.log(
+    "❌ Template not found"
+  );
+
+  continue;
+}
 
         /* =========================
            PREVENT DUPLICATES
@@ -193,8 +207,7 @@ export async function GET() {
 
               text,
 
-              templateId:
-                template.id,
+              templateId: template?.id,
 
               scheduleId:
                 schedule.id,

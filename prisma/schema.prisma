@@ -177,7 +177,7 @@ model ReminderSchedule {
 
   userId     String
   invoiceId  String
-  templateId String
+  templateId String?
 
   type   ReminderType
   mode   ReminderMode
@@ -191,7 +191,7 @@ model ReminderSchedule {
   createdAt DateTime @default(now())
 
   invoice  Invoice          @relation(fields: [invoiceId], references: [id])
-  template ReminderTemplate @relation(fields: [templateId], references: [id])
+  template ReminderTemplate? @relation(fields: [templateId], references: [id])
 }
 
 model ReminderSettings {

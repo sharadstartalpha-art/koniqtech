@@ -10,20 +10,18 @@ export async function POST(
        INPUT
     ========================= */
 
+    const body = await req.json();
+
     const {
       id,
       paidAmount,
-    } = await req.json();
+    } = body;
 
-    if (
-      !id ||
-      !paidAmount ||
-      Number(paidAmount) <= 0
-    ) {
+    if (!id) {
       return NextResponse.json(
         {
           error:
-            "Invalid payment amount",
+            "Invoice ID required",
         },
         {
           status: 400,
@@ -36,11 +34,13 @@ export async function POST(
     ========================= */
 
     const invoice =
-      await prisma.invoice.findUnique({
-        where: {
-          id,
-        },
-      });
+      await prisma.invoice.findUnique(
+        {
+          where: {
+            id,
+          },
+        }
+      );
 
     if (!invoice) {
       return NextResponse.json(
@@ -59,24 +59,69 @@ export async function POST(
     ========================= */
 
     const currentPaid =
-      Number(invoice.paidAmount || 0);
+      Number(
+        invoice.paidAmount || 0
+      );
 
     const totalAmount =
       Number(invoice.amount);
 
     /* =========================
-       NEW VALUES
+       PAYMENT LOGIC
+    ========================= */
+
+    let paymentToAdd = 0;
+
+    // ✅ if frontend sends amount
+    if (
+      paidAmount !== undefined &&
+      paidAmount !== null
+    ) {
+      paymentToAdd =
+        Number(paidAmount);
+
+      if (
+        isNaN(paymentToAdd) ||
+        paymentToAdd <= 0
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid payment amount",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+    } else {
+      // ✅ ONE CLICK FULL PAYMENT
+      paymentToAdd =
+        totalAmount -
+        currentPaid;
+    }
+
+    /* =========================
+       FINAL VALUES
     ========================= */
 
     const updatedPaid =
       currentPaid +
-      Number(paidAmount);
+      paymentToAdd;
+
+    const cappedPaid =
+      Math.min(
+        updatedPaid,
+        totalAmount
+      );
 
     const balance =
-      totalAmount - updatedPaid;
+      totalAmount -
+      cappedPaid;
 
     const status =
-      updatedPaid >= totalAmount
+      balance <= 0
         ? "paid"
         : "unpaid";
 
@@ -85,22 +130,25 @@ export async function POST(
     ========================= */
 
     const updatedInvoice =
-      await prisma.invoice.update({
-        where: {
-          id,
-        },
+      await prisma.invoice.update(
+        {
+          where: {
+            id,
+          },
 
-        data: {
-          paidAmount: updatedPaid,
+          data: {
+            paidAmount:
+              cappedPaid,
 
-          status,
+            status,
 
-          paidAt:
-            status === "paid"
-              ? new Date()
-              : null,
-        },
-      });
+            paidAt:
+              status === "paid"
+                ? new Date()
+                : null,
+          },
+        }
+      );
 
     return NextResponse.json(
       updatedInvoice

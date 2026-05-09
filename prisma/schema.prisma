@@ -155,6 +155,7 @@ model User {
   paymentLinks  PaymentLink[]
   invoices      Invoice[]
   subscriptions Subscription[]
+  campaigns     Campaign[]
 }
 
 enum ReminderMode {
@@ -353,4 +354,26 @@ model SMSConfig {
   fromNumber String?
 
   createdAt DateTime @default(now())
+}
+
+model Campaign {
+  id String @id @default(uuid())
+
+  userId String
+
+  name String
+
+  channel String
+
+  message String
+
+  status String @default("pending")
+
+  scheduleDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 }

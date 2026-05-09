@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+
     /* =========================================
        AUTH
     ========================================= */
@@ -28,6 +29,27 @@ export async function GET() {
         }
       );
     }
+
+    /* =========================================
+       REMINDER LOGS
+    ========================================= */
+
+    const logs =
+      await prisma.reminderLog.findMany({
+        where: {
+          userId: user.id,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        take: 100,
+
+        include: {
+          invoice: true,
+        },
+      });
 
     /* =========================================
        REMINDERS
@@ -51,40 +73,50 @@ export async function GET() {
       });
 
     /* =========================================
-       COUNTS
+       REAL ANALYTICS
     ========================================= */
 
-    const totalSent =
-      reminders.filter(
-        (r) => r.status === "sent"
+    const sent =
+      logs.filter(
+        (l) => l.status === "sent"
       ).length;
 
-    const totalPending =
-      reminders.filter(
-        (r) => r.status === "pending"
+    const failed =
+      logs.filter(
+        (l) => l.status === "failed"
       ).length;
 
-    const totalFailed =
-      reminders.filter(
-        (r) => r.status === "failed"
+    const opened =
+      logs.filter(
+        (l) => l.status === "opened"
+      ).length;
+
+    const pending =
+      logs.filter(
+        (l) => l.status === "pending"
       ).length;
 
     /* =========================================
        CHANNEL STATS
     ========================================= */
 
-    const emailCount =
-      reminders.filter(
-        (r) =>
-          r.mode === "manual" ||
-          r.mode === "auto"
+    const email =
+      logs.filter(
+        (l) =>
+          l.channel === "email"
       ).length;
 
-    // future support
-    const whatsappCount = 0;
+    const whatsapp =
+      logs.filter(
+        (l) =>
+          l.channel === "whatsapp"
+      ).length;
 
-    // future support
-    const smsCount = 0;
+    const sms =
+      logs.filter(
+        (l) =>
+          l.channel === "sms"
+      ).length;
 
     /* =========================================
        RESPONSE
@@ -92,23 +124,21 @@ export async function GET() {
 
     return NextResponse.json({
       stats: {
-        sent: totalSent,
-
-        pending: totalPending,
-
-        failed: totalFailed,
+        sent,
+        failed,
+        opened,
+        pending,
 
         channels: {
-          email: emailCount,
-
-          whatsapp:
-            whatsappCount,
-
-          sms: smsCount,
+          email,
+          whatsapp,
+          sms,
         },
       },
 
       reminders,
+
+      logs,
     });
 
   } catch (err) {
@@ -225,6 +255,37 @@ export async function POST(
             new Date(),
         },
       });
+
+    /* =========================================
+       CREATE LOG ENTRY
+    ========================================= */
+
+    await prisma.reminderLog.create({
+      data: {
+        userId:
+          user.id,
+
+        invoiceId,
+
+        channel:
+          mode || "email",
+
+        status: "sent",
+
+        recipient:
+          email,
+
+        subject:
+          type || "Reminder",
+
+        message:
+          text || "Reminder sent",
+      },
+    });
+
+    /* =========================================
+       RESPONSE
+    ========================================= */
 
     return NextResponse.json({
       success: true,

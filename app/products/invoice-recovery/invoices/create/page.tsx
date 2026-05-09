@@ -13,13 +13,18 @@ import {
   DollarSign,
   User,
   Sparkles,
+  Phone,
 } from "lucide-react";
 
 export default function CreateInvoicePage() {
+
   const [email, setEmail] =
     useState("");
 
   const [name, setName] =
+    useState("");
+
+  const [phone, setPhone] =
     useState("");
 
   const [amount, setAmount] =
@@ -37,59 +42,66 @@ export default function CreateInvoicePage() {
      CREATE
   ========================= */
 
-  const create =
-    async () => {
-      if (!email || !amount) {
-        toast.error(
-          "Email and amount required"
-        );
+  const create = async () => {
 
-        return;
-      }
+    if (!email || !amount) {
 
-      try {
-        setLoading(true);
+      toast.error(
+        "Email and amount required"
+      );
 
-        await axios.post(
-          "/api/invoices/create",
-          {
-            clientEmail:
-              email,
+      return;
+    }
 
-            clientName:
-              name || null,
+    try {
 
-            amount:
-              Number(amount),
+      setLoading(true);
 
-            dueDate:
-              new Date(),
+      await axios.post(
+        "/api/invoices/create",
+        {
+          clientEmail: email,
 
-            mode,
-          }
-        );
+          clientName:
+            name || null,
 
-        toast.success(
-          "Invoice created successfully"
-        );
+          clientPhone:
+            phone || null,
 
-        window.location.href =
-          "/products/invoice-recovery/invoices";
+          amount:
+            Number(amount),
 
-      } catch (err) {
-        console.error(err);
+          dueDate:
+            new Date(),
 
-        toast.error(
-          "Failed to create invoice"
-        );
+          mode,
+        }
+      );
 
-      } finally {
-        setLoading(false);
-      }
-    };
+      toast.success(
+        "Invoice created successfully"
+      );
+
+      window.location.href =
+        "/products/invoice-recovery/invoices";
+
+    } catch (err) {
+
+      console.error(err);
+
+      toast.error(
+        "Failed to create invoice"
+      );
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout>
+
       <div className="min-h-screen bg-gray-50 px-6 py-10">
 
         <div className="max-w-2xl mx-auto">
@@ -105,13 +117,15 @@ export default function CreateInvoicePage() {
               </div>
 
               <div>
+
                 <h1 className="text-4xl font-bold text-gray-900">
                   Create Invoice
                 </h1>
 
                 <p className="text-gray-500 mt-1">
-                  Send payment requests and automate reminder recovery
+                  Send invoices with automated recovery workflows
                 </p>
+
               </div>
 
             </div>
@@ -122,15 +136,16 @@ export default function CreateInvoicePage() {
 
           <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
 
-            {/* TOP SECTION */}
+            {/* FORM */}
 
             <div className="p-8 border-b border-gray-100">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                {/* CLIENT NAME */}
+                {/* NAME */}
 
                 <div>
+
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">
                     Client Name
                   </label>
@@ -152,11 +167,13 @@ export default function CreateInvoicePage() {
                     />
 
                   </div>
+
                 </div>
 
                 {/* EMAIL */}
 
                 <div>
+
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">
                     Client Email
                   </label>
@@ -178,6 +195,35 @@ export default function CreateInvoicePage() {
                     />
 
                   </div>
+
+                </div>
+
+                {/* PHONE */}
+
+                <div>
+
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                    Client Phone
+                  </label>
+
+                  <div className="relative">
+
+                    <Phone className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+
+                    <input
+                      type="text"
+                      placeholder="+1 555 000 000"
+                      value={phone}
+                      onChange={(e) =>
+                        setPhone(
+                          e.target.value
+                        )
+                      }
+                      className="w-full h-12 border border-gray-300 rounded-2xl pl-11 pr-4 outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition"
+                    />
+
+                  </div>
+
                 </div>
 
               </div>
@@ -216,21 +262,13 @@ export default function CreateInvoicePage() {
 
             <div className="p-8">
 
-              <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Reminder Automation
+              </h2>
 
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Reminder Automation
-                  </h2>
-
-                  <p className="text-sm text-gray-500 mt-1">
-                    Choose how reminders should be handled
-                  </p>
-                </div>
-
-              </div>
-
-              {/* MODE SWITCH */}
+              <p className="text-sm text-gray-500 mt-1 mb-6">
+                Configure how reminders should be sent
+              </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -238,41 +276,22 @@ export default function CreateInvoicePage() {
 
                 <button
                   onClick={() =>
-                    setMode(
-                      "manual"
-                    )
+                    setMode("manual")
                   }
                   className={`border rounded-3xl p-6 text-left transition-all ${
                     mode === "manual"
                       ? "border-orange-500 bg-orange-50 ring-4 ring-orange-100"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
+                      : "border-gray-200"
                   }`}
                 >
 
-                  <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">
+                    Manual
+                  </h3>
 
-                    <div>
-
-                      <h3 className="font-semibold text-lg text-gray-900">
-                        Manual Reminders
-                      </h3>
-
-                      <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                        Send reminders manually whenever needed
-                      </p>
-
-                    </div>
-
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 ${
-                        mode ===
-                        "manual"
-                          ? "border-orange-500 bg-orange-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-
-                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Send reminders manually
+                  </p>
 
                 </button>
 
@@ -280,57 +299,24 @@ export default function CreateInvoicePage() {
 
                 <button
                   onClick={() =>
-                    setMode(
-                      "auto"
-                    )
+                    setMode("auto")
                   }
                   className={`border rounded-3xl p-6 text-left transition-all ${
                     mode === "auto"
                       ? "border-orange-500 bg-orange-50 ring-4 ring-orange-100"
-                      : "border-gray-200 hover:border-gray-300 bg-white"
+                      : "border-gray-200"
                   }`}
                 >
 
-                  <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">
+                    Auto Recovery
+                  </h3>
 
-                    <div>
-
-                      <h3 className="font-semibold text-lg text-gray-900">
-                        Auto Reminders
-                      </h3>
-
-                      <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                        Automatically send reminder sequences based on schedules
-                      </p>
-
-                    </div>
-
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 ${
-                        mode ===
-                        "auto"
-                          ? "border-orange-500 bg-orange-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-
-                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Automatically trigger workflows
+                  </p>
 
                 </button>
-
-              </div>
-
-              {/* INFO BOX */}
-
-              <div className="mt-6 rounded-2xl bg-gray-50 border border-gray-200 p-5">
-
-                <p className="text-sm text-gray-600 leading-relaxed">
-
-                  {mode === "auto"
-                    ? "Invoices created with Auto mode will use your automated reminder workflow and scheduled sequences."
-                    : "Invoices created with Manual mode require you to send reminders manually from the reminders dashboard."}
-
-                </p>
 
               </div>
 
@@ -342,7 +328,7 @@ export default function CreateInvoicePage() {
 
               <a
                 href="/products/invoice-recovery/invoices"
-                className="text-sm font-medium text-gray-500 hover:text-gray-700 transition"
+                className="text-sm font-medium text-gray-500 hover:text-gray-700"
               >
                 Cancel
               </a>
@@ -353,7 +339,7 @@ export default function CreateInvoicePage() {
                 className="h-12 px-7 rounded-2xl bg-black hover:bg-gray-900 text-white font-semibold transition disabled:opacity-60"
               >
                 {loading
-                  ? "Creating Invoice..."
+                  ? "Creating..."
                   : "Create Invoice"}
               </button>
 
@@ -362,7 +348,9 @@ export default function CreateInvoicePage() {
           </div>
 
         </div>
+
       </div>
+
     </Layout>
   );
 }

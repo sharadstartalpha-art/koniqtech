@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const {
       clientEmail,
       clientName,
+      clientPhone,
       amount,
       dueDate,
       mode, // ✅ NEW
@@ -130,7 +131,7 @@ export async function POST(req: Request) {
         data: {
           userId,
           productId: product.id,
-
+           clientPhone,
           clientEmail,
           clientName,
 

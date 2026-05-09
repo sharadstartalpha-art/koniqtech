@@ -125,6 +125,7 @@ model User {
   password String?
 
   name   String?
+  phone  String?
   avatar String?
 
   role String @default("USER")
@@ -190,7 +191,7 @@ model ReminderSchedule {
 
   createdAt DateTime @default(now())
 
-  invoice  Invoice          @relation(fields: [invoiceId], references: [id])
+  invoice  Invoice           @relation(fields: [invoiceId], references: [id])
   template ReminderTemplate? @relation(fields: [templateId], references: [id])
 }
 
@@ -220,7 +221,7 @@ model Invoice {
 
   clientEmail String
   clientName  String?
-
+  clientPhone String?
   // Financials
 
   amount Float
@@ -293,7 +294,62 @@ model ReminderLog {
 
   providerId String?
 
+  openedAt  DateTime?
+  clickedAt DateTime?
+
   createdAt DateTime @default(now())
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model AIRecovery {
+  id String @id @default(uuid())
+
+  userId String
+
+  invoiceId String
+
+  score Float
+
+  riskLevel String
+  // low | medium | high
+
+  recommendation String
+
+  createdAt DateTime @default(now())
+}
+
+model WhatsAppConfig {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  enabled Boolean @default(false)
+
+  phoneNumber String?
+
+  accessToken String?
+
+  businessId String?
+
+  createdAt DateTime @default(now())
+}
+
+model SMSConfig {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  enabled Boolean @default(false)
+
+  provider String?
+  // twilio | vonage
+
+  accountSid String?
+
+  authToken String?
+
+  fromNumber String?
+
+  createdAt DateTime @default(now())
 }

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     /* =========================
-       GET LOGGED-IN USER
+       AUTH
     ========================= */
 
     const user = await getUser();
@@ -24,7 +24,7 @@ export async function GET() {
     }
 
     /* =========================
-       GET USER INVOICES ONLY
+       GET INVOICES + PAYMENTS
     ========================= */
 
     const invoices =
@@ -36,11 +36,26 @@ export async function GET() {
         orderBy: {
           createdAt: "desc",
         },
+
+        include: {
+          payments: {
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
       });
 
-    return NextResponse.json(invoices);
+    /* =========================
+       RESPONSE
+    ========================= */
+
+    return NextResponse.json(
+      invoices
+    );
 
   } catch (err) {
+
     console.error(
       "INVOICE LIST ERROR:",
       err
@@ -48,7 +63,8 @@ export async function GET() {
 
     return NextResponse.json(
       {
-        error: "Failed to load invoices",
+        error:
+          "Failed to load invoices",
       },
       {
         status: 500,

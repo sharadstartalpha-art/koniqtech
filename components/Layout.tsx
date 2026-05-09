@@ -237,7 +237,7 @@ export default function Layout({
 
                   {item.progress && (
                     <span className="text-[10px] text-gray-400">
-                      Coming soon
+                     
                     </span>
                   )}
 

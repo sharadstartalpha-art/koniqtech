@@ -12,11 +12,9 @@ import {
   Save,
   Eye,
   FileText,
+  Sparkles,
+  Mail,
 } from "lucide-react";
-
-/* =========================
-   TYPES
-========================= */
 
 type Template = {
   id: string;
@@ -37,10 +35,6 @@ type Template = {
 
   isDefault: boolean;
 };
-
-/* =========================
-   COMPONENT
-========================= */
 
 export default function TemplatePage() {
   const [templates, setTemplates] =
@@ -65,7 +59,7 @@ export default function TemplatePage() {
     useState(false);
 
   /* =========================
-     LOAD TEMPLATES
+     LOAD
   ========================= */
 
   const load = async () => {
@@ -75,12 +69,11 @@ export default function TemplatePage() {
           "/api/reminder-templates"
         );
 
-      const data =
+      setTemplates(
         res.data.templates ||
-        res.data ||
-        [];
-
-      setTemplates(data);
+          res.data ||
+          []
+      );
 
     } catch (err) {
       console.error(err);
@@ -92,7 +85,7 @@ export default function TemplatePage() {
   }, []);
 
   /* =========================
-     SELECT TEMPLATE
+     SELECT
   ========================= */
 
   const selectTemplate = (
@@ -112,7 +105,25 @@ export default function TemplatePage() {
   };
 
   /* =========================
-     SAVE TEMPLATE
+     RESET
+  ========================= */
+
+  const resetForm = () => {
+    setSelected(null);
+
+    setForm({
+      name: "",
+
+      subject: "",
+
+      html: "",
+
+      type: "friendly",
+    });
+  };
+
+  /* =========================
+     SAVE
   ========================= */
 
   const save = async () => {
@@ -152,7 +163,7 @@ export default function TemplatePage() {
       console.error(err);
 
       alert(
-        "Error saving template"
+        "Failed to save template"
       );
 
     } finally {
@@ -161,16 +172,13 @@ export default function TemplatePage() {
   };
 
   /* =========================
-     DELETE TEMPLATE
+     DELETE
   ========================= */
 
   const remove = async (
     id: string,
     isDefault: boolean
   ) => {
-    /* DEFAULT TEMPLATES
-       SHOULD NOT DELETE */
-
     if (isDefault) {
       return alert(
         "Default templates cannot be deleted"
@@ -179,7 +187,7 @@ export default function TemplatePage() {
 
     if (
       !confirm(
-        "Delete this template?"
+        "Delete template?"
       )
     ) {
       return;
@@ -202,78 +210,103 @@ export default function TemplatePage() {
       console.error(err);
 
       alert(
-        "Failed to delete template"
+        "Delete failed"
       );
     }
   };
 
-  /* =========================
-     RESET FORM
-  ========================= */
-
-  const resetForm = () => {
-    setSelected(null);
-
-    setForm({
-      name: "",
-
-      subject: "",
-
-      html: "",
-
-      type: "friendly",
-    });
-  };
-
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-8">
 
         {/* HEADER */}
 
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Email Templates
-          </h1>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
-          <p className="text-gray-500 mt-1">
-            Customize reminder
-            templates for your
-            SaaS emails
-          </p>
+          <div>
+
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles
+                size={18}
+                className="text-orange-500"
+              />
+
+              <span className="text-sm font-medium text-orange-600">
+                Email Automation
+              </span>
+            </div>
+
+            <h1 className="text-4xl font-bold text-gray-900">
+              Reminder Templates
+            </h1>
+
+            <p className="text-gray-500 mt-2 max-w-2xl">
+              Create professional invoice reminder emails with live preview,
+              reusable variables and automated workflows.
+            </p>
+
+          </div>
+
+          <button
+            onClick={resetForm}
+            className="flex items-center justify-center gap-2 bg-black hover:opacity-90 text-white px-5 py-3 rounded-2xl font-medium transition"
+          >
+            <Plus size={18} />
+            New Template
+          </button>
+
+        </div>
+
+        {/* STATS */}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <StatCard
+            label="Total Templates"
+            value={templates.length}
+          />
+
+          <StatCard
+            label="Default Templates"
+            value={
+              templates.filter(
+                (t) =>
+                  t.isDefault
+              ).length
+            }
+          />
+
+          <StatCard
+            label="Custom Templates"
+            value={
+              templates.filter(
+                (t) =>
+                  !t.isDefault
+              ).length
+            }
+          />
+
         </div>
 
         {/* MAIN */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
 
-          {/* =========================
-              TEMPLATE LIST
-          ========================= */}
+          {/* SIDEBAR */}
 
-          <div className="bg-white border border-gray-200 rounded-3xl p-5 space-y-4 shadow-sm h-fit">
+          <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm h-fit">
 
-            {/* TOP */}
+            <div className="flex items-center gap-2 mb-5">
 
-            <div className="flex items-center justify-between">
+              <Mail
+                size={18}
+              />
 
-              <h2 className="font-semibold text-lg text-gray-900">
+              <h2 className="font-semibold text-lg">
                 Templates
               </h2>
 
-              <button
-                onClick={
-                  resetForm
-                }
-                className="flex items-center gap-1 text-sm border border-gray-300 hover:border-orange-500 hover:text-orange-600 px-3 py-1.5 rounded-xl transition"
-              >
-                <Plus size={14} />
-                New
-              </button>
-
             </div>
-
-            {/* LIST */}
 
             <div className="space-y-3">
 
@@ -286,38 +319,37 @@ export default function TemplatePage() {
                         t
                       )
                     }
-                    className={`border rounded-2xl p-4 cursor-pointer transition ${
+                    className={`p-4 rounded-2xl border cursor-pointer transition ${
                       selected?.id ===
                       t.id
                         ? "border-orange-500 bg-orange-50"
                         : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
+
+                    <div className="flex items-start justify-between gap-3">
 
                       <div className="min-w-0">
 
                         <div className="flex items-center gap-2">
 
-                          <p className="font-semibold text-gray-900">
+                          <h3 className="font-semibold truncate">
                             {t.name}
-                          </p>
+                          </h3>
 
                           {t.isDefault && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
                               Default
                             </span>
                           )}
 
                         </div>
 
-                        <p className="text-xs text-gray-500 capitalize mt-1">
+                        <p className="text-xs text-gray-500 mt-1 capitalize">
                           {t.type}
                         </p>
 
                       </div>
-
-                      {/* DELETE */}
 
                       {!t.isDefault && (
                         <button
@@ -349,209 +381,25 @@ export default function TemplatePage() {
             </div>
           </div>
 
-          {/* =========================
-              EDITOR
-          ========================= */}
+          {/* EDITOR */}
 
-          <div className="lg:col-span-2 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm space-y-5">
+          <div className="xl:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
 
-            {/* NAME */}
+            {/* TOP BAR */}
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Template Name
-              </label>
+            <div className="border-b border-gray-200 px-6 py-5 flex items-center justify-between">
 
-              <input
-                placeholder="Ex: Friendly Reminder"
-                value={form.name}
-                onChange={(
-                  e
-                ) =>
-                  setForm({
-                    ...form,
+              <div>
+                <h2 className="text-xl font-semibold">
+                  {selected
+                    ? "Edit Template"
+                    : "Create Template"}
+                </h2>
 
-                    name: e
-                      .target
-                      .value,
-                  })
-                }
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              />
-            </div>
-
-            {/* TYPE */}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Reminder Type
-              </label>
-
-              <select
-                value={
-                  form.type
-                }
-                onChange={(
-                  e
-                ) =>
-                  setForm({
-                    ...form,
-
-                    type:
-                      e.target
-                        .value as Template["type"],
-                  })
-                }
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              >
-                <option value="friendly">
-                  Friendly
-                </option>
-
-                <option value="firm">
-                  Firm
-                </option>
-
-                <option value="final">
-                  Final
-                </option>
-
-                <option value="custom">
-                  Custom
-                </option>
-
-              </select>
-            </div>
-
-            {/* SUBJECT */}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Subject
-              </label>
-
-              <input
-                placeholder="Invoice Reminder"
-                value={
-                  form.subject
-                }
-                onChange={(
-                  e
-                ) =>
-                  setForm({
-                    ...form,
-
-                    subject:
-                      e.target
-                        .value,
-                  })
-                }
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              />
-            </div>
-
-            {/* HTML */}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                HTML Email Content
-              </label>
-
-              <textarea
-                placeholder="Paste HTML email template..."
-                value={
-                  form.html
-                }
-                onChange={(
-                  e
-                ) =>
-                  setForm({
-                    ...form,
-
-                    html: e
-                      .target
-                      .value,
-                  })
-                }
-                rows={14}
-                className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none font-mono text-sm focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-              />
-            </div>
-
-            {/* VARIABLES */}
-
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
-
-              <p className="text-sm font-semibold text-gray-700 mb-3">
-                Available Variables
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-
-                <code className="bg-white border px-3 py-1 rounded-lg text-xs">
-                  {"{{name}}"}
-                </code>
-
-                <code className="bg-white border px-3 py-1 rounded-lg text-xs">
-                  {"{{amount}}"}
-                </code>
-
-                <code className="bg-white border px-3 py-1 rounded-lg text-xs">
-                  {"{{link}}"}
-                </code>
-
-                <code className="bg-white border px-3 py-1 rounded-lg text-xs">
-                  {"{{dueDate}}"}
-                </code>
-
+                <p className="text-sm text-gray-500 mt-1">
+                  Design invoice reminder emails
+                </p>
               </div>
-            </div>
-
-            {/* PREVIEW */}
-
-            <div className="space-y-3">
-
-              <div className="flex items-center gap-2">
-
-                <Eye
-                  size={18}
-                />
-
-                <h3 className="font-semibold text-gray-900">
-                  Live Preview
-                </h3>
-
-              </div>
-
-              <div className="border border-gray-200 rounded-2xl bg-gray-50 p-6 overflow-hidden">
-
-                {form.html ? (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        form.html,
-                    }}
-                  />
-                ) : (
-                  <div className="flex items-center gap-2 text-gray-400">
-
-                    <FileText
-                      size={18}
-                    />
-
-                    <p className="text-sm">
-                      Email preview will appear here
-                    </p>
-
-                  </div>
-                )}
-
-              </div>
-            </div>
-
-            {/* ACTIONS */}
-
-            <div className="flex gap-3 pt-2">
 
               <button
                 onClick={save}
@@ -566,27 +414,258 @@ export default function TemplatePage() {
 
                 {loading
                   ? "Saving..."
-                  : selected
-                  ? "Update Template"
                   : "Save Template"}
               </button>
 
-              {selected && (
-                <button
-                  onClick={
-                    resetForm
-                  }
-                  className="border border-gray-300 hover:bg-gray-50 px-5 py-3 rounded-2xl font-medium transition"
-                >
-                  Cancel
-                </button>
-              )}
-
             </div>
 
+            {/* CONTENT */}
+
+            <div className="p-6 space-y-6">
+
+              {/* GRID */}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Template Name
+                  </label>
+
+                  <input
+                    value={form.name}
+                    onChange={(
+                      e
+                    ) =>
+                      setForm({
+                        ...form,
+
+                        name:
+                          e.target
+                            .value,
+                      })
+                    }
+                    placeholder="Friendly Reminder"
+                    className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Reminder Type
+                  </label>
+
+                  <select
+                    value={
+                      form.type
+                    }
+                    onChange={(
+                      e
+                    ) =>
+                      setForm({
+                        ...form,
+
+                        type:
+                          e.target
+                            .value as Template["type"],
+                      })
+                    }
+                    className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  >
+                    <option value="friendly">
+                      Friendly
+                    </option>
+
+                    <option value="firm">
+                      Firm
+                    </option>
+
+                    <option value="final">
+                      Final
+                    </option>
+
+                    <option value="custom">
+                      Custom
+                    </option>
+
+                  </select>
+                </div>
+
+              </div>
+
+              {/* SUBJECT */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Subject Line
+                </label>
+
+                <input
+                  value={
+                    form.subject
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setForm({
+                      ...form,
+
+                      subject:
+                        e.target
+                          .value,
+                    })
+                  }
+                  placeholder="Invoice Reminder"
+                  className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                />
+              </div>
+
+              {/* VARIABLES */}
+
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+
+                <p className="font-semibold text-sm mb-3">
+                  Available Variables
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+
+                  {[
+                    "{{name}}",
+                    "{{amount}}",
+                    "{{link}}",
+                    "{{dueDate}}",
+                    "{{email}}",
+                  ].map(
+                    (
+                      item
+                    ) => (
+                      <code
+                        key={
+                          item
+                        }
+                        className="bg-white border px-3 py-2 rounded-xl text-xs"
+                      >
+                        {item}
+                      </code>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+              {/* HTML */}
+
+              <div>
+
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email HTML
+                </label>
+
+                <textarea
+                  value={
+                    form.html
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setForm({
+                      ...form,
+
+                      html:
+                        e.target
+                          .value,
+                    })
+                  }
+                  rows={14}
+                  className="w-full border border-gray-300 rounded-2xl px-4 py-4 font-mono text-sm outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  placeholder="Paste your email HTML..."
+                />
+
+              </div>
+
+              {/* PREVIEW */}
+
+              <div>
+
+                <div className="flex items-center gap-2 mb-4">
+
+                  <Eye
+                    size={18}
+                  />
+
+                  <h3 className="font-semibold text-lg">
+                    Live Preview
+                  </h3>
+
+                </div>
+
+                <div className="border border-gray-200 rounded-3xl overflow-hidden bg-gray-100">
+
+                  <div className="bg-white min-h-[300px] p-8">
+
+                    {form.html ? (
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            form.html,
+                        }}
+                      />
+                    ) : (
+                      <div className="h-[300px] flex flex-col items-center justify-center text-gray-400">
+
+                        <FileText
+                          size={
+                            40
+                          }
+                        />
+
+                        <p className="mt-3 text-sm">
+                          Preview will appear here
+                        </p>
+
+                      </div>
+                    )}
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
           </div>
+
         </div>
       </div>
     </Layout>
+  );
+}
+
+/* =========================
+   STAT CARD
+========================= */
+
+function StatCard({
+  label,
+  value,
+}: {
+  label: string;
+
+  value: number;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
+
+      <p className="text-sm text-gray-500">
+        {label}
+      </p>
+
+      <h3 className="text-3xl font-bold mt-2">
+        {value}
+      </h3>
+
+    </div>
   );
 }

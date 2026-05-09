@@ -122,13 +122,13 @@ export default function AccountPage() {
   }, []);
 
   /* =========================
-     CANCEL SUBSCRIPTION
+     CANCEL
   ========================= */
 
   const cancel = async () => {
     if (
       !confirm(
-        "Cancel your subscription?"
+        "Cancel subscription?"
       )
     ) {
       return;
@@ -217,7 +217,7 @@ export default function AccountPage() {
   if (!data) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex items-center justify-center h-[70vh]">
           <div className="text-gray-500 text-sm">
             Loading account...
           </div>
@@ -251,7 +251,7 @@ export default function AccountPage() {
       : 0;
 
   /* =========================
-     NEXT UPGRADE
+     UPGRADE
   ========================= */
 
   const sortedPlans =
@@ -288,7 +288,7 @@ export default function AccountPage() {
           return "from-purple-600 to-pink-600";
 
         default:
-          return "from-gray-700 to-gray-900";
+          return "from-gray-800 to-black";
       }
     }, [data.plan]);
 
@@ -300,29 +300,23 @@ export default function AccountPage() {
             HEADER
         ========================= */}
 
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
-          <div>
-            <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 px-3 py-1 rounded-full text-sm font-medium mb-4">
-              <Sparkles
-                size={14}
-              />
-              Billing & Subscription
-            </div>
-
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
-              Account Settings
-            </h1>
-
-            <p className="text-gray-500 mt-2 text-lg">
-              Manage your subscription, invoices, and billing usage.
-            </p>
+        <div>
+          <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 px-3 py-1 rounded-full text-sm font-medium mb-4">
+            <Sparkles size={14} />
+            Account & Billing
           </div>
 
+          <h1 className="text-4xl font-bold text-gray-900">
+            My Account
+          </h1>
+
+          <p className="text-gray-500 mt-2 text-lg">
+            Manage your subscription and invoice recovery usage.
+          </p>
         </div>
 
         {/* =========================
-            PLAN CARD
+            HERO CARD
         ========================= */}
 
         <div
@@ -330,28 +324,25 @@ export default function AccountPage() {
         >
           <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="relative z-10 grid lg:grid-cols-2 gap-10">
 
             {/* LEFT */}
 
             <div>
-              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-xl px-4 py-2 rounded-full text-sm font-medium">
+              <div className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-xl">
                 <Crown size={16} />
-                Current Plan
+                Active Subscription
               </div>
 
               <h2 className="text-5xl font-bold mt-6">
                 {data.plan}
               </h2>
 
-              <p className="text-white/80 mt-3 text-lg">
-                {data.plan ===
-                "Free"
-                  ? "Perfect for getting started."
-                  : "Advanced tools for growing businesses."}
+              <p className="text-white/80 mt-4 text-lg">
+                Powerful invoice recovery tools for modern businesses.
               </p>
 
-              <div className="flex flex-wrap gap-6 mt-8">
+              <div className="flex flex-wrap gap-8 mt-10">
 
                 <div>
                   <p className="text-white/70 text-sm">
@@ -385,7 +376,7 @@ export default function AccountPage() {
 
             {/* RIGHT */}
 
-            <div className="bg-white/10 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 w-full max-w-sm">
+            <div className="bg-white/10 border border-white/10 backdrop-blur-2xl rounded-3xl p-6">
 
               <div className="flex items-center justify-between mb-4">
                 <span className="text-white/80 text-sm">
@@ -415,14 +406,14 @@ export default function AccountPage() {
                 />
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mt-6">
 
                 <div className="bg-white/10 rounded-2xl p-4">
                   <p className="text-white/70 text-xs">
                     Used
                   </p>
 
-                  <h3 className="text-2xl font-bold mt-2">
+                  <h3 className="text-3xl font-bold mt-2">
                     {data.used}
                   </h3>
                 </div>
@@ -432,7 +423,7 @@ export default function AccountPage() {
                     Remaining
                   </p>
 
-                  <h3 className="text-2xl font-bold mt-2">
+                  <h3 className="text-3xl font-bold mt-2">
                     {remaining}
                   </h3>
                 </div>
@@ -450,25 +441,27 @@ export default function AccountPage() {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
           {/* =========================
-              BILLING INFO
+              OVERVIEW
           ========================= */}
 
           <div className="xl:col-span-2 bg-white border border-gray-200 rounded-[28px] p-8 shadow-sm">
 
             <div className="flex items-center gap-3 mb-8">
+
               <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center">
                 <CreditCard size={20} />
               </div>
 
               <div>
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3 className="text-xl font-bold">
                   Billing Overview
                 </h3>
 
                 <p className="text-sm text-gray-500">
-                  Your subscription and invoice activity
+                  Your current account information
                 </p>
               </div>
+
             </div>
 
             <div className="grid md:grid-cols-2 gap-5">
@@ -486,7 +479,7 @@ export default function AccountPage() {
                 icon={
                   <Calendar size={20} />
                 }
-                title="Plan Expiry"
+                title="Expiry Date"
                 value={
                   data.expiresAt
                     ? new Date(
@@ -512,7 +505,7 @@ export default function AccountPage() {
                 icon={
                   <ShieldCheck size={20} />
                 }
-                title="Remaining Limit"
+                title="Remaining"
                 value={String(
                   remaining
                 )}
@@ -529,12 +522,12 @@ export default function AccountPage() {
           <div className="bg-white border border-gray-200 rounded-[28px] p-8 shadow-sm space-y-6">
 
             <div>
-              <h3 className="text-xl font-bold text-gray-900">
-                Subscription Actions
+              <h3 className="text-xl font-bold">
+                Subscription
               </h3>
 
               <p className="text-sm text-gray-500 mt-2">
-                Upgrade or manage your plan
+                Upgrade your plan anytime
               </p>
             </div>
 
@@ -544,9 +537,10 @@ export default function AccountPage() {
               <div className="border border-gray-200 rounded-3xl p-6 bg-gradient-to-br from-orange-50 to-white">
 
                 <div className="flex items-center justify-between">
+
                   <div>
                     <p className="text-sm text-gray-500">
-                      Recommended Upgrade
+                      Next Upgrade
                     </p>
 
                     <h4 className="text-2xl font-bold mt-1">
@@ -557,10 +551,9 @@ export default function AccountPage() {
                   </div>
 
                   <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center">
-                    <ArrowUpRight
-                      size={20}
-                    />
+                    <ArrowUpRight size={20} />
                   </div>
+
                 </div>
 
                 <div className="mt-5">
@@ -580,9 +573,9 @@ export default function AccountPage() {
 
                   <Feature text="Unlimited automated reminders" />
 
-                  <Feature text="Advanced recovery analytics" />
+                  <Feature text="Recovery analytics dashboard" />
 
-                  <Feature text="Priority support access" />
+                  <Feature text="Priority support" />
 
                 </div>
 
@@ -607,7 +600,9 @@ export default function AccountPage() {
               </div>
             ) : (
               <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
+
                 <div className="flex items-center gap-3">
+
                   <CheckCircle2 className="text-green-600" />
 
                   <div>
@@ -616,10 +611,12 @@ export default function AccountPage() {
                     </h4>
 
                     <p className="text-sm text-green-600 mt-1">
-                      You already have full platform access.
+                      You already have full access.
                     </p>
                   </div>
+
                 </div>
+
               </div>
             )}
 
@@ -684,12 +681,14 @@ function Feature({
 }) {
   return (
     <div className="flex items-center gap-3 text-sm text-gray-600">
+
       <CheckCircle2
         size={16}
         className="text-green-500"
       />
 
       <span>{text}</span>
+
     </div>
   );
 }

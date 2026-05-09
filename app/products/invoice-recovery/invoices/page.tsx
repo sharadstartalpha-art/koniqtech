@@ -1,15 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
-import { DollarSign, Search } from "lucide-react";
+
 import toast from "react-hot-toast";
+
+import {
+  Search,
+  DollarSign,
+  FileText,
+  CircleDollarSign,
+  Wallet,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Clock3,
+} from "lucide-react";
+
+/* =========================
+   TYPES
+========================= */
 
 type Invoice = {
   id: string;
-
-  userId: string;
 
   clientName: string;
 
@@ -24,61 +38,38 @@ type Invoice = {
   mode: "manual" | "auto";
 };
 
-export default function InvoicesPage() {
-  const [data, setData] = useState<Invoice[]>([]);
+/* =========================
+   PAGE
+========================= */
 
-  const [filtered, setFiltered] = useState<
+export default function InvoicesPage() {
+  const [data, setData] = useState<
     Invoice[]
   >([]);
 
-  const [search, setSearch] = useState("");
+  const [filtered, setFiltered] =
+    useState<Invoice[]>([]);
+
+  const [search, setSearch] =
+    useState("");
 
   const [loading, setLoading] =
     useState(true);
 
-  const [page, setPage] = useState(1);
-
-  const [limit, setLimit] = useState(5);
-
   /* =========================
-     LOAD USER INVOICES ONLY
+     LOAD
   ========================= */
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  useEffect(() => {
-    const result = data.filter((inv) =>
-      inv.clientEmail
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
-
-    setFiltered(result);
-
-    setPage(1);
-
-  }, [search, data]);
 
   const load = async () => {
     try {
-      /* ✅ IMPORTANT:
-         THIS MUST RETURN ONLY
-         LOGGED-IN USER INVOICES
-      */
-
       const res = await axios.get(
         "/api/invoices/list"
       );
 
       setData(res.data);
-
       setFiltered(res.data);
 
-    } catch (err) {
-      console.error(err);
-
+    } catch {
       toast.error(
         "Failed to load invoices"
       );
@@ -88,324 +79,88 @@ export default function InvoicesPage() {
     }
   };
 
-  
+  useEffect(() => {
+    load();
+  }, []);
 
-/* =========================
-   MARK PAID
-========================= */
-
-const markPaid = async (
-  id: string,
-  totalAmount: number
-) => {
-  let paidAmount = "";
-
-  const setQuickAmount = (
-    percent: number
-  ) => {
-    const value = (
-      totalAmount *
-      (percent / 100)
-    ).toFixed(2);
-
-    paidAmount = value;
-
-    const input =
-      document.getElementById(
-        "paid-amount-input"
-      ) as HTMLInputElement;
-
-    if (input) {
-      input.value = value;
-    }
-  };
-
-  toast.custom(
-    (t) => (
-      <div className="w-[440px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
-
-        {/* HEADER */}
-
-        <div className="px-6 py-5 border-b border-gray-100">
-
-          <div className="flex items-center gap-4">
-
-            <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Update Payment
-              </h2>
-
-              <p className="text-sm text-gray-500 mt-1">
-                Record client payment for this invoice
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* BODY */}
-
-        <div className="p-6 space-y-6">
-
-          {/* TOTAL */}
-
-          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
-
-            <div className="flex items-center justify-between">
-
-              <span className="text-sm text-gray-500">
-                Invoice Total
-              </span>
-
-              <span className="text-3xl font-bold text-gray-900">
-                ${totalAmount}
-              </span>
-
-            </div>
-
-          </div>
-
-          {/* INPUT */}
-
-          <div>
-
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Paid Amount
-            </label>
-
-            <div className="relative">
-
-              <DollarSign className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
-
-              <input
-                id="paid-amount-input"
-                type="number"
-                autoFocus
-                placeholder="Enter paid amount"
-                onChange={(e) => {
-                  paidAmount =
-                    e.target.value;
-                }}
-                className="w-full h-14 border border-gray-300 rounded-2xl pl-12 pr-4 text-lg font-medium outline-none focus:ring-4 focus:ring-green-100 focus:border-green-500 transition"
-              />
-
-            </div>
-
-          </div>
-
-          {/* QUICK ACTIONS */}
-
-          <div>
-
-            <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase mb-3">
-              Quick Actions
-            </p>
-
-            <div className="grid grid-cols-3 gap-3">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setQuickAmount(25)
-                }
-                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
-              >
-                25%
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setQuickAmount(50)
-                }
-                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
-              >
-                50%
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setQuickAmount(100)
-                }
-                className="h-11 rounded-2xl border border-gray-300 text-sm font-semibold hover:bg-black hover:text-white hover:border-black transition"
-              >
-                Full
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* FOOTER */}
-
-        <div className="px-6 py-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-
-          <button
-            onClick={() =>
-              toast.dismiss(t.id)
-            }
-            className="h-11 px-5 rounded-2xl border border-gray-300 text-sm font-medium hover:bg-white transition"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={async () => {
-              try {
-                if (
-                  !paidAmount ||
-                  Number(
-                    paidAmount
-                  ) <= 0
-                ) {
-                  toast.error(
-                    "Enter valid amount"
-                  );
-
-                  return;
-                }
-
-                await axios.post(
-                  "/api/invoices/mark-paid",
-                  {
-                    id,
-
-                    paidAmount:
-                      Number(
-                        paidAmount
-                      ),
-                  }
-                );
-
-                toast.dismiss(
-                  t.id
-                );
-
-                toast.success(
-                  "Payment updated successfully"
-                );
-
-                load();
-
-              } catch (err) {
-                console.error(
-                  err
-                );
-
-                toast.error(
-                  "Failed to update payment"
-                );
-              }
-            }}
-            className="h-11 px-6 rounded-2xl bg-black hover:bg-gray-900 text-white text-sm font-semibold transition"
-          >
-            Save Payment
-          </button>
-
-        </div>
-
-      </div>
-    ),
-    {
-      duration: 20000,
-      position: "top-center",
-    }
-  );
-};
   /* =========================
-     SWITCH MODE
+     SEARCH
   ========================= */
 
-  const switchMode = async (
-    id: string,
-    mode: "manual" | "auto"
-  ) => {
-    try {
-      await axios.post(
-        "/api/invoices/update-mode",
-        {
-          id,
-          mode,
-        }
+  useEffect(() => {
+    const result = data.filter(
+      (inv) =>
+        inv.clientEmail
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          ) ||
+        inv.clientName
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+    );
+
+    setFiltered(result);
+
+  }, [search, data]);
+
+  /* =========================
+     STATS
+  ========================= */
+
+  const stats = useMemo(() => {
+    const totalRevenue =
+      data.reduce(
+        (sum, i) =>
+          sum + Number(i.amount),
+        0
       );
 
-      toast.success(
-        `Switched to ${mode}`
+    const totalPaid =
+      data.reduce(
+        (sum, i) =>
+          sum +
+          Number(i.paidAmount || 0),
+        0
       );
 
-      setData((prev) =>
-        prev.map((inv) =>
-          inv.id === id
-            ? { ...inv, mode }
-            : inv
-        )
-      );
+    const outstanding =
+      totalRevenue - totalPaid;
 
-    } catch {
-      toast.error(
-        "Failed to update mode"
-      );
-    }
-  };
+    const paidInvoices =
+      data.filter(
+        (i) => i.status === "paid"
+      ).length;
+
+    return {
+      totalRevenue,
+      totalPaid,
+      outstanding,
+      paidInvoices,
+    };
+  }, [data]);
 
   /* =========================
      DELETE
   ========================= */
 
-  const confirmDelete = (
-    id: string
-  ) => {
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-3">
-          <span className="text-sm">
-            Delete this invoice?
-          </span>
-
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() =>
-                toast.dismiss(t.id)
-              }
-              className="text-xs px-3 py-1 border rounded"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-
-                await remove(id);
-              }}
-              className="text-xs px-3 py-1 bg-red-600 text-white rounded"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      ),
-      { duration: 5000 }
-    );
-  };
-
   const remove = async (
     id: string
   ) => {
+    if (
+      !confirm(
+        "Delete this invoice?"
+      )
+    ) {
+      return;
+    }
+
     try {
       await axios.post(
         "/api/invoices/delete",
-        {
-          id,
-        }
+        { id }
       );
 
       toast.success(
@@ -415,333 +170,457 @@ const markPaid = async (
       load();
 
     } catch {
-      toast.error("Delete failed");
+      toast.error(
+        "Delete failed"
+      );
     }
   };
 
   /* =========================
-     PAGINATION
+     MARK PAID
   ========================= */
 
-  const total = filtered.length;
+  const markPaid = async (
+    id: string
+  ) => {
+    try {
+      await axios.post(
+        "/api/invoices/mark-paid",
+        {
+          id,
+        }
+      );
 
-  const totalPages = Math.ceil(
-    total / limit
-  );
+      toast.success(
+        "Invoice marked paid"
+      );
 
-  const start = (page - 1) * limit;
+      load();
 
-  const current = filtered.slice(
-    start,
-    start + limit
-  );
+    } catch {
+      toast.error(
+        "Failed to update"
+      );
+    }
+  };
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-8">
 
-        {/* HEADER */}
+        {/* HERO */}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-semibold">
-              My Invoices
-            </h1>
+        <div className="rounded-3xl bg-gradient-to-br from-black to-gray-900 p-8 text-white">
 
-            <p className="text-sm text-gray-500">
-              Total: {total}
-            </p>
+          <div className="flex items-start justify-between flex-wrap gap-6">
+
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-sm mb-4">
+                <CircleDollarSign
+                  size={16}
+                />
+                Revenue Recovery
+              </div>
+
+              <h1 className="text-4xl font-bold">
+                Invoices
+              </h1>
+
+              <p className="text-gray-300 mt-3 max-w-2xl">
+                Track unpaid invoices,
+                collect payments faster,
+                and automate recovery
+                workflows.
+              </p>
+            </div>
+
+            <a
+              href="/products/invoice-recovery/invoices/create"
+              className="
+                h-12 px-5 rounded-2xl
+                bg-white text-black
+                font-semibold
+                flex items-center gap-2
+                hover:scale-[1.02]
+                transition
+              "
+            >
+              <Plus size={18} />
+              Create Invoice
+            </a>
+
           </div>
 
-          <a
-            href="/products/invoice-recovery/invoices/create"
-            className="text-sm bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
-          >
-            + Create
-          </a>
+        </div>
+
+        {/* STATS */}
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+
+          <StatCard
+            title="Total Revenue"
+            value={`$${stats.totalRevenue}`}
+            icon={Wallet}
+          />
+
+          <StatCard
+            title="Collected"
+            value={`$${stats.totalPaid}`}
+            icon={CheckCircle2}
+          />
+
+          <StatCard
+            title="Outstanding"
+            value={`$${stats.outstanding}`}
+            icon={Clock3}
+          />
+
+          <StatCard
+            title="Invoices"
+            value={data.length}
+            icon={FileText}
+          />
+
         </div>
 
         {/* SEARCH */}
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative max-w-sm w-full">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+
+          <div className="relative max-w-md">
+
             <Search
-              size={16}
-              className="absolute left-3 top-2.5 text-gray-400"
+              size={18}
+              className="
+                absolute left-4 top-1/2
+                -translate-y-1/2
+                text-gray-400
+              "
             />
 
             <input
-              placeholder="Search emails..."
-              className="w-full border rounded-md pl-9 pr-3 py-2 text-sm outline-none focus:border-black"
+              placeholder="Search client..."
               value={search}
               onChange={(e) =>
                 setSearch(e.target.value)
               }
+              className="
+                w-full h-12 rounded-xl
+                border border-gray-200
+                pl-11 pr-4
+                outline-none
+                focus:ring-2
+                focus:ring-orange-500
+              "
             />
+
           </div>
 
-          <select
-            value={limit}
-            onChange={(e) =>
-              setLimit(
-                Number(e.target.value)
-              )
-            }
-            className="text-sm border rounded-md px-3 py-2 outline-none"
-          >
-            <option value={5}>
-              5
-            </option>
-
-            <option value={10}>
-              10
-            </option>
-
-            <option value={25}>
-              25
-            </option>
-
-            <option value={50}>
-              50
-            </option>
-          </select>
         </div>
 
         {/* TABLE */}
 
-        <div className="bg-white border rounded-xl overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
 
           {loading ? (
-            <div className="p-6 text-sm text-gray-500">
+
+            <div className="p-10 text-center text-gray-500">
               Loading invoices...
             </div>
 
-          ) : current.length === 0 ? (
-            <div className="p-6 text-sm text-gray-500">
-              No invoices found.
+          ) : filtered.length === 0 ? (
+
+            <div className="p-16 text-center">
+
+              <div className="w-16 h-16 rounded-2xl bg-gray-100 mx-auto flex items-center justify-center mb-5">
+                <FileText
+                  size={28}
+                  className="text-gray-500"
+                />
+              </div>
+
+              <h2 className="text-xl font-semibold">
+                No invoices found
+              </h2>
+
+              <p className="text-gray-500 mt-2">
+                Create your first invoice
+                to start recovering
+                payments.
+              </p>
+
             </div>
 
           ) : (
-            <table className="w-full text-sm">
 
-              <thead className="bg-gray-50 border-b text-gray-600">
-                <tr>
-                  <th className="px-4 py-3 text-left">
-                    #
-                  </th>
+            <div className="overflow-x-auto">
 
-                  <th className="px-4 py-3 text-left">
-                    Name
-                  </th>
+              <table className="w-full">
 
-                  <th className="px-4 py-3 text-left">
-                    Email
-                  </th>
+                <thead className="bg-gray-50 border-b border-gray-200">
 
-                  <th className="px-4 py-3 text-left">
-                    Total
-                  </th>
+                  <tr className="text-left text-sm text-gray-500">
 
-                  <th className="px-4 py-3 text-left">
-                    Paid
-                  </th>
+                    <th className="px-6 py-4">
+                      Client
+                    </th>
 
-                  <th className="px-4 py-3 text-left">
-                    Balance
-                  </th>
+                    <th className="px-6 py-4">
+                      Total
+                    </th>
 
-                  <th className="px-4 py-3 text-left">
-                    Reminder Mode
-                  </th>
+                    <th className="px-6 py-4">
+                      Paid
+                    </th>
 
-                  <th className="px-4 py-3 text-left">
-                    Status
-                  </th>
+                    <th className="px-6 py-4">
+                      Balance
+                    </th>
 
-                  <th className="px-4 py-3 text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+                    <th className="px-6 py-4">
+                      Mode
+                    </th>
 
-              <tbody>
-                {current.map(
-                  (inv, index) => {
-                    const paid = Number(
-  inv.paidAmount || 0
-);
+                    <th className="px-6 py-4">
+                      Status
+                    </th>
 
-const balance =
-  Number(inv.amount) - paid;
+                    <th className="px-6 py-4 text-right">
+                      Actions
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {filtered.map((inv) => {
+                    const paid =
+                      Number(
+                        inv.paidAmount || 0
+                      );
+
+                    const balance =
+                      Number(inv.amount) -
+                      paid;
 
                     return (
                       <tr
                         key={inv.id}
-                        className="border-b hover:bg-gray-50 transition"
+                        className="
+                          border-b
+                          border-gray-100
+                          hover:bg-gray-50/60
+                          transition
+                        "
                       >
-                        <td className="px-4 py-3">
-                          {start +
-                            index +
-                            1}
+
+                        {/* CLIENT */}
+
+                        <td className="px-6 py-5">
+
+                          <div className="flex items-center gap-4">
+
+                            <div className="
+                              w-11 h-11 rounded-full
+                              bg-orange-100
+                              text-orange-700
+                              flex items-center
+                              justify-center
+                              font-semibold
+                            ">
+                              {inv.clientName?.[0] ||
+                                "C"}
+                            </div>
+
+                            <div>
+
+                              <p className="font-semibold text-gray-900">
+                                {inv.clientName ||
+                                  "Unknown"}
+                              </p>
+
+                              <p className="text-sm text-gray-500">
+                                {
+                                  inv.clientEmail
+                                }
+                              </p>
+
+                            </div>
+
+                          </div>
+
                         </td>
 
-                        <td className="px-4 py-3 font-medium">
-                          {inv.clientName ||
-                            "-"}
+                        {/* TOTAL */}
+
+                        <td className="px-6 py-5 font-semibold">
+                          ${inv.amount}
                         </td>
 
-                        <td className="px-4 py-3">
-                          {
-                            inv.clientEmail
-                          }
-                        </td>
+                        {/* PAID */}
 
-                        <td className="px-4 py-3 font-semibold">
-                          $
-                          {inv.amount}
-                        </td>
-
-                        <td className="px-4 py-3 font-semibold text-green-600">
+                        <td className="px-6 py-5 text-green-600 font-semibold">
                           ${paid}
                         </td>
 
-                        <td className="px-4 py-3 font-semibold text-red-600">
+                        {/* BALANCE */}
+
+                        <td className="px-6 py-5 text-red-600 font-semibold">
                           ${balance}
                         </td>
 
                         {/* MODE */}
 
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() =>
-                              switchMode(
-                                inv.id,
-                                inv.mode ===
-                                  "manual"
-                                  ? "auto"
-                                  : "manual"
-                              )
-                            }
-                            className={`relative inline-flex items-center h-7 w-24 rounded-full transition-all duration-200 px-1 ${
-                              inv.mode ===
-                              "auto"
-                                ? "bg-green-500"
-                                : "bg-blue-500"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-200 ${
+                        <td className="px-6 py-5">
+
+                          <span
+                            className={`
+                              inline-flex items-center
+                              px-3 py-1 rounded-full
+                              text-xs font-semibold
+                              ${
                                 inv.mode ===
                                 "auto"
-                                  ? "translate-x-[68px]"
-                                  : "translate-x-0"
-                              }`}
-                            />
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-blue-100 text-blue-700"
+                              }
+                            `}
+                          >
+                            {inv.mode}
+                          </span>
 
-                            <span className="w-full text-center text-xs font-medium text-white z-10">
-                              {inv.mode ===
-                              "auto"
-                                ? "AUTO"
-                                : "MANUAL"}
-                            </span>
-                          </button>
                         </td>
 
                         {/* STATUS */}
 
-                        <td className="px-4 py-3">
+                        <td className="px-6 py-5">
+
                           <span
-                            className={`text-xs px-2 py-1 rounded-md font-medium ${
-                              inv.status ===
-                              "paid"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-600"
-                            }`}
+                            className={`
+                              inline-flex items-center
+                              px-3 py-1 rounded-full
+                              text-xs font-semibold
+                              ${
+                                inv.status ===
+                                "paid"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-600"
+                              }
+                            `}
                           >
-                            {
-                              inv.status
-                            }
+                            {inv.status}
                           </span>
+
                         </td>
 
                         {/* ACTIONS */}
 
-                        <td className="px-4 py-3 text-right space-x-2">
+                        <td className="px-6 py-5">
 
-                         {inv.status  !==
-                            "paid" && (
+                          <div className="flex justify-end gap-2">
+
+                            {inv.status !==
+                              "paid" && (
+                              <button
+                                onClick={() =>
+                                  markPaid(
+                                    inv.id
+                                  )
+                                }
+                                className="
+                                  h-10 px-4 rounded-xl
+                                  bg-black text-white
+                                  text-sm font-medium
+                                  hover:opacity-90
+                                "
+                              >
+                                Mark Paid
+                              </button>
+                            )}
+
                             <button
                               onClick={() =>
-  markPaid(
-    inv.id,
-    inv.amount
-  )
-}
-                              className="text-xs px-3 py-1.5 border rounded hover:bg-gray-100"
+                                remove(inv.id)
+                              }
+                              className="
+                                h-10 w-10 rounded-xl
+                                border border-red-200
+                                text-red-600
+                                hover:bg-red-50
+                                flex items-center
+                                justify-center
+                              "
                             >
-                              Mark Paid
+                              <Trash2
+                                size={16}
+                              />
                             </button>
-                          )}
 
-                          <button
-                            onClick={() =>
-                              confirmDelete(
-                                inv.id
-                              )
-                            }
-                            className="text-xs px-3 py-1.5 border rounded text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          </div>
 
                         </td>
+
                       </tr>
                     );
-                  }
-                )}
-              </tbody>
-            </table>
+                  })}
+
+                </tbody>
+
+              </table>
+
+            </div>
           )}
         </div>
 
-        {/* PAGINATION */}
-
-        <div className="flex justify-between items-center">
-
-          <p className="text-sm text-gray-500">
-            Page {page} of{" "}
-            {totalPages || 1}
-          </p>
-
-          <div className="flex gap-2">
-
-            <button
-              disabled={page === 1}
-              onClick={() =>
-                setPage((p) => p - 1)
-              }
-              className="border px-3 py-1 rounded text-sm disabled:opacity-50"
-            >
-              Prev
-            </button>
-
-            <button
-              disabled={
-                page ===
-                  totalPages ||
-                totalPages === 0
-              }
-              onClick={() =>
-                setPage((p) => p + 1)
-              }
-              className="border px-3 py-1 rounded text-sm disabled:opacity-50"
-            >
-              Next
-            </button>
-
-          </div>
-        </div>
       </div>
     </Layout>
+  );
+}
+
+/* =========================
+   STAT CARD
+========================= */
+
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+}: any) {
+  return (
+    <div className="
+      bg-white border border-gray-200
+      rounded-3xl p-5
+    ">
+
+      <div className="flex items-center justify-between">
+
+        <div>
+
+          <p className="text-sm text-gray-500">
+            {title}
+          </p>
+
+          <h2 className="text-3xl font-bold text-gray-900 mt-2">
+            {value}
+          </h2>
+
+        </div>
+
+        <div className="
+          w-12 h-12 rounded-2xl
+          bg-orange-100
+          flex items-center justify-center
+        ">
+          <Icon
+            size={22}
+            className="text-orange-600"
+          />
+        </div>
+
+      </div>
+
+    </div>
   );
 }

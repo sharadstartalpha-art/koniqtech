@@ -127,6 +127,7 @@ model User {
 
   name   String?
   phone  String?
+  whatsappNumber String?
   avatar String?
 
   role String @default("USER")
@@ -224,6 +225,7 @@ model Invoice {
   clientEmail String
   clientName  String?
   clientPhone String?
+  clientWhatsapp String?
   // Financials
 
   amount Float

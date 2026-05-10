@@ -1,6 +1,12 @@
+// lib/cron.ts
+
 import { prisma } from "@/lib/prisma";
 
 import { sendEmail } from "@/lib/email";
+
+// future
+// import { sendSMS } from "@/lib/sms";
+// import { sendWhatsApp } from "@/lib/whatsapp";
 
 export async function GET() {
   try {
@@ -8,9 +14,9 @@ export async function GET() {
       "🚀 AUTO REMINDER CRON START"
     );
 
-    /* =========================
+    /* =========================================
        GET PENDING SCHEDULES
-    ========================= */
+    ========================================= */
 
     const schedules =
       await prisma.reminderSchedule.findMany(
@@ -33,15 +39,16 @@ export async function GET() {
       `📦 Found ${schedules.length} schedules`
     );
 
-    /* =========================
+    /* =========================================
        LOOP
-    ========================= */
+    ========================================= */
 
     for (const schedule of schedules) {
       try {
-        /* =========================
+
+        /* =========================================
            GET INVOICE
-        ========================= */
+        ========================================= */
 
         const invoice =
           await prisma.invoice.findUnique(
@@ -60,44 +67,38 @@ export async function GET() {
           continue;
         }
 
-        /* =========================
-           GET TEMPLATE
-        ========================= */
+        /* =========================================
+           TEMPLATE
+        ========================================= */
 
-       
+        if (!schedule.templateId) {
+          console.log(
+            "❌ Template missing"
+          );
 
-if (!schedule.templateId) {
+          continue;
+        }
 
-  console.log(
-    "❌ Template missing"
-  );
+        const template =
+          await prisma.reminderTemplate.findUnique(
+            {
+              where: {
+                id: schedule.templateId,
+              },
+            }
+          );
 
-  continue;
-}
+        if (!template) {
+          console.log(
+            "❌ Template not found"
+          );
 
+          continue;
+        }
 
-
-const template =
-  await prisma.reminderTemplate.findUnique(
-    {
-      where: {
-        id: schedule.templateId,
-      },
-    }
-  );
-
-if (!template) {
-
-  console.log(
-    "❌ Template not found"
-  );
-
-  continue;
-}
-
-        /* =========================
+        /* =========================================
            PREVENT DUPLICATES
-        ========================= */
+        ========================================= */
 
         const alreadySent =
           await prisma.reminder.findFirst(
@@ -117,17 +118,18 @@ if (!template) {
           continue;
         }
 
-        /* =========================
-           APPLY VARIABLES
-        ========================= */
+        /* =========================================
+           VARIABLES
+        ========================================= */
 
         const html =
           template.html
             .replaceAll(
               "{{name}}",
-              invoice.clientEmail.split(
-                "@"
-              )[0]
+              invoice.clientName ||
+                invoice.clientEmail.split(
+                  "@"
+                )[0]
             )
 
             .replaceAll(
@@ -144,12 +146,15 @@ if (!template) {
 
             .replaceAll(
               "{{dueDate}}",
-              new Date().toLocaleDateString()
+              new Date(
+                invoice.dueDate
+              ).toLocaleDateString()
             )
 
             .replaceAll(
               "{{link}}",
-              "#"
+              invoice.paymentLink ||
+                "#"
             );
 
         const text =
@@ -158,26 +163,40 @@ if (!template) {
             ""
           );
 
-        /* =========================
-           SEND EMAIL
-        ========================= */
+        /* =========================================
+           SEND CHANNEL
+        ========================================= */
 
-        await sendEmail({
-          to: invoice.clientEmail,
+        // EMAIL
+        if (schedule.mode === "auto") {
 
-          subject:
-            template.subject,
+          await sendEmail({
+            to: invoice.clientEmail,
 
-          html,
-        });
+            subject:
+              template.subject,
 
-        console.log(
-          `📧 Sent → ${invoice.clientEmail}`
-        );
+            html,
+          });
 
-        /* =========================
+          console.log(
+            `📧 Email sent → ${invoice.clientEmail}`
+          );
+        }
+
+        // FUTURE SMS
+        // if (schedule.channel === "sms") {
+        //   await sendSMS(...)
+        // }
+
+        // FUTURE WHATSAPP
+        // if (schedule.channel === "whatsapp") {
+        //   await sendWhatsApp(...)
+        // }
+
+        /* =========================================
            SAVE REMINDER
-        ========================= */
+        ========================================= */
 
         await prisma.reminder.create(
           {
@@ -195,19 +214,19 @@ if (!template) {
                 schedule.amount,
 
               type:
-                schedule.type as any,
+                schedule.type,
 
               mode:
-                schedule.mode as any,
+                schedule.mode,
 
-              status:
-                "sent" as any,
+              status: "sent",
 
               html,
 
               text,
 
-              templateId: template?.id,
+              templateId:
+                template.id,
 
               scheduleId:
                 schedule.id,
@@ -218,9 +237,37 @@ if (!template) {
           }
         );
 
-        /* =========================
+        /* =========================================
+           SAVE LOG
+        ========================================= */
+
+        await prisma.reminderLog.create(
+          {
+            data: {
+              userId:
+                schedule.userId,
+
+              invoiceId:
+                invoice.id,
+
+              channel: "email",
+
+              status: "sent",
+
+              recipient:
+                invoice.clientEmail,
+
+              subject:
+                template.subject,
+
+              message: text,
+            },
+          }
+        );
+
+        /* =========================================
            UPDATE SCHEDULE
-        ========================= */
+        ========================================= */
 
         await prisma.reminderSchedule.update(
           {
@@ -239,6 +286,7 @@ if (!template) {
         );
 
       } catch (singleError) {
+
         console.error(
           "❌ SINGLE REMINDER ERROR:",
           singleError
@@ -267,6 +315,7 @@ if (!template) {
     });
 
   } catch (err) {
+
     console.error(
       "❌ CRON ERROR:",
       err

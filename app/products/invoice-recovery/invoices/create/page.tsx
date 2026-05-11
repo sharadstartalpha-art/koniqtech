@@ -14,10 +14,11 @@ import {
   User,
   Sparkles,
   Phone,
+  ShieldCheck,
+  ArrowRight,
 } from "lucide-react";
 
 export default function CreateInvoicePage() {
-
   const [email, setEmail] =
     useState("");
 
@@ -43,9 +44,7 @@ export default function CreateInvoicePage() {
   ========================= */
 
   const create = async () => {
-
     if (!email || !amount) {
-
       toast.error(
         "Email and amount required"
       );
@@ -54,7 +53,6 @@ export default function CreateInvoicePage() {
     }
 
     try {
-
       setLoading(true);
 
       await axios.post(
@@ -86,7 +84,6 @@ export default function CreateInvoicePage() {
         "/products/invoice-recovery/invoices";
 
     } catch (err) {
-
       console.error(err);
 
       toast.error(
@@ -94,7 +91,6 @@ export default function CreateInvoicePage() {
       );
 
     } finally {
-
       setLoading(false);
     }
   };
@@ -102,51 +98,85 @@ export default function CreateInvoicePage() {
   return (
     <Layout>
 
-      <div className="min-h-screen bg-gray-50 px-6 py-10">
+      <div className="space-y-8">
 
-        <div className="max-w-2xl mx-auto">
+        {/* HEADER */}
 
-          {/* HEADER */}
+        <div className="flex items-start justify-between flex-wrap gap-5">
 
-          <div className="mb-8">
+          <div>
 
-            <div className="flex items-center gap-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-sm font-medium mb-4">
+              <Sparkles size={14} />
+              Smart Recovery Invoice
+            </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-orange-600" />
-              </div>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+              Create Invoice
+            </h1>
 
-              <div>
+            <p className="text-gray-500 mt-3 max-w-2xl leading-7">
+              Create invoices, automate payment reminders,
+              and recover outstanding payments faster.
+            </p>
 
-                <h1 className="text-4xl font-bold text-gray-900">
-                  Create Invoice
-                </h1>
+          </div>
 
-                <p className="text-gray-500 mt-1">
-                  Send invoices with automated recovery workflows
-                </p>
+          <div className="hidden lg:flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-5 py-4">
 
-              </div>
+            <div className="w-11 h-11 rounded-2xl bg-green-100 flex items-center justify-center">
+              <ShieldCheck className="w-5 h-5 text-green-600" />
+            </div>
 
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Recovery Enabled
+              </p>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Email + WhatsApp + SMS ready
+              </p>
             </div>
 
           </div>
 
-          {/* CARD */}
+        </div>
 
-          <div className="bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
+        {/* MAIN */}
 
-            {/* FORM */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          {/* FORM */}
+
+          <div className="xl:col-span-2 bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
+
+            {/* CLIENT */}
 
             <div className="p-8 border-b border-gray-100">
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center justify-between mb-6">
+
+                <div>
+
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Client Information
+                  </h2>
+
+                  <p className="text-sm text-gray-500 mt-1">
+                    Add customer billing details
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                 {/* NAME */}
 
                 <div>
 
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Client Name
                   </label>
 
@@ -174,7 +204,7 @@ export default function CreateInvoicePage() {
 
                 <div>
 
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Client Email
                   </label>
 
@@ -202,7 +232,7 @@ export default function CreateInvoicePage() {
 
                 <div>
 
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
                     Client Phone
                   </label>
 
@@ -226,31 +256,31 @@ export default function CreateInvoicePage() {
 
                 </div>
 
-              </div>
+                {/* AMOUNT */}
 
-              {/* AMOUNT */}
+                <div>
 
-              <div className="mt-6">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Invoice Amount
+                  </label>
 
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Invoice Amount
-                </label>
+                  <div className="relative">
 
-                <div className="relative">
+                    <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
 
-                  <DollarSign className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="number"
+                      placeholder="1000"
+                      value={amount}
+                      onChange={(e) =>
+                        setAmount(
+                          e.target.value
+                        )
+                      }
+                      className="w-full h-12 border border-gray-300 rounded-2xl pl-11 pr-4 outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition"
+                    />
 
-                  <input
-                    type="number"
-                    placeholder="1000"
-                    value={amount}
-                    onChange={(e) =>
-                      setAmount(
-                        e.target.value
-                      )
-                    }
-                    className="w-full h-14 border border-gray-300 rounded-2xl pl-11 pr-4 text-lg font-semibold outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition"
-                  />
+                  </div>
 
                 </div>
 
@@ -258,17 +288,21 @@ export default function CreateInvoicePage() {
 
             </div>
 
-            {/* REMINDER MODE */}
+            {/* AUTOMATION */}
 
             <div className="p-8">
 
-              <h2 className="text-lg font-semibold text-gray-900">
-                Reminder Automation
-              </h2>
+              <div className="mb-6">
 
-              <p className="text-sm text-gray-500 mt-1 mb-6">
-                Configure how reminders should be sent
-              </p>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Recovery Workflow
+                </h2>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  Configure how reminders should be handled
+                </p>
+
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -281,17 +315,34 @@ export default function CreateInvoicePage() {
                   className={`border rounded-3xl p-6 text-left transition-all ${
                     mode === "manual"
                       ? "border-orange-500 bg-orange-50 ring-4 ring-orange-100"
-                      : "border-gray-200"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
 
-                  <h3 className="font-semibold text-lg">
-                    Manual
-                  </h3>
+                  <div className="flex items-center justify-between">
 
-                  <p className="text-sm text-gray-500 mt-2">
-                    Send reminders manually
-                  </p>
+                    <div>
+
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        Manual Recovery
+                      </h3>
+
+                      <p className="text-sm text-gray-500 mt-2 leading-6">
+                        Send reminders manually from the dashboard.
+                      </p>
+
+                    </div>
+
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 ${
+                        mode ===
+                        "manual"
+                          ? "border-orange-500 bg-orange-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+
+                  </div>
 
                 </button>
 
@@ -304,17 +355,34 @@ export default function CreateInvoicePage() {
                   className={`border rounded-3xl p-6 text-left transition-all ${
                     mode === "auto"
                       ? "border-orange-500 bg-orange-50 ring-4 ring-orange-100"
-                      : "border-gray-200"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
 
-                  <h3 className="font-semibold text-lg">
-                    Auto Recovery
-                  </h3>
+                  <div className="flex items-center justify-between">
 
-                  <p className="text-sm text-gray-500 mt-2">
-                    Automatically trigger workflows
-                  </p>
+                    <div>
+
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        Auto Recovery
+                      </h3>
+
+                      <p className="text-sm text-gray-500 mt-2 leading-6">
+                        Trigger automated reminder workflows and recovery sequences.
+                      </p>
+
+                    </div>
+
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 ${
+                        mode ===
+                        "auto"
+                          ? "border-orange-500 bg-orange-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+
+                  </div>
 
                 </button>
 
@@ -328,7 +396,7 @@ export default function CreateInvoicePage() {
 
               <a
                 href="/products/invoice-recovery/invoices"
-                className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                className="text-sm font-medium text-gray-500 hover:text-gray-700 transition"
               >
                 Cancel
               </a>
@@ -336,12 +404,87 @@ export default function CreateInvoicePage() {
               <button
                 onClick={create}
                 disabled={loading}
-                className="h-12 px-7 rounded-2xl bg-black hover:bg-gray-900 text-white font-semibold transition disabled:opacity-60"
+                className="h-12 px-7 rounded-2xl bg-black hover:bg-gray-900 text-white font-semibold transition disabled:opacity-60 flex items-center gap-2"
               >
+
                 {loading
                   ? "Creating..."
                   : "Create Invoice"}
+
+                {!loading && (
+                  <ArrowRight className="w-4 h-4" />
+                )}
+
               </button>
+
+            </div>
+
+          </div>
+
+          {/* SIDE PANEL */}
+
+          <div className="space-y-5">
+
+            {/* INFO */}
+
+            <div className="bg-black text-white rounded-3xl p-6 overflow-hidden relative">
+
+              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
+
+              <div className="relative z-10">
+
+                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
+                  <Sparkles className="w-5 h-5 text-yellow-300" />
+                </div>
+
+                <h3 className="text-xl font-semibold">
+                  Smart Recovery Enabled
+                </h3>
+
+                <p className="text-sm text-gray-300 leading-7 mt-4">
+                  Automatically recover unpaid invoices using:
+                </p>
+
+                <div className="mt-5 space-y-3">
+
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-green-400" />
+                    Email reminders
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-orange-400" />
+                    WhatsApp follow-ups
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-blue-400" />
+                    SMS nudges
+                  </div>
+
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-purple-400" />
+                    AI recovery workflows
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* TIP */}
+
+            <div className="bg-white border border-gray-200 rounded-3xl p-6">
+
+              <h3 className="font-semibold text-gray-900">
+                Recovery Tip
+              </h3>
+
+              <p className="text-sm text-gray-500 leading-7 mt-3">
+                Invoices with automated reminders typically recover payments
+                faster than manually managed invoices.
+              </p>
 
             </div>
 

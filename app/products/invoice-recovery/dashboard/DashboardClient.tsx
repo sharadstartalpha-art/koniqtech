@@ -186,7 +186,7 @@ export default function DashboardClient() {
 
       </div>
 
-      {/* STATS */}
+      {/* TOP STATS */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
 
@@ -319,85 +319,176 @@ export default function DashboardClient() {
 
       </div>
 
-      {/* INSIGHTS */}
+      {/* EXTRA STATS */}
 
-      <div className="bg-gradient-to-br from-black to-gray-900 rounded-3xl p-7 text-white overflow-hidden relative">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+        <div className="bg-white border rounded-3xl p-5">
+          <p className="text-sm text-gray-500">
+            Recovery Rate
+          </p>
 
-        <div className="relative z-10">
+          <h3 className="text-3xl font-bold mt-2">
+            {stats.totalInvoices === 0
+              ? "0%"
+              : `${Math.round(
+                  (stats.recovered /
+                    (stats.recovered +
+                      stats.pending)) *
+                    100
+                )}%`}
+          </h3>
+        </div>
+
+        <div className="bg-white border rounded-3xl p-5">
+          <p className="text-sm text-gray-500">
+            Unpaid Invoices
+          </p>
+
+          <h3 className="text-3xl font-bold mt-2">
+            {stats.unpaidInvoices}
+          </h3>
+        </div>
+
+        <div className="bg-white border rounded-3xl p-5">
+          <p className="text-sm text-gray-500">
+            Avg Invoice Value
+          </p>
+
+          <h3 className="text-3xl font-bold mt-2">
+            $
+            {stats.totalInvoices === 0
+              ? 0
+              : Math.round(
+                  (stats.recovered +
+                    stats.pending) /
+                    stats.totalInvoices
+                )}
+          </h3>
+        </div>
+
+      </div>
+
+      {/* INSIGHTS + ACTIVITY */}
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+        {/* AI INSIGHTS */}
+
+        <div className="xl:col-span-1 bg-black text-white rounded-3xl p-6">
 
           <div className="flex items-center gap-3">
 
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur">
-              <Sparkles className="w-6 h-6 text-yellow-300" />
+            <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-yellow-300" />
             </div>
+
+            <div>
+              <h3 className="font-semibold text-lg">
+                AI Recovery Insights
+              </h3>
+
+              <p className="text-sm text-gray-400">
+                Smart recommendations
+              </p>
+            </div>
+
+          </div>
+
+          <div className="mt-5 space-y-4">
+
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+              <p className="text-sm leading-6 text-gray-200">
+                {insight}
+              </p>
+            </div>
+
+            <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4">
+              <p className="text-sm text-orange-200">
+                Best recovery time:
+              </p>
+
+              <h4 className="text-xl font-bold mt-2">
+                9 AM – 11 AM
+              </h4>
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* RECENT ACTIVITY */}
+
+        <div className="xl:col-span-2 bg-white border border-gray-200 rounded-3xl p-6">
+
+          <div className="flex items-center justify-between">
 
             <div>
 
               <h3 className="text-xl font-semibold">
-                AI Insights
+                Recent Invoice Activity
               </h3>
 
-              <p className="text-sm text-gray-300 mt-1">
-                Smart recovery recommendations based on your invoices
+              <p className="text-sm text-gray-500 mt-1">
+                Latest recovery updates
               </p>
 
             </div>
 
           </div>
 
-          <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-sm">
+          <div className="mt-6 divide-y divide-gray-100">
 
-            <p className="text-base leading-7 text-gray-100">
-              {insight}
-            </p>
+            {invoices.slice(0, 5).map((invoice) => {
 
-          </div>
+              const balance =
+                invoice.amount -
+                invoice.paidAmount;
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              return (
 
-            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-              <p className="text-sm text-gray-400">
-                Unpaid Invoices
-              </p>
+                <div
+                  key={invoice.id}
+                  className="py-4 flex items-center justify-between"
+                >
 
-              <h4 className="text-3xl font-bold mt-2">
-                {
-                  stats.unpaidInvoices
-                }
-              </h4>
-            </div>
+                  <div>
 
-            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-              <p className="text-sm text-gray-400">
-                Recovery Rate
-              </p>
+                    <h4 className="font-medium text-gray-900">
+                      Invoice #{invoice.id.slice(0, 6)}
+                    </h4>
 
-              <h4 className="text-3xl font-bold mt-2">
-                {stats.totalInvoices ===
-                0
-                  ? "0%"
-                  : `${Math.round(
-                      (stats.recovered /
-                        (stats.recovered +
-                          stats.pending)) *
-                        100
-                    )}%`}
-              </h4>
-            </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {invoice.mode === "auto"
+                        ? "Auto Recovery"
+                        : "Manual Recovery"}
+                    </p>
 
-            <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-              <p className="text-sm text-gray-400">
-                Auto Reminder Usage
-              </p>
+                  </div>
 
-              <h4 className="text-3xl font-bold mt-2">
-                {
-                  stats.autoInvoices
-                }
-              </h4>
-            </div>
+                  <div className="text-right">
+
+                    <h4 className="font-semibold">
+                      ${invoice.amount}
+                    </h4>
+
+                    <p
+                      className={`text-sm mt-1 ${
+                        balance > 0
+                          ? "text-red-500"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {balance > 0
+                        ? `$${balance} pending`
+                        : "Paid"}
+                    </p>
+
+                  </div>
+
+                </div>
+              );
+            })}
 
           </div>
 

@@ -125,10 +125,10 @@ model User {
   email    String  @unique
   password String?
 
-  name   String?
-  phone  String?
+  name           String?
+  phone          String?
   whatsappNumber String?
-  avatar String?
+  avatar         String?
 
   role String @default("USER")
 
@@ -149,6 +149,10 @@ model User {
   lastActiveAt DateTime?
 
   timezone String? @default("UTC")
+
+  businessEmail String?
+
+  emailProvider String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -222,9 +226,9 @@ model Invoice {
   userId    String
   productId String
 
-  clientEmail String
-  clientName  String?
-  clientPhone String?
+  clientEmail    String
+  clientName     String?
+  clientPhone    String?
   clientWhatsapp String?
   // Financials
 
@@ -296,12 +300,12 @@ model ReminderLog {
 
   message String
 
-  providerId String?
+  providerId  String?
   deliveredAt DateTime?
-  openedAt  DateTime?
-  clickedAt DateTime?
-  bouncedAt DateTime?
-  createdAt DateTime @default(now())
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  bouncedAt   DateTime?
+  createdAt   DateTime  @default(now())
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
 }
@@ -378,4 +382,26 @@ model Campaign {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model OnboardingProgress {
+  id String @id @default(cuid())
+
+  userId String @unique
+
+  connectedEmail Boolean @default(false)
+
+  createdInvoice Boolean @default(false)
+
+  setupWorkflow Boolean @default(false)
+
+  sentReminder Boolean @default(false)
+
+  upgradedPlan Boolean @default(false)
+
+  completed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 }

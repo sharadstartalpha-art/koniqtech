@@ -11,25 +11,15 @@ import Logo from "@/components/Logo";
 import {
   LayoutDashboard,
   FileText,
-  Mail,
-  Link as LinkIcon,
-  User,
-  Settings,
-  LayoutTemplate,
-  ChevronRight,
   Sparkles,
+  BarChart3,
+  LayoutTemplate,
+  Settings,
+  User,
+  ChevronRight,
   CreditCard,
   ShieldCheck,
-  Bell,
-  MessageCircle,
-  Smartphone,
-  Bot,
-  BarChart3,
-  Megaphone,
-  Rocket,
-  Workflow,
-  Send,
-  Crown,
+  Plus,
 } from "lucide-react";
 
 type LayoutProps = {
@@ -44,22 +34,19 @@ export default function Layout({
     usePathname();
 
   /* =========================================
-     NAVIGATION
+     CLEAN NAVIGATION
   ========================================= */
 
   const nav = [
 
-    /* =========================================
-       CORE
-    ========================================= */
-
     {
-      section: "Core",
+      section: "Workspace",
 
       items: [
 
         {
-          name: "Dashboard",
+          name:
+            "Dashboard",
 
           href:
             "/products/invoice-recovery/dashboard",
@@ -69,7 +56,8 @@ export default function Layout({
         },
 
         {
-          name: "Invoices",
+          name:
+            "Invoices",
 
           href:
             "/products/invoice-recovery/invoices",
@@ -79,116 +67,22 @@ export default function Layout({
         },
 
         {
-          name: "Automation",
-
-          href:
-            "/products/invoice-recovery/automation",
-
-          icon:
-            Sparkles,
-
-          badge:
-            "NEW",
-        },
-
-        {
-          name: "Reminders",
-
-          href:
-            "/products/invoice-recovery/reminders",
-
-          icon:
-            Mail,
-        },
-
-        {
           name:
-            "Reminder Center",
+            "Recovery",
 
           href:
             "/products/invoice-recovery/reminder-center",
 
           icon:
-            Bell,
-        },
-
-        {
-          name:
-            "Payment Links",
-
-          href:
-            "/products/invoice-recovery/links",
-
-          icon:
-            LinkIcon,
-        },
-      ],
-    },
-
-    /* =========================================
-       RECOVERY CHANNELS
-    ========================================= */
-
-    {
-      section:
-        "Recovery Channels",
-
-      items: [
-
-        {
-          name:
-            "WhatsApp",
-
-          href:
-            "/products/invoice-recovery/whatsapp",
-
-          icon:
-            MessageCircle,
-
-          badge:
-            "LIVE",
-        },
-
-        {
-          name:
-            "SMS",
-
-          href:
-            "/products/invoice-recovery/sms",
-
-          icon:
-            Smartphone,
-        },
-
-        {
-          name:
-            "AI Recovery",
-
-          href:
-            "/products/invoice-recovery/ai-assistant",
-
-          icon:
-            Bot,
+            Sparkles,
 
           badge:
             "AI",
         },
-      ],
-    },
-
-    /* =========================================
-       ANALYTICS
-    ========================================= */
-
-    {
-      section:
-        "Analytics",
-
-      items: [
 
         {
           name:
-            "Recovery Analytics",
+            "Analytics",
 
           href:
             "/products/invoice-recovery/recovery-analytics",
@@ -196,108 +90,16 @@ export default function Layout({
           icon:
             BarChart3,
         },
-
-        {
-          name:
-            "Campaigns",
-
-          href:
-            "/products/invoice-recovery/campaigns",
-
-          icon:
-            Megaphone,
-        },
       ],
     },
 
     /* =========================================
-       ONBOARDING
+       MANAGEMENT
     ========================================= */
 
     {
       section:
-        "Onboarding",
-
-      items: [
-
-        {
-          name:
-            "Quick Setup",
-
-          href:
-            "/products/invoice-recovery/onboarding",
-
-          icon:
-            Rocket,
-
-          badge:
-            "START",
-        },
-
-        {
-          name:
-            "Connect Email",
-
-          href:
-            "/products/invoice-recovery/onboarding/connect-email",
-
-          icon:
-            Mail,
-        },
-
-        {
-          name:
-            "Create Invoice",
-
-          href:
-            "/products/invoice-recovery/onboarding/create-invoice",
-
-          icon:
-            FileText,
-        },
-
-        {
-          name:
-            "Setup Workflow",
-
-          href:
-            "/products/invoice-recovery/onboarding/setup-workflow",
-
-          icon:
-            Workflow,
-        },
-
-        {
-          name:
-            "Send Reminder",
-
-          href:
-            "/products/invoice-recovery/onboarding/send-reminder",
-
-          icon:
-            Send,
-        },
-
-        {
-          name:
-            "Upgrade",
-
-          href:
-            "/products/invoice-recovery/onboarding/upgrade",
-
-          icon:
-            Crown,
-        },
-      ],
-    },
-
-    /* =========================================
-       WORKSPACE
-    ========================================= */
-
-    {
-      section:
-        "Workspace",
+        "Management",
 
       items: [
 
@@ -344,7 +146,7 @@ export default function Layout({
           SIDEBAR
       ========================================= */}
 
-      <aside className="hidden lg:flex w-[285px] bg-white border-r border-gray-200 flex-col">
+      <aside className="hidden lg:flex w-[280px] bg-white border-r border-gray-200 flex-col">
 
         {/* =========================================
             LOGO
@@ -354,11 +156,14 @@ export default function Layout({
 
           <Logo />
 
-          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
+          <Link
+            href="/products/invoice-recovery/create"
+            className="w-10 h-10 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition"
+          >
 
-            <Sparkles size={18} />
+            <Plus size={18} />
 
-          </div>
+          </Link>
 
         </div>
 
@@ -480,7 +285,7 @@ export default function Layout({
           </div>
 
           {/* =========================================
-              PRO CARD
+              QUICK ACTION
           ========================================= */}
 
           <div className="mt-8 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 p-5 text-white overflow-hidden relative">
@@ -499,22 +304,22 @@ export default function Layout({
 
               <h3 className="font-semibold text-lg">
 
-                Upgrade to Pro
+                Create Invoice
 
               </h3>
 
               <p className="text-sm text-orange-100 leading-6 mt-2">
 
-                Unlock AI recovery, unlimited reminders, WhatsApp automation and advanced analytics.
+                Send invoices, automate recovery reminders and track payments.
 
               </p>
 
               <Link
-                href="/products/invoice-recovery/onboarding/upgrade"
+                href="/products/invoice-recovery/create"
                 className="mt-5 inline-flex items-center gap-2 bg-white text-orange-600 px-4 py-2 rounded-xl font-medium hover:bg-orange-50 transition"
               >
 
-                Upgrade Plan
+                New Invoice
 
                 <ChevronRight
                   size={16}

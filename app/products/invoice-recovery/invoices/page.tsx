@@ -188,82 +188,53 @@ export default function InvoicesPage() {
     }
   };
 
+
+
+ 
   /* =========================
-     MARK PAID
+     Overdue
   ========================= */
+ const overdue =
+  data.filter(
+    (i) =>
+      i.status !== "paid"
+  ).length;
 
-  const markPaid = async (
-    id: string
-  ) => {
-    try {
-      await axios.post(
-        "/api/invoices/mark-paid",
-        {
-          id,
-        }
-      );
-
-      toast.success(
-        "Invoice marked paid"
-      );
-
-      load();
-
-    } catch {
-      toast.error(
-        "Failed to update"
-      );
-    }
-  };
-
+  
   return (
     <Layout>
       <div className="space-y-8">
 
         {/* HERO */}
 
-        <div className="rounded-3xl bg-gradient-to-br from-black to-gray-900 p-8 text-white">
+        <div className="flex items-center justify-between flex-wrap gap-4">
 
-          <div className="flex items-start justify-between flex-wrap gap-6">
+  <div>
+    <h1 className="text-4xl font-bold text-gray-900">
+      Invoices
+    </h1>
 
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-sm mb-4">
-                <CircleDollarSign
-                  size={16}
-                />
-                Revenue Recovery
-              </div>
+    <p className="text-gray-500 mt-2">
+      Manage invoices, track payments, and monitor outstanding balances.
+    </p>
+  </div>
 
-              <h1 className="text-4xl font-bold">
-                Invoices
-              </h1>
+  <a
+    href="/products/invoice-recovery/invoices/create"
+    className="
+      h-12 px-5 rounded-2xl
+      bg-black text-white
+      font-semibold
+      flex items-center gap-2
+      hover:bg-gray-900
+      transition
+    "
+  >
+    <Plus size={18} />
+    Create Invoice
+  </a>
 
-              <p className="text-gray-300 mt-3 max-w-2xl">
-                Track unpaid invoices,
-                collect payments faster,
-                and automate recovery
-                workflows.
-              </p>
-            </div>
-
-            <a
-              href="/products/invoice-recovery/invoices/create"
-              className="
-                h-12 px-5 rounded-2xl
-                bg-white text-black
-                font-semibold
-                flex items-center gap-2
-                hover:scale-[1.02]
-                transition
-              "
-            >
-              <Plus size={18} />
-              Create Invoice
-            </a>
-
-          </div>
-
-        </div>
+</div>
 
         {/* STATS */}
 
@@ -271,7 +242,7 @@ export default function InvoicesPage() {
 
           <StatCard
             title="Total Revenue"
-            value={`$${stats.totalRevenue}`}
+           value={`$${stats.totalRevenue.toLocaleString()}`}
             icon={Wallet}
           />
 
@@ -287,6 +258,12 @@ export default function InvoicesPage() {
             icon={Clock3}
           />
 
+
+<StatCard
+  title="Overdue"
+  value={overdue}
+  icon={Clock3}
+/>
           <StatCard
             title="Invoices"
             value={data.length}
@@ -571,16 +548,19 @@ export default function InvoicesPage() {
         idx: number
       ) => (
         <div
-          key={idx}
-          className="
-            text-xs text-gray-500
-          "
-        >
-          Paid ${p.amount} on{" "}
-          {new Date(
-            p.createdAt
-          ).toLocaleDateString()}
-        </div>
+  key={idx}
+  className="
+    text-xs text-gray-500
+    flex items-center gap-2
+  "
+>
+  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+
+  Paid ${p.amount} •{" "}
+  {new Date(
+    p.createdAt
+  ).toLocaleDateString()}
+</div>
       )
     )}
 

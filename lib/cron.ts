@@ -10,6 +10,7 @@ import { sendEmail } from "@/lib/email";
 
 export async function GET() {
   try {
+
     console.log(
       "🚀 AUTO REMINDER CRON START"
     );
@@ -44,6 +45,7 @@ export async function GET() {
     ========================================= */
 
     for (const schedule of schedules) {
+
       try {
 
         /* =========================================
@@ -60,6 +62,7 @@ export async function GET() {
           );
 
         if (!invoice) {
+
           console.log(
             "❌ Invoice missing"
           );
@@ -72,6 +75,7 @@ export async function GET() {
         ========================================= */
 
         if (!schedule.templateId) {
+
           console.log(
             "❌ Template missing"
           );
@@ -89,6 +93,7 @@ export async function GET() {
           );
 
         if (!template) {
+
           console.log(
             "❌ Template not found"
           );
@@ -111,6 +116,7 @@ export async function GET() {
           );
 
         if (alreadySent) {
+
           console.log(
             "⏭️ Already sent"
           );
@@ -119,11 +125,54 @@ export async function GET() {
         }
 
         /* =========================================
-           VARIABLES
+           CREATE LOG FIRST
+        ========================================= */
+
+        const log =
+          await prisma.reminderLog.create(
+            {
+              data: {
+                userId:
+                  schedule.userId,
+
+                invoiceId:
+                  invoice.id,
+
+                channel:
+                  "email",
+
+                status:
+                  "sent",
+
+                recipient:
+                  invoice.clientEmail,
+
+                subject:
+                  template.subject,
+
+                message:
+                  template.html,
+              },
+            }
+          );
+
+        /* =========================================
+           TRACKING URLS
+        ========================================= */
+
+        const trackingPixel =
+          `https://koniqtech.com/api/track/open/${log.id}`;
+
+        const clickLink =
+          `https://koniqtech.com/api/track/click/${log.id}`;
+
+        /* =========================================
+           HTML VARIABLES
         ========================================= */
 
         const html =
           template.html
+
             .replaceAll(
               "{{name}}",
               invoice.clientName ||
@@ -153,8 +202,12 @@ export async function GET() {
 
             .replaceAll(
               "{{link}}",
-              invoice.paymentLink ||
-                "#"
+              clickLink
+            )
+
+            .replaceAll(
+              "{{trackingPixel}}",
+              `<img src="${trackingPixel}" width="1" height="1" />`
             );
 
         const text =
@@ -164,14 +217,16 @@ export async function GET() {
           );
 
         /* =========================================
-           SEND CHANNEL
+           SEND EMAIL
         ========================================= */
 
-        // EMAIL
-        if (schedule.mode === "auto") {
+        if (
+          schedule.mode === "auto"
+        ) {
 
           await sendEmail({
-            to: invoice.clientEmail,
+            to:
+              invoice.clientEmail,
 
             subject:
               template.subject,
@@ -184,12 +239,18 @@ export async function GET() {
           );
         }
 
-        // FUTURE SMS
+        /* =========================================
+           FUTURE SMS
+        ========================================= */
+
         // if (schedule.channel === "sms") {
         //   await sendSMS(...)
         // }
 
-        // FUTURE WHATSAPP
+        /* =========================================
+           FUTURE WHATSAPP
+        ========================================= */
+
         // if (schedule.channel === "whatsapp") {
         //   await sendWhatsApp(...)
         // }
@@ -219,7 +280,8 @@ export async function GET() {
               mode:
                 schedule.mode,
 
-              status: "sent",
+              status:
+                "sent",
 
               html,
 
@@ -238,34 +300,6 @@ export async function GET() {
         );
 
         /* =========================================
-           SAVE LOG
-        ========================================= */
-
-        await prisma.reminderLog.create(
-          {
-            data: {
-              userId:
-                schedule.userId,
-
-              invoiceId:
-                invoice.id,
-
-              channel: "email",
-
-              status: "sent",
-
-              recipient:
-                invoice.clientEmail,
-
-              subject:
-                template.subject,
-
-              message: text,
-            },
-          }
-        );
-
-        /* =========================================
            UPDATE SCHEDULE
         ========================================= */
 
@@ -276,7 +310,8 @@ export async function GET() {
             },
 
             data: {
-              status: "sent",
+              status:
+                "sent",
             },
           }
         );
@@ -299,7 +334,8 @@ export async function GET() {
             },
 
             data: {
-              status: "failed",
+              status:
+                "failed",
             },
           }
         );

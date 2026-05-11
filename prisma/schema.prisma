@@ -297,10 +297,10 @@ model ReminderLog {
   message String
 
   providerId String?
-
+  deliveredAt DateTime?
   openedAt  DateTime?
   clickedAt DateTime?
-
+  bouncedAt DateTime?
   createdAt DateTime @default(now())
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])

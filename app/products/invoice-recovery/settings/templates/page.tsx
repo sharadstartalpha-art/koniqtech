@@ -606,12 +606,23 @@ export default function TemplatePage() {
                   <div className="bg-white min-h-[300px] p-8">
 
                     {form.html ? (
-                      <div
-                        dangerouslySetInnerHTML={{
-                          __html:
-                            form.html,
-                        }}
+                      <>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html:
+                              form.html,
+                          }}
+                        />
+
+                    {form.html && (
+                      <img 
+                        src="https://koniqtech.com/api/track/open/LOG_ID" 
+                        width="1"
+                        height="1"
+                        alt=""
                       />
+                    )}
+                      </>
                     ) : (
                       <div className="h-[300px] flex flex-col items-center justify-center text-gray-400">
 

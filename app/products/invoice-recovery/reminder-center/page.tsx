@@ -25,6 +25,26 @@ import {
 
 export default function ReminderCenterPage() {
 
+
+  function SimpleStat({
+  title,
+  value,
+}: any) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-3xl p-5">
+
+      <p className="text-sm text-gray-500">
+        {title}
+      </p>
+
+      <h3 className="text-3xl font-bold mt-2">
+        {value}
+      </h3>
+
+    </div>
+  );
+}
+
   /* =========================================
      STATES
   ========================================= */
@@ -170,215 +190,216 @@ export default function ReminderCenterPage() {
 
       <div className="space-y-6">
 
-        {/* HERO */}
+  {/* HEADER */}
 
-        <div className="rounded-[28px] overflow-hidden bg-gradient-to-r from-black via-zinc-950 to-slate-900 text-white p-8 border border-zinc-800">
+  <div className="flex items-center justify-between flex-wrap gap-4">
 
-          <div className="flex items-start justify-between flex-wrap gap-6">
+    <div>
 
-            <div className="max-w-2xl">
+      <h1 className="text-4xl font-bold text-gray-900">
+        Recovery
+      </h1>
 
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs mb-5 border border-white/10">
-                <Bell size={14} />
-                Reminder Center
-              </div>
+      <p className="text-gray-500 mt-2">
+        Manage reminders, recovery channels, and payment follow-ups.
+      </p>
 
-              <h1 className="text-4xl font-bold leading-tight">
-                Manage every recovery reminder
-              </h1>
+    </div>
 
-              <p className="text-zinc-300 mt-4 text-[15px] leading-7">
-                Monitor Email, WhatsApp, and SMS reminders from one place.
-              </p>
+    <button
+      onClick={() =>
+        setOpenCreate(true)
+      }
+      className="
+        h-12 px-5 rounded-2xl
+        bg-black text-white
+        font-semibold
+        hover:bg-gray-900
+        transition
+      "
+    >
+      Send Reminder
+    </button>
 
-              <div className="flex gap-3 mt-6 flex-wrap">
+  </div>
 
-                {/* CREATE */}
+  {/* STATS */}
 
-                <button
-                  onClick={() =>
-                    setOpenCreate(true)
-                  }
-                  className="bg-white text-black px-5 py-3 rounded-xl text-sm font-medium hover:bg-zinc-200 transition"
-                >
-                  Create Reminder
-                </button>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
 
-                {/* ANALYTICS */}
+    <SimpleStat
+      title="Sent"
+      value={stats.sent || 0}
+    />
 
-                <button
-                  onClick={() =>
-                    setOpenAnalytics(true)
-                  }
-                  className="border border-white/20 px-5 py-3 rounded-xl text-sm hover:bg-white/10 transition"
-                >
-                  View Analytics
-                </button>
+    <SimpleStat
+      title="Pending"
+      value={stats.pending || 0}
+    />
 
-              </div>
-            </div>
+    <SimpleStat
+      title="Failed"
+      value={stats.failed || 0}
+    />
 
-            {/* STATS */}
+    <SimpleStat
+      title="Opened"
+      value={stats.opened || 0}
+    />
 
-            <div className="grid grid-cols-2 gap-4 min-w-[320px]">
+  </div>
 
-              <StatCard
-                title="Sent"
-                value={stats.sent || 0}
-                icon={CheckCircle2}
-              />
+  {/* CHANNELS */}
 
-              <StatCard
-                title="Pending"
-                value={stats.pending || 0}
-                icon={Clock3}
-              />
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-              <StatCard
-                title="Failed"
-                value={stats.failed || 0}
-                icon={AlertTriangle}
-              />
+    <ChannelCard
+      title="Email"
+      desc="Recovery emails"
+      icon={Mail}
+      active={`${stats?.channels?.email || 0} sent`}
+    />
 
-              <StatCard
-                title="Opened"
-                value={stats.opened || 0}
-                icon={BrainCircuit}
-              />
+    <ChannelCard
+      title="WhatsApp"
+      desc="WhatsApp reminders"
+      icon={MessageCircle}
+      active={`${stats?.channels?.whatsapp || 0} sent`}
+    />
 
-            </div>
-          </div>
-        </div>
+    <ChannelCard
+      title="SMS"
+      desc="SMS follow-ups"
+      icon={Smartphone}
+      active={`${stats?.channels?.sms || 0} sent`}
+    />
 
-        {/* CHANNELS */}
+  </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+  {/* QUICK INSIGHTS */}
 
-          <ChannelCard
-            title="Email Recovery"
-            desc="Automated invoice reminders via email."
-            icon={Mail}
-            active={`${stats?.channels?.email || 0} sent`}
-          />
+  <div className="bg-black text-white rounded-3xl p-6">
 
-          <ChannelCard
-            title="WhatsApp Recovery"
-            desc="High-open recovery campaigns."
-            icon={MessageCircle}
-            active={`${stats?.channels?.whatsapp || 0} sent`}
-          />
+    <div className="flex items-center gap-3">
 
-          <ChannelCard
-            title="SMS Recovery"
-            desc="Fast payment nudges via SMS."
-            icon={Smartphone}
-            active={`${stats?.channels?.sms || 0} sent`}
-          />
-
-        </div>
-
-        {/* TABLE */}
-
-        <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden">
-
-          <div className="p-6 border-b border-zinc-100">
-
-            <h2 className="text-xl font-semibold">
-              Recent Reminder Activity
-            </h2>
-
-            <p className="text-sm text-zinc-500 mt-1">
-              Track all reminder delivery events
-            </p>
-
-          </div>
-
-          <div className="divide-y">
-
-            {logs.length === 0 && (
-              <div className="p-10 text-center text-zinc-500">
-                No reminders yet
-              </div>
-            )}
-
-            {logs.map((log: any) => {
-
-              const Icon =
-                log.channel ===
-                "whatsapp"
-                  ? MessageCircle
-                  : log.channel ===
-                    "sms"
-                  ? Smartphone
-                  : Mail;
-
-              return (
-                <div
-                  key={log.id}
-                  className="p-5 flex items-center justify-between hover:bg-zinc-50 transition"
-                >
-
-                  <div className="flex items-center gap-4">
-
-                    <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center">
-                      <Icon size={20} />
-                    </div>
-
-                    <div>
-
-                      <h3 className="font-semibold text-[15px]">
-                        {
-                          log.invoice
-                            ?.clientName
-                        }
-                      </h3>
-
-                      <p className="text-sm text-zinc-500 mt-1">
-                        {
-                          log.channel
-                        }{" "}
-                        •{" "}
-                        {
-                          log.subject
-                        }
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  <div className="hidden md:block text-sm font-medium">
-                    $
-                    {
-                      log.invoice
-                        ?.amount
-                    }
-                  </div>
-
-                  <div className="hidden md:block text-sm text-zinc-500">
-                    {new Date(
-                      log.createdAt
-                    ).toLocaleString()}
-                  </div>
-
-                  <div>
-                    <StatusBadge
-                      status={
-                        log.status
-                      }
-                    />
-                  </div>
-
-                  <button className="text-zinc-400 hover:text-black transition">
-                    <ArrowRight size={18} />
-                  </button>
-
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
+        <BrainCircuit className="w-5 h-5 text-yellow-300" />
       </div>
+
+      <div>
+
+        <h3 className="text-lg font-semibold">
+          AI Recovery Insights
+        </h3>
+
+        <p className="text-sm text-gray-400">
+          Smart collection recommendations
+        </p>
+
+      </div>
+
+    </div>
+
+    <div className="mt-5 space-y-4">
+
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+        <p className="text-sm text-gray-200 leading-7">
+          Clients respond best to reminders between 9 AM and 11 AM.
+        </p>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+        <p className="text-sm text-gray-200 leading-7">
+          WhatsApp reminders currently outperform email recovery by 21%.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  {/* ACTIVITY */}
+
+  <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
+
+    <div className="p-6 border-b border-gray-100">
+
+      <h2 className="text-xl font-semibold">
+        Recent Activity
+      </h2>
+
+      <p className="text-sm text-gray-500 mt-1">
+        Latest recovery events
+      </p>
+
+    </div>
+
+    <div className="divide-y">
+
+      {logs.length === 0 && (
+
+        <div className="p-10 text-center text-gray-500">
+          No reminder activity yet
+        </div>
+
+      )}
+
+      {logs.map((log: any) => {
+
+        const Icon =
+          log.channel === "whatsapp"
+            ? MessageCircle
+            : log.channel === "sms"
+            ? Smartphone
+            : Mail;
+
+        return (
+
+          <div
+            key={log.id}
+            className="p-5 flex items-center justify-between hover:bg-gray-50 transition"
+          >
+
+            <div className="flex items-center gap-4">
+
+              <div className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <Icon size={18} />
+              </div>
+
+              <div>
+
+                <h3 className="font-medium">
+                  {log.invoice?.clientName ||
+                    "Unknown Client"}
+                </h3>
+
+                <p className="text-sm text-gray-500 mt-1">
+                  {log.channel} • {log.subject}
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="hidden lg:block text-sm text-gray-500">
+              {new Date(
+                log.createdAt
+              ).toLocaleString()}
+            </div>
+
+            <StatusBadge
+              status={log.status}
+            />
+
+          </div>
+        );
+      })}
+
+    </div>
+
+  </div>
+
+</div>
 
       {/* ===================================
           CREATE MODAL

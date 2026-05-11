@@ -1,3 +1,5 @@
+// app/products/invoice-recovery/settings/templates/page.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,14 +8,16 @@ import axios from "axios";
 
 import Layout from "@/components/Layout";
 
+import toast from "react-hot-toast";
+
 import {
   Plus,
   Trash2,
   Save,
   Eye,
-  FileText,
-  Sparkles,
   Mail,
+  Sparkles,
+  FileText,
 } from "lucide-react";
 
 type Template = {
@@ -37,11 +41,19 @@ type Template = {
 };
 
 export default function TemplatePage() {
+
+  /* =========================================
+     STATE
+  ========================================= */
+
   const [templates, setTemplates] =
     useState<Template[]>([]);
 
   const [selected, setSelected] =
     useState<Template | null>(null);
+
+  const [loading, setLoading] =
+    useState(false);
 
   const [form, setForm] =
     useState({
@@ -55,211 +67,250 @@ export default function TemplatePage() {
         "friendly" as Template["type"],
     });
 
-  const [loading, setLoading] =
-    useState(false);
-
-  /* =========================
+  /* =========================================
      LOAD
-  ========================= */
+  ========================================= */
 
-  const load = async () => {
-    try {
-      const res =
-        await axios.get(
-          "/api/reminder-templates"
+  const load =
+    async () => {
+      try {
+
+        const res =
+          await axios.get(
+            "/api/reminder-templates"
+          );
+
+        setTemplates(
+          res.data.templates || []
         );
 
-      setTemplates(
-        res.data.templates ||
-          res.data ||
-          []
-      );
+      } catch (err) {
 
-    } catch (err) {
-      console.error(err);
-    }
-  };
+        console.error(err);
+
+        toast.error(
+          "Failed to load templates"
+        );
+      }
+    };
 
   useEffect(() => {
     load();
   }, []);
 
-  /* =========================
+  /* =========================================
      SELECT
-  ========================= */
+  ========================================= */
 
-  const selectTemplate = (
-    t: Template
-  ) => {
-    setSelected(t);
+  const selectTemplate =
+    (template: Template) => {
 
-    setForm({
-      name: t.name,
+      setSelected(template);
 
-      subject: t.subject,
+      setForm({
+        name: template.name,
 
-      html: t.html,
+        subject:
+          template.subject,
 
-      type: t.type,
-    });
-  };
+        html: template.html,
 
-  /* =========================
+        type: template.type,
+      });
+    };
+
+  /* =========================================
      RESET
-  ========================= */
+  ========================================= */
 
-  const resetForm = () => {
-    setSelected(null);
+  const resetForm =
+    () => {
 
-    setForm({
-      name: "",
+      setSelected(null);
 
-      subject: "",
+      setForm({
+        name: "",
 
-      html: "",
+        subject: "",
 
-      type: "friendly",
-    });
-  };
+        html: "",
 
-  /* =========================
+        type: "friendly",
+      });
+    };
+
+  /* =========================================
      SAVE
-  ========================= */
+  ========================================= */
 
-  const save = async () => {
-    try {
-      if (
-        !form.name ||
-        !form.subject ||
-        !form.html
-      ) {
-        return alert(
-          "All fields are required"
+  const save =
+    async () => {
+      try {
+
+        if (
+          !form.name ||
+          !form.subject ||
+          !form.html
+        ) {
+          toast.error(
+            "All fields are required"
+          );
+
+          return;
+        }
+
+        setLoading(true);
+
+        await axios.post(
+          "/api/reminder-templates",
+          {
+            id: selected?.id,
+
+            ...form,
+          }
+        );
+
+        toast.success(
+          selected
+            ? "Template updated"
+            : "Template created"
+        );
+
+        resetForm();
+
+        load();
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast.error(
+          "Failed to save template"
+        );
+
+      } finally {
+
+        setLoading(false);
+      }
+    };
+
+  /* =========================================
+     DELETE
+  ========================================= */
+
+  const remove =
+    async (
+      id: string,
+      isDefault: boolean
+    ) => {
+
+      if (isDefault) {
+
+        toast.error(
+          "Default templates cannot be deleted"
+        );
+
+        return;
+      }
+
+      const ok =
+        confirm(
+          "Delete this template?"
+        );
+
+      if (!ok) return;
+
+      try {
+
+        await axios.delete(
+          `/api/reminder-templates?id=${id}`
+        );
+
+        toast.success(
+          "Template deleted"
+        );
+
+        if (
+          selected?.id === id
+        ) {
+          resetForm();
+        }
+
+        load();
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast.error(
+          "Delete failed"
         );
       }
-
-      setLoading(true);
-
-      await axios.post(
-        "/api/reminder-templates",
-        {
-          id: selected?.id,
-
-          ...form,
-        }
-      );
-
-      alert(
-        selected
-          ? "Template updated"
-          : "Template created"
-      );
-
-      resetForm();
-
-      load();
-
-    } catch (err) {
-      console.error(err);
-
-      alert(
-        "Failed to save template"
-      );
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* =========================
-     DELETE
-  ========================= */
-
-  const remove = async (
-    id: string,
-    isDefault: boolean
-  ) => {
-    if (isDefault) {
-      return alert(
-        "Default templates cannot be deleted"
-      );
-    }
-
-    if (
-      !confirm(
-        "Delete template?"
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await axios.delete(
-        `/api/reminder-templates?id=${id}`
-      );
-
-      if (
-        selected?.id === id
-      ) {
-        resetForm();
-      }
-
-      load();
-
-    } catch (err) {
-      console.error(err);
-
-      alert(
-        "Delete failed"
-      );
-    }
-  };
+    };
 
   return (
     <Layout>
+
       <div className="space-y-8">
 
-        {/* HEADER */}
+        {/* =========================================
+           HEADER
+        ========================================= */}
 
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
           <div>
 
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
+
               <Sparkles
                 size={18}
                 className="text-orange-500"
               />
 
               <span className="text-sm font-medium text-orange-600">
-                Email Automation
+                Recovery Templates
               </span>
+
             </div>
 
-            <h1 className="text-4xl font-bold text-gray-900">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
               Reminder Templates
             </h1>
 
-            <p className="text-gray-500 mt-2 max-w-2xl">
-              Create professional invoice reminder emails with live preview,
-              reusable variables and automated workflows.
+            <p className="text-gray-500 mt-2 text-base max-w-2xl">
+              Create reusable recovery templates
+              for email reminders and automated
+              collection workflows.
             </p>
 
           </div>
 
           <button
             onClick={resetForm}
-            className="flex items-center justify-center gap-2 bg-black hover:opacity-90 text-white px-5 py-3 rounded-2xl font-medium transition"
+            className="
+              h-12 px-5 rounded-2xl
+              bg-black text-white
+              flex items-center gap-2
+              font-semibold
+              hover:bg-gray-900
+              transition
+            "
           >
+
             <Plus size={18} />
+
             New Template
+
           </button>
 
         </div>
 
-        {/* STATS */}
+        {/* =========================================
+           STATS
+        ========================================= */}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
           <StatCard
             label="Total Templates"
@@ -267,7 +318,7 @@ export default function TemplatePage() {
           />
 
           <StatCard
-            label="Default Templates"
+            label="Default"
             value={
               templates.filter(
                 (t) =>
@@ -277,7 +328,7 @@ export default function TemplatePage() {
           />
 
           <StatCard
-            label="Custom Templates"
+            label="Custom"
             value={
               templates.filter(
                 (t) =>
@@ -288,19 +339,28 @@ export default function TemplatePage() {
 
         </div>
 
-        {/* MAIN */}
+        {/* =========================================
+           MAIN
+        ========================================= */}
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
 
-          {/* SIDEBAR */}
+          {/* =========================================
+             SIDEBAR
+          ========================================= */}
 
-          <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm h-fit">
+          <div className="
+            bg-white
+            border border-gray-200
+            rounded-3xl
+            p-5
+            shadow-sm
+            h-fit
+          ">
 
             <div className="flex items-center gap-2 mb-5">
 
-              <Mail
-                size={18}
-              />
+              <Mail size={18} />
 
               <h2 className="font-semibold text-lg">
                 Templates
@@ -311,20 +371,25 @@ export default function TemplatePage() {
             <div className="space-y-3">
 
               {templates.map(
-                (t) => (
+                (template) => (
+
                   <div
-                    key={t.id}
+                    key={template.id}
                     onClick={() =>
                       selectTemplate(
-                        t
+                        template
                       )
                     }
-                    className={`p-4 rounded-2xl border cursor-pointer transition ${
-                      selected?.id ===
-                      t.id
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    }`}
+                    className={`
+                      p-4 rounded-2xl border
+                      cursor-pointer transition
+                      ${
+                        selected?.id ===
+                        template.id
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      }
+                    `}
                   >
 
                     <div className="flex items-start justify-between gap-3">
@@ -334,87 +399,116 @@ export default function TemplatePage() {
                         <div className="flex items-center gap-2">
 
                           <h3 className="font-semibold truncate">
-                            {t.name}
+                            {template.name}
                           </h3>
 
-                          {t.isDefault && (
-                            <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          {template.isDefault && (
+
+                            <span className="
+                              text-[10px]
+                              bg-blue-100
+                              text-blue-700
+                              px-2 py-1
+                              rounded-full
+                            ">
                               Default
                             </span>
+
                           )}
 
                         </div>
 
                         <p className="text-xs text-gray-500 mt-1 capitalize">
-                          {t.type}
+                          {template.type}
                         </p>
 
                       </div>
 
-                      {!t.isDefault && (
+                      {!template.isDefault && (
+
                         <button
-                          onClick={(
-                            e
-                          ) => {
+                          onClick={(e) => {
                             e.stopPropagation();
 
                             remove(
-                              t.id,
-                              t.isDefault
+                              template.id,
+                              template.isDefault
                             );
                           }}
                           className="text-red-500 hover:text-red-600"
                         >
-                          <Trash2
-                            size={
-                              15
-                            }
-                          />
+
+                          <Trash2 size={15} />
+
                         </button>
+
                       )}
 
                     </div>
+
                   </div>
                 )
               )}
 
             </div>
+
           </div>
 
-          {/* EDITOR */}
+          {/* =========================================
+             EDITOR
+          ========================================= */}
 
-          <div className="xl:col-span-3 bg-white border border-gray-200 rounded-3xl shadow-sm overflow-hidden">
+          <div className="
+            xl:col-span-3
+            bg-white
+            border border-gray-200
+            rounded-3xl
+            shadow-sm
+            overflow-hidden
+          ">
 
             {/* TOP BAR */}
 
-            <div className="border-b border-gray-200 px-6 py-5 flex items-center justify-between">
+            <div className="
+              border-b border-gray-200
+              px-6 py-5
+              flex items-center justify-between
+            ">
 
               <div>
+
                 <h2 className="text-xl font-semibold">
+
                   {selected
                     ? "Edit Template"
                     : "Create Template"}
+
                 </h2>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  Design invoice reminder emails
+                  Build invoice reminder templates
                 </p>
+
               </div>
 
               <button
                 onClick={save}
-                disabled={
-                  loading
-                }
-                className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-3 rounded-2xl font-medium transition"
+                disabled={loading}
+                className="
+                  h-12 px-5 rounded-2xl
+                  bg-orange-500 hover:bg-orange-600
+                  text-white font-semibold
+                  flex items-center gap-2
+                  transition
+                "
               >
-                <Save
-                  size={16}
-                />
+
+                <Save size={16} />
 
                 {loading
                   ? "Saving..."
                   : "Save Template"}
+
               </button>
 
             </div>
@@ -427,51 +521,70 @@ export default function TemplatePage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
+                {/* NAME */}
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+
+                  <label className="
+                    block text-sm font-semibold
+                    text-gray-700 mb-2
+                  ">
                     Template Name
                   </label>
 
                   <input
                     value={form.name}
-                    onChange={(
-                      e
-                    ) =>
+                    onChange={(e) =>
                       setForm({
                         ...form,
-
                         name:
-                          e.target
-                            .value,
+                          e.target.value,
                       })
                     }
                     placeholder="Friendly Reminder"
-                    className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                    className="
+                      w-full border border-gray-300
+                      rounded-2xl px-4 py-3
+                      outline-none
+                      focus:border-orange-500
+                      focus:ring-4
+                      focus:ring-orange-100
+                    "
                   />
+
                 </div>
 
+                {/* TYPE */}
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+
+                  <label className="
+                    block text-sm font-semibold
+                    text-gray-700 mb-2
+                  ">
                     Reminder Type
                   </label>
 
                   <select
-                    value={
-                      form.type
-                    }
-                    onChange={(
-                      e
-                    ) =>
+                    value={form.type}
+                    onChange={(e) =>
                       setForm({
                         ...form,
-
                         type:
                           e.target
                             .value as Template["type"],
                       })
                     }
-                    className="w-full border border-gray-300 rounded-2xl px-4 py-3 bg-white outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                    className="
+                      w-full border border-gray-300
+                      rounded-2xl px-4 py-3
+                      bg-white outline-none
+                      focus:border-orange-500
+                      focus:ring-4
+                      focus:ring-orange-100
+                    "
                   >
+
                     <option value="friendly">
                       Friendly
                     </option>
@@ -489,6 +602,7 @@ export default function TemplatePage() {
                     </option>
 
                   </select>
+
                 </div>
 
               </div>
@@ -496,33 +610,42 @@ export default function TemplatePage() {
               {/* SUBJECT */}
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Subject Line
+
+                <label className="
+                  block text-sm font-semibold
+                  text-gray-700 mb-2
+                ">
+                  Subject
                 </label>
 
                 <input
-                  value={
-                    form.subject
-                  }
-                  onChange={(
-                    e
-                  ) =>
+                  value={form.subject}
+                  onChange={(e) =>
                     setForm({
                       ...form,
-
                       subject:
-                        e.target
-                          .value,
+                        e.target.value,
                     })
                   }
                   placeholder="Invoice Reminder"
-                  className="w-full border border-gray-300 rounded-2xl px-4 py-3 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
+                  className="
+                    w-full border border-gray-300
+                    rounded-2xl px-4 py-3
+                    outline-none
+                    focus:border-orange-500
+                    focus:ring-4
+                    focus:ring-orange-100
+                  "
                 />
+
               </div>
 
               {/* VARIABLES */}
 
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5">
+              <div className="
+                bg-gray-50 border border-gray-200
+                rounded-2xl p-5
+              ">
 
                 <p className="font-semibold text-sm mb-3">
                   Available Variables
@@ -536,20 +659,20 @@ export default function TemplatePage() {
                     "{{link}}",
                     "{{dueDate}}",
                     "{{email}}",
-                  ].map(
-                    (
-                      item
-                    ) => (
-                      <code
-                        key={
-                          item
-                        }
-                        className="bg-white border px-3 py-2 rounded-xl text-xs"
-                      >
-                        {item}
-                      </code>
-                    )
-                  )}
+                  ].map((item) => (
+
+                    <code
+                      key={item}
+                      className="
+                        bg-white border
+                        px-3 py-2
+                        rounded-xl text-xs
+                      "
+                    >
+                      {item}
+                    </code>
+
+                  ))}
 
                 </div>
 
@@ -559,28 +682,33 @@ export default function TemplatePage() {
 
               <div>
 
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="
+                  block text-sm font-semibold
+                  text-gray-700 mb-2
+                ">
                   Email HTML
                 </label>
 
                 <textarea
-                  value={
-                    form.html
-                  }
-                  onChange={(
-                    e
-                  ) =>
+                  rows={14}
+                  value={form.html}
+                  onChange={(e) =>
                     setForm({
                       ...form,
-
                       html:
-                        e.target
-                          .value,
+                        e.target.value,
                     })
                   }
-                  rows={14}
-                  className="w-full border border-gray-300 rounded-2xl px-4 py-4 font-mono text-sm outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
-                  placeholder="Paste your email HTML..."
+                  placeholder="Paste email HTML..."
+                  className="
+                    w-full border border-gray-300
+                    rounded-2xl px-4 py-4
+                    font-mono text-sm
+                    outline-none
+                    focus:border-orange-500
+                    focus:ring-4
+                    focus:ring-orange-100
+                  "
                 />
 
               </div>
@@ -591,9 +719,7 @@ export default function TemplatePage() {
 
                 <div className="flex items-center gap-2 mb-4">
 
-                  <Eye
-                    size={18}
-                  />
+                  <Eye size={18} />
 
                   <h3 className="font-semibold text-lg">
                     Live Preview
@@ -601,42 +727,42 @@ export default function TemplatePage() {
 
                 </div>
 
-                <div className="border border-gray-200 rounded-3xl overflow-hidden bg-gray-100">
+                <div className="
+                  border border-gray-200
+                  rounded-3xl overflow-hidden
+                  bg-gray-100
+                ">
 
-                  <div className="bg-white min-h-[300px] p-8">
+                  <div className="
+                    bg-white min-h-[320px]
+                    p-8
+                  ">
 
                     {form.html ? (
-                      <>
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html:
-                              form.html,
-                          }}
-                        />
 
-                    {form.html && (
-                      <img 
-                        src="https://koniqtech.com/api/track/open/LOG_ID" 
-                        width="1"
-                        height="1"
-                        alt=""
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            form.html,
+                        }}
                       />
-                    )}
-                      </>
-                    ) : (
-                      <div className="h-[300px] flex flex-col items-center justify-center text-gray-400">
 
-                        <FileText
-                          size={
-                            40
-                          }
-                        />
+                    ) : (
+
+                      <div className="
+                        h-[320px]
+                        flex flex-col items-center justify-center
+                        text-gray-400
+                      ">
+
+                        <FileText size={40} />
 
                         <p className="mt-3 text-sm">
                           Preview will appear here
                         </p>
 
                       </div>
+
                     )}
 
                   </div>
@@ -646,28 +772,33 @@ export default function TemplatePage() {
               </div>
 
             </div>
+
           </div>
 
         </div>
+
       </div>
+
     </Layout>
   );
 }
 
-/* =========================
+/* =========================================
    STAT CARD
-========================= */
+========================================= */
 
 function StatCard({
   label,
   value,
 }: {
   label: string;
-
   value: number;
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-3xl p-5 shadow-sm">
+    <div className="
+      bg-white border border-gray-200
+      rounded-3xl p-5 shadow-sm
+    ">
 
       <p className="text-sm text-gray-500">
         {label}

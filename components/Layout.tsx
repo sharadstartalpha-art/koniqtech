@@ -157,7 +157,7 @@ export default function Layout({
           <Logo />
 
           <Link
-            href="/products/invoice-recovery/create"
+            href="/products/invoice-recovery/invoices/create"
             className="w-10 h-10 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition"
           >
 
@@ -315,7 +315,7 @@ export default function Layout({
               </p>
 
               <Link
-                href="/products/invoice-recovery/create"
+                href="/products/invoice-recovery/invoices/create"
                 className="mt-5 inline-flex items-center gap-2 bg-white text-orange-600 px-4 py-2 rounded-xl font-medium hover:bg-orange-50 transition"
               >
 

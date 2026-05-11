@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+
 import { usePathname } from "next/navigation";
 
 import Header from "./Header";
+
 import Logo from "@/components/Logo";
 
 import {
@@ -24,6 +26,10 @@ import {
   Bot,
   BarChart3,
   Megaphone,
+  Rocket,
+  Workflow,
+  Send,
+  Crown,
 } from "lucide-react";
 
 type LayoutProps = {
@@ -33,134 +39,322 @@ type LayoutProps = {
 export default function Layout({
   children,
 }: LayoutProps) {
-  const pathname = usePathname();
+
+  const pathname =
+    usePathname();
+
+  /* =========================================
+     NAVIGATION
+  ========================================= */
 
   const nav = [
-  {
-    section: "Core",
-    items: [
-      {
-        name: "Dashboard",
-        href: "/products/invoice-recovery/dashboard",
-        icon: LayoutDashboard,
-      },
 
-      {
-        name: "Invoices",
-        href: "/products/invoice-recovery/invoices",
-        icon: FileText,
-      },
+    /* =========================================
+       CORE
+    ========================================= */
 
-      {
-        name: "Automation",
-        href: "/products/invoice-recovery/automation",
-        icon: Sparkles,
-        badge: "NEW",
-      },
+    {
+      section: "Core",
 
-      {
-        name: "Reminders",
-        href: "/products/invoice-recovery/reminders",
-        icon: Mail,
-      },
+      items: [
 
-      {
-        name: "Reminder Center",
-        href: "/products/invoice-recovery/reminder-center",
-        icon: Bell,
-        progress: true,
-      },
+        {
+          name: "Dashboard",
 
-      {
-        name: "Payment Links",
-        href: "/products/invoice-recovery/links",
-        icon: LinkIcon,
-      },
-    ],
-  },
+          href:
+            "/products/invoice-recovery/dashboard",
 
-  {
-    section: "Recovery Channels",
-    items: [
-      {
-        name: "WhatsApp",
-        href: "/products/invoice-recovery/whatsapp",
-        icon: MessageCircle,
-        progress: true,
-      },
+          icon:
+            LayoutDashboard,
+        },
 
-      {
-        name: "SMS",
-        href: "/products/invoice-recovery/sms",
-        icon: Smartphone,
-        progress: true,
-      },
+        {
+          name: "Invoices",
 
-      {
-        name: "AI Recovery",
-        href: "/products/invoice-recovery/ai-assistant",
-        icon: Bot,
-        badge: "AI",
-      },
-    ],
-  },
+          href:
+            "/products/invoice-recovery/invoices",
 
-  {
-    section: "Analytics",
-    items: [
-      {
-        name: "Recovery Analytics",
-        href: "/products/invoice-recovery/recovery-analytics",
-        icon: BarChart3,
-      },
+          icon:
+            FileText,
+        },
 
-      {
-        name: "Campaigns",
-        href: "/products/invoice-recovery/campaigns",
-        icon: Megaphone,
-        progress: true,
-      },
-    ],
-  },
+        {
+          name: "Automation",
 
-  {
-    section: "Workspace",
-    items: [
-      {
-        name: "Templates",
-        href: "/products/invoice-recovery/settings/templates",
-        icon: LayoutTemplate,
-      },
+          href:
+            "/products/invoice-recovery/automation",
 
-      {
-        name: "Account",
-        href: "/products/invoice-recovery/account",
-        icon: User,
-      },
+          icon:
+            Sparkles,
 
-      {
-        name: "Settings",
-        href: "/products/invoice-recovery/settings",
-        icon: Settings,
-      },
-    ],
-  },
-];
+          badge:
+            "NEW",
+        },
+
+        {
+          name: "Reminders",
+
+          href:
+            "/products/invoice-recovery/reminders",
+
+          icon:
+            Mail,
+        },
+
+        {
+          name:
+            "Reminder Center",
+
+          href:
+            "/products/invoice-recovery/reminder-center",
+
+          icon:
+            Bell,
+        },
+
+        {
+          name:
+            "Payment Links",
+
+          href:
+            "/products/invoice-recovery/links",
+
+          icon:
+            LinkIcon,
+        },
+      ],
+    },
+
+    /* =========================================
+       RECOVERY CHANNELS
+    ========================================= */
+
+    {
+      section:
+        "Recovery Channels",
+
+      items: [
+
+        {
+          name:
+            "WhatsApp",
+
+          href:
+            "/products/invoice-recovery/whatsapp",
+
+          icon:
+            MessageCircle,
+
+          badge:
+            "LIVE",
+        },
+
+        {
+          name:
+            "SMS",
+
+          href:
+            "/products/invoice-recovery/sms",
+
+          icon:
+            Smartphone,
+        },
+
+        {
+          name:
+            "AI Recovery",
+
+          href:
+            "/products/invoice-recovery/ai-assistant",
+
+          icon:
+            Bot,
+
+          badge:
+            "AI",
+        },
+      ],
+    },
+
+    /* =========================================
+       ANALYTICS
+    ========================================= */
+
+    {
+      section:
+        "Analytics",
+
+      items: [
+
+        {
+          name:
+            "Recovery Analytics",
+
+          href:
+            "/products/invoice-recovery/recovery-analytics",
+
+          icon:
+            BarChart3,
+        },
+
+        {
+          name:
+            "Campaigns",
+
+          href:
+            "/products/invoice-recovery/campaigns",
+
+          icon:
+            Megaphone,
+        },
+      ],
+    },
+
+    /* =========================================
+       ONBOARDING
+    ========================================= */
+
+    {
+      section:
+        "Onboarding",
+
+      items: [
+
+        {
+          name:
+            "Quick Setup",
+
+          href:
+            "/products/invoice-recovery/onboarding",
+
+          icon:
+            Rocket,
+
+          badge:
+            "START",
+        },
+
+        {
+          name:
+            "Connect Email",
+
+          href:
+            "/products/invoice-recovery/onboarding/connect-email",
+
+          icon:
+            Mail,
+        },
+
+        {
+          name:
+            "Create Invoice",
+
+          href:
+            "/products/invoice-recovery/onboarding/create-invoice",
+
+          icon:
+            FileText,
+        },
+
+        {
+          name:
+            "Setup Workflow",
+
+          href:
+            "/products/invoice-recovery/onboarding/setup-workflow",
+
+          icon:
+            Workflow,
+        },
+
+        {
+          name:
+            "Send Reminder",
+
+          href:
+            "/products/invoice-recovery/onboarding/send-reminder",
+
+          icon:
+            Send,
+        },
+
+        {
+          name:
+            "Upgrade",
+
+          href:
+            "/products/invoice-recovery/onboarding/upgrade",
+
+          icon:
+            Crown,
+        },
+      ],
+    },
+
+    /* =========================================
+       WORKSPACE
+    ========================================= */
+
+    {
+      section:
+        "Workspace",
+
+      items: [
+
+        {
+          name:
+            "Templates",
+
+          href:
+            "/products/invoice-recovery/settings/templates",
+
+          icon:
+            LayoutTemplate,
+        },
+
+        {
+          name:
+            "Account",
+
+          href:
+            "/products/invoice-recovery/account",
+
+          icon:
+            User,
+        },
+
+        {
+          name:
+            "Settings",
+
+          href:
+            "/products/invoice-recovery/settings",
+
+          icon:
+            Settings,
+        },
+      ],
+    },
+  ];
 
   return (
     <div className="flex min-h-screen bg-[#f7f8fc] text-sm text-gray-900">
 
-      {/* SIDEBAR */}
+      {/* =========================================
+          SIDEBAR
+      ========================================= */}
 
-      <aside className="hidden lg:flex w-[270px] bg-white border-r border-gray-200 flex-col">
+      <aside className="hidden lg:flex w-[285px] bg-white border-r border-gray-200 flex-col">
 
-        {/* LOGO */}
+        {/* =========================================
+            LOGO
+        ========================================= */}
 
         <div className="h-16 px-6 border-b border-gray-100 flex items-center justify-between">
 
           <Logo />
 
-          <div className="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
 
             <Sparkles size={18} />
 
@@ -168,99 +362,126 @@ export default function Layout({
 
         </div>
 
-        {/* NAVIGATION */}
+        {/* =========================================
+            NAVIGATION
+        ========================================= */}
 
         <div className="flex-1 overflow-y-auto px-4 py-5">
 
-          <div className="mb-4 px-3">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
-              Workspace
-            </p>
-          </div>
+          <div className="space-y-8">
 
-          <div className="space-y-7">
+            {nav.map((group) => (
 
-  {nav.map((group) => (
+              <div key={group.section}>
 
-    <div key={group.section}>
+                {/* SECTION */}
 
-      <div className="mb-3 px-3">
-        <p className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
-          {group.section}
-        </p>
-      </div>
+                <div className="mb-3 px-3">
 
-      <nav className="space-y-1.5">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">
 
-        {group.items.map((item) => {
-          const active =
-            pathname === item.href;
+                    {group.section}
 
-          const Icon = item.icon;
+                  </p>
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`group flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 ${
-                active
-                  ? "bg-black text-white shadow-lg shadow-black/10"
-                  : "text-gray-600 hover:bg-gray-100 hover:text-black"
-              }`}
-            >
-
-              <div className="flex items-center gap-3">
-
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                    active
-                      ? "bg-white/10"
-                      : "bg-gray-100 group-hover:bg-white"
-                  }`}
-                >
-                  <Icon size={18} />
                 </div>
 
-                <div className="flex flex-col">
+                {/* LINKS */}
 
-                  <span className="font-medium flex items-center gap-2">
+                <nav className="space-y-1.5">
 
-                    {item.name}
+                  {group.items.map(
+                    (item) => {
 
-                    {item.badge && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500 text-white">
-                        {item.badge}
-                      </span>
-                    )}
+                      const active =
+                        pathname ===
+                        item.href;
 
-                  </span>
+                      const Icon =
+                        item.icon;
 
-                  {item.progress && (
-                    <span className="text-[10px] text-gray-400">
-                     
-                    </span>
+                      return (
+                        <Link
+                          key={
+                            item.href
+                          }
+                          href={
+                            item.href
+                          }
+                          className={`group flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 ${
+                            active
+                              ? "bg-black text-white shadow-lg shadow-black/10"
+                              : "text-gray-600 hover:bg-gray-100 hover:text-black"
+                          }`}
+                        >
+
+                          <div className="flex items-center gap-3">
+
+                            {/* ICON */}
+
+                            <div
+                              className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
+                                active
+                                  ? "bg-white/10"
+                                  : "bg-gray-100 group-hover:bg-white"
+                              }`}
+                            >
+
+                              <Icon
+                                size={18}
+                              />
+
+                            </div>
+
+                            {/* TEXT */}
+
+                            <div className="flex flex-col">
+
+                              <span className="font-medium flex items-center gap-2">
+
+                                {item.name}
+
+                                {item.badge && (
+
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-orange-500 text-white">
+
+                                    {
+                                      item.badge
+                                    }
+
+                                  </span>
+                                )}
+
+                              </span>
+
+                            </div>
+
+                          </div>
+
+                          {/* ACTIVE */}
+
+                          {active && (
+
+                            <ChevronRight
+                              size={16}
+                            />
+                          )}
+
+                        </Link>
+                      );
+                    }
                   )}
 
-                </div>
+                </nav>
 
               </div>
+            ))}
 
-              {active && (
-                <ChevronRight size={16} />
-              )}
+          </div>
 
-            </Link>
-          );
-        })}
-
-      </nav>
-
-    </div>
-
-  ))}
-
-</div>
-          {/* PRO CARD */}
+          {/* =========================================
+              PRO CARD
+          ========================================= */}
 
           <div className="mt-8 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 p-5 text-white overflow-hidden relative">
 
@@ -270,22 +491,26 @@ export default function Layout({
 
               <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mb-4">
 
-                <CreditCard size={22} />
+                <CreditCard
+                  size={22}
+                />
 
               </div>
 
               <h3 className="font-semibold text-lg">
+
                 Upgrade to Pro
+
               </h3>
 
               <p className="text-sm text-orange-100 leading-6 mt-2">
-                Unlock unlimited reminders,
-                smart automation, and
-                advanced recovery analytics.
+
+                Unlock AI recovery, unlimited reminders, WhatsApp automation and advanced analytics.
+
               </p>
 
               <Link
-                href="/products/invoice-recovery/account"
+                href="/products/invoice-recovery/onboarding/upgrade"
                 className="mt-5 inline-flex items-center gap-2 bg-white text-orange-600 px-4 py-2 rounded-xl font-medium hover:bg-orange-50 transition"
               >
 
@@ -303,7 +528,9 @@ export default function Layout({
 
         </div>
 
-        {/* FOOTER */}
+        {/* =========================================
+            FOOTER
+        ========================================= */}
 
         <div className="p-5 border-t border-gray-100">
 
@@ -320,7 +547,9 @@ export default function Layout({
             <div>
 
               <p className="font-semibold text-gray-900">
+
                 System Status
+
               </p>
 
               <div className="flex items-center gap-2 mt-1">
@@ -328,7 +557,9 @@ export default function Layout({
                 <div className="w-2 h-2 rounded-full bg-green-500" />
 
                 <span className="text-xs text-gray-500">
-                  All services operational
+
+                  All systems operational
+
                 </span>
 
               </div>
@@ -341,7 +572,9 @@ export default function Layout({
 
       </aside>
 
-      {/* RIGHT SIDE */}
+      {/* =========================================
+          RIGHT SIDE
+      ========================================= */}
 
       <div className="flex-1 flex flex-col min-w-0">
 
@@ -349,7 +582,7 @@ export default function Layout({
 
         <Header />
 
-        {/* PAGE CONTENT */}
+        {/* PAGE */}
 
         <main className="flex-1 overflow-y-auto">
 

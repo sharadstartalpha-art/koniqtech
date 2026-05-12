@@ -1,12 +1,14 @@
-// lib/cron.ts
-
+import {
+  ReminderType,
+  ReminderMode,
+} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import { sendEmail } from "@/lib/email";
 
-// future
-// import { sendSMS } from "@/lib/sms";
-// import { sendWhatsApp } from "@/lib/whatsapp";
+import { sendSMS } from "@/lib/sms";
+
+import { sendWhatsApp } from "@/lib/whatsapp";
 
 export async function GET() {
   try {
@@ -16,7 +18,7 @@ export async function GET() {
     );
 
     /* =========================================
-       GET PENDING SCHEDULES
+       GET PENDING
     ========================================= */
 
     const schedules =
@@ -28,6 +30,12 @@ export async function GET() {
             sendAt: {
               lte: new Date(),
             },
+          },
+
+          include: {
+            invoice: true,
+
+            template: true,
           },
 
           orderBy: {
@@ -48,21 +56,13 @@ export async function GET() {
 
       try {
 
-        /* =========================================
-           GET INVOICE
-        ========================================= */
-
         const invoice =
-          await prisma.invoice.findUnique(
-            {
-              where: {
-                id: schedule.invoiceId,
-              },
-            }
-          );
+          schedule.invoice;
+
+        const template =
+          schedule.template;
 
         if (!invoice) {
-
           console.log(
             "❌ Invoice missing"
           );
@@ -70,12 +70,7 @@ export async function GET() {
           continue;
         }
 
-        /* =========================================
-           TEMPLATE
-        ========================================= */
-
-        if (!schedule.templateId) {
-
+        if (!template) {
           console.log(
             "❌ Template missing"
           );
@@ -83,29 +78,11 @@ export async function GET() {
           continue;
         }
 
-        const template =
-          await prisma.reminderTemplate.findUnique(
-            {
-              where: {
-                id: schedule.templateId,
-              },
-            }
-          );
-
-        if (!template) {
-
-          console.log(
-            "❌ Template not found"
-          );
-
-          continue;
-        }
-
         /* =========================================
-           PREVENT DUPLICATES
+           DUPLICATE CHECK
         ========================================= */
 
-        const alreadySent =
+        const existing =
           await prisma.reminder.findFirst(
             {
               where: {
@@ -115,7 +92,7 @@ export async function GET() {
             }
           );
 
-        if (alreadySent) {
+        if (existing) {
 
           console.log(
             "⏭️ Already sent"
@@ -125,7 +102,7 @@ export async function GET() {
         }
 
         /* =========================================
-           CREATE LOG FIRST
+           CREATE LOG
         ========================================= */
 
         const log =
@@ -139,10 +116,10 @@ export async function GET() {
                   invoice.id,
 
                 channel:
-                  "email",
+                  schedule.channel,
 
                 status:
-                  "sent",
+                  "processing",
 
                 recipient:
                   invoice.clientEmail,
@@ -157,17 +134,17 @@ export async function GET() {
           );
 
         /* =========================================
-           TRACKING URLS
+           TRACKING
         ========================================= */
 
-        const trackingPixel =
+        const openUrl =
           `https://koniqtech.com/api/track/open/${log.id}`;
 
-        const clickLink =
+        const clickUrl =
           `https://koniqtech.com/api/track/click/${log.id}`;
 
         /* =========================================
-           HTML VARIABLES
+           VARIABLES
         ========================================= */
 
         const html =
@@ -202,12 +179,12 @@ export async function GET() {
 
             .replaceAll(
               "{{link}}",
-              clickLink
+              clickUrl
             )
 
             .replaceAll(
               "{{trackingPixel}}",
-              `<img src="${trackingPixel}" width="1" height="1" />`
+              `<img src="${openUrl}" width="1" height="1" />`
             );
 
         const text =
@@ -217,11 +194,14 @@ export async function GET() {
           );
 
         /* =========================================
-           SEND EMAIL
+           SEND CHANNEL
         ========================================= */
 
+        // EMAIL
+
         if (
-          schedule.mode === "auto"
+          schedule.channel ===
+          "email"
         ) {
 
           await sendEmail({
@@ -239,62 +219,110 @@ export async function GET() {
           );
         }
 
-        /* =========================================
-           FUTURE SMS
-        ========================================= */
+        // SMS
 
-        // if (schedule.channel === "sms") {
-        //   await sendSMS(...)
-        // }
+        if (
+          schedule.channel ===
+          "sms"
+        ) {
 
-        /* =========================================
-           FUTURE WHATSAPP
-        ========================================= */
+          if (
+            invoice.clientPhone
+          ) {
 
-        // if (schedule.channel === "whatsapp") {
-        //   await sendWhatsApp(...)
-        // }
+            await sendSMS({
+              to:
+                invoice.clientPhone,
+
+              body:
+                text,
+            });
+
+            console.log(
+              `📱 SMS sent → ${invoice.clientPhone}`
+            );
+          }
+        }
+
+        // WHATSAPP
+
+        if (
+          schedule.channel ===
+          "whatsapp"
+        ) {
+
+          if (
+            invoice.clientPhone
+          ) {
+
+            await sendWhatsApp({
+              to:
+                invoice.clientPhone,
+
+              body:
+                text,
+            });
+
+            console.log(
+              `💬 WhatsApp sent → ${invoice.clientPhone}`
+            );
+          }
+        }
 
         /* =========================================
            SAVE REMINDER
         ========================================= */
+await prisma.reminder.create({
+  data: {
+    userId:
+      schedule.userId,
 
-        await prisma.reminder.create(
+    invoiceId:
+      invoice.id,
+
+    email:
+      invoice.clientEmail,
+
+    amount:
+      schedule.amount,
+
+    type:
+      schedule.type as ReminderType,
+
+    mode:
+      schedule.mode as ReminderMode,
+
+    status:
+      "sent",
+
+    html,
+
+    text,
+
+    templateId:
+      template.id,
+
+    scheduleId:
+      schedule.id,
+
+    sentAt:
+      new Date(),
+  },
+});
+        /* =========================================
+           UPDATE LOG
+        ========================================= */
+
+        await prisma.reminderLog.update(
           {
+            where: {
+              id:
+                log.id,
+            },
+
             data: {
-              userId:
-                schedule.userId,
-
-              invoiceId:
-                invoice.id,
-
-              email:
-                invoice.clientEmail,
-
-              amount:
-                schedule.amount,
-
-              type:
-                schedule.type,
-
-              mode:
-                schedule.mode,
-
               status:
                 "sent",
-
-              html,
-
-              text,
-
-              templateId:
-                template.id,
-
-              scheduleId:
-                schedule.id,
-
-              sentAt:
-                new Date(),
             },
           }
         );
@@ -306,7 +334,8 @@ export async function GET() {
         await prisma.reminderSchedule.update(
           {
             where: {
-              id: schedule.id,
+              id:
+                schedule.id,
             },
 
             data: {
@@ -330,12 +359,17 @@ export async function GET() {
         await prisma.reminderSchedule.update(
           {
             where: {
-              id: schedule.id,
+              id:
+                schedule.id,
             },
 
             data: {
               status:
                 "failed",
+
+              retryCount: {
+                increment: 1,
+              },
             },
           }
         );

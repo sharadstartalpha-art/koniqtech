@@ -10,31 +10,36 @@ export async function POST(
   req: Request
 ) {
   try {
-    /* =========================
-       INPUT
-    ========================= */
+
+    /* =========================================
+       BODY
+    ========================================= */
+
+    const body =
+      await req.json();
 
     const {
       name,
       email,
       password,
       acceptedTerms,
-    } = await req.json();
+    } = body;
 
-    /* =========================
+    /* =========================================
        CLEAN INPUT
-    ========================= */
+    ========================================= */
 
     const cleanName =
       name?.trim();
 
-    const cleanEmail = email
-      ?.trim()
-      ?.toLowerCase();
+    const cleanEmail =
+      email
+        ?.trim()
+        ?.toLowerCase();
 
-    /* =========================
-       REQUIRED
-    ========================= */
+    /* =========================================
+       VALIDATION
+    ========================================= */
 
     if (
       !cleanName ||
@@ -52,10 +57,6 @@ export async function POST(
       );
     }
 
-    /* =========================
-       TERMS
-    ========================= */
-
     if (!acceptedTerms) {
       return NextResponse.json(
         {
@@ -68,15 +69,13 @@ export async function POST(
       );
     }
 
-    /* =========================
-       EMAIL VALIDATION
-    ========================= */
-
     const emailRegex =
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (
-      !emailRegex.test(cleanEmail)
+      !emailRegex.test(
+        cleanEmail
+      )
     ) {
       return NextResponse.json(
         {
@@ -88,10 +87,6 @@ export async function POST(
         }
       );
     }
-
-    /* =========================
-       PASSWORD VALIDATION
-    ========================= */
 
     const strongPassword =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -112,20 +107,19 @@ export async function POST(
       );
     }
 
-    /* =========================
-       CHECK EXISTING USER
-    ========================= */
+    /* =========================================
+       EXISTING USER
+    ========================================= */
 
     const existingUser =
-      await prisma.user.findUnique({
-        where: {
-          email: cleanEmail,
-        },
-      });
-
-    /* =========================
-       ALREADY REGISTERED
-    ========================= */
+      await prisma.user.findUnique(
+        {
+          where: {
+            email:
+              cleanEmail,
+          },
+        }
+      );
 
     if (
       existingUser?.isVerified
@@ -141,92 +135,109 @@ export async function POST(
       );
     }
 
-    /* =========================
+    /* =========================================
        HASH PASSWORD
-    ========================= */
+    ========================================= */
 
-    const hashed =
+    const hashedPassword =
       await bcrypt.hash(
         password,
         10
       );
 
-    /* =========================
-       GENERATE OTP
-    ========================= */
+    /* =========================================
+       OTP
+    ========================================= */
 
-    const otp = Math.floor(
-      100000 +
-        Math.random() * 900000
-    ).toString();
+    const otp =
+      Math.floor(
+        100000 +
+          Math.random() *
+            900000
+      ).toString();
 
-    const expiry = new Date(
-      Date.now() +
-        1000 * 60 * 5
-    );
+    const otpExpiry =
+      new Date(
+        Date.now() +
+          1000 *
+            60 *
+            5
+      );
 
-    /* =========================
+    /* =========================================
        CREATE / UPDATE USER
-    ========================= */
+    ========================================= */
 
     let user;
 
     if (existingUser) {
-      /* UPDATE UNVERIFIED USER */
 
       user =
-        await prisma.user.update({
-          where: {
-            email: cleanEmail,
-          },
+        await prisma.user.update(
+          {
+            where: {
+              email:
+                cleanEmail,
+            },
 
-          data: {
-            name: cleanName,
+            data: {
+              name:
+                cleanName,
 
-            password: hashed,
+              password:
+                hashedPassword,
 
-            otp,
+              otp,
 
-            otpExpiry: expiry,
+              otpExpiry,
 
-            acceptedTerms: true,
+              acceptedTerms:
+                true,
 
-            acceptedAt:
-              new Date(),
-          },
-        });
+              acceptedAt:
+                new Date(),
+            },
+          }
+        );
 
     } else {
-      /* CREATE NEW USER */
 
       user =
-        await prisma.user.create({
-          data: {
-            name: cleanName,
+        await prisma.user.create(
+          {
+            data: {
+              name:
+                cleanName,
 
-            email: cleanEmail,
+              email:
+                cleanEmail,
 
-            password: hashed,
+              password:
+                hashedPassword,
 
-            role: "USER",
+              role:
+                "USER",
 
-            isVerified: false,
+              isVerified:
+                false,
 
-            otp,
+              otp,
 
-            otpExpiry: expiry,
+              otpExpiry,
 
-            acceptedTerms: true,
+              acceptedTerms:
+                true,
 
-            acceptedAt:
-              new Date(),
-          },
-        });
+              acceptedAt:
+                new Date(),
+            },
+          }
+        );
     }
 
-    /* =========================
-       ASSIGN FREE PLAN
-    ========================= */
+    /* =========================================
+       FREE PLAN
+    ========================================= */
 
     const product =
       await prisma.product.findUnique(
@@ -239,6 +250,7 @@ export async function POST(
       );
 
     if (product) {
+
       const freePlan =
         await prisma.plan.findFirst(
           {
@@ -246,13 +258,15 @@ export async function POST(
               productId:
                 product.id,
 
-              name: "Free",
+              name:
+                "Free",
             },
           }
         );
 
       if (freePlan) {
-        const existingSub =
+
+        const existingSubscription =
           await prisma.subscription.findFirst(
             {
               where: {
@@ -265,7 +279,10 @@ export async function POST(
             }
           );
 
-        if (!existingSub) {
+        if (
+          !existingSubscription
+        ) {
+
           await prisma.subscription.create(
             {
               data: {
@@ -288,7 +305,7 @@ export async function POST(
                         60 *
                         60 *
                         24 *
-                        7
+                        30
                   ),
               },
             }
@@ -297,82 +314,90 @@ export async function POST(
       }
     }
 
-    /* =========================
-       EMAIL TEMPLATE
-    ========================= */
+    /* =========================================
+       ONBOARDING
+    ========================================= */
+
+    await prisma.userOnboarding.upsert(
+      {
+        where: {
+          userId:
+            user.id,
+        },
+
+        update: {},
+
+        create: {
+          userId:
+            user.id,
+        },
+      }
+    );
+
+    /* =========================================
+       EMAIL HTML
+    ========================================= */
 
     const html = `
-      <div style="font-family: Arial; max-width:500px; margin:auto; padding:20px;">
+      <div style="font-family:Arial;padding:30px;max-width:500px;margin:auto;">
 
-        <h2 style="color:#f97316;">
-          KoniqTech Verification
-        </h2>
+        <h1 style="color:#f97316;">
+          Verify Your Account
+        </h1>
 
         <p>
           Hi ${cleanName},
         </p>
 
         <p>
-          Use the OTP below to verify your account:
+          Use the verification code below:
         </p>
 
-        <div
-          style="
-            font-size:32px;
-            font-weight:bold;
-            letter-spacing:6px;
-            margin:30px 0;
-            color:#111827;
-          "
-        >
+        <div style="
+          font-size:36px;
+          font-weight:bold;
+          letter-spacing:8px;
+          margin:30px 0;
+          color:#111827;
+        ">
           ${otp}
         </div>
 
         <p>
-          This OTP will expire in 5 minutes.
+          This code expires in 5 minutes.
         </p>
 
-        <p style="margin-top:30px;">
-          — KoniqTech Team
+        <p style="margin-top:40px;">
+          — KoniqTech
         </p>
 
       </div>
     `;
 
-    const text = `
-      Hi ${cleanName},
-
-      Your OTP code is:
-
-      ${otp}
-
-      This OTP expires in 5 minutes.
-    `;
-
-    /* =========================
+    /* =========================================
        SEND EMAIL
-    ========================= */
+    ========================================= */
 
     await sendEmail({
-      to: cleanEmail,
+      to:
+        cleanEmail,
 
       subject:
         "Verify Your KoniqTech Account",
 
       html,
-
-      text,
     });
 
-    /* =========================
-       SUCCESS
-    ========================= */
+    /* =========================================
+       RESPONSE
+    ========================================= */
 
     return NextResponse.json({
       success: true,
     });
 
   } catch (err) {
+
     console.error(
       "REGISTER ERROR:",
       err

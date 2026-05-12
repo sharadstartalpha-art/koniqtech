@@ -1,18 +1,26 @@
 import { prisma } from "@/lib/prisma";
+
 import { NextResponse } from "next/server";
+
 import { cookies } from "next/headers";
+
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET!
+  process.env.JWT_SECRET
 );
 
-export async function POST(req: Request) {
+export async function POST(
+  req: Request
+) {
   try {
-    /* =========================
-       📥 1. INPUT
-    ========================= */
-    const body = await req.json();
+
+    /* =========================================
+       BODY
+    ========================================= */
+
+    const body =
+      await req.json();
 
     const {
       clientEmail,
@@ -20,153 +28,286 @@ export async function POST(req: Request) {
       clientPhone,
       amount,
       dueDate,
-      mode, // ✅ NEW
+      mode,
     } = body;
 
-    if (!clientEmail || !amount || !dueDate) {
+    /* =========================================
+       VALIDATION
+    ========================================= */
+
+    if (
+      !clientEmail ||
+      !amount ||
+      !dueDate
+    ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
+        {
+          error:
+            "Missing required fields",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    /* =========================
-       🔐 2. AUTH
-    ========================= */
-    const cookieStore = await cookies();
+    /* =========================================
+       AUTH
+    ========================================= */
+
+    const cookieStore =
+      await cookies();
 
     const token =
-      cookieStore.get("token")?.value;
+      cookieStore.get("token")
+        ?.value;
 
     if (!token) {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        {
+          error:
+            "Unauthorized",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
-    const { payload } = await jwtVerify(
-      token,
-      JWT_SECRET
-    );
+    let userId = "";
 
-    const userId = payload.id as string;
+    try {
 
-    /* =========================
-       🔍 3. PRODUCT
-    ========================= */
-    const product =
-      await prisma.product.findUnique({
-        where: {
-          slug: "invoice-recovery",
+      const { payload } =
+        await jwtVerify(
+          token,
+          JWT_SECRET
+        );
+
+      userId =
+        payload.id as string;
+
+    } catch {
+
+      return NextResponse.json(
+        {
+          error:
+            "Invalid session",
         },
-      });
+        {
+          status: 401,
+        }
+      );
+    }
+
+    /* =========================================
+       PRODUCT
+    ========================================= */
+
+    const product =
+      await prisma.product.findUnique(
+        {
+          where: {
+            slug:
+              "invoice-recovery",
+          },
+        }
+      );
 
     if (!product) {
       return NextResponse.json(
-        { error: "Product not found" },
-        { status: 400 }
+        {
+          error:
+            "Product not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
-    /* =========================
-       💳 4. SUBSCRIPTION
-    ========================= */
-    const sub =
-      await prisma.subscription.findFirst({
-        where: {
-          userId,
-          productId: product.id,
-          status: {
-            equals: "ACTIVE",
-            mode: "insensitive",
+    /* =========================================
+       ACTIVE SUBSCRIPTION
+    ========================================= */
+
+    const subscription =
+      await prisma.subscription.findFirst(
+        {
+          where: {
+            userId,
+
+            productId:
+              product.id,
+
+            status: {
+              equals:
+                "ACTIVE",
+
+              mode:
+                "insensitive",
+            },
           },
-        },
 
-        include: {
-          plan: true,
-        },
+          include: {
+            plan: true,
+          },
 
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+          orderBy: {
+            createdAt:
+              "desc",
+          },
+        }
+      );
 
-    if (!sub) {
+    if (!subscription) {
+
       return NextResponse.json(
-        { error: "No active subscription" },
-        { status: 403 }
+        {
+          error:
+            "No active subscription",
+        },
+        {
+          status: 403,
+        }
       );
     }
 
-    /* =========================
-       📊 5. LIMIT CHECK
-    ========================= */
-    const limit =
-      sub.plan?.invoiceLimit ?? null;
+    /* =========================================
+       LIMIT CHECK
+    ========================================= */
 
-    const count = await prisma.invoice.count({
-      where: {
-        userId,
-        productId: product.id,
-      },
-    });
+    const limit =
+      subscription.plan
+        ?.invoiceLimit;
+
+    const totalInvoices =
+      await prisma.invoice.count(
+        {
+          where: {
+            userId,
+
+            productId:
+              product.id,
+          },
+        }
+      );
 
     if (
       limit !== null &&
       limit !== -1 &&
-      count >= limit
+      totalInvoices >= limit
     ) {
+
       return NextResponse.json(
-        { error: "Invoice limit reached" },
-        { status: 403 }
+        {
+          error:
+            "Invoice limit reached",
+        },
+        {
+          status: 403,
+        }
       );
     }
 
-    /* =========================
-       💾 6. CREATE INVOICE
-    ========================= */
+    /* =========================================
+       CREATE INVOICE
+    ========================================= */
+
     const invoice =
-      await prisma.invoice.create({
-        data: {
-          userId,
-          productId: product.id,
-           clientPhone,
-          clientEmail,
-          clientName,
+      await prisma.invoice.create(
+        {
+          data: {
+            userId,
 
-          amount: Number(amount),
+            productId:
+              product.id,
 
-          dueDate: new Date(dueDate),
+            clientEmail,
 
-          status: "UNPAID",
+            clientName:
+              clientName ||
+              null,
 
-          // ✅ FIXED
-          mode: mode || "manual",
-        },
-      });
+            clientPhone:
+              clientPhone ||
+              null,
 
-    /* =========================
-       💳 7. PAYMENT LINK
-    ========================= */
-    const paymentLink = `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
+            amount:
+              Number(amount),
+
+            dueDate:
+              new Date(
+                dueDate
+              ),
+
+            status:
+              "UNPAID",
+
+            mode:
+              mode ||
+              "manual",
+          },
+        }
+      );
+
+    /* =========================================
+       PAYMENT LINK
+    ========================================= */
+
+    const paymentLink =
+      `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
 
     const updatedInvoice =
-      await prisma.invoice.update({
+      await prisma.invoice.update(
+        {
+          where: {
+            id:
+              invoice.id,
+          },
+
+          data: {
+            paymentLink,
+          },
+        }
+      );
+
+    /* =========================================
+       ONBOARDING UPDATE
+    ========================================= */
+
+    await prisma.userOnboarding.upsert(
+      {
         where: {
-          id: invoice.id,
+          userId,
         },
 
-        data: {
-          paymentLink,
+        update: {
+          firstInvoice:
+            true,
         },
-      });
 
-    return NextResponse.json(
-      updatedInvoice
+        create: {
+          userId,
+
+          firstInvoice:
+            true,
+        },
+      }
     );
 
+    /* =========================================
+       RESPONSE
+    ========================================= */
+
+    return NextResponse.json({
+      success: true,
+
+      invoice:
+        updatedInvoice,
+    });
+
   } catch (error: any) {
+
     console.error(
       "CREATE INVOICE ERROR:",
       error
@@ -174,10 +315,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error: "Failed to create invoice",
-        details: error?.message || null,
+        error:
+          "Failed to create invoice",
+
+        details:
+          error?.message ||
+          null,
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

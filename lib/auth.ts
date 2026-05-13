@@ -1,39 +1,13 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
+import { prisma } from "./prisma";
+
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET!
 );
 
-/* =========================================
-   USER PAYLOAD
-========================================= */
-
-export type UserPayload = {
-  id: string;
-
-  email: string;
-
-  role: string;
-
-  name?: string | null;
-
-  phone?: string | null;
-
-  companyName?: string | null;
-
-  businessPhone?: string | null;
-
-  businessEmail?: string | null;
-
-  whatsappNumber?: string | null;
-};
-
-/* =========================================
-   GET USER
-========================================= */
-
-export async function getUser(): Promise<UserPayload | null> {
+export async function getUser() {
   try {
 
     const cookieStore =
@@ -53,71 +27,29 @@ export async function getUser(): Promise<UserPayload | null> {
         secret
       );
 
-    /* =====================================
-       VALIDATION
-    ===================================== */
-
     if (
       typeof payload.id !==
-        "string" ||
-      typeof payload.email !==
-        "string" ||
-      typeof payload.role !==
-        "string"
+      "string"
     ) {
       return null;
     }
 
     /* =====================================
-       RETURN USER
+       GET FRESH USER FROM DATABASE
     ===================================== */
 
-    return {
-      id:
-        payload.id,
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: payload.id,
+        },
+      });
 
-      email:
-        payload.email,
+    if (!user) {
+      return null;
+    }
 
-      role:
-        payload.role,
-
-      name:
-        typeof payload.name ===
-        "string"
-          ? payload.name
-          : null,
-
-      phone:
-        typeof payload.phone ===
-        "string"
-          ? payload.phone
-          : null,
-
-      companyName:
-        typeof payload.companyName ===
-        "string"
-          ? payload.companyName
-          : null,
-
-      businessPhone:
-        typeof payload.businessPhone ===
-        "string"
-          ? payload.businessPhone
-          : null,
-
-      businessEmail:
-        typeof payload.businessEmail ===
-        "string"
-          ? payload.businessEmail
-          : null,
-
-      whatsappNumber:
-        typeof payload.whatsappNumber ===
-        "string"
-          ? payload.whatsappNumber
-          : null,
-    };
+    return user;
 
   } catch (err) {
 

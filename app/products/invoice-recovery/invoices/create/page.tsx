@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import axios from "axios";
 
@@ -95,6 +95,20 @@ export default function CreateInvoicePage() {
     useState(false);
 
   /* =========================================
+     PAYMENT WARNING
+  ========================================= */
+
+  const [
+    showPaymentWarning,
+    setShowPaymentWarning,
+  ] = useState(false);
+
+  const [
+    hasPaymentMethod,
+    setHasPaymentMethod,
+  ] = useState(false);
+
+  /* =========================================
      UPDATE WORKFLOW
   ========================================= */
 
@@ -122,6 +136,47 @@ export default function CreateInvoicePage() {
   };
 
   /* =========================================
+     CHECK PAYMENT METHOD
+  ========================================= */
+
+  useEffect(() => {
+
+    const checkPaymentMethod =
+      async () => {
+        try {
+
+          const res =
+            await axios.get(
+              "/api/settings/payments"
+            );
+
+          const data =
+            res.data;
+
+          const exists =
+            !!(
+              data?.paypalMe ||
+              data?.stripeLink ||
+              data?.razorpayLink ||
+              data?.customPaymentLink ||
+              data?.upiId
+            );
+
+          setHasPaymentMethod(
+            exists
+          );
+
+        } catch (err) {
+
+          console.error(err);
+        }
+      };
+
+    checkPaymentMethod();
+
+  }, []);
+
+  /* =========================================
      CREATE
   ========================================= */
 
@@ -135,6 +190,22 @@ export default function CreateInvoicePage() {
 
         toast.error(
           "Email and amount required"
+        );
+
+        return;
+      }
+
+      /* =====================================
+         PAYMENT METHOD CHECK
+      ===================================== */
+
+      if (
+        mode === "auto" &&
+        !hasPaymentMethod
+      ) {
+
+        setShowPaymentWarning(
+          true
         );
 
         return;
@@ -777,6 +848,191 @@ export default function CreateInvoicePage() {
         </div>
 
       </div>
+
+      {showPaymentWarning && (
+
+        <div className="
+          fixed inset-0 z-50
+          bg-black/50
+          backdrop-blur-sm
+          flex items-center justify-center
+          p-4
+        ">
+
+          <div className="
+            bg-white
+            w-full
+            max-w-lg
+            rounded-3xl
+            p-8
+          ">
+
+            <div className="
+              w-14 h-14
+              rounded-2xl
+              bg-orange-100
+              flex items-center justify-center
+              mb-5
+            ">
+
+              <DollarSign className="w-6 h-6 text-orange-600" />
+
+            </div>
+
+            <h2 className="
+              text-2xl
+              font-bold
+              text-gray-900
+            ">
+
+              No Payment Method Found
+
+            </h2>
+
+            <p className="
+              text-gray-500
+              mt-4
+              leading-7
+            ">
+
+              You haven't configured any payment link yet.
+
+              Customers will receive plain reminders without
+              a payment button which may reduce recovery rates.
+
+            </p>
+
+            <div className="
+              mt-6
+              bg-orange-50
+              border border-orange-200
+              rounded-2xl
+              p-4
+            ">
+
+              <p className="
+                text-sm
+                text-orange-800
+                leading-6
+              ">
+
+                Recommended:
+                Add PayPal, Stripe, Razorpay or UPI
+                payment links before enabling
+                auto recovery.
+
+              </p>
+
+            </div>
+
+            <div className="
+              flex flex-col md:flex-row
+              gap-3
+              mt-8
+            ">
+
+              {/* GO TO PAYMENT SETTINGS */}
+
+              <button
+                onClick={() => {
+                  window.location.href =
+                    "/products/invoice-recovery/settings/payment-methods";
+                }}
+                className="
+                  flex-1
+                  h-12
+                  rounded-2xl
+                  bg-black
+                  text-white
+                  font-semibold
+                  flex items-center justify-center gap-2
+                "
+              >
+
+                Configure Payment Link
+
+                <ArrowRight className="w-4 h-4" />
+
+              </button>
+
+              {/* CONTINUE */}
+
+              <button
+                onClick={async () => {
+
+                  setShowPaymentWarning(
+                    false
+                  );
+
+                  try {
+
+                    setLoading(true);
+
+                    await axios.post(
+                      "/api/invoices/create",
+                      {
+                        clientEmail:
+                          email,
+
+                        clientName:
+                          name || null,
+
+                        clientPhone:
+                          phone || null,
+
+                        amount:
+                          Number(amount),
+
+                        dueDate:
+                          new Date(),
+
+                        mode,
+
+                        autoSendFirstReminder,
+
+                        reminderWorkflow,
+                      }
+                    );
+
+                    toast.success(
+                      "Invoice created"
+                    );
+
+                    window.location.href =
+                      "/products/invoice-recovery/invoices";
+
+                  } catch (err) {
+
+                    console.error(err);
+
+                    toast.error(
+                      "Failed to create invoice"
+                    );
+
+                  } finally {
+
+                    setLoading(false);
+                  }
+                }}
+                className="
+                  flex-1
+                  h-12
+                  rounded-2xl
+                  border border-gray-300
+                  font-semibold
+                "
+              >
+
+                Continue Without Payment Link
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </Layout>
   );

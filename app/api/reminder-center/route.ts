@@ -144,24 +144,26 @@ export async function GET() {
 
       stats,
 
-      user: {
-        name:
-          (user as any)
-            ?.name || "",
+     user: {
+  name:
+    user.name ||
+    "",
 
-        companyName:
-          (user as any)
-            ?.companyName ||
-          "KoniqTech",
+  companyName:
+    user.companyName ||
+    "Koniq Technologies",
 
-        email:
-          (user as any)
-            ?.email || "",
+  email:
+    user.businessEmail ||
+    user.email ||
+    "",
 
-        phone:
-          (user as any)
-            ?.phone || "",
-      },
+  phone:
+    user.businessPhone ||
+    user.phone ||
+    user.whatsappNumber ||
+    "",
+},
     });
 
   } catch (err) {

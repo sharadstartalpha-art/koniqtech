@@ -185,90 +185,176 @@ export default function CreateInvoicePage() {
      CREATE
   ========================================= */
 
-  const create =
-    async () => {
+ const create = async () => {
 
-      if (
-        !email ||
-        !amount
-      ) {
+  if (!email || !amount) {
 
-        toast.error(
-          "Email and amount required"
-        );
+    toast.error(
+      "Email and amount required"
+    );
 
-        return;
-      }
+    return;
+  }
 
-      /* =====================================
-         PAYMENT METHOD CHECK
-      ===================================== */
+  try {
 
-      if (
-        mode === "auto" &&
-        includePaymentLink &&
-        !hasPaymentMethod
-      ) {
+    setLoading(true);
 
-        setShowPaymentWarning(
-          true
-        );
+    const res =
+      await axios.post(
+        "/api/invoices/create",
+        {
+          clientEmail:
+            email,
 
-        return;
-      }
+          clientName:
+            name || null,
 
-      try {
+          clientPhone:
+            phone || null,
 
-        setLoading(true);
+          amount:
+            Number(amount),
 
-        await axios.post(
-          "/api/invoices/create",
-          {
-            clientEmail:
-              email,
+          dueDate:
+            new Date(),
 
-            clientName:
-              name || null,
+          mode,
 
-            clientPhone:
-              phone || null,
-
-            amount:
-              Number(amount),
-
-            dueDate:
-              new Date(),
-
-            mode,
-
+          autoSendFirstReminder:
             autoSendFirstReminder,
 
-            includePaymentLink,
+          reminderWorkflow,
+        }
+      );
 
-            reminderWorkflow,
-          }
-        );
+    if (res.data?.success) {
 
-        toast.success(
-          "Invoice created successfully"
-        );
+      toast.success(
+        "Invoice created successfully"
+      );
 
-        window.location.href =
-          "/products/invoice-recovery/invoices";
+      window.location.href =
+        "/products/invoice-recovery/invoices";
+    }
 
-      } catch (err) {
+  } catch (err: any) {
 
-        console.error(err);
+    console.error(err);
 
-        toast.error(
-          "Failed to create invoice"
-        );
+    /* =====================================
+       SUBSCRIPTION ERROR
+    ===================================== */
 
-      } finally {
+    if (
+      err?.response?.status ===
+      403
+    ) {
 
-        setLoading(false);
-      }
-    };
+      const message =
+        err?.response?.data
+          ?.error ||
+        "No active subscription";
+
+      toast.custom((t) => (
+        <div
+          className="
+            bg-white
+            border
+            border-zinc-200
+            shadow-xl
+            rounded-2xl
+            p-5
+            w-[380px]
+          "
+        >
+
+          <h3 className="
+            font-semibold
+            text-lg
+            text-black
+          ">
+            Subscription Required
+          </h3>
+
+          <p className="
+            text-sm
+            text-zinc-500
+            mt-2
+            leading-6
+          ">
+            {message}
+          </p>
+
+          <div className="
+            flex items-center
+            justify-end
+            gap-3
+            mt-5
+          ">
+
+            <button
+              onClick={() =>
+                toast.dismiss(t.id)
+              }
+              className="
+                px-4 py-2
+                rounded-xl
+                border
+                border-zinc-300
+                text-sm
+                font-medium
+              "
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={() => {
+                window.location.href =
+                  "/products/invoice-recovery/subscribe";
+
+                toast.dismiss(
+                  t.id
+                );
+              }}
+              className="
+                px-4 py-2
+                rounded-xl
+                bg-black
+                text-white
+                text-sm
+                font-semibold
+              "
+            >
+              Upgrade Plan
+            </button>
+
+          </div>
+
+        </div>
+      ));
+
+      return;
+    }
+
+    /* =====================================
+       NORMAL ERROR
+    ===================================== */
+
+    toast.error(
+      err?.response?.data
+        ?.error ||
+        "Failed to create invoice"
+    );
+
+  } finally {
+
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <Layout>

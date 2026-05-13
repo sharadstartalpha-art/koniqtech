@@ -6,6 +6,10 @@ import { cookies } from "next/headers";
 
 import { jwtVerify } from "jose";
 
+import { generateEmail } from "@/lib/aiEmail";
+
+import { sendEmail } from "@/lib/email";
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET
 );
@@ -29,6 +33,10 @@ export async function POST(
       amount,
       dueDate,
       mode,
+
+      /* NEW AUTO FLOW */
+      autoSendFirstReminder,
+      reminderWorkflow,
     } = body;
 
     /* =========================================
@@ -40,6 +48,7 @@ export async function POST(
       !amount ||
       !dueDate
     ) {
+
       return NextResponse.json(
         {
           error:
@@ -63,6 +72,7 @@ export async function POST(
         ?.value;
 
     if (!token) {
+
       return NextResponse.json(
         {
           error:
@@ -101,6 +111,30 @@ export async function POST(
     }
 
     /* =========================================
+       GET USER
+    ========================================= */
+
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
+
+    if (!user) {
+
+      return NextResponse.json(
+        {
+          error:
+            "User not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    /* =========================================
        PRODUCT
     ========================================= */
 
@@ -115,6 +149,7 @@ export async function POST(
       );
 
     if (!product) {
+
       return NextResponse.json(
         {
           error:
@@ -241,11 +276,41 @@ export async function POST(
               ),
 
             status:
-              "UNPAID",
+              "unpaid",
 
             mode:
               mode ||
-              "manual",
+              "auto",
+
+            /* =====================================
+               NEW AUTO SETTINGS
+            ===================================== */
+
+            autoSendFirstReminder:
+              autoSendFirstReminder ??
+              true,
+
+            reminderWorkflow:
+              reminderWorkflow ||
+              [
+                {
+                  day: 3,
+                  type:
+                    "friendly",
+                },
+
+                {
+                  day: 7,
+                  type:
+                    "firm",
+                },
+
+                {
+                  day: 14,
+                  type:
+                    "final",
+                },
+              ],
           },
         }
       );
@@ -270,6 +335,117 @@ export async function POST(
           },
         }
       );
+
+    /* =========================================
+       INSTANT FIRST EMAIL
+    ========================================= */
+
+    if (
+      mode === "auto" &&
+      autoSendFirstReminder
+    ) {
+
+      try {
+
+        const email =
+          generateEmail({
+            amount:
+              Number(
+                invoice.amount
+              ),
+
+            type:
+              "friendly",
+
+            clientName:
+              invoice.clientName ||
+              "Customer",
+
+            paymentLink,
+
+            senderName:
+              user.name ||
+              "KoniqTech",
+
+            companyName:
+              user.companyName ||
+              "KoniqTech",
+
+            senderEmail:
+              user.businessEmail ||
+              user.email,
+
+            senderPhone:
+              user.businessPhone ||
+              user.phone ||
+              undefined,
+          });
+
+        await sendEmail({
+          to:
+            invoice.clientEmail,
+
+          subject:
+            email.subject,
+
+          html:
+            email.html,
+
+          text:
+            email.text,
+        });
+
+        /* =====================================
+           SAVE LOG
+        ===================================== */
+
+        await prisma.reminder.create({
+          data: {
+            userId,
+
+            invoiceId:
+              invoice.id,
+
+            email:
+              invoice.clientEmail,
+
+            amount:
+              Number(
+                invoice.amount
+              ),
+
+            type:
+              "friendly",
+
+            mode:
+              "auto",
+
+            status:
+              "sent",
+
+            sentAt:
+              new Date(),
+
+            html:
+              email.html,
+
+            text:
+              email.text,
+          },
+        });
+
+        console.log(
+          "✅ Instant reminder sent"
+        );
+
+      } catch (emailError) {
+
+        console.error(
+          "❌ Instant reminder failed:",
+          emailError
+        );
+      }
+    }
 
     /* =========================================
        ONBOARDING UPDATE

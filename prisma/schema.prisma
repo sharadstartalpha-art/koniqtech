@@ -296,6 +296,10 @@ model Invoice {
   reminderSchedules ReminderSchedule[]
 
   reminderLogs ReminderLog[]
+
+  autoSendFirstReminder Boolean @default(true)
+
+reminderWorkflow Json?
 }
 
 model ReminderLog {

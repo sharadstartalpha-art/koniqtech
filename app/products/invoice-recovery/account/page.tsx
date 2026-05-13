@@ -677,7 +677,7 @@ export default function AccountPage() {
                 Your subscription and billing
                 information are protected with
                 secure payment infrastructure and
-                encrypted authentication systems.
+                encrypted authentication systems..
               </p>
 
             </div>

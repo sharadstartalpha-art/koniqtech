@@ -238,6 +238,114 @@ export async function POST(
       mode ||
       "email";
 
+
+/* =====================================
+   GET INVOICE
+===================================== */
+
+/* =====================================
+   GET INVOICE
+===================================== */
+
+const invoice =
+  await prisma.invoice.findFirst({
+    where: {
+      id: invoiceId,
+      userId: user.id,
+    },
+
+    include: {
+      user: true,
+    },
+  });
+
+if (!invoice) {
+
+  return NextResponse.json(
+    {
+      error:
+        "Invoice not found",
+    },
+    {
+      status: 404,
+    }
+  );
+}
+
+/* =====================================
+   DYNAMIC VARIABLES
+===================================== */
+
+const customerName =
+  invoice.clientName ||
+  "Customer";
+
+const companyName =
+  invoice.user.companyName ||
+  "KoniqTech";
+
+const senderName =
+  invoice.user.name ||
+  "KoniqTech";
+
+const senderEmail =
+  invoice.user.businessEmail ||
+  invoice.user.email;
+
+const senderPhone =
+  invoice.user.businessPhone ||
+  invoice.user.phone ||
+  "";
+
+const paymentLink =
+  invoice.paymentLink || "";
+
+/* =====================================
+   TEMPLATE VARIABLES
+===================================== */
+
+const finalHtml =
+  (html || "")
+    .replaceAll(
+      "{{name}}",
+      customerName
+    )
+    .replaceAll(
+      "{{amount}}",
+      String(amount)
+    )
+    .replaceAll(
+      "{{companyName}}",
+      companyName
+    )
+    .replaceAll(
+      "{{senderName}}",
+      senderName
+    )
+    .replaceAll(
+      "{{senderEmail}}",
+      senderEmail
+    )
+    .replaceAll(
+      "{{senderPhone}}",
+      senderPhone
+    )
+    .replaceAll(
+      "{{paymentLink}}",
+      paymentLink
+    );
+
+const finalText =
+  (text || "")
+    .replaceAll(
+      "{{name}}",
+      customerName
+    )
+    .replaceAll(
+      "{{amount}}",
+      String(amount)
+    );
+      
     /* =====================================
        VALIDATION
     ===================================== */
@@ -275,6 +383,57 @@ export async function POST(
         );
       }
 
+
+
+      /* =====================================
+   REPLACE TEMPLATE VARIABLES
+===================================== */
+
+const finalHtml =
+  (html || "")
+    .replaceAll(
+      "{{name}}",
+      customerName
+    )
+    .replaceAll(
+      "{{amount}}",
+      String(amount)
+    )
+    .replaceAll(
+      "{{companyName}}",
+      companyName
+    )
+    .replaceAll(
+      "{{senderName}}",
+      senderName
+    )
+    .replaceAll(
+      "{{senderEmail}}",
+      senderEmail
+    )
+    .replaceAll(
+      "{{senderPhone}}",
+      senderPhone
+    )
+    .replaceAll(
+      "{{paymentLink}}",
+      paymentLink
+    );
+
+const finalText =
+  (text || "")
+    .replaceAll(
+      "{{name}}",
+      customerName
+    )
+    .replaceAll(
+      "{{amount}}",
+      String(amount)
+    );
+
+
+
+
       await sendEmail({
         to: email,
 
@@ -283,7 +442,7 @@ export async function POST(
           "Payment Reminder",
 
         html:
-          html ||
+           finalHtml ||
           `
             <div>
               <h2>
@@ -395,10 +554,10 @@ export async function POST(
             "sent",
 
           html:
-            html || "",
+            finalHtml  || "",
 
           text:
-            text || "",
+            finalText  || "",
 
           sentAt:
             new Date(),

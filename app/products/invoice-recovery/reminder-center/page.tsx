@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import axios from "axios";
 
@@ -11,42 +11,49 @@ import Layout from "@/components/Layout";
 import toast from "react-hot-toast";
 
 import {
-  Bell,
   Mail,
   MessageCircle,
   Smartphone,
-  Clock3,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
   BrainCircuit,
   X,
 } from "lucide-react";
 
+/* =========================================
+   TYPES
+========================================= */
+
+type Invoice = {
+  id: string;
+
+  clientEmail: string;
+
+  clientPhone?: string | null;
+
+  clientName?: string | null;
+
+  amount: number;
+};
+
+type Template = {
+  id: string;
+
+  name: string;
+
+  subject: string;
+
+  html: string;
+
+  type: string;
+};
+
+/* =========================================
+   PAGE
+========================================= */
+
 export default function ReminderCenterPage() {
 
-
-  function SimpleStat({
-  title,
-  value,
-}: any) {
-  return (
-    <div className="bg-white border border-gray-200 rounded-3xl p-5">
-
-      <p className="text-sm text-gray-500">
-        {title}
-      </p>
-
-      <h3 className="text-3xl font-bold mt-2">
-        {value}
-      </h3>
-
-    </div>
-  );
-}
-
   /* =========================================
-     STATES
+     STATE
   ========================================= */
 
   const [loading, setLoading] =
@@ -55,10 +62,13 @@ export default function ReminderCenterPage() {
   const [data, setData] =
     useState<any>(null);
 
-  const [openCreate, setOpenCreate] =
-    useState(false);
+  const [invoices, setInvoices] =
+    useState<Invoice[]>([]);
 
-  const [openAnalytics, setOpenAnalytics] =
+  const [templates, setTemplates] =
+    useState<Template[]>([]);
+
+  const [openCreate, setOpenCreate] =
     useState(false);
 
   /* =========================================
@@ -71,28 +81,69 @@ export default function ReminderCenterPage() {
   const [email, setEmail] =
     useState("");
 
+  const [phone, setPhone] =
+    useState("");
+
   const [amount, setAmount] =
     useState("");
 
-  const [mode, setMode] =
+  const [channel, setChannel] =
     useState("email");
 
   const [message, setMessage] =
     useState("");
 
+  const [templateId, setTemplateId] =
+    useState("");
+
+  const [sending, setSending] =
+    useState(false);
+
   /* =========================================
-     LOAD DATA
+     LOAD
   ========================================= */
 
   const loadData = async () => {
     try {
 
-      const res =
-        await axios.get(
+      const [
+        reminderRes,
+        invoiceRes,
+        templateRes,
+      ] = await Promise.all([
+        axios.get(
           "/api/reminder-center"
-        );
+        ),
 
-      setData(res.data);
+        axios.get(
+          "/api/invoices"
+        ),
+
+        axios.get(
+          "/api/reminder-templates"
+        ),
+      ]);
+
+      setData(
+        reminderRes.data
+      );
+
+      setInvoices(
+        Array.isArray(
+          invoiceRes.data
+        )
+          ? invoiceRes.data
+          : []
+      );
+
+      setTemplates(
+        Array.isArray(
+          templateRes.data
+        )
+          ? templateRes.data
+          : templateRes.data
+              ?.templates || []
+      );
 
     } catch (err) {
 
@@ -103,6 +154,7 @@ export default function ReminderCenterPage() {
       );
 
     } finally {
+
       setLoading(false);
     }
   };
@@ -112,7 +164,102 @@ export default function ReminderCenterPage() {
   }, []);
 
   /* =========================================
-     CREATE REMINDER
+     AUTO FILL INVOICE
+  ========================================= */
+
+  useEffect(() => {
+
+    if (!invoiceId) return;
+
+    const invoice =
+      invoices.find(
+        (i) =>
+          i.id === invoiceId
+      );
+
+    if (!invoice) return;
+
+    setEmail(
+      invoice.clientEmail || ""
+    );
+
+    setPhone(
+      invoice.clientPhone || ""
+    );
+
+    setAmount(
+      String(invoice.amount || 0)
+    );
+
+  }, [invoiceId, invoices]);
+
+  /* =========================================
+     TEMPLATE
+  ========================================= */
+
+  const selectedTemplate =
+    useMemo(() => {
+      return templates.find(
+        (t) =>
+          t.id === templateId
+      );
+    }, [
+      templateId,
+      templates,
+    ]);
+
+  useEffect(() => {
+
+    if (
+      !selectedTemplate
+    ) return;
+
+    const invoice =
+      invoices.find(
+        (i) =>
+          i.id === invoiceId
+      );
+
+    const finalHtml =
+      selectedTemplate.html
+        .replaceAll(
+          "{{name}}",
+          invoice?.clientName ||
+            "Customer"
+        )
+        .replaceAll(
+          "{{amount}}",
+          amount
+        )
+        .replaceAll(
+          "{{email}}",
+          email
+        )
+        .replaceAll(
+          "{{link}}",
+          "#"
+        );
+
+    const plainText =
+      finalHtml.replace(
+        /<[^>]*>/g,
+        ""
+      );
+
+    setMessage(
+      plainText
+    );
+
+  }, [
+    selectedTemplate,
+    invoiceId,
+    amount,
+    email,
+    invoices,
+  ]);
+
+  /* =========================================
+     SEND
   ========================================= */
 
   const createReminder =
@@ -127,15 +274,75 @@ export default function ReminderCenterPage() {
           return;
         }
 
+        if (
+          channel === "email" &&
+          !email
+        ) {
+          toast.error(
+            "Email required"
+          );
+
+          return;
+        }
+
+        if (
+          (
+            channel === "sms" ||
+            channel ===
+              "whatsapp"
+          ) &&
+          !phone
+        ) {
+          toast.error(
+            "Phone required"
+          );
+
+          return;
+        }
+
+        setSending(true);
+
+        const html =
+          selectedTemplate?.html
+            ?.replaceAll(
+              "{{amount}}",
+              amount
+            )
+            ?.replaceAll(
+              "{{email}}",
+              email
+            )
+            ?.replaceAll(
+              "{{link}}",
+              "#"
+            ) ||
+          `<p>${message}</p>`;
+
         await axios.post(
           "/api/reminder-center",
           {
             invoiceId,
+
             email,
+
+            phone,
+
             amount,
-            mode,
-            type: "friendly",
-            html: `<p>${message}</p>`,
+
+            channel,
+
+            type:
+              selectedTemplate
+                ?.type ||
+              "friendly",
+
+            subject:
+              selectedTemplate
+                ?.subject ||
+              "Payment Reminder",
+
+            html,
+
             text: message,
           }
         );
@@ -146,15 +353,33 @@ export default function ReminderCenterPage() {
 
         setOpenCreate(false);
 
+        setInvoiceId("");
+
+        setEmail("");
+
+        setPhone("");
+
+        setAmount("");
+
+        setMessage("");
+
+        setTemplateId("");
+
         loadData();
 
-      } catch (err) {
+      } catch (err: any) {
 
         console.error(err);
 
         toast.error(
-          "Failed to send reminder"
+          err?.response?.data
+            ?.error ||
+            "Failed to send reminder"
         );
+
+      } finally {
+
+        setSending(false);
       }
     };
 
@@ -176,9 +401,6 @@ export default function ReminderCenterPage() {
      DATA
   ========================================= */
 
-  const reminders =
-    data?.reminders || [];
-
   const logs =
     data?.logs || [];
 
@@ -190,236 +412,225 @@ export default function ReminderCenterPage() {
 
       <div className="space-y-6">
 
-  {/* HEADER */}
+        {/* HEADER */}
 
-  <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center justify-between flex-wrap gap-4">
 
-    <div>
+          <div>
 
-      <h1 className="text-4xl font-bold text-gray-900">
-        Recovery
-      </h1>
+            <h1 className="text-4xl font-bold">
+              Recovery
+            </h1>
 
-      <p className="text-gray-500 mt-2">
-        Manage reminders, recovery channels, and payment follow-ups.
-      </p>
-
-    </div>
-
-    <button
-      onClick={() =>
-        setOpenCreate(true)
-      }
-      className="
-        h-12 px-5 rounded-2xl
-        bg-black text-white
-        font-semibold
-        hover:bg-gray-900
-        transition
-      "
-    >
-      Send Reminder
-    </button>
-
-  </div>
-
-  {/* STATS */}
-
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-
-    <SimpleStat
-      title="Sent"
-      value={stats.sent || 0}
-    />
-
-    <SimpleStat
-      title="Pending"
-      value={stats.pending || 0}
-    />
-
-    <SimpleStat
-      title="Failed"
-      value={stats.failed || 0}
-    />
-
-    <SimpleStat
-      title="Opened"
-      value={stats.opened || 0}
-    />
-
-  </div>
-
-  {/* CHANNELS */}
-
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-    <ChannelCard
-      title="Email"
-      desc="Recovery emails"
-      icon={Mail}
-      active={`${stats?.channels?.email || 0} sent`}
-    />
-
-    <ChannelCard
-      title="WhatsApp"
-      desc="WhatsApp reminders"
-      icon={MessageCircle}
-      active={`${stats?.channels?.whatsapp || 0} sent`}
-    />
-
-    <ChannelCard
-      title="SMS"
-      desc="SMS follow-ups"
-      icon={Smartphone}
-      active={`${stats?.channels?.sms || 0} sent`}
-    />
-
-  </div>
-
-  {/* QUICK INSIGHTS */}
-
-  <div className="bg-black text-white rounded-3xl p-6">
-
-    <div className="flex items-center gap-3">
-
-      <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center">
-        <BrainCircuit className="w-5 h-5 text-yellow-300" />
-      </div>
-
-      <div>
-
-        <h3 className="text-lg font-semibold">
-          AI Recovery Insights
-        </h3>
-
-        <p className="text-sm text-gray-400">
-          Smart collection recommendations
-        </p>
-
-      </div>
-
-    </div>
-
-    <div className="mt-5 space-y-4">
-
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-        <p className="text-sm text-gray-200 leading-7">
-          Clients respond best to reminders between 9 AM and 11 AM.
-        </p>
-      </div>
-
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-        <p className="text-sm text-gray-200 leading-7">
-          WhatsApp reminders currently outperform email recovery by 21%.
-        </p>
-      </div>
-
-    </div>
-
-  </div>
-
-  {/* ACTIVITY */}
-
-  <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
-
-    <div className="p-6 border-b border-gray-100">
-
-      <h2 className="text-xl font-semibold">
-        Recent Activity
-      </h2>
-
-      <p className="text-sm text-gray-500 mt-1">
-        Latest recovery events
-      </p>
-
-    </div>
-
-    <div className="divide-y">
-
-      {logs.length === 0 && (
-
-        <div className="p-10 text-center text-gray-500">
-          No reminder activity yet
-        </div>
-
-      )}
-
-      {logs.map((log: any) => {
-
-        const Icon =
-          log.channel === "whatsapp"
-            ? MessageCircle
-            : log.channel === "sms"
-            ? Smartphone
-            : Mail;
-
-        return (
-
-          <div
-            key={log.id}
-            className="p-5 flex items-center justify-between hover:bg-gray-50 transition"
-          >
-
-            <div className="flex items-center gap-4">
-
-              <div className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center">
-                <Icon size={18} />
-              </div>
-
-              <div>
-
-                <h3 className="font-medium">
-                  {log.invoice?.clientName ||
-                    "Unknown Client"}
-                </h3>
-
-                <p className="text-sm text-gray-500 mt-1">
-                  {log.channel} • {log.subject}
-                </p>
-
-              </div>
-
-            </div>
-
-            <div className="hidden lg:block text-sm text-gray-500">
-              {new Date(
-                log.createdAt
-              ).toLocaleString()}
-            </div>
-
-            <StatusBadge
-              status={log.status}
-            />
+            <p className="text-gray-500 mt-2">
+              Manage reminders and payment follow-ups
+            </p>
 
           </div>
-        );
-      })}
 
-    </div>
+          <button
+            onClick={() =>
+              setOpenCreate(true)
+            }
+            className="h-12 px-5 rounded-2xl bg-black text-white font-semibold"
+          >
+            Send Reminder
+          </button>
 
-  </div>
+        </div>
 
-</div>
+        {/* STATS */}
 
-      {/* ===================================
-          CREATE MODAL
-      =================================== */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+
+          <SimpleStat
+            title="Sent"
+            value={
+              stats.sent || 0
+            }
+          />
+
+          <SimpleStat
+            title="Pending"
+            value={
+              stats.pending || 0
+            }
+          />
+
+          <SimpleStat
+            title="Failed"
+            value={
+              stats.failed || 0
+            }
+          />
+
+          <SimpleStat
+            title="Opened"
+            value={
+              stats.opened || 0
+            }
+          />
+
+        </div>
+
+        {/* CHANNELS */}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+          <ChannelCard
+            title="Email"
+            desc="Recovery emails"
+            icon={Mail}
+            active={`${stats?.channels?.email || 0} sent`}
+          />
+
+          <ChannelCard
+            title="WhatsApp"
+            desc="WhatsApp reminders"
+            icon={
+              MessageCircle
+            }
+            active={`${stats?.channels?.whatsapp || 0} sent`}
+          />
+
+          <ChannelCard
+            title="SMS"
+            desc="SMS reminders"
+            icon={Smartphone}
+            active={`${stats?.channels?.sms || 0} sent`}
+          />
+
+        </div>
+
+        {/* AI */}
+
+        <div className="bg-black text-white rounded-3xl p-6">
+
+          <div className="flex items-center gap-3">
+
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+              <BrainCircuit className="w-5 h-5 text-yellow-300" />
+            </div>
+
+            <div>
+
+              <h3 className="text-lg font-semibold">
+                AI Recovery Insights
+              </h3>
+
+              <p className="text-sm text-gray-400">
+                Smart collection recommendations
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* LOGS */}
+
+        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
+
+          <div className="p-6 border-b">
+
+            <h2 className="text-xl font-semibold">
+              Recent Activity
+            </h2>
+
+          </div>
+
+          <div className="divide-y">
+
+            {logs.length ===
+              0 && (
+              <div className="p-10 text-center text-gray-500">
+                No activity yet
+              </div>
+            )}
+
+            {logs.map(
+              (log: any) => {
+
+                const Icon =
+                  log.channel ===
+                  "whatsapp"
+                    ? MessageCircle
+                    : log.channel ===
+                      "sms"
+                    ? Smartphone
+                    : Mail;
+
+                return (
+                  <div
+                    key={log.id}
+                    className="p-5 flex items-center justify-between"
+                  >
+
+                    <div className="flex items-center gap-4">
+
+                      <div className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center">
+                        <Icon size={18} />
+                      </div>
+
+                      <div>
+
+                        <h3 className="font-medium">
+                          {
+                            log.invoice
+                              ?.clientName
+                          }
+                        </h3>
+
+                        <p className="text-sm text-gray-500 mt-1">
+                          {
+                            log.channel
+                          }
+                        </p>
+
+                      </div>
+
+                    </div>
+
+                    <StatusBadge
+                      status={
+                        log.status
+                      }
+                    />
+
+                  </div>
+                );
+              }
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =========================================
+         MODAL
+      ========================================= */}
 
       {openCreate && (
+
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
 
-          <div className="bg-white w-full max-w-lg rounded-3xl p-7">
+          <div className="bg-white w-full max-w-xl rounded-3xl p-7">
+
+            {/* HEADER */}
 
             <div className="flex items-center justify-between mb-6">
 
               <div>
 
                 <h2 className="text-2xl font-bold">
-                  Create Reminder
+                  Send Reminder
                 </h2>
 
-                <p className="text-sm text-zinc-500 mt-1">
-                  Send reminder manually
+                <p className="text-sm text-gray-500 mt-1">
+                  Email, SMS & WhatsApp reminders
                 </p>
 
               </div>
@@ -434,66 +645,141 @@ export default function ReminderCenterPage() {
 
             </div>
 
+            {/* FORM */}
+
             <div className="space-y-4">
 
-              <input
-                placeholder="Invoice ID"
+              {/* INVOICE */}
+
+              <select
                 value={invoiceId}
                 onChange={(e) =>
                   setInvoiceId(
                     e.target.value
                   )
                 }
-                className="w-full border rounded-2xl px-4 py-3 outline-none"
-              />
-
-              <input
-                placeholder="Client email"
-                value={email}
-                onChange={(e) =>
-                  setEmail(
-                    e.target.value
-                  )
-                }
-                className="w-full border rounded-2xl px-4 py-3 outline-none"
-              />
-
-              <input
-                placeholder="Invoice amount"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(
-                    e.target.value
-                  )
-                }
-                className="w-full border rounded-2xl px-4 py-3 outline-none"
-              />
-
-              <select
-                value={mode}
-                onChange={(e) =>
-                  setMode(
-                    e.target.value
-                  )
-                }
-                className="w-full border rounded-2xl px-4 py-3 outline-none"
+                className="w-full border rounded-2xl px-4 py-3"
               >
-                <option value="email">
-                  Email
+
+                <option value="">
+                  Select invoice
                 </option>
 
-                <option value="whatsapp">
-                  WhatsApp
+                {invoices.map(
+                  (invoice) => (
+                    <option
+                      key={
+                        invoice.id
+                      }
+                      value={
+                        invoice.id
+                      }
+                    >
+                      {
+                        invoice.clientEmail
+                      }{" "}
+                      • $
+                      {
+                        invoice.amount
+                      }
+                    </option>
+                  )
+                )}
+
+              </select>
+
+              {/* EMAIL */}
+
+              <input
+                value={email}
+                readOnly
+                placeholder="Client email"
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
+              {/* PHONE */}
+
+              <input
+                value={phone}
+                readOnly
+                placeholder="Client phone"
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
+              {/* AMOUNT */}
+
+              <input
+                value={amount}
+                readOnly
+                placeholder="Amount"
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
+              {/* CHANNEL */}
+
+              <select
+                value={channel}
+                onChange={(e) =>
+                  setChannel(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-2xl px-4 py-3"
+              >
+
+                <option value="email">
+                  Email
                 </option>
 
                 <option value="sms">
                   SMS
                 </option>
 
+                <option value="whatsapp">
+                  WhatsApp
+                </option>
+
               </select>
 
+              {/* TEMPLATE */}
+
+              <select
+                value={templateId}
+                onChange={(e) =>
+                  setTemplateId(
+                    e.target.value
+                  )
+                }
+                className="w-full border rounded-2xl px-4 py-3"
+              >
+
+                <option value="">
+                  Select template
+                </option>
+
+                {templates.map(
+                  (template) => (
+                    <option
+                      key={
+                        template.id
+                      }
+                      value={
+                        template.id
+                      }
+                    >
+                      {
+                        template.name
+                      }
+                    </option>
+                  )
+                )}
+
+              </select>
+
+              {/* MESSAGE */}
+
               <textarea
-                rows={5}
+                rows={6}
                 value={message}
                 onChange={(e) =>
                   setMessage(
@@ -501,10 +787,12 @@ export default function ReminderCenterPage() {
                   )
                 }
                 placeholder="Reminder message..."
-                className="w-full border rounded-2xl px-4 py-3 outline-none"
+                className="w-full border rounded-2xl px-4 py-3"
               />
 
             </div>
+
+            {/* ACTIONS */}
 
             <div className="flex justify-end gap-3 mt-6">
 
@@ -521,84 +809,20 @@ export default function ReminderCenterPage() {
                 onClick={
                   createReminder
                 }
+                disabled={
+                  sending
+                }
                 className="bg-black text-white px-5 py-3 rounded-2xl"
               >
-                Send Reminder
+                {sending
+                  ? "Sending..."
+                  : "Send Reminder"}
               </button>
 
             </div>
 
           </div>
-        </div>
-      )}
 
-      {/* ===================================
-          ANALYTICS MODAL
-      =================================== */}
-
-      {openAnalytics && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-
-          <div className="bg-white w-full max-w-2xl rounded-3xl p-7">
-
-            <div className="flex items-center justify-between mb-8">
-
-              <div>
-
-                <h2 className="text-2xl font-bold">
-                  Recovery Analytics
-                </h2>
-
-                <p className="text-sm text-zinc-500 mt-1">
-                  Real performance overview
-                </p>
-
-              </div>
-
-              <button
-                onClick={() =>
-                  setOpenAnalytics(false)
-                }
-              >
-                <X size={22} />
-              </button>
-
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-              <AnalyticsCard
-                title="Emails"
-                value={
-                  stats?.channels
-                    ?.email || 0
-                }
-              />
-
-              <AnalyticsCard
-                title="WhatsApp"
-                value={
-                  stats?.channels
-                    ?.whatsapp || 0
-                }
-              />
-
-              <AnalyticsCard
-                title="SMS"
-                value={
-                  stats?.channels
-                    ?.sms || 0
-                }
-              />
-
-              <AnalyticsCard
-                title="Success"
-                value={`${stats.sent || 0}`}
-              />
-
-            </div>
-
-          </div>
         </div>
       )}
 
@@ -606,45 +830,28 @@ export default function ReminderCenterPage() {
   );
 }
 
-/* ===================================
-   STATS
-=================================== */
+/* =========================================
+   COMPONENTS
+========================================= */
 
-function StatCard({
+function SimpleStat({
   title,
   value,
-  icon: Icon,
 }: any) {
   return (
-    <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5">
+    <div className="bg-white border border-gray-200 rounded-3xl p-5">
 
-      <div className="flex items-center justify-between">
+      <p className="text-sm text-gray-500">
+        {title}
+      </p>
 
-        <div>
-
-          <p className="text-zinc-400 text-sm">
-            {title}
-          </p>
-
-          <h3 className="text-3xl font-bold mt-2">
-            {value}
-          </h3>
-
-        </div>
-
-        <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center">
-          <Icon size={18} />
-        </div>
-
-      </div>
+      <h3 className="text-3xl font-bold mt-2">
+        {value}
+      </h3>
 
     </div>
   );
 }
-
-/* ===================================
-   CHANNEL
-=================================== */
 
 function ChannelCard({
   title,
@@ -653,9 +860,9 @@ function ChannelCard({
   active,
 }: any) {
   return (
-    <div className="bg-white border border-zinc-200 rounded-3xl p-6 hover:shadow-md transition">
+    <div className="bg-white border border-gray-200 rounded-3xl p-6">
 
-      <div className="w-12 h-12 rounded-2xl bg-zinc-100 flex items-center justify-center mb-5">
+      <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mb-5">
         <Icon size={20} />
       </div>
 
@@ -663,25 +870,17 @@ function ChannelCard({
         {title}
       </h3>
 
-      <p className="text-sm text-zinc-500 mt-2 leading-6">
+      <p className="text-sm text-gray-500 mt-2">
         {desc}
       </p>
 
-      <div className="mt-5 inline-flex items-center gap-2 text-green-600 text-sm font-medium">
-
-        <div className="w-2 h-2 rounded-full bg-green-500" />
-
+      <div className="mt-5 text-sm text-green-600 font-medium">
         {active}
-
       </div>
 
     </div>
   );
 }
-
-/* ===================================
-   STATUS
-=================================== */
 
 function StatusBadge({
   status,
@@ -708,29 +907,6 @@ function StatusBadge({
   return (
     <div className="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-medium">
       Failed
-    </div>
-  );
-}
-
-/* ===================================
-   ANALYTICS
-=================================== */
-
-function AnalyticsCard({
-  title,
-  value,
-}: any) {
-  return (
-    <div className="border rounded-2xl p-5">
-
-      <p className="text-sm text-zinc-500">
-        {title}
-      </p>
-
-      <h3 className="text-3xl font-bold mt-2">
-        {value}
-      </h3>
-
     </div>
   );
 }

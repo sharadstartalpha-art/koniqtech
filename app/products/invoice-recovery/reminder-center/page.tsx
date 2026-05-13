@@ -25,11 +25,11 @@ import {
 type Invoice = {
   id: string;
 
-  clientEmail: string;
+  clientName?: string | null;
+
+  clientEmail?: string | null;
 
   clientPhone?: string | null;
-
-  clientName?: string | null;
 
   amount: number;
 };
@@ -59,6 +59,12 @@ export default function ReminderCenterPage() {
   const [loading, setLoading] =
     useState(true);
 
+  const [sending, setSending] =
+    useState(false);
+
+  const [openCreate, setOpenCreate] =
+    useState(false);
+
   const [data, setData] =
     useState<any>(null);
 
@@ -67,9 +73,6 @@ export default function ReminderCenterPage() {
 
   const [templates, setTemplates] =
     useState<Template[]>([]);
-
-  const [openCreate, setOpenCreate] =
-    useState(false);
 
   /* =========================================
      FORM
@@ -90,14 +93,11 @@ export default function ReminderCenterPage() {
   const [channel, setChannel] =
     useState("email");
 
-  const [message, setMessage] =
-    useState("");
-
   const [templateId, setTemplateId] =
     useState("");
 
-  const [sending, setSending] =
-    useState(false);
+  const [message, setMessage] =
+    useState("");
 
   /* =========================================
      LOAD
@@ -133,7 +133,8 @@ export default function ReminderCenterPage() {
           invoiceRes.data
         )
           ? invoiceRes.data
-          : []
+          : invoiceRes.data
+              ?.invoices || []
       );
 
       setTemplates(
@@ -164,34 +165,49 @@ export default function ReminderCenterPage() {
   }, []);
 
   /* =========================================
-     AUTO FILL INVOICE
+     CURRENT INVOICE
+  ========================================= */
+
+  const currentInvoice =
+    useMemo(() => {
+
+      return invoices.find(
+        (invoice) =>
+          invoice.id.trim() ===
+          invoiceId.trim()
+      );
+
+    }, [
+      invoiceId,
+      invoices,
+    ]);
+
+  /* =========================================
+     AUTO FILL
   ========================================= */
 
   useEffect(() => {
 
-    if (!invoiceId) return;
-
-    const invoice =
-      invoices.find(
-        (i) =>
-          i.id === invoiceId
-      );
-
-    if (!invoice) return;
+    if (!currentInvoice)
+      return;
 
     setEmail(
-      invoice.clientEmail || ""
+      currentInvoice.clientEmail ||
+        ""
     );
 
     setPhone(
-      invoice.clientPhone || ""
+      currentInvoice.clientPhone ||
+        ""
     );
 
     setAmount(
-      String(invoice.amount || 0)
+      String(
+        currentInvoice.amount || 0
+      )
     );
 
-  }, [invoiceId, invoices]);
+  }, [currentInvoice]);
 
   /* =========================================
      TEMPLATE
@@ -199,63 +215,81 @@ export default function ReminderCenterPage() {
 
   const selectedTemplate =
     useMemo(() => {
+
       return templates.find(
-        (t) =>
-          t.id === templateId
+        (template) =>
+          template.id ===
+          templateId
       );
+
     }, [
       templateId,
       templates,
     ]);
 
+  /* =========================================
+     APPLY VARIABLES
+  ========================================= */
+
+  const applyVariables = (
+    content: string
+  ) => {
+
+    return content
+      .replaceAll(
+        "{{name}}",
+        currentInvoice
+          ?.clientName ||
+          "Customer"
+      )
+      .replaceAll(
+        "{{amount}}",
+        amount || "0"
+      )
+      .replaceAll(
+        "{{email}}",
+        email || ""
+      )
+      .replaceAll(
+        "{{phone}}",
+        phone || ""
+      )
+      .replaceAll(
+        "{{invoiceId}}",
+        invoiceId || ""
+      )
+      .replaceAll(
+        "{{link}}",
+        "https://koniqtech.com"
+      );
+  };
+
+  /* =========================================
+     TEMPLATE CHANGE
+  ========================================= */
+
   useEffect(() => {
 
-    if (
-      !selectedTemplate
-    ) return;
+    if (!selectedTemplate)
+      return;
 
-    const invoice =
-      invoices.find(
-        (i) =>
-          i.id === invoiceId
+    const html =
+      applyVariables(
+        selectedTemplate.html
       );
 
-    const finalHtml =
-      selectedTemplate.html
-        .replaceAll(
-          "{{name}}",
-          invoice?.clientName ||
-            "Customer"
-        )
-        .replaceAll(
-          "{{amount}}",
-          amount
-        )
-        .replaceAll(
-          "{{email}}",
-          email
-        )
-        .replaceAll(
-          "{{link}}",
-          "#"
-        );
-
-    const plainText =
-      finalHtml.replace(
-        /<[^>]*>/g,
+    const cleanText =
+      html.replace(
+        /<[^>]+>/g,
         ""
       );
 
-    setMessage(
-      plainText
-    );
+    setMessage(cleanText);
 
   }, [
     selectedTemplate,
-    invoiceId,
+    currentInvoice,
     amount,
-    email,
-    invoices,
   ]);
 
   /* =========================================
@@ -279,7 +313,7 @@ export default function ReminderCenterPage() {
           !email
         ) {
           toast.error(
-            "Email required"
+            "Client email missing"
           );
 
           return;
@@ -294,7 +328,7 @@ export default function ReminderCenterPage() {
           !phone
         ) {
           toast.error(
-            "Phone required"
+            "Client phone missing"
           );
 
           return;
@@ -303,20 +337,11 @@ export default function ReminderCenterPage() {
         setSending(true);
 
         const html =
-          selectedTemplate?.html
-            ?.replaceAll(
-              "{{amount}}",
-              amount
-            )
-            ?.replaceAll(
-              "{{email}}",
-              email
-            )
-            ?.replaceAll(
-              "{{link}}",
-              "#"
-            ) ||
-          `<p>${message}</p>`;
+          selectedTemplate
+            ? applyVariables(
+                selectedTemplate.html
+              )
+            : `<p>${message}</p>`;
 
         await axios.post(
           "/api/reminder-center",
@@ -361,9 +386,9 @@ export default function ReminderCenterPage() {
 
         setAmount("");
 
-        setMessage("");
-
         setTemplateId("");
+
+        setMessage("");
 
         loadData();
 
@@ -519,7 +544,7 @@ export default function ReminderCenterPage() {
               </h3>
 
               <p className="text-sm text-gray-400">
-                Smart collection recommendations
+                Best recovery performance happens between 9AM–11AM
               </p>
 
             </div>
@@ -528,7 +553,7 @@ export default function ReminderCenterPage() {
 
         </div>
 
-        {/* LOGS */}
+        {/* ACTIVITY */}
 
         <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
 
@@ -649,9 +674,10 @@ export default function ReminderCenterPage() {
 
             <div className="space-y-4">
 
-              {/* INVOICE */}
+              {/* INVOICE ID */}
 
-              <select
+              <input
+                placeholder="Paste Invoice ID"
                 value={invoiceId}
                 onChange={(e) =>
                   setInvoiceId(
@@ -659,34 +685,7 @@ export default function ReminderCenterPage() {
                   )
                 }
                 className="w-full border rounded-2xl px-4 py-3"
-              >
-
-                <option value="">
-                  Select invoice
-                </option>
-
-                {invoices.map(
-                  (invoice) => (
-                    <option
-                      key={
-                        invoice.id
-                      }
-                      value={
-                        invoice.id
-                      }
-                    >
-                      {
-                        invoice.clientEmail
-                      }{" "}
-                      • $
-                      {
-                        invoice.amount
-                      }
-                    </option>
-                  )
-                )}
-
-              </select>
+              />
 
               {/* EMAIL */}
 
@@ -711,7 +710,7 @@ export default function ReminderCenterPage() {
               <input
                 value={amount}
                 readOnly
-                placeholder="Amount"
+                placeholder="Invoice amount"
                 className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
               />
 
@@ -779,7 +778,7 @@ export default function ReminderCenterPage() {
               {/* MESSAGE */}
 
               <textarea
-                rows={6}
+                rows={8}
                 value={message}
                 onChange={(e) =>
                   setMessage(
@@ -838,6 +837,7 @@ function SimpleStat({
   title,
   value,
 }: any) {
+
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-5">
 
@@ -859,6 +859,7 @@ function ChannelCard({
   icon: Icon,
   active,
 }: any) {
+
   return (
     <div className="bg-white border border-gray-200 rounded-3xl p-6">
 

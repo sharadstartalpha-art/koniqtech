@@ -13,6 +13,11 @@ import {
   ShieldCheck,
   Sparkles,
   ChevronRight,
+  Palette,
+  Wallet,
+  Mail,
+  MessageCircle,
+  Users,
 } from "lucide-react";
 
 export default function SettingsClient() {
@@ -45,21 +50,66 @@ export default function SettingsClient() {
 
   const tabs = [
     {
-      id: "reminders",
-      label:
-        "Reminder Settings",
-      icon: Bell,
-      desc:
-        "Templates, automation & delivery",
-    },
-
-    {
       id: "general",
       label:
         "General",
       icon: Settings,
       desc:
         "Workspace preferences",
+    },
+
+    {
+      id: "branding",
+      label:
+        "Branding",
+      icon: Palette,
+      desc:
+        "Logo, company & branding",
+    },
+
+    {
+      id: "payments",
+      label:
+        "Payment Methods",
+      icon: Wallet,
+      desc:
+        "Payment links & gateways",
+    },
+
+    {
+      id: "reminders",
+      label:
+        "Reminder Automation",
+      icon: Bell,
+      desc:
+        "Reminder workflows & AI",
+    },
+
+    {
+      id: "email",
+      label:
+        "Email Settings",
+      icon: Mail,
+      desc:
+        "SMTP & email branding",
+    },
+
+    {
+      id: "whatsapp",
+      label:
+        "WhatsApp Settings",
+      icon: MessageCircle,
+      desc:
+        "WhatsApp automation",
+    },
+
+    {
+      id: "team",
+      label:
+        "Team",
+      icon: Users,
+      desc:
+        "Manage members & access",
     },
 
     {
@@ -71,6 +121,81 @@ export default function SettingsClient() {
         "Plans & subscription",
     },
   ];
+
+  /* =========================================
+     TITLE
+  ========================================= */
+
+  const getTitle = () => {
+
+    switch (tab) {
+
+      case "general":
+        return "General Settings";
+
+      case "branding":
+        return "Branding";
+
+      case "payments":
+        return "Payment Methods";
+
+      case "reminders":
+        return "Reminder Automation";
+
+      case "email":
+        return "Email Settings";
+
+      case "whatsapp":
+        return "WhatsApp Settings";
+
+      case "team":
+        return "Team Management";
+
+      case "billing":
+        return "Billing & Subscription";
+
+      default:
+        return "Settings";
+    }
+  };
+
+  /* =========================================
+     DESCRIPTION
+  ========================================= */
+
+  const getDescription =
+    () => {
+
+      switch (tab) {
+
+        case "general":
+          return "Manage workspace and application preferences";
+
+        case "branding":
+          return "Configure company profile, logo and recovery branding";
+
+        case "payments":
+          return "Configure payment gateways, PayPal, Stripe and payment links";
+
+        case "reminders":
+          return "Configure reminders, workflows and automation sequences";
+
+        case "email":
+          return "Configure SMTP, sender identity and email delivery";
+
+        case "whatsapp":
+          return "Configure WhatsApp API and recovery messaging";
+
+        case "team":
+          return "Manage workspace users, permissions and collaboration";
+
+        case "billing":
+          return "Manage subscriptions, invoices and plan upgrades";
+
+        default:
+          return "Workspace settings";
+      }
+    };
 
   return (
     <Layout>
@@ -125,7 +250,9 @@ export default function SettingsClient() {
                 font-bold
                 leading-tight
               ">
-                Manage your workspace settings
+
+                Manage your recovery workspace
+
               </h1>
 
               <p className="
@@ -134,9 +261,11 @@ export default function SettingsClient() {
                 text-[15px]
                 leading-7
               ">
-                Configure reminder automation,
-                billing preferences, security,
-                and recovery workflows.
+
+                Configure automation,
+                branding, payments,
+                notifications and recovery workflows.
+
               </p>
 
             </div>
@@ -161,9 +290,9 @@ export default function SettingsClient() {
               />
 
               <HeroCard
-                title="Billing"
+                title="Payments"
                 value="Connected"
-                icon={CreditCard}
+                icon={Wallet}
               />
 
             </div>
@@ -254,7 +383,9 @@ export default function SettingsClient() {
                           font-semibold
                           text-sm
                         ">
+
                           {item.label}
+
                         </p>
 
                         <p
@@ -267,7 +398,9 @@ export default function SettingsClient() {
                             }
                           `}
                         >
+
                           {item.desc}
+
                         </p>
 
                       </div>
@@ -312,13 +445,7 @@ export default function SettingsClient() {
                 font-bold
               ">
 
-                {tab ===
-                "reminders"
-                  ? "Reminder Settings"
-                  : tab ===
-                    "general"
-                  ? "General Settings"
-                  : "Billing Settings"}
+                {getTitle()}
 
               </h2>
 
@@ -327,13 +454,7 @@ export default function SettingsClient() {
                 mt-1
               ">
 
-                {tab ===
-                "reminders"
-                  ? "Configure reminders, templates and automation flows"
-                  : tab ===
-                    "general"
-                  ? "Manage workspace and application preferences"
-                  : "Manage plans, invoices and subscriptions"}
+                {getDescription()}
 
               </p>
 
@@ -343,64 +464,108 @@ export default function SettingsClient() {
 
             <div className="p-8">
 
-              {/* REMINDERS */}
+              {/* =====================================
+                 REMINDERS
+              ===================================== */}
 
               {tab ===
                 "reminders" && (
                 <ReminderTab />
               )}
 
-              {/* GENERAL */}
+              {/* =====================================
+                 GENERAL
+              ===================================== */}
 
               {tab ===
                 "general" && (
-                <div className="
-                  rounded-3xl
-                  border border-zinc-200
-                  p-8
-                  text-center
-                ">
-
-                  <div className="
-                    w-16 h-16
-                    rounded-2xl
-                    bg-zinc-100
-                    mx-auto
-                    flex items-center justify-center
-                  ">
-
-                    <Settings
-                      size={28}
-                    />
-
-                  </div>
-
-                  <h3 className="
-                    text-xl
-                    font-semibold
-                    mt-5
-                  ">
-                    General Settings
-                  </h3>
-
-                  <p className="
-                    text-zinc-500
-                    mt-2
-                    max-w-md
-                    mx-auto
-                    leading-7
-                  ">
-                    Workspace branding,
-                    timezone preferences,
-                    notification controls,
-                    and more settings
-                    will appear here.
-                  </p>
-
-                </div>
+                <ComingSoonCard
+                  icon={
+                    Settings
+                  }
+                  title="General Settings"
+                  desc="Workspace timezone, defaults, notification preferences and recovery behavior settings."
+                />
               )}
 
-              {/* BILLING */}
+              {/* =====================================
+                 BRANDING
+              ===================================== */}
+
+              {tab ===
+                "branding" && (
+                <ComingSoonCard
+                  icon={
+                    Palette
+                  }
+                  title="Branding"
+                  desc="Upload logo, company name, sender profile, recovery email branding and white-label settings."
+                />
+              )}
+
+              {/* =====================================
+                 PAYMENTS
+              ===================================== */}
+
+              {tab ===
+                "payments" && (
+                <ComingSoonCard
+                  icon={
+                    Wallet
+                  }
+                  title="Payment Methods"
+                  desc="Configure PayPal, Stripe, Razorpay, UPI, bank transfer and custom payment links."
+                />
+              )}
+
+              {/* =====================================
+                 EMAIL
+              ===================================== */}
+
+              {tab ===
+                "email" && (
+                <ComingSoonCard
+                  icon={
+                    Mail
+                  }
+                  title="Email Settings"
+                  desc="Configure SMTP credentials, sender email identity and delivery settings."
+                />
+              )}
+
+              {/* =====================================
+                 WHATSAPP
+              ===================================== */}
+
+              {tab ===
+                "whatsapp" && (
+                <ComingSoonCard
+                  icon={
+                    MessageCircle
+                  }
+                  title="WhatsApp Settings"
+                  desc="Connect WhatsApp API, recovery flows and automated WhatsApp reminders."
+                />
+              )}
+
+              {/* =====================================
+                 TEAM
+              ===================================== */}
+
+              {tab ===
+                "team" && (
+                <ComingSoonCard
+                  icon={
+                    Users
+                  }
+                  title="Team Management"
+                  desc="Invite team members, assign roles and manage workspace permissions."
+                />
+              )}
+
+              {/* =====================================
+                 BILLING
+              ===================================== */}
 
               {tab ===
                 "billing" && (
@@ -430,7 +595,9 @@ export default function SettingsClient() {
                     font-semibold
                     mt-5
                   ">
-                    Billing & Plans
+
+                    Billing & Subscription
+
                   </h3>
 
                   <p className="
@@ -440,11 +607,12 @@ export default function SettingsClient() {
                     mx-auto
                     leading-7
                   ">
-                    Subscription management,
-                    invoice billing,
-                    payment methods,
-                    and plan upgrades
-                    will appear here.
+
+                    Manage plans,
+                    invoices,
+                    subscriptions
+                    and billing history.
+
                   </p>
 
                   <a
@@ -495,6 +663,7 @@ function HeroCard({
   value,
   icon: Icon,
 }: any) {
+
   return (
     <div className="
       bg-white/5
@@ -514,7 +683,9 @@ function HeroCard({
             text-zinc-400
             text-sm
           ">
+
             {title}
+
           </p>
 
           <h3 className="
@@ -522,7 +693,9 @@ function HeroCard({
             font-bold
             mt-2
           ">
+
             {value}
+
           </h3>
 
         </div>
@@ -539,6 +712,62 @@ function HeroCard({
         </div>
 
       </div>
+
+    </div>
+  );
+}
+
+/* =========================================
+   COMING SOON CARD
+========================================= */
+
+function ComingSoonCard({
+  icon: Icon,
+  title,
+  desc,
+}: any) {
+
+  return (
+    <div className="
+      rounded-3xl
+      border border-zinc-200
+      p-8
+      text-center
+    ">
+
+      <div className="
+        w-16 h-16
+        rounded-2xl
+        bg-zinc-100
+        mx-auto
+        flex items-center justify-center
+      ">
+
+        <Icon size={28} />
+
+      </div>
+
+      <h3 className="
+        text-xl
+        font-semibold
+        mt-5
+      ">
+
+        {title}
+
+      </h3>
+
+      <p className="
+        text-zinc-500
+        mt-2
+        max-w-md
+        mx-auto
+        leading-7
+      ">
+
+        {desc}
+
+      </p>
 
     </div>
   );

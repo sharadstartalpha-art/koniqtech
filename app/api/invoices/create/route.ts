@@ -14,6 +14,14 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET
 );
 
+type ReminderWorkflowItem = {
+  day: number;
+  type:
+    | "friendly"
+    | "firm"
+    | "final";
+};
+
 export async function POST(
   req: Request
 ) {
@@ -32,11 +40,27 @@ export async function POST(
       clientPhone,
       amount,
       dueDate,
-      mode,
 
-      /* NEW AUTO FLOW */
-      autoSendFirstReminder,
-      reminderWorkflow,
+      mode = "auto",
+
+      autoSendFirstReminder = true,
+
+      reminderWorkflow = [
+        {
+          day: 3,
+          type: "friendly",
+        },
+
+        {
+          day: 7,
+          type: "firm",
+        },
+
+        {
+          day: 14,
+          type: "final",
+        },
+      ],
     } = body;
 
     /* =========================================
@@ -111,7 +135,7 @@ export async function POST(
     }
 
     /* =========================================
-       GET USER
+       USER
     ========================================= */
 
     const user =
@@ -245,6 +269,58 @@ export async function POST(
     }
 
     /* =========================================
+       USER PAYMENT LINKS
+    ========================================= */
+
+    let paymentLink:
+      | string
+      | null = null;
+
+    if (user.paypalMe) {
+
+      paymentLink =
+        user.paypalMe;
+    }
+
+    else if (
+      user.stripeLink
+    ) {
+
+      paymentLink =
+        user.stripeLink;
+    }
+
+    else if (
+      user.razorpayLink
+    ) {
+
+      paymentLink =
+        user.razorpayLink;
+    }
+
+    else if (
+      user.customPaymentLink
+    ) {
+
+      paymentLink =
+        user.customPaymentLink;
+    }
+
+    else if (
+      user.upiId
+    ) {
+
+      paymentLink =
+        `upi://pay?pa=${user.upiId}&pn=${encodeURIComponent(
+          user.companyName ||
+            user.name ||
+            "Business"
+        )}&am=${Number(
+          amount
+        )}`;
+    }
+
+    /* =========================================
        CREATE INVOICE
     ========================================= */
 
@@ -278,152 +354,70 @@ export async function POST(
             status:
               "unpaid",
 
-            mode:
-              mode ||
+            mode,
+
+            paymentLink,
+
+            autoReminder:
+              mode ===
               "auto",
 
-            /* =====================================
-               NEW AUTO SETTINGS
-            ===================================== */
-
-            autoSendFirstReminder:
-              autoSendFirstReminder ??
-              true,
+            autoSendFirstReminder,
 
             reminderWorkflow:
-              reminderWorkflow ||
-              [
-                {
-                  day: 3,
-                  type:
-                    "friendly",
-                },
-
-                {
-                  day: 7,
-                  type:
-                    "firm",
-                },
-
-                {
-                  day: 14,
-                  type:
-                    "final",
-                },
-              ],
+              reminderWorkflow as any,
           },
         }
       );
 
     /* =========================================
-       PAYMENT LINK
+       CREATE REMINDER SCHEDULES
     ========================================= */
 
-   /* =========================================
-   USER PAYMENT LINKS
-========================================= */
+    if (
+      mode === "auto" &&
+      Array.isArray(
+        reminderWorkflow
+      )
+    ) {
 
-const paymentUser =
-  await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
+      for (const item of reminderWorkflow as ReminderWorkflowItem[]) {
 
-    select: {
-      paypalMe: true,
-      stripeLink: true,
-      razorpayLink: true,
-      customPaymentLink: true,
-      upiId: true,
-    },
-  });
-/* =========================================
-   GENERATE PAYMENT LINK
-========================================= */
+        const sendDate =
+          new Date();
 
-let paymentLink: string | null = null;
+        sendDate.setDate(
+          sendDate.getDate() +
+            Number(
+              item.day
+            )
+        );
 
-/* =========================
-   PAYPAL
-========================= */
+       await prisma.reminderSchedule.create({
+  data: {
+    userId,
 
-if (paymentUser?.paypalMe) {
+    invoiceId:
+      invoice.id,
 
-  paymentLink =
-    user.paypalMe;
+    type:
+      item.type,
 
-}
+    amount:
+      Number(invoice.amount),
 
-/* =========================
-   STRIPE
-========================= */
+    sendAt:
+      sendDate,
 
-else if (
-  paymentUser?.stripeLink
-) {
+    status:
+      "pending",
+  },
+});
+      }
+    }
 
-  paymentLink =
-    user.stripeLink;
-
-}
-
-/* =========================
-   RAZORPAY
-========================= */
-
-else if (
-  paymentUser?.razorpayLink
-) {
-
-  paymentLink =
-    user.razorpayLink;
-
-}
-
-/* =========================
-   CUSTOM
-========================= */
-
-else if (
-  paymentUser?.customPaymentLink
-) {
-
-  paymentLink =
-    user.customPaymentLink;
-
-}
-
-/* =========================
-   UPI
-========================= */
-
-else if (
-  paymentUser?.upiId
-) {
-
-  paymentLink =
-    `upi://pay?pa=${user.upiId}&pn=${encodeURIComponent(
-      clientName || "Customer"
-    )}&am=${amount}`;
-
-}
-
-/* =========================================
-   SAVE PAYMENT LINK
-========================================= */
-
-const updatedInvoice =
-  await prisma.invoice.update({
-    where: {
-      id: invoice.id,
-    },
-
-    data: {
-      paymentLink,
-    },
-  });
     /* =========================================
-       INSTANT FIRST EMAIL
+       SEND FIRST REMINDER
     ========================================= */
 
     if (
@@ -448,7 +442,8 @@ const updatedInvoice =
               "Customer",
 
             paymentLink:
-  paymentLink || undefined,
+              paymentLink ||
+              undefined,
 
             senderName:
               user.name ||
@@ -482,60 +477,58 @@ const updatedInvoice =
             email.text,
         });
 
-        /* =====================================
-           SAVE LOG
-        ===================================== */
+        await prisma.reminder.create(
+          {
+            data: {
+              userId,
 
-        await prisma.reminder.create({
-          data: {
-            userId,
+              invoiceId:
+                invoice.id,
 
-            invoiceId:
-              invoice.id,
+              email:
+                invoice.clientEmail,
 
-            email:
-              invoice.clientEmail,
+              amount:
+                Number(
+                  invoice.amount
+                ),
 
-            amount:
-              Number(
-                invoice.amount
-              ),
+              type:
+                "friendly",
 
-            type:
-              "friendly",
+              mode:
+                "auto",
 
-            mode:
-              "auto",
+              status:
+                "sent",
 
-            status:
-              "sent",
+              sentAt:
+                new Date(),
 
-            sentAt:
-              new Date(),
+              html:
+                email.html,
 
-            html:
-              email.html,
-
-            text:
-              email.text,
-          },
-        });
+              text:
+                email.text,
+            },
+          }
+        );
 
         console.log(
-          "✅ Instant reminder sent"
+          "✅ First reminder sent"
         );
 
       } catch (emailError) {
 
         console.error(
-          "❌ Instant reminder failed:",
+          "❌ Email error:",
           emailError
         );
       }
     }
 
     /* =========================================
-       ONBOARDING UPDATE
+       ONBOARDING
     ========================================= */
 
     await prisma.userOnboarding.upsert(
@@ -565,8 +558,7 @@ const updatedInvoice =
     return NextResponse.json({
       success: true,
 
-      invoice:
-        updatedInvoice,
+      invoice,
     });
 
   } catch (error: any) {

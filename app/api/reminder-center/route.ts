@@ -30,8 +30,8 @@ export async function GET() {
       );
     }
 
-    const logs =
-      await prisma.reminderLog.findMany({
+    const reminders =
+      await prisma.reminder.findMany({
         where: {
           userId: user.id,
         },
@@ -47,8 +47,8 @@ export async function GET() {
         take: 100,
       });
 
-    const reminders =
-      await prisma.reminder.findMany({
+    const logs =
+      await prisma.reminderLog.findMany({
         where: {
           userId: user.id,
         },
@@ -127,11 +127,17 @@ export async function POST(
       phone,
       amount,
       type,
-      channel,
       html,
       text,
       subject,
+
+      // SUPPORT OLD + NEW UI
+      channel,
+      mode,
     } = body;
+
+    const finalChannel =
+      channel || mode || "email";
 
     /* =====================================
        VALIDATION
@@ -149,23 +155,13 @@ export async function POST(
       );
     }
 
-    if (!channel) {
-      return NextResponse.json(
-        {
-          error:
-            "Channel required",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
     /* =====================================
-       SEND EMAIL
+       EMAIL
     ===================================== */
 
-    if (channel === "email") {
+    if (
+      finalChannel === "email"
+    ) {
 
       if (!email) {
         return NextResponse.json(
@@ -186,17 +182,31 @@ export async function POST(
           subject ||
           "Payment Reminder",
 
-        html,
+        html:
+          html ||
+          `
+            <div>
+              <h2>Payment Reminder</h2>
 
-        text,
+              <p>
+                ${text || ""}
+              </p>
+            </div>
+          `,
+
+        text:
+          text ||
+          "Payment reminder",
       });
     }
 
     /* =====================================
-       SEND SMS
+       SMS
     ===================================== */
 
-    if (channel === "sms") {
+    if (
+      finalChannel === "sms"
+    ) {
 
       if (!phone) {
         return NextResponse.json(
@@ -220,11 +230,12 @@ export async function POST(
     }
 
     /* =====================================
-       SEND WHATSAPP
+       WHATSAPP
     ===================================== */
 
     if (
-      channel === "whatsapp"
+      finalChannel ===
+      "whatsapp"
     ) {
 
       if (!phone) {
@@ -272,18 +283,17 @@ export async function POST(
           mode:
             "manual",
 
-          channel,
+          channel:
+            finalChannel,
 
           status:
             "sent",
 
           html:
-            html ||
-            "",
+            html || "",
 
           text:
-            text ||
-            "",
+            text || "",
 
           sentAt:
             new Date(),
@@ -301,21 +311,21 @@ export async function POST(
 
         invoiceId,
 
-        channel,
+        channel:
+          finalChannel,
 
         status:
           "sent",
 
         recipient:
-          email || phone,
+          email || phone || "",
 
         subject:
           subject ||
           "Reminder",
 
         message:
-          text ||
-          "",
+          text || "",
       },
     });
 

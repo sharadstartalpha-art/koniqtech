@@ -272,43 +272,70 @@ export default function ReminderCenterPage() {
   ========================================= */
 
   const applyVariables = (
-    content: string
-  ) => {
+  content: string
+) => {
 
-    return content
-      .replaceAll(
-        "{{name}}",
-        currentInvoice
-          ?.clientName ||
-          "Customer"
-      )
+  return content
 
-      .replaceAll(
-        "{{amount}}",
-        amount || "0"
-      )
+    .replaceAll(
+      "{{name}}",
+      currentInvoice?.clientName ||
+        "Customer"
+    )
 
-      .replaceAll(
-        "{{email}}",
-        email || ""
-      )
+    .replaceAll(
+      "{{amount}}",
+      amount || "0"
+    )
 
-      .replaceAll(
-        "{{phone}}",
-        phone || ""
-      )
+    .replaceAll(
+      "{{email}}",
+      email || ""
+    )
 
-      .replaceAll(
-        "{{invoiceId}}",
-        invoiceId || ""
-      )
+    .replaceAll(
+      "{{phone}}",
+      phone || ""
+    )
 
-      .replaceAll(
-        "{{link}}",
-        "https://koniqtech.com"
-      );
-  };
+    .replaceAll(
+      "{{invoiceId}}",
+      invoiceId || ""
+    )
 
+    .replaceAll(
+      "{{link}}",
+      "https://koniqtech.com"
+    )
+
+    /* =========================
+       SENDER VARIABLES
+    ========================= */
+
+    .replaceAll(
+      "{{senderName}}",
+      data?.user?.name ||
+        "KoniqTech"
+    )
+
+    .replaceAll(
+      "{{companyName}}",
+      data?.user?.companyName ||
+        "KoniqTech"
+    )
+
+    .replaceAll(
+      "{{senderEmail}}",
+      data?.user?.email ||
+        "info@koniqtech.com"
+    )
+
+    .replaceAll(
+      "{{senderPhone}}",
+      data?.user?.phone ||
+        ""
+    );
+};
   /* =========================================
      AUTO TEMPLATE MESSAGE
   ========================================= */

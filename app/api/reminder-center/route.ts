@@ -17,6 +17,10 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
 
+    /* =====================================
+       AUTH
+    ===================================== */
+
     const user = await getUser();
 
     if (!user) {
@@ -29,6 +33,10 @@ export async function GET() {
         }
       );
     }
+
+    /* =====================================
+       REMINDERS
+    ===================================== */
 
     const reminders =
       await prisma.reminder.findMany({
@@ -47,6 +55,10 @@ export async function GET() {
         take: 100,
       });
 
+    /* =====================================
+       LOGS
+    ===================================== */
+
     const logs =
       await prisma.reminderLog.findMany({
         where: {
@@ -64,9 +76,92 @@ export async function GET() {
         take: 100,
       });
 
+    /* =====================================
+       STATS
+    ===================================== */
+
+    const stats = {
+      sent:
+        logs.filter(
+          (log) =>
+            log.status ===
+            "sent"
+        ).length,
+
+      pending:
+        logs.filter(
+          (log) =>
+            log.status ===
+            "pending"
+        ).length,
+
+      failed:
+        logs.filter(
+          (log) =>
+            log.status ===
+            "failed"
+        ).length,
+
+      opened:
+        logs.filter(
+          (log) =>
+            log.status ===
+            "opened"
+        ).length,
+
+      channels: {
+        email:
+          logs.filter(
+            (log) =>
+              log.channel ===
+              "email"
+          ).length,
+
+        sms:
+          logs.filter(
+            (log) =>
+              log.channel ===
+              "sms"
+          ).length,
+
+        whatsapp:
+          logs.filter(
+            (log) =>
+              log.channel ===
+              "whatsapp"
+          ).length,
+      },
+    };
+
+    /* =====================================
+       RESPONSE
+    ===================================== */
+
     return NextResponse.json({
       reminders,
+
       logs,
+
+      stats,
+
+      user: {
+        name:
+          (user as any)
+            ?.name || "",
+
+        companyName:
+          (user as any)
+            ?.companyName ||
+          "KoniqTech",
+
+        email:
+          (user as any)
+            ?.email || "",
+
+        phone:
+          (user as any)
+            ?.phone || "",
+      },
     });
 
   } catch (err) {
@@ -137,7 +232,9 @@ export async function POST(
     } = body;
 
     const finalChannel =
-      channel || mode || "email";
+      channel ||
+      mode ||
+      "email";
 
     /* =====================================
        VALIDATION
@@ -160,7 +257,8 @@ export async function POST(
     ===================================== */
 
     if (
-      finalChannel === "email"
+      finalChannel ===
+      "email"
     ) {
 
       if (!email) {
@@ -186,7 +284,9 @@ export async function POST(
           html ||
           `
             <div>
-              <h2>Payment Reminder</h2>
+              <h2>
+                Payment Reminder
+              </h2>
 
               <p>
                 ${text || ""}
@@ -205,7 +305,8 @@ export async function POST(
     ===================================== */
 
     if (
-      finalChannel === "sms"
+      finalChannel ===
+      "sms"
     ) {
 
       if (!phone) {
@@ -274,7 +375,9 @@ export async function POST(
           email,
 
           amount:
-            Number(amount) || 0,
+            Number(
+              amount
+            ) || 0,
 
           type:
             type ||
@@ -318,7 +421,9 @@ export async function POST(
           "sent",
 
         recipient:
-          email || phone || "",
+          email ||
+          phone ||
+          "",
 
         subject:
           subject ||
@@ -329,8 +434,13 @@ export async function POST(
       },
     });
 
+    /* =====================================
+       RESPONSE
+    ===================================== */
+
     return NextResponse.json({
       success: true,
+
       reminder,
     });
 

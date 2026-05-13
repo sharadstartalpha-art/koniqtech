@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import axios from "axios";
 
 import Layout from "@/components/Layout";
 
-/* =========================
+/* =========================================
    TYPES
-========================= */
+========================================= */
 
 type EmailPreview = {
   html: string;
@@ -17,53 +17,57 @@ type EmailPreview = {
 
 type Invoice = {
   id: string;
-  clientEmail: string;
+
+  clientName?: string | null;
+
+  clientEmail?: string | null;
+
+  clientPhone?: string | null;
+
   amount: number;
 };
 
 type Template = {
   id: string;
+
   name: string;
+
   subject: string;
+
   html: string;
+
   text?: string;
+
   type: string;
 };
 
 type AutoReminder = {
   step: number;
+
   templateId: string;
+
   delay: number;
 };
 
-/* =========================
+type UserData = {
+  name?: string;
+
+  email?: string;
+
+  phone?: string;
+
+  companyName?: string;
+};
+
+/* =========================================
    PAGE
-========================= */
+========================================= */
 
 export default function CreateReminderPage() {
-  const [invoices, setInvoices] =
-    useState<Invoice[]>([]);
 
-  const [templates, setTemplates] =
-    useState<Template[]>([]);
-
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<Template | null>(null);
-
-  const [search, setSearch] =
-    useState("");
-
-  const [selected, setSelected] =
-    useState<Invoice | null>(null);
-
-  const [amount, setAmount] =
-    useState("");
-
-  const [preview, setPreview] =
-    useState<EmailPreview | null>(null);
-
-  const [tab, setTab] =
-    useState<"text" | "html">("html");
+  /* =========================================
+     STATE
+  ========================================= */
 
   const [loading, setLoading] =
     useState(false);
@@ -74,27 +78,66 @@ export default function CreateReminderPage() {
   const [showDropdown, setShowDropdown] =
     useState(false);
 
-  /* =========================
+  const [preview, setPreview] =
+    useState<EmailPreview | null>(
+      null
+    );
+
+  const [tab, setTab] =
+    useState<"html" | "text">(
+      "html"
+    );
+
+  /* =========================================
+     DATA
+  ========================================= */
+
+  const [invoices, setInvoices] =
+    useState<Invoice[]>([]);
+
+  const [templates, setTemplates] =
+    useState<Template[]>([]);
+
+  const [userData, setUserData] =
+    useState<UserData | null>(
+      null
+    );
+
+  /* =========================================
+     FORM
+  ========================================= */
+
+  const [search, setSearch] =
+    useState("");
+
+  const [selected, setSelected] =
+    useState<Invoice | null>(null);
+
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<Template | null>(
+      null
+    );
+
+  const [amount, setAmount] =
+    useState("");
+
+  /* =========================================
      SEND MODE
-  ========================= */
+  ========================================= */
 
   const [sendMode, setSendMode] =
     useState<"manual" | "auto">(
       "manual"
     );
 
-  /* =========================
-     MANUAL / AUTO AMOUNT
-  ========================= */
-
   const [amountMode, setAmountMode] =
     useState<"manual" | "auto">(
       "manual"
     );
 
-  /* =========================
+  /* =========================================
      AUTO REMINDERS
-  ========================= */
+  ========================================= */
 
   const [autoReminders, setAutoReminders] =
     useState<AutoReminder[]>([
@@ -103,11 +146,13 @@ export default function CreateReminderPage() {
         templateId: "",
         delay: 0,
       },
+
       {
         step: 2,
         templateId: "",
         delay: 3,
       },
+
       {
         step: 3,
         templateId: "",
@@ -115,33 +160,41 @@ export default function CreateReminderPage() {
       },
     ]);
 
-  /* =========================
+  /* =========================================
      LOAD
-  ========================= */
+  ========================================= */
 
   useEffect(() => {
     loadInvoices();
+
     loadTemplates();
+
+    loadUser();
   }, []);
 
   const loadInvoices = async () => {
     try {
+
       const res =
-        await axios.get("/api/invoices");
+        await axios.get(
+          "/api/invoices"
+        );
 
       setInvoices(
         Array.isArray(res.data)
           ? res.data
-          : []
+          : res.data?.invoices || []
       );
 
     } catch (err) {
+
       console.error(err);
     }
   };
 
   const loadTemplates = async () => {
     try {
+
       const res =
         await axios.get(
           "/api/reminder-templates"
@@ -150,99 +203,197 @@ export default function CreateReminderPage() {
       let templateData = [];
 
       if (Array.isArray(res.data)) {
+
         templateData = res.data;
 
       } else if (
-        Array.isArray(res.data.templates)
+        Array.isArray(
+          res.data.templates
+        )
       ) {
+
         templateData =
           res.data.templates;
 
       } else if (
-        Array.isArray(res.data.data)
+        Array.isArray(
+          res.data.data
+        )
       ) {
+
         templateData =
           res.data.data;
       }
 
-      setTemplates(templateData);
+      setTemplates(
+        templateData
+      );
 
     } catch (err) {
+
       console.error(err);
     }
   };
 
-  /* =========================
+  const loadUser = async () => {
+    try {
+
+      const res =
+        await axios.get(
+          "/api/me"
+        );
+
+      setUserData(
+        res.data?.user || null
+      );
+
+    } catch (err) {
+
+      console.error(err);
+    }
+  };
+
+  /* =========================================
      FILTER CLIENTS
-  ========================= */
+  ========================================= */
 
-  const filtered = invoices.filter((inv) =>
-    inv.clientEmail
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const filtered =
+    invoices.filter((inv) =>
+      inv.clientEmail
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    );
 
-  /* =========================
+  /* =========================================
+     AUTO SELECT
+  ========================================= */
+
+  useEffect(() => {
+
+    if (!selected)
+      return;
+
+    setAmount(
+      String(
+        selected.amount || 0
+      )
+    );
+
+  }, [selected]);
+
+  /* =========================================
      APPLY VARIABLES
-  ========================= */
+  ========================================= */
 
   const applyVariables = (
     content: string,
     finalAmount: string
   ) => {
-    if (!content) return "";
 
     return content
+
       .replaceAll(
         "{{name}}",
-        selected?.clientEmail?.split("@")[0] ||
+        selected?.clientName ||
+          selected?.clientEmail
+            ?.split("@")[0] ||
           "Customer"
       )
+
       .replaceAll(
         "{{amount}}",
-        finalAmount
+        finalAmount || "0"
       )
+
       .replaceAll(
         "{{email}}",
-        selected?.clientEmail || ""
+        selected?.clientEmail ||
+          ""
       )
+
       .replaceAll(
-        "{{dueDate}}",
-        new Date().toLocaleDateString()
+        "{{phone}}",
+        selected?.clientPhone ||
+          ""
       )
+
+      .replaceAll(
+        "{{invoiceId}}",
+        selected?.id || ""
+      )
+
       .replaceAll(
         "{{link}}",
-        "#"
+        "https://koniqtech.com"
+      )
+
+      /* =========================
+         SENDER
+      ========================= */
+
+      .replaceAll(
+        "{{senderName}}",
+        userData?.name ||
+          "KoniqTech"
+      )
+
+      .replaceAll(
+        "{{companyName}}",
+        userData?.companyName ||
+          "KoniqTech"
+      )
+
+      .replaceAll(
+        "{{senderEmail}}",
+        userData?.email ||
+          "info@koniqtech.com"
+      )
+
+      .replaceAll(
+        "{{senderPhone}}",
+        userData?.phone || ""
       );
   };
 
-  /* =========================
+  /* =========================================
      GENERATE
-  ========================= */
+  ========================================= */
 
   const generate = async () => {
+
     if (!selected) {
-      return alert("Select client");
+      return alert(
+        "Select client"
+      );
     }
 
     if (
       amountMode === "manual" &&
       !amount
     ) {
-      return alert("Enter amount");
+      return alert(
+        "Enter amount"
+      );
     }
 
     if (!selectedTemplate) {
-      return alert("Select template");
+      return alert(
+        "Select template"
+      );
     }
 
     setLoading(true);
 
     try {
+
       const finalAmount =
         amountMode === "manual"
           ? amount
-          : String(selected.amount);
+          : String(
+              selected.amount
+            );
 
       const html =
         applyVariables(
@@ -250,16 +401,11 @@ export default function CreateReminderPage() {
           finalAmount
         );
 
-      const text = `
-Hi ${
-        selected.clientEmail.split("@")[0]
-      },
-
-This is a reminder that your payment of $${finalAmount} is pending.
-
-Thank you,
-KoniqTech
-`;
+      const text =
+        html.replace(
+          /<[^>]*>/g,
+          ""
+        );
 
       setPreview({
         html,
@@ -267,38 +413,45 @@ KoniqTech
       });
 
     } catch (err) {
+
       console.error(err);
 
     } finally {
+
       setLoading(false);
     }
   };
 
-  /* =========================
+  /* =========================================
      SEND
-  ========================= */
+  ========================================= */
 
   const send = async () => {
     try {
+
       setSending(true);
 
-      /* =====================
-         AUTO SEQUENCE
-      ===================== */
+      if (
+        sendMode === "auto"
+      ) {
 
-      if (sendMode === "auto") {
         await axios.post(
           "/api/reminders/auto-sequence",
           {
-            invoiceId: selected?.id,
+            invoiceId:
+              selected?.id,
 
-            reminders: autoReminders,
+            reminders:
+              autoReminders,
 
             amountMode,
 
             amount:
-              amountMode === "manual"
-                ? Number(amount)
+              amountMode ===
+              "manual"
+                ? Number(
+                    amount
+                  )
                 : selected?.amount,
           }
         );
@@ -308,9 +461,6 @@ KoniqTech
         );
 
       } else {
-        /* =====================
-           MANUAL SEND
-        ===================== */
 
         await axios.post(
           "/api/reminders/send-custom",
@@ -318,71 +468,95 @@ KoniqTech
             email:
               selected?.clientEmail,
 
+            phone:
+              selected?.clientPhone,
+
             subject:
-              selectedTemplate?.subject,
+              selectedTemplate?.subject ||
+              "Payment Reminder",
 
-            html: preview?.html,
+            html:
+              preview?.html,
 
-            text: preview?.text,
+            text:
+              preview?.text,
 
             amount:
-              amountMode === "manual"
-                ? Number(amount)
+              amountMode ===
+              "manual"
+                ? Number(
+                    amount
+                  )
                 : selected?.amount,
           }
         );
 
-        alert("Reminder sent");
+        alert(
+          "Reminder sent"
+        );
       }
 
       window.location.href =
         "/products/invoice-recovery/reminders";
 
     } catch (err) {
+
       console.error(err);
 
       alert("Failed");
 
     } finally {
+
       setSending(false);
     }
   };
 
+  /* =========================================
+     UI
+  ========================================= */
+
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto space-y-6">
+
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
         {/* HEADER */}
 
         <div>
-          <h1 className="text-3xl font-bold">
+
+          <h1 className="text-2xl md:text-3xl font-bold">
             Send Reminder
           </h1>
 
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500 mt-1 text-sm md:text-base">
             Manual & automated invoice reminders
           </p>
+
         </div>
 
         {/* CARD */}
 
-        <div className="bg-white border rounded-3xl p-8 space-y-6">
+        <div className="bg-white border rounded-3xl p-4 md:p-8 space-y-6">
 
-          {/* SEND TYPE */}
+          {/* SEND MODE */}
 
           <div>
+
             <label className="block text-sm font-semibold mb-3">
               Send Type
             </label>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
 
               <button
                 onClick={() =>
-                  setSendMode("manual")
+                  setSendMode(
+                    "manual"
+                  )
                 }
-                className={`px-5 py-2 rounded-xl border ${
-                  sendMode === "manual"
+                className={`px-5 py-2 rounded-xl border transition ${
+                  sendMode ===
+                  "manual"
                     ? "bg-black text-white"
                     : "bg-white"
                 }`}
@@ -392,10 +566,13 @@ KoniqTech
 
               <button
                 onClick={() =>
-                  setSendMode("auto")
+                  setSendMode(
+                    "auto"
+                  )
                 }
-                className={`px-5 py-2 rounded-xl border ${
-                  sendMode === "auto"
+                className={`px-5 py-2 rounded-xl border transition ${
+                  sendMode ===
+                  "auto"
                     ? "bg-black text-white"
                     : "bg-white"
                 }`}
@@ -404,118 +581,121 @@ KoniqTech
               </button>
 
             </div>
+
           </div>
 
-          {/* CLIENT */}
+          {/* CLIENT SEARCH */}
 
           <div className="relative">
 
             <label className="block text-sm font-semibold mb-2">
-              Client Email
+              Search Client
             </label>
 
             <input
-              placeholder="Search client..."
+              placeholder="Search by email..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setShowDropdown(true);
+
+                setSearch(
+                  e.target.value
+                );
+
+                setShowDropdown(
+                  true
+                );
               }}
               className="w-full border rounded-2xl px-4 py-3"
             />
 
             {showDropdown && (
-              <div className="absolute z-20 mt-2 w-full bg-white border rounded-2xl shadow-lg max-h-52 overflow-y-auto">
+              <div className="absolute z-20 mt-2 w-full bg-white border rounded-2xl shadow-lg max-h-60 overflow-y-auto">
 
-                {filtered.map((inv) => (
-                  <div
-                    key={inv.id}
-                    onClick={() => {
-                      setSelected(inv);
-                      setSearch(
-                        inv.clientEmail
-                      );
-                      setShowDropdown(false);
-                    }}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer"
-                  >
-                    {inv.clientEmail}
-                  </div>
-                ))}
+                {filtered.map(
+                  (inv) => (
+                    <div
+                      key={inv.id}
+                      onClick={() => {
+
+                        setSelected(
+                          inv
+                        );
+
+                        setSearch(
+                          inv.clientEmail ||
+                            ""
+                        );
+
+                        setShowDropdown(
+                          false
+                        );
+                      }}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                    >
+
+                      <div className="font-medium">
+                        {
+                          inv.clientEmail
+                        }
+                      </div>
+
+                      <div className="text-sm text-gray-500">
+                        {
+                          inv.clientPhone
+                        }{" "}
+                        • ₹
+                        {
+                          inv.amount
+                        }
+                      </div>
+
+                    </div>
+                  )
+                )}
 
               </div>
             )}
+
           </div>
 
-          {/* TOTAL */}
+          {/* CLIENT DETAILS */}
 
           {selected && (
-            <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
-              <p>Total Due</p>
 
-              <p className="text-4xl font-bold text-orange-600">
-                ${selected.amount}
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              <input
+                readOnly
+                value={
+                  selected.clientEmail ||
+                  ""
+                }
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
+              <input
+                readOnly
+                value={
+                  selected.clientPhone ||
+                  ""
+                }
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
+              <input
+                readOnly
+                value={`₹${selected.amount}`}
+                className="w-full border rounded-2xl px-4 py-3 bg-gray-50"
+              />
+
             </div>
           )}
 
-          {/* AMOUNT MODE */}
+          {/* TEMPLATE */}
 
-          <div>
-            <label className="block text-sm font-semibold mb-3">
-              Amount Mode
-            </label>
+          {sendMode ===
+            "manual" && (
 
-            <div className="flex gap-3">
-
-              <button
-                onClick={() =>
-                  setAmountMode("manual")
-                }
-                className={`px-5 py-2 rounded-xl border ${
-                  amountMode === "manual"
-                    ? "bg-orange-500 text-white"
-                    : ""
-                }`}
-              >
-                Manual Amount
-              </button>
-
-              <button
-                onClick={() =>
-                  setAmountMode("auto")
-                }
-                className={`px-5 py-2 rounded-xl border ${
-                  amountMode === "auto"
-                    ? "bg-orange-500 text-white"
-                    : ""
-                }`}
-              >
-                Full Invoice Amount
-              </button>
-
-            </div>
-          </div>
-
-          {/* MANUAL AMOUNT */}
-
-          {amountMode === "manual" && (
-            <input
-              type="number"
-              placeholder="Reminder amount"
-              value={amount}
-              onChange={(e) =>
-                setAmount(e.target.value)
-              }
-              className="w-full border rounded-2xl px-4 py-3"
-            />
-          )}
-
-          {/* =========================
-              MANUAL EMAIL
-          ========================= */}
-
-          {sendMode === "manual" && (
             <>
               <div>
 
@@ -525,182 +705,150 @@ KoniqTech
 
                 <select
                   value={
-                    selectedTemplate?.id || ""
+                    selectedTemplate?.id ||
+                    ""
                   }
                   onChange={(e) => {
+
                     const found =
                       templates.find(
                         (t) =>
                           t.id ===
-                          e.target.value
+                          e.target
+                            .value
                       );
 
                     setSelectedTemplate(
-                      found || null
+                      found ||
+                        null
                     );
                   }}
                   className="w-full border rounded-2xl px-4 py-3"
                 >
+
                   <option value="">
                     Choose template
                   </option>
 
-                  {templates.map((template) => (
-                    <option
-                      key={template.id}
-                      value={template.id}
-                    >
-                      {template.name}
-                    </option>
-                  ))}
+                  {templates.map(
+                    (
+                      template
+                    ) => (
+                      <option
+                        key={
+                          template.id
+                        }
+                        value={
+                          template.id
+                        }
+                      >
+                        {
+                          template.name
+                        }
+                      </option>
+                    )
+                  )}
+
                 </select>
 
               </div>
 
               <button
                 onClick={generate}
-                className="w-full bg-orange-500 text-white py-3 rounded-2xl"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-semibold transition"
               >
                 Generate Email
               </button>
+
             </>
-          )}
-
-          {/* =========================
-              AUTO REMINDERS
-          ========================= */}
-
-          {sendMode === "auto" && (
-            <div className="space-y-5">
-
-              <div>
-                <h2 className="text-lg font-semibold">
-                  Auto Reminder Sequence
-                </h2>
-
-                <p className="text-sm text-gray-500">
-                  Configure automatic reminders
-                </p>
-              </div>
-
-              {autoReminders.map(
-                (reminder, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-2xl p-5 grid grid-cols-3 gap-4"
-                  >
-
-                    {/* TEMPLATE */}
-
-                    <div>
-                      <label className="text-sm font-medium">
-                        Template
-                      </label>
-
-                      <select
-                        value={
-                          reminder.templateId
-                        }
-                        onChange={(e) => {
-                          const updated = [
-                            ...autoReminders,
-                          ];
-
-                          updated[index].templateId =
-                            e.target.value;
-
-                          setAutoReminders(
-                            updated
-                          );
-                        }}
-                        className="w-full mt-2 border rounded-xl px-3 py-2"
-                      >
-                        <option value="">
-                          Select template
-                        </option>
-
-                        {templates.map((t) => (
-                          <option
-                            key={t.id}
-                            value={t.id}
-                          >
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* DELAY */}
-
-                    <div>
-                      <label className="text-sm font-medium">
-                        Send After (Days)
-                      </label>
-
-                      <input
-                        type="number"
-                        value={reminder.delay}
-                        onChange={(e) => {
-                          const updated = [
-                            ...autoReminders,
-                          ];
-
-                          updated[index].delay =
-                            Number(
-                              e.target.value
-                            );
-
-                          setAutoReminders(
-                            updated
-                          );
-                        }}
-                        className="w-full mt-2 border rounded-xl px-3 py-2"
-                      />
-                    </div>
-
-                    {/* STEP */}
-
-                    <div className="flex items-end">
-                      <div className="bg-gray-100 rounded-xl px-4 py-2 w-full text-center font-medium">
-                        Reminder #{reminder.step}
-                      </div>
-                    </div>
-
-                  </div>
-                )
-              )}
-
-            </div>
           )}
 
           {/* PREVIEW */}
 
-          {preview && sendMode === "manual" && (
-            <div className="border rounded-2xl p-6">
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: preview.html,
-                }}
-              />
-            </div>
-          )}
+          {preview &&
+            sendMode ===
+              "manual" && (
+
+              <div className="border rounded-2xl overflow-hidden">
+
+                <div className="flex border-b">
+
+                  <button
+                    onClick={() =>
+                      setTab(
+                        "html"
+                      )
+                    }
+                    className={`flex-1 py-3 text-sm font-medium ${
+                      tab ===
+                      "html"
+                        ? "bg-black text-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    HTML
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setTab(
+                        "text"
+                      )
+                    }
+                    className={`flex-1 py-3 text-sm font-medium ${
+                      tab ===
+                      "text"
+                        ? "bg-black text-white"
+                        : "bg-white"
+                    }`}
+                  >
+                    Text
+                  </button>
+
+                </div>
+
+                <div className="p-6 max-h-[500px] overflow-y-auto">
+
+                  {tab ===
+                  "html" ? (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          preview.html,
+                      }}
+                    />
+                  ) : (
+                    <pre className="whitespace-pre-wrap text-sm">
+                      {
+                        preview.text
+                      }
+                    </pre>
+                  )}
+
+                </div>
+
+              </div>
+            )}
 
           {/* SEND */}
 
           <button
             onClick={send}
             disabled={sending}
-            className="w-full bg-black text-white py-4 rounded-2xl font-semibold"
+            className="w-full bg-black hover:bg-gray-900 text-white py-4 rounded-2xl font-semibold transition"
           >
             {sending
               ? "Processing..."
-              : sendMode === "auto"
+              : sendMode ===
+                "auto"
               ? "Save Auto Sequence"
               : "Send Reminder"}
           </button>
 
         </div>
+
       </div>
+
     </Layout>
   );
 }

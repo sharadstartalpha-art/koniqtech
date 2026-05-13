@@ -245,22 +245,46 @@ async function main() {
       type: "friendly",
       subject: "Friendly Reminder",
       html: `
-        <p>Hi {{name}},</p>
+        <div style="font-family:sans-serif">
 
-        <p>
-          Just a friendly reminder that your invoice is still unpaid.
-        </p>
+  <p>
+    Hi {{name}},
+  </p>
 
-        <p>
-          Amount Due:
-          <strong>{{amount}}</strong>
-        </p>
+  <p>
+    Just a friendly reminder that your invoice is still unpaid.
+  </p>
 
-        <p>
-          Please make payment at your earliest convenience.
-        </p>
+  <p>
+    <strong>
+      Amount Due:
+    </strong>
+    ₹{{amount}}
+  </p>
 
-        <p>Thanks!</p>
+  <p>
+    Please make payment at your earliest convenience.
+  </p>
+
+  <br />
+
+  <p>
+    Regards,
+  </p>
+
+  <p>
+    <strong>
+      {{senderName}}
+    </strong><br />
+
+    {{companyName}}<br />
+
+    {{senderEmail}}<br />
+
+    {{senderPhone}}
+  </p>
+
+</div>
       `,
     },
 

@@ -34,6 +34,8 @@ type Invoice = {
   clientWhatsapp?: string | null;
 
   amount: number;
+
+  paymentLink?: string | null;
 };
 
 type Template = {
@@ -179,37 +181,19 @@ export default function ReminderCenterPage() {
   }, []);
 
   /* =========================================
-     CURRENT INVOICE
-  ========================================= */
-
-  const currentInvoice =
-    useMemo(() => {
-
-      if (!invoiceId)
-        return null;
-
-      return invoices.find(
-        (invoice) =>
-          invoice.id
-            .trim()
-            .toLowerCase() ===
-          invoiceId
-            .trim()
-            .toLowerCase()
-      );
-
-    }, [
-      invoiceId,
-      invoices,
-    ]);
-
-  /* =========================================
-     AUTO FILL
+     AUTO FILL INVOICE
   ========================================= */
 
   useEffect(() => {
 
-    if (!currentInvoice) {
+    /* =========================
+       RESET IF EMPTY
+    ========================= */
+
+    if (
+      !invoiceId ||
+      !invoices.length
+    ) {
 
       setEmail("");
 
@@ -221,33 +205,67 @@ export default function ReminderCenterPage() {
     }
 
     /* =========================
-       PHONE FIX
+       FIND INVOICE
     ========================= */
 
-    const finalPhone =
-      currentInvoice
-        ?.clientPhone ||
-      currentInvoice
-        ?.clientWhatsapp ||
-      "";
+    const found =
+      invoices.find(
+        (invoice) =>
+          invoice.id
+            .trim()
+            .toLowerCase() ===
+          invoiceId
+            .trim()
+            .toLowerCase()
+      );
+
+    /* =========================
+       NOT FOUND
+    ========================= */
+
+    if (!found) {
+
+      setEmail("");
+
+      setPhone("");
+
+      setAmount("");
+
+      return;
+    }
+
+    /* =========================
+       EMAIL
+    ========================= */
 
     setEmail(
-      currentInvoice
-        ?.clientEmail || ""
+      found.clientEmail || ""
     );
 
+    /* =========================
+       PHONE / WHATSAPP
+    ========================= */
+
     setPhone(
-      finalPhone
+      found.clientPhone ||
+      found.clientWhatsapp ||
+      ""
     );
+
+    /* =========================
+       AMOUNT
+    ========================= */
 
     setAmount(
       String(
-        currentInvoice
-          ?.amount || 0
+        found.amount || 0
       )
     );
 
-  }, [currentInvoice]);
+  }, [
+    invoiceId,
+    invoices,
+  ]);
 
   /* =========================================
      TEMPLATE
@@ -272,70 +290,79 @@ export default function ReminderCenterPage() {
   ========================================= */
 
   const applyVariables = (
-  content: string
-) => {
+    content: string
+  ) => {
 
-  return content
+    return content
 
-    .replaceAll(
-      "{{name}}",
-      currentInvoice?.clientName ||
-        "Customer"
-    )
+      .replaceAll(
+        "{{name}}",
+        invoices.find(
+          (invoice) =>
+            invoice.id
+              .trim()
+              .toLowerCase() ===
+            invoiceId
+              .trim()
+              .toLowerCase()
+        )?.clientName ||
+          "Customer"
+      )
 
-    .replaceAll(
-      "{{amount}}",
-      amount || "0"
-    )
+      .replaceAll(
+        "{{amount}}",
+        amount || "0"
+      )
 
-    .replaceAll(
-      "{{email}}",
-      email || ""
-    )
+      .replaceAll(
+        "{{email}}",
+        email || ""
+      )
 
-    .replaceAll(
-      "{{phone}}",
-      phone || ""
-    )
+      .replaceAll(
+        "{{phone}}",
+        phone || ""
+      )
 
-    .replaceAll(
-      "{{invoiceId}}",
-      invoiceId || ""
-    )
+      .replaceAll(
+        "{{invoiceId}}",
+        invoiceId || ""
+      )
 
-    .replaceAll(
-      "{{link}}",
-      "https://koniqtech.com"
-    )
+      .replaceAll(
+        "{{link}}",
+        "https://koniqtech.com"
+      )
 
-    /* =========================
-       SENDER VARIABLES
-    ========================= */
+      /* =========================
+         SENDER VARIABLES
+      ========================= */
 
-    .replaceAll(
-      "{{senderName}}",
-      data?.user?.name ||
-        "KoniqTech"
-    )
+      .replaceAll(
+        "{{senderName}}",
+        data?.user?.name ||
+          "KoniqTech"
+      )
 
-    .replaceAll(
-      "{{companyName}}",
-      data?.user?.companyName ||
-        "KoniqTech"
-    )
+      .replaceAll(
+        "{{companyName}}",
+        data?.user?.companyName ||
+          "KoniqTech"
+      )
 
-    .replaceAll(
-      "{{senderEmail}}",
-      data?.user?.email ||
-        "info@koniqtech.com"
-    )
+      .replaceAll(
+        "{{senderEmail}}",
+        data?.user?.email ||
+          "info@koniqtech.com"
+      )
 
-    .replaceAll(
-      "{{senderPhone}}",
-      data?.user?.phone ||
-        ""
-    );
-};
+      .replaceAll(
+        "{{senderPhone}}",
+        data?.user?.phone ||
+          ""
+      );
+  };
+
   /* =========================================
      AUTO TEMPLATE MESSAGE
   ========================================= */
@@ -360,12 +387,12 @@ export default function ReminderCenterPage() {
     const cleanText =
       parsedHtml
         .replace(
-          /<style[^>]*>.*?<\/style>/gs,
+          /<style[^>]*>[\s\S]*?<\/style>/g,
           ""
         )
 
         .replace(
-          /<script[^>]*>.*?<\/script>/gs,
+          /<script[^>]*>[\s\S]*?<\/script>/g,
           ""
         )
 
@@ -402,7 +429,8 @@ export default function ReminderCenterPage() {
 
   }, [
     selectedTemplate,
-    currentInvoice,
+    invoiceId,
+    invoices,
     amount,
     email,
     phone,
@@ -618,426 +646,7 @@ export default function ReminderCenterPage() {
           />
 
         </div>
-
-        {/* CHANNELS */}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          <ChannelCard
-            title="Email"
-            desc="Recovery emails"
-            icon={Mail}
-            active={`${stats?.channels?.email || 0} sent`}
-          />
-
-          <ChannelCard
-            title="WhatsApp"
-            desc="WhatsApp reminders"
-            icon={
-              MessageCircle
-            }
-            active={`${stats?.channels?.whatsapp || 0} sent`}
-          />
-
-          <ChannelCard
-            title="SMS"
-            desc="SMS reminders"
-            icon={Smartphone}
-            active={`${stats?.channels?.sms || 0} sent`}
-          />
-
-        </div>
-
-        {/* AI */}
-
-        <div className="bg-black text-white rounded-3xl p-6">
-
-          <div className="flex items-center gap-3">
-
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
-              <BrainCircuit className="w-5 h-5 text-yellow-300" />
-            </div>
-
-            <div>
-
-              <h3 className="text-lg font-semibold">
-                AI Recovery Insights
-              </h3>
-
-              <p className="text-sm text-gray-400">
-                WhatsApp reminders perform 21% better than email
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* LOGS */}
-
-        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden">
-
-          <div className="p-6 border-b">
-
-            <h2 className="text-xl font-semibold">
-              Recent Activity
-            </h2>
-
-          </div>
-
-          <div className="divide-y">
-
-            {logs.length ===
-              0 && (
-              <div className="p-10 text-center text-gray-500">
-                No activity yet
-              </div>
-            )}
-
-            {logs.map(
-              (log: any) => {
-
-                const Icon =
-                  log.channel ===
-                  "whatsapp"
-                    ? MessageCircle
-                    : log.channel ===
-                      "sms"
-                    ? Smartphone
-                    : Mail;
-
-                return (
-                  <div
-                    key={log.id}
-                    className="
-                      p-5
-                      flex
-                      flex-col
-                      md:flex-row
-                      md:items-center
-                      md:justify-between
-                      gap-4
-                    "
-                  >
-
-                    <div className="flex items-center gap-4">
-
-                      <div className="w-11 h-11 rounded-2xl bg-gray-100 flex items-center justify-center">
-                        <Icon size={18} />
-                      </div>
-
-                      <div>
-
-                        <h3 className="font-medium">
-                          {
-                            log.invoice
-                              ?.clientName
-                          }
-                        </h3>
-
-                        <p className="text-sm text-gray-500 mt-1">
-                          {
-                            log.channel
-                          }
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    <StatusBadge
-                      status={
-                        log.status
-                      }
-                    />
-
-                  </div>
-                );
-              }
-            )}
-
-          </div>
-
-        </div>
-
       </div>
-
-      {/* =========================================
-         MODAL
-      ========================================= */}
-
-      {openCreate && (
-
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
-
-          <div className="min-h-screen flex items-center justify-center p-4">
-
-            <div className="
-              bg-white
-              w-full
-              max-w-2xl
-              rounded-3xl
-              p-5 md:p-7
-            ">
-
-              {/* HEADER */}
-
-              <div className="flex items-start justify-between gap-4 mb-6">
-
-                <div>
-
-                  <h2 className="text-2xl font-bold">
-                    Send Reminder
-                  </h2>
-
-                  <p className="text-sm text-gray-500 mt-1">
-                    Email, SMS & WhatsApp reminders
-                  </p>
-
-                </div>
-
-                <button
-                  onClick={() =>
-                    setOpenCreate(false)
-                  }
-                >
-                  <X size={22} />
-                </button>
-
-              </div>
-
-              {/* FORM */}
-
-              <div className="space-y-4">
-
-                {/* INVOICE ID */}
-
-                <input
-                  placeholder="Paste Invoice ID"
-                  value={invoiceId}
-                  onChange={(e) =>
-                    setInvoiceId(
-                      e.target.value
-                    )
-                  }
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-sm
-                  "
-                />
-
-                {/* EMAIL */}
-
-                <input
-                  value={email}
-                  readOnly
-                  placeholder="Client email"
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    bg-gray-50
-                    text-sm
-                  "
-                />
-
-                {/* PHONE */}
-
-                <input
-                  value={phone}
-                  readOnly
-                  placeholder="Client phone"
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    bg-gray-50
-                    text-sm
-                  "
-                />
-
-                {/* AMOUNT */}
-
-                <input
-                  value={amount}
-                  readOnly
-                  placeholder="Invoice amount"
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    bg-gray-50
-                    text-sm
-                  "
-                />
-
-                {/* CHANNEL */}
-
-                <select
-                  value={channel}
-                  onChange={(e) =>
-                    setChannel(
-                      e.target.value
-                    )
-                  }
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-sm
-                  "
-                >
-
-                  <option value="email">
-                    Email
-                  </option>
-
-                  <option value="sms">
-                    SMS
-                  </option>
-
-                  <option value="whatsapp">
-                    WhatsApp
-                  </option>
-
-                </select>
-
-                {/* TEMPLATE */}
-
-                <select
-                  value={templateId}
-                  onChange={(e) =>
-                    setTemplateId(
-                      e.target.value
-                    )
-                  }
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-sm
-                  "
-                >
-
-                  <option value="">
-                    Select template
-                  </option>
-
-                  {templates.map(
-                    (template) => (
-                      <option
-                        key={
-                          template.id
-                        }
-                        value={
-                          template.id
-                        }
-                      >
-                        {
-                          template.name
-                        }
-                      </option>
-                    )
-                  )}
-
-                </select>
-
-                {/* MESSAGE */}
-
-                <textarea
-                  rows={10}
-                  value={message}
-                  onChange={(e) =>
-                    setMessage(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Reminder message..."
-                  className="
-                    w-full
-                    border
-                    rounded-2xl
-                    px-4
-                    py-3
-                    text-sm
-                    resize-none
-                  "
-                />
-
-              </div>
-
-              {/* ACTIONS */}
-
-              <div className="
-                flex
-                flex-col-reverse
-                md:flex-row
-                justify-end
-                gap-3
-                mt-6
-              ">
-
-                <button
-                  onClick={() =>
-                    setOpenCreate(false)
-                  }
-                  className="
-                    border
-                    px-5
-                    py-3
-                    rounded-2xl
-                    w-full
-                    md:w-auto
-                  "
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={
-                    createReminder
-                  }
-                  disabled={
-                    sending
-                  }
-                  className="
-                    bg-black
-                    text-white
-                    px-5
-                    py-3
-                    rounded-2xl
-                    w-full
-                    md:w-auto
-                  "
-                >
-                  {sending
-                    ? "Sending..."
-                    : "Send Reminder"}
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-      )}
 
     </Layout>
   );

@@ -29,6 +29,10 @@ export async function runReminders() {
 
           mode: "auto",
         },
+
+        include: {
+          user: true,
+        },
       });
 
     /* =====================================
@@ -62,19 +66,20 @@ export async function runReminders() {
         daysLate >= 1 &&
         daysLate < 3
       ) {
-        type = "friendly";
-      }
 
-      else if (
+        type = "friendly";
+
+      } else if (
         daysLate >= 3 &&
         daysLate < 7
       ) {
-        type = "firm";
-      }
 
-      else if (
+        type = "firm";
+
+      } else if (
         daysLate >= 7
       ) {
+
         type = "final";
       }
 
@@ -122,13 +127,22 @@ export async function runReminders() {
             undefined,
 
           senderName:
+            inv.user?.name ||
+            inv.user?.email?.split("@")[0] ||
             "KoniqTech Team",
 
           companyName:
+            inv.user?.companyName ||
+            inv.user?.name ||
             "KoniqTech",
 
           senderEmail:
+            inv.user?.email ||
             "info@koniqtech.com",
+
+          senderPhone:
+            inv.user?.phone ||
+            "",
         });
 
       /* ===================================

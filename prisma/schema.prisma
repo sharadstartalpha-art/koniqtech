@@ -169,6 +169,24 @@ model User {
   reminderLogs      ReminderLog[]
   onboarding        UserOnboarding?
   paymentMethods PaymentMethod[]
+
+  paypalMe String?
+
+stripeLink String?
+
+razorpayLink String?
+
+customPaymentLink String?
+
+bankName String?
+
+accountName String?
+
+accountNumber String?
+
+ifscCode String?
+
+upiId String?
 }
 
 enum ReminderMode {

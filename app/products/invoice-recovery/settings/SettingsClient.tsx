@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 
 import ReminderTab from "./ReminderTab";
+import PaymentMethodsPage from "./payment-methods/page";
 
 import {
   Bell,
@@ -68,13 +69,11 @@ export default function SettingsClient() {
     },
 
     {
-      id: "payments",
-      label:
-        "Payment Methods",
-      icon: Wallet,
-      desc:
-        "Payment links & gateways",
-    },
+  id: "payments",
+  label: "Payment Methods",
+  icon: CreditCard,
+  desc: "Manage payment links & banking",
+},
 
     {
       id: "reminders",
@@ -507,16 +506,9 @@ export default function SettingsClient() {
                  PAYMENTS
               ===================================== */}
 
-              {tab ===
-                "payments" && (
-                <ComingSoonCard
-                  icon={
-                    Wallet
-                  }
-                  title="Payment Methods"
-                  desc="Configure PayPal, Stripe, Razorpay, UPI, bank transfer and custom payment links."
-                />
-              )}
+              {tab === "payments" && (
+  <PaymentMethodsPage />
+)}
 
               {/* =====================================
                  EMAIL

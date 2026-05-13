@@ -239,13 +239,20 @@ async function main() {
   /* ===============================
      ✅ REMINDER TEMPLATES
   =============================== */
-  const templates = [
-    {
-      name: "Friendly",
-      type: "friendly",
-      subject: "Friendly Reminder",
-      html: `
-        <div style="font-family:sans-serif">
+ /* ===============================
+   ✅ REMINDER TEMPLATES
+=============================== */
+
+const templates = [
+  {
+    name: "Friendly",
+
+    type: "friendly",
+
+    subject: "Friendly Reminder",
+
+    html: `
+<div style="font-family:sans-serif">
 
   <p>
     Hi {{name}},
@@ -259,6 +266,7 @@ async function main() {
     <strong>
       Amount Due:
     </strong>
+
     ₹{{amount}}
   </p>
 
@@ -275,89 +283,182 @@ async function main() {
   <p>
     <strong>
       {{senderName}}
-    </strong><br />
+    </strong>
 
-    {{companyName}}<br />
+    <br />
 
-    {{senderEmail}}<br />
+    {{companyName}}
+
+    <br />
+
+    {{senderEmail}}
+
+    <br />
 
     {{senderPhone}}
   </p>
 
 </div>
-      `,
+    `,
+  },
+
+  {
+    name: "Firm",
+
+    type: "firm",
+
+    subject: "Payment Reminder",
+
+    html: `
+<div style="font-family:sans-serif">
+
+  <p>
+    Hi {{name}},
+  </p>
+
+  <p>
+    Your invoice payment is now overdue.
+  </p>
+
+  <p>
+    <strong>
+      Outstanding Amount:
+    </strong>
+
+    ₹{{amount}}
+  </p>
+
+  <p>
+    Kindly arrange payment immediately.
+  </p>
+
+  <br />
+
+  <p>
+    Regards,
+  </p>
+
+  <p>
+    <strong>
+      {{senderName}}
+    </strong>
+
+    <br />
+
+    {{companyName}}
+
+    <br />
+
+    {{senderEmail}}
+
+    <br />
+
+    {{senderPhone}}
+  </p>
+
+</div>
+    `,
+  },
+
+  {
+    name: "Final",
+
+    type: "final",
+
+    subject: "Final Notice",
+
+    html: `
+<div style="font-family:sans-serif">
+
+  <p>
+    Hi {{name}},
+  </p>
+
+  <p>
+    This is your final reminder regarding the unpaid invoice.
+  </p>
+
+  <p>
+    <strong>
+      Total Due:
+    </strong>
+
+    ₹{{amount}}
+  </p>
+
+  <p>
+    Immediate payment is required to avoid escalation.
+  </p>
+
+  <br />
+
+  <p>
+    Regards,
+  </p>
+
+  <p>
+    <strong>
+      {{senderName}}
+    </strong>
+
+    <br />
+
+    {{companyName}}
+
+    <br />
+
+    {{senderEmail}}
+
+    <br />
+
+    {{senderPhone}}
+  </p>
+
+</div>
+    `,
+  },
+];
+
+/* ===============================
+   UPSERT TEMPLATES
+=============================== */
+
+for (const template of templates) {
+
+  await prisma.reminderTemplate.upsert({
+    where: {
+      name: template.name,
     },
 
-    {
-      name: "Firm",
-      type: "firm",
-      subject: "Payment Reminder",
-      html: `
-        <p>Hi {{name}},</p>
+    update: {
+      type: template.type as any,
 
-        <p>
-          Your invoice is now overdue.
-        </p>
+      subject: template.subject,
 
-        <p>
-          Amount Due:
-          <strong>{{amount}}</strong>
-        </p>
+      html: template.html,
 
-        <p>
-          Please arrange payment immediately.
-        </p>
-      `,
+      isDefault: true,
     },
 
-    {
-      name: "Final",
-      type: "final",
-      subject: "Final Notice",
-      html: `
-        <p>
-          Final reminder before further action.
-        </p>
+    create: {
+      userId: "system",
 
-        <p>
-          Outstanding Amount:
-          <strong>{{amount}}</strong>
-        </p>
+      name: template.name,
 
-        <p>
-          Please settle this invoice immediately.
-        </p>
-      `,
+      type: template.type as any,
+
+      subject: template.subject,
+
+      html: template.html,
+
+      isDefault: true,
     },
-  ];
+  });
+}
 
-  for (const template of templates) {
-    const exists =
-      await prisma.reminderTemplate.findFirst({
-        where: {
-          name: template.name,
-          type: template.type,
-          isDefault: true,
-        },
-      });
-
-    if (!exists) {
-      await prisma.reminderTemplate.create({
-        data: {
-          userId: "system",
-          name: template.name,
-          type: template.type as any,
-          subject: template.subject,
-          html: template.html,
-          isDefault: true,
-        },
-      });
-    }
-  }
-
-  console.log(
-    "✅ Reminder templates created"
-  );
+console.log(
+  "✅ Reminder templates synced"
+);
 
   console.log(
     "🎉 Seeding finished successfully"

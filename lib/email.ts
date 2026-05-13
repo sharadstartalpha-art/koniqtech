@@ -1,6 +1,10 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-type SendEmailProps = {
+const resend = new Resend(
+  process.env.RESEND_API_KEY
+);
+
+export type SendEmailProps = {
   to: string;
 
   subject: string;
@@ -12,26 +16,6 @@ type SendEmailProps = {
   replyTo?: string;
 };
 
-const transporter =
-  nodemailer.createTransport({
-    host:
-      process.env.SMTP_HOST,
-
-    port: Number(
-      process.env.SMTP_PORT
-    ),
-
-    secure: false,
-
-    auth: {
-      user:
-        process.env.SMTP_USER,
-
-      pass:
-        process.env.SMTP_PASS,
-    },
-  });
-
 export async function sendEmail({
   to,
   subject,
@@ -40,9 +24,10 @@ export async function sendEmail({
   replyTo,
 }: SendEmailProps) {
 
-  return transporter.sendMail({
+  return await resend.emails.send({
     from:
-      process.env.SMTP_FROM,
+      process.env.EMAIL_FROM ||
+      "KoniqTech <info@koniqtech.com>",
 
     to,
 

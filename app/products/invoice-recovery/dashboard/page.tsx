@@ -30,7 +30,7 @@ export default async function Page() {
             href="/products/invoice-recovery/subscribe"
             className="inline-flex items-center px-4 py-2 text-sm bg-black text-white rounded-md hover:opacity-90"
           >
-            Subscribe
+            Subscribe 
           </a>
         </div>
       ) : (

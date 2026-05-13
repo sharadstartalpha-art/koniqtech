@@ -1,58 +1,158 @@
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
-import { prisma } from "@/lib/prisma";
-import { sendEmail } from "@/lib/email";
-import { generateEmail } from "@/lib/aiEmail";
 
-const connection = new IORedis(process.env.REDIS_URL!);
+import IORedis from "ioredis";
+
+import { prisma } from "@/lib/prisma";
+
+import { sendEmail } from "@/lib/email";
+
+import {
+  generateEmail,
+} from "@/lib/aiEmail";
+
+/* =========================================
+   REDIS CONNECTION
+========================================= */
+
+const connection =
+  new IORedis(
+    process.env.REDIS_URL!
+  );
+
+/* =========================================
+   REMINDER WORKER
+========================================= */
 
 new Worker(
   "reminders",
+
   async () => {
     try {
-      const invoices = await prisma.invoice.findMany({
-        where: { status: "unpaid" },
-      });
+
+      console.log(
+        "🤖 Reminder worker started"
+      );
+
+      /* =====================================
+         GET UNPAID INVOICES
+      ===================================== */
+
+      const invoices =
+        await prisma.invoice.findMany({
+          where: {
+            status:
+              "unpaid",
+          },
+        });
+
+      /* =====================================
+         LOOP
+      ===================================== */
 
       for (const inv of invoices) {
-        /* =========================
-           🔗 REQUIRE PAYMENT LINK
-        ========================= */
-        if (!inv.paymentLink) {
-          console.warn("⚠️ Missing payment link:", inv.id);
+
+        /* ===================================
+           VALIDATION
+        =================================== */
+
+        if (!inv.clientEmail) {
+
+          console.warn(
+            "⚠️ Missing client email:",
+            inv.id
+          );
+
           continue;
         }
 
-        /* =========================
-           ✉️ GENERATE EMAIL
-        ========================= */
-        const { html, text } = generateEmail(
-          inv.amount,
-          "friendly",
-          inv.paymentLink
-        );
+        /* ===================================
+           GENERATE EMAIL
+        =================================== */
 
-        if (!html) {
-          console.warn("⚠️ Email generation failed:", inv.id);
+        const email =
+          generateEmail({
+            amount:
+              Number(
+                inv.amount
+              ) || 0,
+
+            type:
+              "friendly",
+
+            clientName:
+              inv.clientName ||
+              "Customer",
+
+            paymentLink:
+              inv.paymentLink ||
+              undefined,
+
+            senderName:
+              "KoniqTech Team",
+
+            companyName:
+              "KoniqTech",
+
+            senderEmail:
+              "info@koniqtech.com",
+          });
+
+        /* ===================================
+           VALIDATE GENERATED EMAIL
+        =================================== */
+
+        if (
+          !email.html ||
+          !email.text
+        ) {
+
+          console.warn(
+            "⚠️ Email generation failed:",
+            inv.id
+          );
+
           continue;
         }
 
-        /* =========================
-           📤 SEND EMAIL (FIXED)
-        ========================= */
+        /* ===================================
+           SEND EMAIL
+        =================================== */
+
         await sendEmail({
-          to: inv.clientEmail,
-          subject: "Payment Reminder",
-          html,
-          text,
+          to:
+            inv.clientEmail,
+
+          subject:
+            email.subject,
+
+          html:
+            email.html,
+
+          text:
+            email.text,
         });
+
+        console.log(
+          `📧 Reminder sent → ${inv.clientEmail}`
+        );
       }
 
-      console.log("✅ reminders sent");
+      console.log(
+        "✅ Reminder worker completed"
+      );
+
     } catch (err) {
-      console.error("❌ Worker error:", err);
+
+      console.error(
+        "❌ Worker error:",
+        err
+      );
+
       throw err;
     }
   },
-  { connection }
+
+  {
+    connection,
+  }
 );

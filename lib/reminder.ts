@@ -1,99 +1,207 @@
 import { prisma } from "./prisma";
-import { generateEmail } from "./aiEmail";
+
+import {
+  generateEmail,
+  type EmailType,
+} from "./aiEmail";
+
 import { sendEmail } from "./email";
 
-type EmailType = "friendly" | "firm" | "final";
+/* =========================================
+   RUN AUTO REMINDERS
+========================================= */
 
 export async function runReminders() {
   try {
-    console.log("🤖 AI Reminder Job Started");
 
-    const invoices = await prisma.invoice.findMany({
-      where: {
-        status: "unpaid",
-        mode: "auto", // ✅ only auto users
-      },
-    });
+    console.log(
+      "🤖 AI Reminder Job Started"
+    );
 
-    for (const inv of invoices) {
-      /* =========================
-         📅 CALCULATE DELAY
-      ========================= */
-      const daysLate =
-        (Date.now() - new Date(inv.dueDate).getTime()) /
-        (1000 * 60 * 60 * 24);
+    /* =====================================
+       GET UNPAID AUTO INVOICES
+    ===================================== */
 
-      let type: EmailType | null = null;
-
-      if (daysLate >= 1 && daysLate < 3) type = "friendly";
-      else if (daysLate >= 3 && daysLate < 7) type = "firm";
-      else if (daysLate >= 7) type = "final";
-
-      if (!type) continue;
-
-      /* =========================
-         🚫 PREVENT DUPLICATES
-      ========================= */
-      const alreadySent = await prisma.reminder.findFirst({
+    const invoices =
+      await prisma.invoice.findMany({
         where: {
-          invoiceId: inv.id,
-          type,
+          status: "unpaid",
+
+          mode: "auto",
         },
       });
 
-      if (alreadySent) continue;
+    /* =====================================
+       LOOP
+    ===================================== */
 
-      /* =========================
-         🔗 VALIDATION
-      ========================= */
-      if (!inv.paymentLink) {
-        console.error("❌ Missing payment link:", inv.id);
+    for (const inv of invoices) {
+
+      /* ===================================
+         CALCULATE DAYS LATE
+      =================================== */
+
+      const daysLate =
+        (
+          Date.now() -
+          new Date(
+            inv.dueDate
+          ).getTime()
+        ) /
+        (1000 * 60 * 60 * 24);
+
+      /* ===================================
+         DETERMINE EMAIL TYPE
+      =================================== */
+
+      let type:
+        | EmailType
+        | null = null;
+
+      if (
+        daysLate >= 1 &&
+        daysLate < 3
+      ) {
+        type = "friendly";
+      }
+
+      else if (
+        daysLate >= 3 &&
+        daysLate < 7
+      ) {
+        type = "firm";
+      }
+
+      else if (
+        daysLate >= 7
+      ) {
+        type = "final";
+      }
+
+      if (!type) {
         continue;
       }
 
-      /* =========================
-         ✉️ GENERATE EMAIL
-      ========================= */
-      const { html, text } = generateEmail(
-        inv.amount,
-        type,
-        inv.paymentLink
-      );
+      /* ===================================
+         PREVENT DUPLICATES
+      =================================== */
 
-      if (!html || !text) {
-        console.error("❌ Email generation failed:", inv.id);
+      const alreadySent =
+        await prisma.reminder.findFirst({
+          where: {
+            invoiceId:
+              inv.id,
+
+            type,
+          },
+        });
+
+      if (alreadySent) {
         continue;
       }
 
-      /* =========================
-         📤 SEND EMAIL
-      ========================= */
-      await sendEmail({
-        to: inv.clientEmail,
-        subject: "Invoice Reminder",
-        html,
-        text,
-      });
+      /* ===================================
+         GENERATE EMAIL
+      =================================== */
 
-      /* =========================
-         💾 SAVE REMINDER
-      ========================= */
-      await prisma.reminder.create({
-        data: {
-          userId: inv.userId,
-          invoiceId: inv.id,
-
-          email: inv.clientEmail,
-          amount: inv.amount,
+      const email =
+        generateEmail({
+          amount:
+            Number(
+              inv.amount
+            ) || 0,
 
           type,
-          mode: "auto",
 
-          status: "sent",
-          sentAt: new Date(),
+          clientName:
+            inv.clientName ||
+            "Customer",
 
-          html,
-          text,
+          paymentLink:
+            inv.paymentLink ||
+            undefined,
+
+          senderName:
+            "KoniqTech Team",
+
+          companyName:
+            "KoniqTech",
+
+          senderEmail:
+            "info@koniqtech.com",
+        });
+
+      /* ===================================
+         VALIDATE
+      =================================== */
+
+      if (
+        !email.html ||
+        !email.text
+      ) {
+
+        console.error(
+          "❌ Email generation failed:",
+          inv.id
+        );
+
+        continue;
+      }
+
+      /* ===================================
+         SEND EMAIL
+      =================================== */
+
+      await sendEmail({
+        to:
+          inv.clientEmail,
+
+        subject:
+          email.subject,
+
+        html:
+          email.html,
+
+        text:
+          email.text,
+      });
+
+      /* ===================================
+         SAVE REMINDER
+      =================================== */
+
+      await prisma.reminder.create({
+        data: {
+          userId:
+            inv.userId,
+
+          invoiceId:
+            inv.id,
+
+          email:
+            inv.clientEmail,
+
+          amount:
+            Number(
+              inv.amount
+            ) || 0,
+
+          type,
+
+          mode:
+            "auto",
+
+          status:
+            "sent",
+
+          sentAt:
+            new Date(),
+
+          html:
+            email.html,
+
+          text:
+            email.text,
         },
       });
 
@@ -102,9 +210,15 @@ export async function runReminders() {
       );
     }
 
-    console.log("✅ AI Reminder Job Finished");
+    console.log(
+      "✅ AI Reminder Job Finished"
+    );
 
   } catch (error) {
-    console.error("❌ Reminder job failed:", error);
+
+    console.error(
+      "❌ Reminder job failed:",
+      error
+    );
   }
 }

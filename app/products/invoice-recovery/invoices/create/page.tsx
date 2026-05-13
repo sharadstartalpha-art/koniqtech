@@ -108,6 +108,11 @@ export default function CreateInvoicePage() {
     setHasPaymentMethod,
   ] = useState(false);
 
+  const [
+    includePaymentLink,
+    setIncludePaymentLink,
+  ] = useState(true);
+
   /* =========================================
      UPDATE WORKFLOW
   ========================================= */
@@ -201,6 +206,7 @@ export default function CreateInvoicePage() {
 
       if (
         mode === "auto" &&
+        includePaymentLink &&
         !hasPaymentMethod
       ) {
 
@@ -236,6 +242,8 @@ export default function CreateInvoicePage() {
             mode,
 
             autoSendFirstReminder,
+
+            includePaymentLink,
 
             reminderWorkflow,
           }
@@ -598,6 +606,57 @@ export default function CreateInvoicePage() {
 
                 </div>
 
+                <div className="
+                  border border-gray-200
+                  rounded-3xl
+                  p-5
+                  mb-6
+                ">
+
+                  <div className="
+                    flex items-start justify-between gap-4
+                  ">
+
+                    <div>
+
+                      <h3 className="
+                        font-semibold
+                        text-gray-900
+                      ">
+
+                        Include Payment Button
+
+                      </h3>
+
+                      <p className="
+                        text-sm
+                        text-gray-500
+                        mt-1
+                        leading-6
+                      ">
+
+                        Add payment button inside reminder emails
+                        so customers can pay instantly.
+
+                      </p>
+
+                    </div>
+
+                    <input
+                      type="checkbox"
+                      checked={includePaymentLink}
+                      onChange={(e) =>
+                        setIncludePaymentLink(
+                          e.target.checked
+                        )
+                      }
+                      className="w-5 h-5"
+                    />
+
+                  </div>
+
+                </div>
+
                 {/* FIRST MAIL */}
 
                 <div className="bg-orange-50 border border-orange-200 rounded-3xl p-5 mb-6">
@@ -646,7 +705,6 @@ export default function CreateInvoicePage() {
                       reminder,
                       index
                     ) => (
-
                       <div
                         key={index}
                         className="border border-gray-200 rounded-3xl p-5"
@@ -665,8 +723,6 @@ export default function CreateInvoicePage() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                          {/* DAYS */}
 
                           <div>
 
@@ -696,8 +752,6 @@ export default function CreateInvoicePage() {
                             />
 
                           </div>
-
-                          {/* TYPE */}
 
                           <div>
 
@@ -755,9 +809,7 @@ export default function CreateInvoicePage() {
               </div>
             )}
 
-            {/* =====================================
-               FOOTER
-            ===================================== */}
+            {/* FOOTER */}
 
             <div className="px-8 py-6 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
 
@@ -790,249 +842,9 @@ export default function CreateInvoicePage() {
 
           </div>
 
-          {/* =====================================
-             SIDE PANEL
-          ===================================== */}
-
-          <div className="space-y-5">
-
-            <div className="bg-black text-white rounded-3xl p-6 overflow-hidden relative">
-
-              <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
-
-              <div className="relative z-10">
-
-                <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
-
-                  <Sparkles className="w-5 h-5 text-yellow-300" />
-
-                </div>
-
-                <h3 className="text-xl font-semibold">
-
-                  AI Recovery Automation
-
-                </h3>
-
-                <p className="text-sm text-gray-300 leading-7 mt-4">
-
-                  Your reminders will automatically escalate from friendly to final notice.
-
-                </p>
-
-                <div className="mt-5 space-y-3 text-sm">
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-green-400" />
-                    Instant first reminder
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-orange-400" />
-                    Auto escalation workflow
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-blue-400" />
-                    Smart recovery sequences
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
         </div>
 
       </div>
-
-      {showPaymentWarning && (
-
-        <div className="
-          fixed inset-0 z-50
-          bg-black/50
-          backdrop-blur-sm
-          flex items-center justify-center
-          p-4
-        ">
-
-          <div className="
-            bg-white
-            w-full
-            max-w-lg
-            rounded-3xl
-            p-8
-          ">
-
-            <div className="
-              w-14 h-14
-              rounded-2xl
-              bg-orange-100
-              flex items-center justify-center
-              mb-5
-            ">
-
-              <DollarSign className="w-6 h-6 text-orange-600" />
-
-            </div>
-
-            <h2 className="
-              text-2xl
-              font-bold
-              text-gray-900
-            ">
-
-              No Payment Method Found
-
-            </h2>
-
-            <p className="
-              text-gray-500
-              mt-4
-              leading-7
-            ">
-
-              You haven't configured any payment link yet.
-
-              Customers will receive plain reminders without
-              a payment button which may reduce recovery rates.
-
-            </p>
-
-            <div className="
-              mt-6
-              bg-orange-50
-              border border-orange-200
-              rounded-2xl
-              p-4
-            ">
-
-              <p className="
-                text-sm
-                text-orange-800
-                leading-6
-              ">
-
-                Recommended:
-                Add PayPal, Stripe, Razorpay or UPI
-                payment links before enabling
-                auto recovery.
-
-              </p>
-
-            </div>
-
-            <div className="
-              flex flex-col md:flex-row
-              gap-3
-              mt-8
-            ">
-
-              {/* GO TO PAYMENT SETTINGS */}
-
-              <button
-                onClick={() => {
-                  window.location.href =
-                    "/products/invoice-recovery/settings/payment-methods";
-                }}
-                className="
-                  flex-1
-                  h-12
-                  rounded-2xl
-                  bg-black
-                  text-white
-                  font-semibold
-                  flex items-center justify-center gap-2
-                "
-              >
-
-                Configure Payment Link
-
-                <ArrowRight className="w-4 h-4" />
-
-              </button>
-
-              {/* CONTINUE */}
-
-              <button
-                onClick={async () => {
-
-                  setShowPaymentWarning(
-                    false
-                  );
-
-                  try {
-
-                    setLoading(true);
-
-                    await axios.post(
-                      "/api/invoices/create",
-                      {
-                        clientEmail:
-                          email,
-
-                        clientName:
-                          name || null,
-
-                        clientPhone:
-                          phone || null,
-
-                        amount:
-                          Number(amount),
-
-                        dueDate:
-                          new Date(),
-
-                        mode,
-
-                        autoSendFirstReminder,
-
-                        reminderWorkflow,
-                      }
-                    );
-
-                    toast.success(
-                      "Invoice created"
-                    );
-
-                    window.location.href =
-                      "/products/invoice-recovery/invoices";
-
-                  } catch (err) {
-
-                    console.error(err);
-
-                    toast.error(
-                      "Failed to create invoice"
-                    );
-
-                  } finally {
-
-                    setLoading(false);
-                  }
-                }}
-                className="
-                  flex-1
-                  h-12
-                  rounded-2xl
-                  border border-gray-300
-                  font-semibold
-                "
-              >
-
-                Continue Without Payment Link
-
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-      )}
 
     </Layout>
   );

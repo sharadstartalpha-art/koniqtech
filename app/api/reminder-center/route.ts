@@ -1,21 +1,21 @@
-// app/api/reminder-center/route.ts
-
 import { prisma } from "@/lib/prisma";
 
 import { getUser } from "@/lib/auth";
 
+import { sendEmail } from "@/lib/email";
+
+import { sendSMS } from "@/lib/sms";
+
+import { sendWhatsApp } from "@/lib/whatsapp";
+
 import { NextResponse } from "next/server";
 
 /* =========================================
-   GET REMINDER CENTER DATA
+   GET REMINDER CENTER
 ========================================= */
 
 export async function GET() {
   try {
-
-    /* =========================================
-       AUTH
-    ========================================= */
 
     const user = await getUser();
 
@@ -30,10 +30,6 @@ export async function GET() {
       );
     }
 
-    /* =========================================
-       REMINDER LOGS
-    ========================================= */
-
     const logs =
       await prisma.reminderLog.findMany({
         where: {
@@ -44,16 +40,12 @@ export async function GET() {
           createdAt: "desc",
         },
 
-        take: 100,
-
         include: {
           invoice: true,
         },
-      });
 
-    /* =========================================
-       REMINDERS
-    ========================================= */
+        take: 100,
+      });
 
     const reminders =
       await prisma.reminder.findMany({
@@ -65,79 +57,15 @@ export async function GET() {
           createdAt: "desc",
         },
 
-        take: 50,
-
         include: {
           invoice: true,
         },
+
+        take: 100,
       });
 
-    /* =========================================
-       REAL ANALYTICS
-    ========================================= */
-
-    const sent =
-      logs.filter(
-        (l) => l.status === "sent"
-      ).length;
-
-    const failed =
-      logs.filter(
-        (l) => l.status === "failed"
-      ).length;
-
-    const opened =
-      logs.filter(
-        (l) => l.status === "opened"
-      ).length;
-
-    const pending =
-      logs.filter(
-        (l) => l.status === "pending"
-      ).length;
-
-    /* =========================================
-       CHANNEL STATS
-    ========================================= */
-
-    const email =
-      logs.filter(
-        (l) =>
-          l.channel === "email"
-      ).length;
-
-    const whatsapp =
-      logs.filter(
-        (l) =>
-          l.channel === "whatsapp"
-      ).length;
-
-    const sms =
-      logs.filter(
-        (l) =>
-          l.channel === "sms"
-      ).length;
-
-    /* =========================================
-       RESPONSE
-    ========================================= */
-
     return NextResponse.json({
-      stats: {
-        sent,
-        failed,
-        opened,
-        pending,
-
-        channels: {
-          email,
-          whatsapp,
-          sms,
-        },
-      },
-
       reminders,
-
       logs,
     });
 
@@ -151,7 +79,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error:
-          "Failed to load reminder center",
+          "Failed to load reminders",
       },
       {
         status: 500,
@@ -161,7 +89,7 @@ export async function GET() {
 }
 
 /* =========================================
-   CREATE MANUAL REMINDER
+   SEND MANUAL REMINDER
 ========================================= */
 
 export async function POST(
@@ -169,9 +97,9 @@ export async function POST(
 ) {
   try {
 
-    /* =========================================
+    /* =====================================
        AUTH
-    ========================================= */
+    ===================================== */
 
     const user = await getUser();
 
@@ -186,31 +114,34 @@ export async function POST(
       );
     }
 
-    /* =========================================
+    /* =====================================
        BODY
-    ========================================= */
+    ===================================== */
 
-    const body = await req.json();
+    const body =
+      await req.json();
 
     const {
       invoiceId,
       email,
+      phone,
       amount,
       type,
-      mode,
+      channel,
       html,
       text,
+      subject,
     } = body;
 
-    /* =========================================
+    /* =====================================
        VALIDATION
-    ========================================= */
+    ===================================== */
 
     if (!invoiceId) {
       return NextResponse.json(
         {
           error:
-            "Invoice ID required",
+            "Invoice required",
         },
         {
           status: 400,
@@ -218,47 +149,150 @@ export async function POST(
       );
     }
 
-    /* =========================================
-       CREATE REMINDER
-    ========================================= */
+    if (!channel) {
+      return NextResponse.json(
+        {
+          error:
+            "Channel required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /* =====================================
+       SEND EMAIL
+    ===================================== */
+
+    if (channel === "email") {
+
+      if (!email) {
+        return NextResponse.json(
+          {
+            error:
+              "Email required",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      await sendEmail({
+        to: email,
+
+        subject:
+          subject ||
+          "Payment Reminder",
+
+        html,
+
+        text,
+      });
+    }
+
+    /* =====================================
+       SEND SMS
+    ===================================== */
+
+    if (channel === "sms") {
+
+      if (!phone) {
+        return NextResponse.json(
+          {
+            error:
+              "Phone required",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      await sendSMS({
+        to: phone,
+
+        body:
+          text ||
+          "Payment reminder",
+      });
+    }
+
+    /* =====================================
+       SEND WHATSAPP
+    ===================================== */
+
+    if (
+      channel === "whatsapp"
+    ) {
+
+      if (!phone) {
+        return NextResponse.json(
+          {
+            error:
+              "Phone required",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      await sendWhatsApp({
+        to: phone,
+
+        body:
+          text ||
+          "Payment reminder",
+      });
+    }
+
+    /* =====================================
+       SAVE REMINDER
+    ===================================== */
 
     const reminder =
-  await prisma.reminder.create({
-    data: {
-      userId: user.id,
+      await prisma.reminder.create({
+        data: {
+          userId:
+            user.id,
 
-      invoiceId,
+          invoiceId,
 
-      email,
+          email,
 
-      amount:
-        Number(amount) || 0,
+          amount:
+            Number(amount) || 0,
 
-      type:
-        type || "friendly",
+          type:
+            type ||
+            "friendly",
 
-      mode: "manual",
+          mode:
+            "manual",
 
-      channel:
-        mode || "email",
+          channel,
 
-      status: "sent",
+          status:
+            "sent",
 
-      html:
-        html ||
-        "<p>Reminder sent</p>",
+          html:
+            html ||
+            "",
 
-      text:
-        text ||
-        "Reminder sent",
+          text:
+            text ||
+            "",
 
-      sentAt:
-        new Date(),
-    },
-  });
-    /* =========================================
-       CREATE LOG ENTRY
-    ========================================= */
+          sentAt:
+            new Date(),
+        },
+      });
+
+    /* =====================================
+       SAVE LOG
+    ===================================== */
 
     await prisma.reminderLog.create({
       data: {
@@ -267,25 +301,23 @@ export async function POST(
 
         invoiceId,
 
-        channel:
-          mode || "email",
+        channel,
 
-        status: "sent",
+        status:
+          "sent",
 
         recipient:
-          email,
+          email || phone,
 
         subject:
-          type || "Reminder",
+          subject ||
+          "Reminder",
 
         message:
-          text || "Reminder sent",
+          text ||
+          "",
       },
     });
-
-    /* =========================================
-       RESPONSE
-    ========================================= */
 
     return NextResponse.json({
       success: true,
@@ -295,14 +327,14 @@ export async function POST(
   } catch (err) {
 
     console.error(
-      "CREATE REMINDER ERROR:",
+      "SEND REMINDER ERROR:",
       err
     );
 
     return NextResponse.json(
       {
         error:
-          "Failed to create reminder",
+          "Failed to send reminder",
       },
       {
         status: 500,

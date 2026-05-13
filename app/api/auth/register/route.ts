@@ -364,7 +364,7 @@ export async function POST(
         </div>
 
         <p>
-          This code expires in 5 minutes.
+          This code expires in 1 minute.
         </p>
 
         <p style="margin-top:40px;">

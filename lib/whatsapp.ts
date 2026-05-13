@@ -1,6 +1,6 @@
-import Twilio from "twilio";
+import twilio from "twilio";
 
-const client = Twilio(
+const client = twilio(
   process.env.TWILIO_ACCOUNT_SID!,
   process.env.TWILIO_AUTH_TOKEN!
 );
@@ -12,13 +12,14 @@ export async function sendWhatsApp({
   to: string;
   body: string;
 }) {
-  return await client.messages.create({
-    from:
-      process.env
-        .TWILIO_WHATSAPP_NUMBER!,
 
-    to: `whatsapp:${to}`,
-
+  return client.messages.create({
     body,
+
+    from:
+      `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+
+    to:
+      `whatsapp:${to}`,
   });
 }

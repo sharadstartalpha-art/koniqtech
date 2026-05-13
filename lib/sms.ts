@@ -1,6 +1,6 @@
-import Twilio from "twilio";
+import twilio from "twilio";
 
-const client = Twilio(
+const client = twilio(
   process.env.TWILIO_ACCOUNT_SID!,
   process.env.TWILIO_AUTH_TOKEN!
 );
@@ -12,13 +12,13 @@ export async function sendSMS({
   to: string;
   body: string;
 }) {
-  return await client.messages.create({
-    from:
-      process.env
-        .TWILIO_PHONE_NUMBER!,
+
+  return client.messages.create({
+    body,
 
     to,
 
-    body,
+    from:
+      process.env.TWILIO_PHONE_NUMBER!,
   });
 }

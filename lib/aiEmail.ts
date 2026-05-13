@@ -141,7 +141,7 @@ export function generateEmail({
 <div style="font-family:sans-serif;color:#111827;line-height:1.7;max-width:600px;margin:auto;">
 
   <p>
-    Hi ${customer},
+    Hi {{name}},
   </p>
 
   <p>

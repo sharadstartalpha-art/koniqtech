@@ -319,23 +319,109 @@ export async function POST(
        PAYMENT LINK
     ========================================= */
 
-    const paymentLink =
-      `https://www.paypal.com/paypalme/koniqtech/${invoice.amount}?note=${invoice.id}`;
+   /* =========================================
+   USER PAYMENT LINKS
+========================================= */
 
-    const updatedInvoice =
-      await prisma.invoice.update(
-        {
-          where: {
-            id:
-              invoice.id,
-          },
+const paymentUser =
+  await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
 
-          data: {
-            paymentLink,
-          },
-        }
-      );
+    select: {
+      paypalMe: true,
+      stripeLink: true,
+      razorpayLink: true,
+      customPaymentLink: true,
+      upiId: true,
+    },
+  });
+/* =========================================
+   GENERATE PAYMENT LINK
+========================================= */
 
+let paymentLink: string | null = null;
+
+/* =========================
+   PAYPAL
+========================= */
+
+if (paymentUser?.paypalMe) {
+
+  paymentLink =
+    user.paypalMe;
+
+}
+
+/* =========================
+   STRIPE
+========================= */
+
+else if (
+  paymentUser?.stripeLink
+) {
+
+  paymentLink =
+    user.stripeLink;
+
+}
+
+/* =========================
+   RAZORPAY
+========================= */
+
+else if (
+  paymentUser?.razorpayLink
+) {
+
+  paymentLink =
+    user.razorpayLink;
+
+}
+
+/* =========================
+   CUSTOM
+========================= */
+
+else if (
+  paymentUser?.customPaymentLink
+) {
+
+  paymentLink =
+    user.customPaymentLink;
+
+}
+
+/* =========================
+   UPI
+========================= */
+
+else if (
+  paymentUser?.upiId
+) {
+
+  paymentLink =
+    `upi://pay?pa=${user.upiId}&pn=${encodeURIComponent(
+      clientName || "Customer"
+    )}&am=${amount}`;
+
+}
+
+/* =========================================
+   SAVE PAYMENT LINK
+========================================= */
+
+const updatedInvoice =
+  await prisma.invoice.update({
+    where: {
+      id: invoice.id,
+    },
+
+    data: {
+      paymentLink,
+    },
+  });
     /* =========================================
        INSTANT FIRST EMAIL
     ========================================= */
@@ -361,7 +447,8 @@ export async function POST(
               invoice.clientName ||
               "Customer",
 
-            paymentLink,
+            paymentLink:
+  paymentLink || undefined,
 
             senderName:
               user.name ||

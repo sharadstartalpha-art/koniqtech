@@ -184,73 +184,92 @@ export default function ReminderCenterPage() {
      CURRENT INVOICE
   ========================================= */
 
-  const currentInvoice =
-    useMemo(() => {
+/* =========================================
+   AUTO FILL INVOICE
+========================================= */
 
-      if (!invoiceId)
-        return null;
+useEffect(() => {
 
-      return invoices.find(
-        (invoice) =>
-          invoice.id
-            .trim()
-            .toLowerCase() ===
-          invoiceId
-            .trim()
-            .toLowerCase()
-      );
+  /* =========================
+     RESET IF EMPTY
+  ========================= */
 
-    }, [
-      invoiceId,
-      invoices,
-    ]);
+  if (
+    !invoiceId ||
+    !invoices.length
+  ) {
 
-  /* =========================================
-     AUTO FILL
-  ========================================= */
+    setEmail("");
 
-  useEffect(() => {
+    setPhone("");
 
-    if (!currentInvoice) {
+    setAmount("");
 
-      setEmail("");
+    return;
+  }
 
-      setPhone("");
+  /* =========================
+     FIND INVOICE
+  ========================= */
 
-      setAmount("");
-
-      return;
-    }
-
-    /* =========================
-       PHONE FIX
-    ========================= */
-
-    const finalPhone =
-      currentInvoice
-        ?.clientPhone ||
-      currentInvoice
-        ?.clientWhatsapp ||
-      "";
-
-    setEmail(
-      currentInvoice
-        ?.clientEmail || ""
+  const found =
+    invoices.find(
+      (invoice) =>
+        invoice.id
+          .trim()
+          .toLowerCase() ===
+        invoiceId
+          .trim()
+          .toLowerCase()
     );
 
-    setPhone(
-      finalPhone
-    );
+  /* =========================
+     NOT FOUND
+  ========================= */
 
-    setAmount(
-      String(
-        currentInvoice
-          ?.amount || 0
-      )
-    );
+  if (!found) {
 
-  }, [currentInvoice]);
+    setEmail("");
 
+    setPhone("");
+
+    setAmount("");
+
+    return;
+  }
+
+  /* =========================
+     EMAIL
+  ========================= */
+
+  setEmail(
+    found.clientEmail || ""
+  );
+
+  /* =========================
+     PHONE / WHATSAPP
+  ========================= */
+
+  setPhone(
+    found.clientPhone ||
+    found.clientWhatsapp ||
+    ""
+  );
+
+  /* =========================
+     AMOUNT
+  ========================= */
+
+  setAmount(
+    String(
+      found.amount || 0
+    )
+  );
+
+}, [
+  invoiceId,
+  invoices,
+]);
   /* =========================================
      TEMPLATE
   ========================================= */
@@ -280,10 +299,13 @@ export default function ReminderCenterPage() {
   return content
 
     .replaceAll(
-      "{{name}}",
-      currentInvoice?.clientName ||
-        "Customer"
-    )
+  "{{name}}",
+  invoices.find(
+    (invoice) =>
+      invoice.id === invoiceId
+  )?.clientName ||
+    "Customer"
+)
 
     .replaceAll(
       "{{amount}}",
@@ -404,10 +426,11 @@ export default function ReminderCenterPage() {
 
   }, [
     selectedTemplate,
-    currentInvoice,
-    amount,
-    email,
-    phone,
+  invoiceId,
+  invoices,
+  amount,
+  email,
+  phone,
   ]);
 
   /* =========================================

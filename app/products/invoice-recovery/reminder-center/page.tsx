@@ -701,7 +701,7 @@ const applyVariables = (
               </h3>
 
               <p className="text-sm text-gray-400">
-                WhatsApp reminders perform 21% better than email
+                WhatsApp reminders perform 21% better than email 
               </p>
 
             </div>

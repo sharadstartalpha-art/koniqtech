@@ -212,16 +212,11 @@ useEffect(() => {
      FIND INVOICE
   ========================= */
 
-  const found =
-    invoices.find(
-      (invoice) =>
-        invoice.id
-          .trim()
-          .toLowerCase() ===
-        invoiceId
-          .trim()
-          .toLowerCase()
-    );
+ const found =
+  invoices.find(
+    (invoice) =>
+      invoice.id === invoiceId
+  );
 
   /* =========================
      NOT FOUND
@@ -274,72 +269,83 @@ useEffect(() => {
      TEMPLATE
   ========================================= */
 
-  const selectedTemplate =
-    useMemo(() => {
+ /* =========================================
+   CURRENT INVOICE
+========================================= */
 
-      return templates.find(
-        (template) =>
-          template.id ===
-          templateId
-      );
+const currentInvoice =
+  useMemo(() => {
 
-    }, [
-      templateId,
-      templates,
-    ]);
+    return invoices.find(
+      (invoice) =>
+        invoice.id === invoiceId
+    );
 
+  }, [
+    invoiceId,
+    invoices,
+  ]);
+
+/* =========================================
+   TEMPLATE
+========================================= */
+
+const selectedTemplate =
+  useMemo(() => {
+
+    return templates.find(
+      (template) =>
+        template.id === templateId
+    );
+
+  }, [
+    templateId,
+    templates,
+  ]);
   /* =========================================
      APPLY VARIABLES
   ========================================= */
-
-  const applyVariables = (
+const applyVariables = (
   content: string
 ) => {
 
   return content
 
- .replaceAll(
-  "{{name}}",
-  invoices.find(
-    (invoice) =>
-      invoice.id
-        .trim()
-        .toLowerCase() ===
-      invoiceId
-        .trim()
-        .toLowerCase()
-  )?.clientName ||
-    "Customer"
-)
+    .replaceAll(
+      "{{name}}",
+      currentInvoice?.clientName?.trim() ||
+        "Customer"
+    )
 
     .replaceAll(
       "{{amount}}",
-      amount || "0"
+      String(
+        currentInvoice?.amount || 0
+      )
     )
 
     .replaceAll(
       "{{email}}",
-      email || ""
+      currentInvoice?.clientEmail || ""
     )
 
     .replaceAll(
       "{{phone}}",
-      phone || ""
+      currentInvoice?.clientPhone ||
+        currentInvoice?.clientWhatsapp ||
+        ""
     )
 
     .replaceAll(
       "{{invoiceId}}",
-      invoiceId || ""
+      currentInvoice?.id || ""
     )
 
     .replaceAll(
       "{{link}}",
-      "https://koniqtech.com"
+      currentInvoice?.paymentLink ||
+        "https://koniqtech.com"
     )
-
-    /* =========================
-       SENDER VARIABLES
-    ========================= */
 
     .replaceAll(
       "{{senderName}}",

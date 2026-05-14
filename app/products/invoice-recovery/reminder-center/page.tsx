@@ -398,7 +398,7 @@ useEffect(() => {
 Hi ${currentInvoice?.clientName || "Customer"},
 
 Friendly reminder:
-₹${amount} is pending.
+$${amount} is pending.
 
 Pay here:
 ${currentInvoice?.paymentLink || ""}
@@ -413,7 +413,7 @@ ${currentInvoice?.paymentLink || ""}
       smsPreview = `
 Hi ${currentInvoice?.clientName || "Customer"},
 
-Your payment of ₹${amount} is overdue.
+Your payment of $${amount} is overdue.
 
 Immediate action required.
 
@@ -427,7 +427,7 @@ ${currentInvoice?.paymentLink || ""}
       smsPreview = `
 FINAL NOTICE
 
-₹${amount} payment pending.
+$${amount} payment pending.
 
 Avoid escalation.
 
@@ -454,7 +454,7 @@ ${currentInvoice?.paymentLink || ""}
     const whatsappPreview = `
 👋 Hi ${currentInvoice?.clientName || "Customer"},
 
-This is a reminder that your payment of ₹${amount} is pending.
+This is a reminder that your payment of $${amount} is pending.
 
 💳 Pay here:
 ${currentInvoice?.paymentLink || ""}

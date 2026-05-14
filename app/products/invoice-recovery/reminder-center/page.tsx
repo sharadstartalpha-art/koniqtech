@@ -374,75 +374,165 @@ const applyVariables = (
   /* =========================================
      AUTO TEMPLATE MESSAGE
   ========================================= */
+/* =========================================
+   AUTO TEMPLATE MESSAGE
+========================================= */
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (
-      !selectedTemplate
+  if (!selectedTemplate) {
+    return;
+  }
+
+  /* =====================================
+     SMS PREVIEW
+  ===================================== */
+
+  if (channel === "sms") {
+
+    let smsPreview = "";
+
+    if (selectedTemplate.type === "friendly") {
+
+      smsPreview = `
+Hi ${currentInvoice?.clientName || "Customer"},
+
+Friendly reminder:
+₹${amount} is pending.
+
+Pay here:
+${currentInvoice?.paymentLink || ""}
+
+- ${data?.user?.companyName || "KoniqTech"}
+`;
+
+    } else if (
+      selectedTemplate.type === "firm"
     ) {
-      return;
+
+      smsPreview = `
+Hi ${currentInvoice?.clientName || "Customer"},
+
+Your payment of ₹${amount} is overdue.
+
+Immediate action required.
+
+${currentInvoice?.paymentLink || ""}
+
+- ${data?.user?.companyName || "KoniqTech"}
+`;
+
+    } else {
+
+      smsPreview = `
+FINAL NOTICE
+
+₹${amount} payment pending.
+
+Avoid escalation.
+
+Pay now:
+${currentInvoice?.paymentLink || ""}
+
+- ${data?.user?.companyName || "KoniqTech"}
+`;
     }
 
-    const parsedHtml =
-      applyVariables(
-        selectedTemplate.html
-      );
-
-    /* =========================
-       CLEAN HTML
-    ========================= */
-
-    const cleanText =
-      parsedHtml
-        .replace(
-          /<style[^>]*>.*?<\/style>/gs,
-          ""
-        )
-
-        .replace(
-          /<script[^>]*>.*?<\/script>/gs,
-          ""
-        )
-
-        .replace(
-          /<\/div>/g,
-          "\n"
-        )
-
-        .replace(
-          /<\/p>/g,
-          "\n"
-        )
-
-        .replace(
-          /<br\s*\/?>/g,
-          "\n"
-        )
-
-        .replace(
-          /<[^>]+>/g,
-          ""
-        )
-
-        .replace(
-          /\n\s+\n/g,
-          "\n\n"
-        )
-
-        .trim();
-
     setMessage(
-      cleanText
+      smsPreview.trim()
     );
 
-  }, [
-    selectedTemplate,
+    return;
+  }
+
+  /* =====================================
+     WHATSAPP PREVIEW
+  ===================================== */
+
+  if (channel === "whatsapp") {
+
+    const whatsappPreview = `
+👋 Hi ${currentInvoice?.clientName || "Customer"},
+
+This is a reminder that your payment of ₹${amount} is pending.
+
+💳 Pay here:
+${currentInvoice?.paymentLink || ""}
+
+Thank you,
+${data?.user?.companyName || "KoniqTech"}
+`;
+
+    setMessage(
+      whatsappPreview.trim()
+    );
+
+    return;
+  }
+
+  /* =====================================
+     EMAIL PREVIEW
+  ===================================== */
+
+  const parsedHtml =
+    applyVariables(
+      selectedTemplate.html
+    );
+
+  const cleanText =
+    parsedHtml
+
+      .replace(
+        /<style[^>]*>.*?<\/style>/gs,
+        ""
+      )
+
+      .replace(
+        /<script[^>]*>.*?<\/script>/gs,
+        ""
+      )
+
+      .replace(
+        /<\/div>/g,
+        "\n"
+      )
+
+      .replace(
+        /<\/p>/g,
+        "\n"
+      )
+
+      .replace(
+        /<br\s*\/?>/g,
+        "\n"
+      )
+
+      .replace(
+        /<[^>]+>/g,
+        ""
+      )
+
+      .replace(
+        /\n\s+\n/g,
+        "\n\n"
+      )
+
+      .trim();
+
+  setMessage(cleanText);
+
+}, [
+  selectedTemplate,
+  channel,
   invoiceId,
   invoices,
   amount,
   email,
   phone,
-  ]);
+  currentInvoice,
+  data,
+]);
+
 
   /* =========================================
      SEND

@@ -843,41 +843,23 @@ useEffect(() => {
 
                 {/* INVOICE ID */}
 
-                <select
-  value={invoiceId}
-  onChange={(e) =>
-    setInvoiceId(
-      e.target.value
-    )
-  }
-  className="
-    w-full
-    border
-    rounded-2xl
-    px-4
-    py-3
-    text-sm
-  "
->
-
-  <option value="">
-    Select Invoice
-  </option>
-
-  {invoices.map(
-    (invoice) => (
-      <option
-        key={invoice.id}
-        value={invoice.id}
-      >
-        {invoice.clientName ||
-          "Unnamed Client"} — ₹
-        {invoice.amount}
-      </option>
-    )
-  )}
-
-</select>
+                <input
+                  placeholder="Paste Invoice ID"
+                  value={invoiceId}
+                  onChange={(e) =>
+                    setInvoiceId(
+                      e.target.value
+                    )
+                  }
+                  className="
+                    w-full
+                    border
+                    rounded-2xl
+                    px-4
+                    py-3
+                    text-sm
+                  "
+                />
 
                 {/* EMAIL */}
 

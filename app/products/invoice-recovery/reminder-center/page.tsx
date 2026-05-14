@@ -298,11 +298,16 @@ useEffect(() => {
 
   return content
 
-    .replaceAll(
+ .replaceAll(
   "{{name}}",
   invoices.find(
     (invoice) =>
-      invoice.id === invoiceId
+      invoice.id
+        .trim()
+        .toLowerCase() ===
+      invoiceId
+        .trim()
+        .toLowerCase()
   )?.clientName ||
     "Customer"
 )

@@ -144,26 +144,26 @@ export async function GET() {
 
       stats,
 
-     user: {
-  name:
-    user.name ||
-    "",
+      user: {
+        name:
+          user.name ||
+          "",
 
-  companyName:
-    user.companyName ||
-    "Koniq Technologies",
+        companyName:
+          user.companyName ||
+          "Koniq Technologies",
 
-  email:
-    user.businessEmail ||
-    user.email ||
-    "",
+        email:
+          user.businessEmail ||
+          user.email ||
+          "",
 
-  phone:
-    user.businessPhone ||
-    user.phone ||
-    user.whatsappNumber ||
-    "",
-},
+        phone:
+          user.businessPhone ||
+          user.phone ||
+          user.whatsappNumber ||
+          "",
+      },
     });
 
   } catch (err) {
@@ -238,114 +238,109 @@ export async function POST(
       mode ||
       "email";
 
+    /* =====================================
+       GET INVOICE
+    ===================================== */
 
-/* =====================================
-   GET INVOICE
-===================================== */
+    const invoice =
+      await prisma.invoice.findFirst({
+        where: {
+          id: invoiceId,
+          userId: user.id,
+        },
 
-/* =====================================
-   GET INVOICE
-===================================== */
+        include: {
+          user: true,
+        },
+      });
 
-const invoice =
-  await prisma.invoice.findFirst({
-    where: {
-      id: invoiceId,
-      userId: user.id,
-    },
+    if (!invoice) {
 
-    include: {
-      user: true,
-    },
-  });
-
-if (!invoice) {
-
-  return NextResponse.json(
-    {
-      error:
-        "Invoice not found",
-    },
-    {
-      status: 404,
+      return NextResponse.json(
+        {
+          error:
+            "Invoice not found",
+        },
+        {
+          status: 404,
+        }
+      );
     }
-  );
-}
 
-/* =====================================
-   DYNAMIC VARIABLES
-===================================== */
+    /* =====================================
+       DYNAMIC VARIABLES
+    ===================================== */
 
-const customerName =
-  invoice.clientName ||
-  "Customer";
+    const customerName =
+      invoice.clientName ||
+      "Customer";
 
-const companyName =
-  invoice.user.companyName ||
-  "KoniqTech";
+    const companyName =
+      invoice.user.companyName ||
+      "KoniqTech";
 
-const senderName =
-  invoice.user.name ||
-  "KoniqTech";
+    const senderName =
+      invoice.user.name ||
+      "KoniqTech";
 
-const senderEmail =
-  invoice.user.businessEmail ||
-  invoice.user.email;
+    const senderEmail =
+      invoice.user.businessEmail ||
+      invoice.user.email;
 
-const senderPhone =
-  invoice.user.businessPhone ||
-  invoice.user.phone ||
-  "";
+    const senderPhone =
+      invoice.user.businessPhone ||
+      invoice.user.phone ||
+      "";
 
-const paymentLink =
-  invoice.paymentLink || "";
+    const paymentLink =
+      invoice.paymentLink || "";
 
-/* =====================================
-   TEMPLATE VARIABLES
-===================================== */
+    /* =====================================
+       TEMPLATE VARIABLES
+    ===================================== */
 
-const finalHtml =
-  (html || "")
-    .replaceAll(
-      "{{name}}",
-      customerName
-    )
-    .replaceAll(
-      "{{amount}}",
-      String(amount)
-    )
-    .replaceAll(
-      "{{companyName}}",
-      companyName
-    )
-    .replaceAll(
-      "{{senderName}}",
-      senderName
-    )
-    .replaceAll(
-      "{{senderEmail}}",
-      senderEmail
-    )
-    .replaceAll(
-      "{{senderPhone}}",
-      senderPhone
-    )
-    .replaceAll(
-      "{{paymentLink}}",
-      paymentLink
-    );
+    const finalHtml =
+      (html || "")
+        .replaceAll(
+          "{{name}}",
+          customerName
+        )
+        .replaceAll(
+          "{{amount}}",
+          String(amount)
+        )
+        .replaceAll(
+          "{{companyName}}",
+          companyName
+        )
+        .replaceAll(
+          "{{senderName}}",
+          senderName
+        )
+        .replaceAll(
+          "{{senderEmail}}",
+          senderEmail
+        )
+        .replaceAll(
+          "{{senderPhone}}",
+          senderPhone
+        )
+        .replaceAll(
+          "{{paymentLink}}",
+          paymentLink
+        );
 
-const finalText =
-  (text || "")
-    .replaceAll(
-      "{{name}}",
-      customerName
-    )
-    .replaceAll(
-      "{{amount}}",
-      String(amount)
-    );
-      
+    const finalText =
+      (text || "")
+        .replaceAll(
+          "{{name}}",
+          customerName
+        )
+        .replaceAll(
+          "{{amount}}",
+          String(amount)
+        );
+
     /* =====================================
        VALIDATION
     ===================================== */
@@ -383,57 +378,6 @@ const finalText =
         );
       }
 
-
-
-      /* =====================================
-   REPLACE TEMPLATE VARIABLES
-===================================== */
-
-const finalHtml =
-  (html || "")
-    .replaceAll(
-      "{{name}}",
-      customerName
-    )
-    .replaceAll(
-      "{{amount}}",
-      String(amount)
-    )
-    .replaceAll(
-      "{{companyName}}",
-      companyName
-    )
-    .replaceAll(
-      "{{senderName}}",
-      senderName
-    )
-    .replaceAll(
-      "{{senderEmail}}",
-      senderEmail
-    )
-    .replaceAll(
-      "{{senderPhone}}",
-      senderPhone
-    )
-    .replaceAll(
-      "{{paymentLink}}",
-      paymentLink
-    );
-
-const finalText =
-  (text || "")
-    .replaceAll(
-      "{{name}}",
-      customerName
-    )
-    .replaceAll(
-      "{{amount}}",
-      String(amount)
-    );
-
-
-
-
       await sendEmail({
         to: email,
 
@@ -442,7 +386,7 @@ const finalText =
           "Payment Reminder",
 
         html:
-           finalHtml ||
+          finalHtml ||
           `
             <div>
               <h2>
@@ -456,7 +400,7 @@ const finalText =
           `,
 
         text:
-          text ||
+          finalText ||
           "Payment reminder",
       });
     }
@@ -482,12 +426,73 @@ const finalText =
         );
       }
 
+      let smsMessage = "";
+
+      if (type === "friendly") {
+
+        smsMessage = `
+Hi ${customerName},
+
+Friendly reminder:
+₹${amount} is pending.
+
+Pay here:
+${paymentLink}
+
+- ${companyName}
+`;
+      }
+
+      if (type === "firm") {
+
+        smsMessage = `
+Hi ${customerName},
+
+Your payment of ₹${amount} is overdue.
+
+Immediate action required.
+
+${paymentLink}
+
+- ${companyName}
+`;
+      }
+
+      if (type === "final") {
+
+        smsMessage = `
+FINAL NOTICE
+
+₹${amount} payment pending.
+
+Avoid escalation.
+
+Pay now:
+${paymentLink}
+
+- ${companyName}
+`;
+      }
+
+      if (!smsMessage) {
+
+        smsMessage = `
+Hi ${customerName},
+
+Your invoice of ₹${amount} is pending.
+
+Please pay soon.
+
+${paymentLink}
+
+- ${companyName}
+`;
+      }
+
       await sendSMS({
         to: phone,
 
-        body:
-          text ||
-          "Payment reminder",
+        body: smsMessage,
       });
     }
 
@@ -516,7 +521,7 @@ const finalText =
         to: phone,
 
         body:
-          text ||
+          finalText ||
           "Payment reminder",
       });
     }
@@ -554,10 +559,10 @@ const finalText =
             "sent",
 
           html:
-            finalHtml  || "",
+            finalHtml || "",
 
           text:
-            finalText  || "",
+            finalText || "",
 
           sentAt:
             new Date(),
@@ -591,7 +596,7 @@ const finalText =
           "Reminder",
 
         message:
-          text || "",
+          finalText || "",
       },
     });
 

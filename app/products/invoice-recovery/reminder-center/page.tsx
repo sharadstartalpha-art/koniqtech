@@ -429,7 +429,7 @@ FINAL NOTICE
 
 $${amount} payment pending.
 
-Avoid escalation.
+Avoid escalation. 
 
 Pay now:
 ${currentInvoice?.paymentLink || ""}

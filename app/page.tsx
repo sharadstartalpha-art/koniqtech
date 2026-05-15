@@ -521,11 +521,47 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-4 mb-10">
-                    <PricingFeature text="Unlimited reminders" />
-                    <PricingFeature text="AI escalation" />
-                    <PricingFeature text="Analytics dashboard" />
-                    <PricingFeature text="Priority support" />
-                  </div>
+
+  {p.name === "Free" && (
+    <>
+      <PricingFeature text="5 invoice recoveries" />
+      <PricingFeature text="Basic reminders" />
+      <PricingFeature text="Email support" />
+      <PricingFeature text="Dashboard access" />
+    </>
+  )}
+
+  {p.name === "Starter" && (
+    <>
+      <PricingFeature text="20 invoice recoveries" />
+      <PricingFeature text="Automated reminders" />
+      <PricingFeature text="AI escalation system" />
+      <PricingFeature text="Payment tracking" />
+      <PricingFeature text="Email support" />
+    </>
+  )}
+
+  {p.name === "Growth" && (
+    <>
+      <PricingFeature text="100 invoice recoveries" />
+      <PricingFeature text="Advanced AI escalation" />
+      <PricingFeature text="Analytics dashboard" />
+      <PricingFeature text="PayPal & Stripe integrations" />
+      <PricingFeature text="Priority support" />
+    </>
+  )}
+
+  {p.name === "Pro" && (
+    <>
+      <PricingFeature text="Unlimited invoice recoveries" />
+      <PricingFeature text="Custom automation flows" />
+      <PricingFeature text="Advanced analytics" />
+      <PricingFeature text="Team access" />
+      <PricingFeature text="Dedicated priority support" />
+    </>
+  )}
+
+</div>
 
                   <a
                     href="/login"

@@ -8,7 +8,7 @@ export async function GET() {
       await prisma.invoice.findMany({
         select: {
           id: true,
-
+ 
           clientName: true,
 
           clientEmail: true,

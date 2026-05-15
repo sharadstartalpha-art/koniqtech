@@ -131,7 +131,7 @@ async function main() {
 
     update: {
       name: "Growth",
-      price: 39,
+      price: 49,
       invoiceLimit: 100,
       productId: invoiceRecovery.id,
       active: true,
@@ -139,7 +139,7 @@ async function main() {
 
     create: {
       name: "Growth",
-      price: 39,
+      price: 49,
       invoiceLimit: 100,
       productId: invoiceRecovery.id,
       paypalPlanId:
@@ -159,7 +159,7 @@ async function main() {
 
     update: {
       name: "Pro",
-      price: 79,
+      price: 99,
       invoiceLimit: -1,
       productId: invoiceRecovery.id,
       active: true,
@@ -167,7 +167,7 @@ async function main() {
 
     create: {
       name: "Pro",
-      price: 79,
+      price: 99,
       invoiceLimit: -1,
       productId: invoiceRecovery.id,
       paypalPlanId:
@@ -267,7 +267,7 @@ const templates = [
       Amount Due:
     </strong>
 
-    ₹{{amount}}
+    $ {{amount}}
   </p>
 
   <p>
@@ -325,7 +325,7 @@ const templates = [
       Outstanding Amount:
     </strong>
 
-    ₹{{amount}}
+    $ {{amount}}
   </p>
 
   <p>
@@ -383,7 +383,7 @@ const templates = [
       Total Due:
     </strong>
 
-    ₹{{amount}}
+    $ {{amount}}
   </p>
 
   <p>

@@ -1,6 +1,4 @@
-import {
-redirect
-}
+import { redirect }
 from "next/navigation"
 
 import {
@@ -14,13 +12,10 @@ const user=
 await authGuard()
 
 if(
-user.role
-!=="admin"
+user.role!=="ADMIN"
 ){
 
-redirect(
-"/dashboard"
-)
+redirect("/dashboard")
 
 }
 

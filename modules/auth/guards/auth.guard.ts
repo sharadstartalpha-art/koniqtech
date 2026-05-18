@@ -1,59 +1,19 @@
-import {
-
-redirect
-
-}
-
-from
-"next/navigation"
+import { redirect }
+from "next/navigation"
 
 import {
-
 getSession
-
 }
+from "../cookies/session"
 
-from
-"../cookies/session"
-
-import {
-
-verifyToken,
-
-UserToken
-
-}
-
-from
-"../jwt/jwt"
-
-export async function authGuard()
-
-:Promise<UserToken>{
-
-const session=
-
-await getSession()
-
-if(!session){
-
-redirect(
-"/login"
-)
-
-}
+export async function authGuard(){
 
 const user=
-
-await verifyToken(
-session
-)
+await getSession()
 
 if(!user){
 
-redirect(
-"/login"
-)
+redirect("/login")
 
 }
 

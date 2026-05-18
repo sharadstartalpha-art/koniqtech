@@ -1,31 +1,53 @@
-import {
+import StatCard
+from "@/shared/components/ui/StatCard"
 
-authGuard
-
-}
-
-from
-"@/modules/auth/guards/auth.guard"
-
-export default async function Dashboard(){
-
-const user=
-
-await authGuard()
+export default function Dashboard(){
 
 return(
 
-<div className="p-10">
+<div className="
+p-8
+bg-slate-50
+min-h-screen
+">
 
-<h1
-className=
-"text-4xl font-bold">
+<h1 className="
+text-4xl
+font-bold
+mb-8
+">
 
-Welcome
-
-{user.role}
+Dashboard
 
 </h1>
+
+<div className="
+grid
+grid-cols-4
+gap-5
+">
+
+<StatCard
+title="Revenue"
+value="$82,400"
+/>
+
+<StatCard
+title="Leads"
+value="241"
+/>
+
+<StatCard
+title="Jobs"
+value="43"
+/>
+
+<StatCard
+title="Customers"
+value="112"
+/>
+
+</div>
 
 </div>
 

@@ -1,9 +1,6 @@
-"use client"
+import Link from "next/link"
 
-import Link from
-"next/link"
-
-const links=[
+const items=[
 
 "dashboard",
 
@@ -37,19 +34,31 @@ export default function Sidebar(){
 
 return(
 
-<div className="w-72 h-screen border-r p-5">
+<div className="
+w-72
+bg-white
+border-r
+h-screen
+p-6
+">
 
-<h1 className="text-2xl font-bold">
+<h1 className="
+text-4xl
+font-bold
+mb-10
+">
 
-KONIQ CRM
+KONIQ
 
 </h1>
 
-<div className="mt-8 space-y-3">
+<div className="
+space-y-3
+">
 
 {
 
-links.map(
+items.map(
 
 x=>(
 
@@ -59,8 +68,13 @@ key={x}
 
 href={`/${x}`}
 
-className=
-"block p-3 rounded"
+className="
+block
+rounded-xl
+p-3
+hover:bg-slate-100
+capitalize
+"
 
 >
 

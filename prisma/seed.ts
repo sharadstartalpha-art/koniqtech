@@ -1,624 +1,295 @@
 import {
-    PrismaClient,
-    Industry,
-    UserRole,
-    SubscriptionStatus,
-    LeadStatus,
-    QuoteStatus,
-    JobStatus
-} from "@prisma/client"
+PrismaClient,
+Industry,
+UserRole,
+SubscriptionStatus
+}
+
+from "@prisma/client"
 
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
+const prisma=
+new PrismaClient()
 
-async function main() {
+async function main(){
 
-    const password = await bcrypt.hash(
-        "Koniq@Admin2026",
-        10
-    )
+const passwordHash=
 
-    /*
-    =====================================
-    ORG
-    =====================================
-    */
+await bcrypt.hash(
 
-    const org = await prisma.organization.create({
-        data: {
-            name: "Elite Roofing Solutions",
+"password",
 
-            slug: "elite-roofing-us",
+10
 
-            industry: Industry.roofing,
+)
 
-            plan: "pro",
+/*
+ORG
+*/
 
-            email: "admin@eliteroofingusa.com",
+let org=
 
-            phone: "+1-469-555-1000",
+await prisma.organization.findUnique({
 
-            address:
-                "Dallas, Texas, USA",
+where:{
 
-            users: {
-                create: [
+slug:
+"elite-roofing-us"
 
-                    {
-                        name: "Michael Carter",
+}
 
-                        email:
-                            "owner@eliteroofingusa.com",
+})
 
-                        passwordHash:
-                            password,
+if(!org){
 
-                        role:
-                            UserRole.owner
-                    },
+org=
 
-                    {
-                        name:
-                            "Sarah Williams",
+await prisma.organization.create({
 
-                        email:
-                            "sales@eliteroofingusa.com",
+data:{
 
-                        passwordHash:
-                            password,
+name:
+"Elite Roofing Solutions",
 
-                        role:
-                            UserRole.sales
-                    },
+slug:
+"elite-roofing-us",
 
-                    {
-                        name:
-                            "David Wilson",
+industry:
+Industry.roofing,
 
-                        email:
-                            "tech@eliteroofingusa.com",
+plan:
+"pro",
 
-                        passwordHash:
-                            password,
+email:
+"admin@eliteroofingusa.com",
 
-                        role:
-                            UserRole.technician
-                    }
+phone:
+"+1-469-555-1000",
 
-                ]
-            }
-        },
+address:
+"Dallas Texas USA"
 
-        include: {
-            users: true
-        }
-    })
+}
 
-    /*
-    =====================================
-    SETTINGS
-    =====================================
-    */
+})
 
-    await prisma.organizationSettings.create({
-        data: {
+}
 
-            orgId: org.id,
+/*
+ADMIN
+*/
 
-            timezone:
-                "America/Chicago",
+await prisma.user.upsert({
 
-            currency:
-                "USD",
+where:{
 
-            branding: {
-                company:
-                    "Elite Roofing Solutions",
+email:
+"admin@koniqtech.com"
 
-                locale:
-                    "en-US"
-            },
+},
 
-            integrations: {
+update:{
 
-                paypal: {
+passwordHash,
 
-                    enabled: true,
+orgId:
+org.id
 
-                    provider:
-                        "paypal",
+},
 
-                    environment:
-                        "live"
-                },
+create:{
 
-                sms:
-                    "twilio",
+name:
+"Koniq Admin",
 
-                email:
-                    "resend"
-            }
-        }
-    })
+email:
+"admin@koniqtech.com",
 
-    /*
-    =====================================
-    PAYPAL SUBSCRIPTION
-    =====================================
-    */
+passwordHash,
 
-    await prisma.subscription.create({
-        data: {
+role:
+UserRole.owner,
 
-            orgId:
-                org.id,
+orgId:
+org.id
 
-            provider:
-                "paypal",
+}
 
-            externalId:
-                "PAYPAL-SUB-US-10001",
+})
 
-            plan:
-                "pro",
+/*
+SALES
+*/
 
-            status:
-                SubscriptionStatus.active,
+await prisma.user.upsert({
 
-            renewAt:
-                new Date(
-                    "2026-06-20"
-                )
-        }
-    })
+where:{
 
-    /*
-    =====================================
-    PIPELINE
-    =====================================
-    */
+email:
+"sales@eliteroofingusa.com"
 
-    const pipeline =
-        await prisma.pipeline.create({
+},
 
-            data: {
+update:{},
 
-                orgId:
-                    org.id,
+create:{
 
-                name:
-                    "US Roofing Sales",
+name:
+"Sarah Williams",
 
-                stages: {
+email:
+"sales@eliteroofingusa.com",
 
-                    create: [
+passwordHash,
 
-                        {
-                            name:
-                                "New Lead",
+role:
+UserRole.sales,
 
-                            position:
-                                1
-                        },
+orgId:
+org.id
 
-                        {
-                            name:
-                                "Inspection",
+}
 
-                            position:
-                                2
-                        },
+})
 
-                        {
-                            name:
-                                "Estimate Sent",
+/*
+TECH
+*/
 
-                            position:
-                                3
-                        },
+await prisma.user.upsert({
 
-                        {
-                            name:
-                                "Insurance Review",
+where:{
 
-                            position:
-                                4
-                        },
+email:
+"tech@eliteroofingusa.com"
 
-                        {
-                            name:
-                                "Closed Won",
+},
 
-                            position:
-                                5
-                        }
+update:{},
 
-                    ]
-                }
-            },
+create:{
 
-            include: {
-                stages: true
-            }
-        })
+name:
+"David Wilson",
 
-    /*
-    =====================================
-    LEAD
-    =====================================
-    */
+email:
+"tech@eliteroofingusa.com",
 
-    const lead =
-        await prisma.lead.create({
+passwordHash,
 
-            data: {
+role:
+UserRole.technician,
 
-                orgId:
-                    org.id,
+orgId:
+org.id
 
-                source:
-                    "Google Ads",
+}
 
-                firstName:
-                    "Robert",
+})
 
-                lastName:
-                    "Johnson",
+/*
+SETTINGS
+*/
 
-                email:
-                    "robert.johnson@email.com",
+const settings=
 
-                phone:
-                    "+1-214-555-1122",
+await prisma.organizationSettings.findUnique({
 
-                address:
-                    "Dallas, TX",
+where:{
 
-                industry:
-                    Industry.roofing,
+orgId:
+org.id
 
-                status:
-                    LeadStatus.qualified,
+}
 
-                notes:
-                    "Insurance claim inspection request"
-            }
-        })
+})
 
-    /*
-    =====================================
-    CUSTOMER
-    =====================================
-    */
+if(!settings){
 
-    const customer =
-        await prisma.customer.create({
+await prisma.organizationSettings.create({
 
-            data: {
+data:{
 
-                orgId:
-                    org.id,
+orgId:
+org.id,
 
-                leadId:
-                    lead.id,
+timezone:
+"America/Chicago",
 
-                firstName:
-                    "Robert",
+currency:
+"USD"
 
-                lastName:
-                    "Johnson",
+}
 
-                companyName:
-                    "Johnson Properties",
+})
 
-                email:
-                    lead.email,
+}
 
-                phone:
-                    lead.phone,
+/*
+PAYPAL SUB
+*/
 
-                city:
-                    "Dallas",
+const sub=
 
-                state:
-                    "Texas",
+await prisma.subscription.findFirst({
 
-                zip:
-                    "75001",
+where:{
 
-                address:
-                    "Dallas TX USA"
-            }
-        })
+externalId:
+"PAYPAL-SUB-US-10001"
 
-    /*
-    =====================================
-    DEAL
-    =====================================
-    */
+}
 
-    const wonStage =
-        pipeline.stages.find(
-            s =>
-                s.name ===
-                "Estimate Sent"
-        )
+})
 
-    await prisma.deal.create({
+if(!sub){
 
-        data: {
+await prisma.subscription.create({
 
-            orgId:
-                org.id,
+data:{
 
-            customerId:
-                customer.id,
+orgId:
+org.id,
 
-            stageId:
-                wonStage!.id,
+provider:
+"paypal",
 
-            title:
-                "Residential Roof Replacement",
+externalId:
+"PAYPAL-SUB-US-10001",
 
-            value:
-                18500,
+plan:
+"pro",
 
-            probability:
-                85,
+status:
+SubscriptionStatus.active
 
-            expectedClose:
-                new Date(
-                    "2026-05-30"
-                )
-        }
-    })
+}
 
-    /*
-    =====================================
-    QUOTE
-    =====================================
-    */
+})
 
-    const quote =
-        await prisma.quote.create({
+}
 
-            data: {
+console.log(
+"SEED OK"
+)
 
-                orgId:
-                    org.id,
-
-                customerId:
-                    customer.id,
-
-                quoteNumber:
-                    "US-ROOF-1001",
-
-                subtotal:
-                    18500,
-
-                tax:
-                    1480,
-
-                total:
-                    19980,
-
-                status:
-                    QuoteStatus.sent,
-
-                validUntil:
-                    new Date(
-                        "2026-06-10"
-                    ),
-
-                items: {
-
-                    create: [
-
-                        {
-                            itemName:
-                                "Roof Replacement",
-
-                            qty:
-                                1,
-
-                            price:
-                                15000,
-
-                            total:
-                                15000
-                        },
-
-                        {
-                            itemName:
-                                "Premium Shingles",
-
-                            qty:
-                                1,
-
-                            price:
-                                3500,
-
-                            total:
-                                3500
-                        }
-
-                    ]
-                }
-            }
-        })
-
-    /*
-    =====================================
-    JOB
-    =====================================
-    */
-
-    await prisma.job.create({
-
-        data: {
-
-            orgId:
-                org.id,
-
-            customerId:
-                customer.id,
-
-            quoteId:
-                quote.id,
-
-            title:
-                "Dallas Roof Install",
-
-            status:
-                JobStatus.scheduled,
-
-            scheduledDate:
-                new Date(
-                    "2026-05-25"
-                ),
-
-            roofingProject: {
-
-                create: {
-
-                    roofType:
-                        "Residential",
-
-                    material:
-                        "Architectural Shingles",
-
-                    areaSqft:
-                        3200,
-
-                    insuranceClaim:
-                        true
-                }
-            }
-        }
-    })
-
-    /*
-    =====================================
-    INVOICE
-    =====================================
-    */
-
-    await prisma.invoice.create({
-
-        data: {
-
-            orgId:
-                org.id,
-
-            customerId:
-                customer.id,
-
-            amount:
-                19980,
-
-            status:
-                "pending",
-
-            dueDate:
-                new Date(
-                    "2026-06-15"
-                )
-        }
-    })
-
-    /*
-    =====================================
-    AUTOMATION
-    =====================================
-    */
-
-    await prisma.automation.create({
-
-        data: {
-
-            orgId:
-                org.id,
-
-            name:
-                "Quote Followup",
-
-            triggerEvent:
-                "quote_sent",
-
-            steps: {
-
-                create: [
-
-                    {
-
-                        actionType:
-                            "send_email",
-
-                        config: {
-                            delay:
-                                "24h"
-                        },
-
-                        position:
-                            1
-                    },
-
-                    {
-
-                        actionType:
-                            "paypal_invoice",
-
-                        config: {
-                            provider:
-                                "paypal"
-                        },
-
-                        position:
-                            2
-                    }
-
-                ]
-            }
-        }
-    })
-
-    /*
-    =====================================
-    PLATFORM ADMIN
-    =====================================
-    */
-
-    await prisma.adminUser.create({
-
-        data: {
-
-            email:
-                "admin@koniqtech.com",
-
-            passwordHash:
-                password,
-
-            role:
-                "super_admin"
-        }
-    })
-
-    console.log(
-        "USA / EU PayPal seed completed"
-    )
 }
 
 main()
-.then(async () => {
-    await prisma.$disconnect()
+
+.then(async()=>{
+
+await prisma.$disconnect()
+
 })
-.catch(async e => {
 
-    console.error(e)
+.catch(async(e)=>{
 
-    await prisma.$disconnect()
+console.error(e)
 
-    process.exit(1)
+await prisma.$disconnect()
+
+process.exit(1)
 
 })

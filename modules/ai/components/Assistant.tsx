@@ -1,46 +1,32 @@
 "use client"
 
-import {
-useState
-}
-
-from "react"
-
 export default function Assistant(){
-
-const[
-prompt,
-setPrompt
-]=useState("")
 
 return(
 
-<div
-className=
-"max-w-4xl">
+<div className="
+p-8
+space-y-4
+">
+
+<h1 className="
+text-4xl
+font-bold
+">
+
+AI Assistant
+
+</h1>
 
 <textarea
-
-className=
-"border w-full p-5 h-60"
-
-onChange={e=>
-
-setPrompt(
-e.target.value
-)
-
-}
-
+className="
+w-full
+border
+rounded
+p-4
+h-40
+"
 />
-
-<button
-className=
-"border p-3 mt-5">
-
-Generate
-
-</button>
 
 </div>
 

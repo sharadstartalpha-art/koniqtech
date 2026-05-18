@@ -6,8 +6,7 @@ NextResponse
 
 }
 
-from
-"next/server"
+from "next/server"
 
 import {
 
@@ -15,8 +14,7 @@ jwtVerify
 
 }
 
-from
-"jose"
+from "jose"
 
 const secret=
 
@@ -24,7 +22,7 @@ new TextEncoder()
 
 .encode(
 
-process.env.JWT_SECRET
+process.env.JWT_SECRET!
 
 )
 
@@ -38,7 +36,7 @@ const token=
 
 request.cookies.get(
 
-"koniq_session"
+"session"
 
 )?.value
 
@@ -50,7 +48,9 @@ const publicRoutes=[
 
 "/login",
 
-"/register"
+"/register",
+
+"/"
 
 ]
 

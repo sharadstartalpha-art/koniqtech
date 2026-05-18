@@ -1,41 +1,62 @@
 "use server"
 
-import {
-validateUser
-}
+import bcrypt from "bcryptjs"
 
-from "../services/auth.service"
+import { redirect } from "next/navigation"
 
-import {
-signToken
-}
+import prisma from "@/shared/lib/prisma"
 
-from "../jwt/jwt"
-
-import {
-setSession
-}
-
+import { createSession }
 from "../cookies/session"
 
 export async function loginAction(
-
-email:string,
-
-password:string
-
+_:unknown,
+formData:FormData
 ){
 
-const user=
-await validateUser(
+const email=
+String(
+formData.get("email")
+)
 
-email,
-password
+const password=
+String(
+formData.get("password")
+)
+
+const user=
+await prisma.user.findUnique({
+
+where:{email}
+
+})
+
+if(!user){
+
+return{
+error:"Invalid login"
+}
+
+}
+
+const ok=
+await bcrypt.compare(
+
+password,
+
+user.password
 
 )
 
-const token=
-await signToken({
+if(!ok){
+
+return{
+error:"Invalid login"
+}
+
+}
+
+await createSession({
 
 id:user.id,
 
@@ -45,14 +66,8 @@ role:user.role
 
 })
 
-await setSession(
-token
+redirect(
+"/dashboard"
 )
-
-return{
-
-success:true
-
-}
 
 }

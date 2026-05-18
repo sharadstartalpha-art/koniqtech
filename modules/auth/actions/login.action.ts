@@ -1,17 +1,16 @@
 "use server"
 
 import bcrypt from "bcryptjs"
-
 import { redirect } from "next/navigation"
 
 import prisma from "@/shared/lib/prisma"
 
-import { createSession }
+import { setSession }
 from "../cookies/session"
 
 export async function loginAction(
-_:unknown,
-formData:FormData
+    _: unknown,
+    formData: FormData
 ){
 
 const email=
@@ -27,14 +26,16 @@ formData.get("password")
 const user=
 await prisma.user.findUnique({
 
-where:{email}
+where:{
+email
+}
 
 })
 
 if(!user){
 
 return{
-error:"Invalid login"
+error:"Invalid credentials"
 }
 
 }
@@ -44,19 +45,19 @@ await bcrypt.compare(
 
 password,
 
-user.password
+user.passwordHash
 
 )
 
 if(!ok){
 
 return{
-error:"Invalid login"
+error:"Invalid credentials"
 }
 
 }
 
-await createSession({
+await setSession({
 
 id:user.id,
 
@@ -66,8 +67,6 @@ role:user.role
 
 })
 
-redirect(
-"/dashboard"
-)
+redirect("/dashboard")
 
 }

@@ -1,18 +1,33 @@
-import { cookies } from "next/headers"
+"use server"
 
-const COOKIE_NAME =
-"koniq_session"
+import { cookies }
+from "next/headers"
+
+import {
+
+signToken,
+
+UserToken
+
+}
+
+from "../jwt/jwt"
 
 export async function setSession(
-token:string
+
+user:UserToken
+
 ){
 
-const cookieStore=
+const token=
+await signToken(user)
+
+const store=
 await cookies()
 
-cookieStore.set(
+store.set(
 
-COOKIE_NAME,
+"session",
 
 token,
 
@@ -20,41 +35,25 @@ token,
 
 httpOnly:true,
 
-secure:
-process.env.NODE_ENV
-==="production",
+secure:true,
 
 sameSite:"lax",
 
 path:"/",
 
-maxAge:
-60*60*24*7
+maxAge:60*60*24*7
 
 }
 
 )
-
-}
-
-export async function getSession(){
-
-const cookieStore=
-await cookies()
-
-return cookieStore.get(
-COOKIE_NAME
-)?.value
 
 }
 
 export async function clearSession(){
 
-const cookieStore=
+const store=
 await cookies()
 
-cookieStore.delete(
-COOKIE_NAME
-)
+store.delete("session")
 
 }

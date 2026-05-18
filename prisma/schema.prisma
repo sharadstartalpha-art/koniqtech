@@ -4,483 +4,540 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url = env("DATABASE_URL")
 }
 
-model Payment {
-  id        String   @id @default(uuid())
-  userId    String
-  productId String
-  invoiceId String
-  amount    Float
-  status    String
-  createdAt DateTime @default(now())
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id])
+enum Industry {
+  roofing
+  hvac
+  plumbing
+  landscaping
 }
 
-model MagicLink {
-  id        String   @id @default(uuid())
-  email     String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+enum UserRole {
+  owner
+  admin
+  manager
+  sales
+  technician
+  support
+  accountant
 }
 
-model Product {
+enum LeadStatus {
+  new
+  contacted
+  qualified
+  proposal
+  won
+  lost
+}
+
+enum JobStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
+enum QuoteStatus {
+  draft
+  sent
+  approved
+  rejected
+  expired
+}
+
+enum SubscriptionStatus {
+  active
+  trial
+  cancelled
+  expired
+}
+
+enum MessageChannel {
+  sms
+  email
+  whatsapp
+  internal
+}
+
+model Organization {
   id        String   @id @default(uuid())
   name      String
   slug      String   @unique
+
+  industry  Industry?
+
+  plan      String   @default("starter")
+
+  logo      String?
+
+  phone     String?
+  email     String?
+
+  address   String?
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  plans         Plan[]
-  invoices      Invoice[]
-  subscriptions Subscription[]
-}
-
-model Plan {
-  id            String         @id @default(uuid())
-  productId     String
-  name          String // Free / Pro / Business
-  price         Float
-  invoiceLimit  Int?
-  paypalPlanId  String?        @unique
-  createdAt     DateTime       @default(now())
-  active        Boolean        @default(true)
-  product       Product        @relation(fields: [productId], references: [id])
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id                   String    @id @default(uuid())
-  userId               String
-  productId            String
-  planId               String // 🔥 NEW
-  paypalSubscriptionId String?
-  status               String
-  createdAt            DateTime  @default(now())
-  expiresAt            DateTime? // ✅ ADD THIS
-  currentPeriodEnd     DateTime? // ✅ ADD THIS
-  product              Product   @relation(fields: [productId], references: [id])
-  plan                 Plan      @relation(fields: [planId], references: [id])
-  user                 User      @relation(fields: [userId], references: [id])
-}
-
-model PaymentLink {
-  id        String   @id @default(uuid())
-  userId    String
-  title     String
-  url       String? // 👈 TEMP OPTIONAL
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model ReminderTemplate {
-  id     String @id @default(cuid())
-  userId String
-
-  name    String @unique
-  subject String
-  html    String // full email HTML
-
-  type      String // 🔥 "friendly" | "firm" | "final" | "custom"
-  isDefault Boolean @default(false)
-
-  createdAt         DateTime           @default(now())
-  reminderSchedules ReminderSchedule[]
-}
-
-model Reminder {
-  id String @id @default(uuid())
-
-  userId    String
-  invoiceId String
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
-
-  type   ReminderType
-  status String
-  mode   ReminderMode
-
-  channel String @default("email")
-  email   String
-  amount  Float
-
-  html String
-  text String
-
-  templateId String?
-  scheduleId String?
-
-  sentAt    DateTime @default(now())
-  createdAt DateTime @default(now())
-
-  opens   Int     @default(0)
-  clicked Boolean @default(false)
+  users           User[]
+  leads           Lead[]
+  customers       Customer[]
+  pipelines       Pipeline[]
+  deals           Deal[]
+  quotes          Quote[]
+  jobs            Job[]
+  events          Event[]
+  conversations   Conversation[]
+  automations     Automation[]
+  subscriptions   Subscription[]
+  invoices        Invoice[]
+  aiLogs          AiLog[]
+  settings        OrganizationSettings?
+  platformLogs    PlatformLog[]
 }
 
 model User {
-  id String @id @default(uuid())
+  id           String   @id @default(uuid())
 
-  email    String  @unique
-  password String?
+  orgId        String
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  name           String?
-  phone          String?
-  whatsappNumber String?
-  avatar         String?
+  name         String
+  email        String   @unique
 
-  role String @default("USER")
+  passwordHash String
 
-  isVerified Boolean @default(false)
+  role         UserRole
 
-  otp       String?
-  otpExpiry DateTime?
+  avatar       String?
 
-  verifyToken  String?
-  verifyExpiry DateTime?
+  status       String @default("active")
 
-  referredBy String?
+  createdAt    DateTime @default(now())
 
-  acceptedTerms Boolean   @default(false)
-  acceptedAt    DateTime?
-
-  lastLoginAt  DateTime?
-  lastActiveAt DateTime?
-
-  timezone String? @default("UTC")
-
-  emailProvider String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  businessPhone   String?
-  businessEmail   String?
-  whatsappEnabled Boolean @default(false)
-  smsEnabled      Boolean @default(false)
-
-  paymentLinks  PaymentLink[]
-  invoices      Invoice[]
-  subscriptions Subscription[]
-  campaigns     Campaign[]
- companyName String?
-  reminderSchedules ReminderSchedule[]
-  reminderLogs      ReminderLog[]
-  onboarding        UserOnboarding?
-  paymentMethods PaymentMethod[]
-
-  paypalMe String?
-
-stripeLink String?
-
-razorpayLink String?
-
-customPaymentLink String?
-
-bankName String?
-
-accountName String?
-
-accountNumber String?
-
-ifscCode String?
-
-upiId String?
+  assignedLeads Lead[]
+  deals        Deal[]
+  jobs         Job[]
+  events       Event[]
+  messages     Message[]
+  aiLogs       AiLog[]
+  sessions     Session[]
 }
 
-enum ReminderMode {
-  manual
-  auto
-}
-
-enum ReminderStatus {
-  pending
-  sent
-  failed
-}
-
-enum ReminderType {
-  friendly
-  firm
-  final
-}
-
-model ReminderSchedule {
-  id String @id @default(cuid())
+model Session {
+  id         String @id @default(uuid())
 
   userId     String
-  invoiceId  String
-  templateId String?
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  amount Float
+  token      String @unique
 
-  type String
+  expiresAt  DateTime
 
-  channel String @default("email")
-  mode    String @default("auto")
-
-  sendAt DateTime
-  step   Int      @default(1)
-  status String   @default("pending")
-
-  retryCount Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-
-  template ReminderTemplate? @relation(fields: [templateId], references: [id])
+  createdAt  DateTime @default(now())
 }
 
-model ReminderSettings {
-  id String @id @default(uuid())
+model Lead {
+  id          String @id @default(uuid())
 
-  userId String @unique
+  orgId       String
+  organization Organization @relation(fields:[orgId], references:[id], onDelete: Cascade)
 
-  emailEnabled    Boolean @default(true)
-  whatsappEnabled Boolean @default(false)
-  smsEnabled      Boolean @default(false)
+  source      String?
 
-  autoReminders Boolean @default(true)
+  firstName   String
+  lastName    String?
 
-  whatsappTemplate String?
-  smsTemplate      String?
+  phone       String?
+  email       String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  address     String?
+
+  industry    Industry?
+
+  status      LeadStatus @default(new)
+
+  assignedTo  String?
+  assignee    User? @relation(fields:[assignedTo], references:[id])
+
+  notes       String?
+
+  createdAt   DateTime @default(now())
+
+  customer Customer?
+}
+
+model Customer {
+  id           String @id @default(uuid())
+
+  orgId        String
+  organization Organization @relation(fields:[orgId], references:[id], onDelete: Cascade)
+
+  leadId       String? @unique
+  lead         Lead? @relation(fields:[leadId], references:[id])
+
+  companyName  String?
+
+  firstName    String
+  lastName     String?
+
+  email        String?
+  phone        String?
+
+  address      String?
+  city         String?
+  state        String?
+  zip          String?
+
+  notes        String?
+
+  createdAt    DateTime @default(now())
+
+  deals        Deal[]
+  quotes       Quote[]
+  jobs         Job[]
+  conversations Conversation[]
+  invoices     Invoice[]
+
+  hvacUnits        HvacUnit[]
+  plumbingAssets   PlumbingAsset[]
+}
+
+model Pipeline {
+  id         String @id @default(uuid())
+
+  orgId      String
+  organization Organization @relation(fields:[orgId], references:[id])
+
+  name       String
+
+  stages     PipelineStage[]
+}
+
+model PipelineStage {
+  id          String @id @default(uuid())
+
+  pipelineId  String
+  pipeline    Pipeline @relation(fields:[pipelineId], references:[id], onDelete: Cascade)
+
+  name        String
+
+  position    Int
+
+  deals       Deal[]
+}
+
+model Deal {
+  id          String @id @default(uuid())
+
+  orgId       String
+  organization Organization @relation(fields:[orgId], references:[id])
+
+  customerId  String
+  customer    Customer @relation(fields:[customerId], references:[id])
+
+  stageId     String
+  stage       PipelineStage @relation(fields:[stageId], references:[id])
+
+  title       String
+
+  value       Decimal @db.Decimal(12,2)
+
+  probability Int?
+
+  assignedTo  String?
+  assignee    User? @relation(fields:[assignedTo], references:[id])
+
+  expectedClose DateTime?
+}
+
+model Quote {
+  id           String @id @default(uuid())
+
+  orgId        String
+  organization Organization @relation(fields:[orgId], references:[id])
+
+  customerId   String
+  customer     Customer @relation(fields:[customerId], references:[id])
+
+  quoteNumber  String @unique
+
+  subtotal     Decimal @db.Decimal(12,2)
+
+  tax          Decimal @db.Decimal(12,2)
+
+  total        Decimal @db.Decimal(12,2)
+
+  status       QuoteStatus @default(draft)
+
+  validUntil   DateTime?
+
+  createdAt    DateTime @default(now())
+
+  items        QuoteItem[]
+  jobs         Job[]
+}
+
+model QuoteItem {
+  id         String @id @default(uuid())
+
+  quoteId    String
+  quote      Quote @relation(fields:[quoteId], references:[id], onDelete: Cascade)
+
+  itemName   String
+
+  qty        Int
+
+  price      Decimal @db.Decimal(12,2)
+
+  total      Decimal @db.Decimal(12,2)
+}
+
+model Job {
+  id             String @id @default(uuid())
+
+  orgId          String
+  organization   Organization @relation(fields:[orgId], references:[id])
+
+  customerId     String
+  customer       Customer @relation(fields:[customerId], references:[id])
+
+  quoteId        String?
+  quote          Quote? @relation(fields:[quoteId], references:[id])
+
+  title          String
+
+  status         JobStatus @default(scheduled)
+
+  technicianId   String?
+  technician     User? @relation(fields:[technicianId], references:[id])
+
+  scheduledDate  DateTime?
+
+  completedDate  DateTime?
+
+  notes          String?
+
+  events         Event[]
+
+  roofingProject RoofingProject?
+  landscapingProject LandscapingProject?
+}
+
+model Event {
+  id          String @id @default(uuid())
+
+  orgId       String
+  organization Organization @relation(fields:[orgId], references:[id])
+
+  title       String
+
+  startTime   DateTime
+
+  endTime     DateTime
+
+  userId      String?
+  user        User? @relation(fields:[userId], references:[id])
+
+  jobId       String?
+  job         Job? @relation(fields:[jobId], references:[id])
+}
+
+model Conversation {
+  id          String @id @default(uuid())
+
+  orgId       String
+  organization Organization @relation(fields:[orgId], references:[id])
+
+  customerId  String
+  customer    Customer @relation(fields:[customerId], references:[id])
+
+  channel     MessageChannel
+
+  createdAt   DateTime @default(now())
+
+  messages    Message[]
+}
+
+model Message {
+  id             String @id @default(uuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields:[conversationId], references:[id], onDelete: Cascade)
+
+  senderId       String?
+  sender         User? @relation(fields:[senderId], references:[id])
+
+  body           String
+
+  createdAt      DateTime @default(now())
+}
+
+model Automation {
+  id            String @id @default(uuid())
+
+  orgId         String
+  organization  Organization @relation(fields:[orgId], references:[id])
+
+  name          String
+
+  triggerEvent  String
+
+  active        Boolean @default(true)
+
+  steps         AutomationStep[]
+}
+
+model AutomationStep {
+  id            String @id @default(uuid())
+
+  automationId  String
+  automation    Automation @relation(fields:[automationId], references:[id], onDelete: Cascade)
+
+  actionType    String
+
+  config        Json
+
+  position      Int
+}
+
+model Subscription {
+  id            String @id @default(uuid())
+
+  orgId         String
+  organization  Organization @relation(fields:[orgId], references:[id])
+
+  provider      String
+
+  externalId    String?
+
+  plan          String
+
+  status        SubscriptionStatus
+
+  renewAt       DateTime?
 }
 
 model Invoice {
-  id String @id @default(uuid())
+  id            String @id @default(uuid())
 
-  userId    String
-  productId String
+  orgId         String
+  organization  Organization @relation(fields:[orgId], references:[id])
 
-  clientEmail    String
-  clientName     String?
-  clientPhone    String?
-  clientWhatsapp String?
-  // Financials
+  customerId    String
+  customer      Customer @relation(fields:[customerId], references:[id])
 
-  amount Float
+  amount        Decimal @db.Decimal(12,2)
 
-  paidAmount Float @default(0)
+  status        String
 
-  balanceAmount Float?
-
-  currency String @default("USD")
-
-  // Status
-
-  status String @default("unpaid")
-
-  mode String @default("manual")
-
-  // Dates
-
-  dueDate DateTime
-
-  paidAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  // Payment
-
-  payments Payment[]
-
-  paymentLink String?
-
-  transactionId String?
-
-  paymentMethod String?
-
-  // Automation
-
-  autoReminder Boolean @default(true)
-
-  // Relations
-
-  product Product @relation(fields: [productId], references: [id])
-
-  user User @relation(fields: [userId], references: [id])
-
-  reminders Reminder[]
-
-  reminderSchedules ReminderSchedule[]
-
-  reminderLogs ReminderLog[]
-
-  autoSendFirstReminder Boolean @default(true)
-
-reminderWorkflow Json?
+  dueDate       DateTime?
 }
 
-model ReminderLog {
-  id String @id @default(cuid())
+model AiLog {
+  id            String @id @default(uuid())
 
-  userId    String
-  invoiceId String
+  orgId         String
+  organization  Organization @relation(fields:[orgId], references:[id])
 
-  channel String
+  userId        String
+  user          User @relation(fields:[userId], references:[id])
 
-  status String
+  prompt        String
 
-  recipient String
+  response      String
 
-  subject String?
-  message String?
+  tokens        Int?
 
-  providerMessageId String?
-
-  openedAt  DateTime?
-  clickedAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
 }
 
-model AIRecovery {
-  id String @id @default(uuid())
+model OrganizationSettings {
+  id            String @id @default(uuid())
 
-  userId String
+  orgId         String @unique
+  organization  Organization @relation(fields:[orgId], references:[id])
 
-  invoiceId String
+  timezone      String?
 
-  score Float
+  currency      String?
 
-  riskLevel String
-  // low | medium | high
+  branding      Json?
 
-  recommendation String
-
-  createdAt DateTime @default(now())
+  integrations  Json?
 }
 
-model WhatsAppConfig {
-  id String @id @default(uuid())
+model AdminUser {
+  id            String @id @default(uuid())
 
-  userId String @unique
+  email         String @unique
 
-  enabled Boolean @default(false)
+  passwordHash  String
 
-  phoneNumber String?
-
-  accessToken String?
-
-  businessId String?
-
-  createdAt DateTime @default(now())
+  role          String
 }
 
-model SMSConfig {
-  id String @id @default(uuid())
+model PlatformLog {
+  id            String @id @default(uuid())
 
-  userId String @unique
+  orgId         String
+  organization  Organization @relation(fields:[orgId], references:[id])
 
-  enabled Boolean @default(false)
+  eventType     String
 
-  provider String?
-  // twilio | vonage
+  payload       Json
 
-  accountSid String?
-
-  authToken String?
-
-  fromNumber String?
-
-  createdAt DateTime @default(now())
+  createdAt     DateTime @default(now())
 }
 
-model Campaign {
-  id String @id @default(uuid())
+model RoofingProject {
+  id              String @id @default(uuid())
 
-  userId String
+  jobId           String @unique
+  job             Job @relation(fields:[jobId], references:[id])
 
-  name String
+  roofType        String?
 
-  channel String
+  material        String?
 
-  message String
+  areaSqft        Decimal? @db.Decimal(10,2)
 
-  status String @default("pending")
-
-  scheduleDate DateTime?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
+  insuranceClaim  Boolean @default(false)
 }
 
-model OnboardingProgress {
-  id String @id @default(cuid())
+model HvacUnit {
+  id            String @id @default(uuid())
 
-  userId String @unique
+  customerId    String
+  customer      Customer @relation(fields:[customerId], references:[id])
 
-  connectedEmail Boolean @default(false)
+  model         String?
 
-  createdInvoice Boolean @default(false)
+  serialNo      String?
 
-  setupWorkflow Boolean @default(false)
-
-  sentReminder Boolean @default(false)
-
-  upgradedPlan Boolean @default(false)
-
-  completed Boolean @default(false)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
+  installDate   DateTime?
 }
 
-model UserOnboarding {
-  id String @id @default(cuid())
+model PlumbingAsset {
+  id            String @id @default(uuid())
 
-  userId String @unique
+  customerId    String
+  customer      Customer @relation(fields:[customerId], references:[id])
 
-  emailConnected Boolean @default(false)
+  fixtureType   String?
 
-  firstInvoice Boolean @default(false)
-
-  workflowCreated Boolean @default(false)
-
-  firstReminder Boolean @default(false)
-
-  upgraded Boolean @default(false)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location      String?
 }
 
+model LandscapingProject {
+  id            String @id @default(uuid())
 
+  jobId         String @unique
+  job           Job @relation(fields:[jobId], references:[id])
 
-model PaymentMethod {
-  id String @id @default(uuid())
+  yardArea      Decimal? @db.Decimal(10,2)
 
-  userId String
-
-  type String
-  label String?
-
-  value String
-
-  active Boolean @default(true)
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
+  irrigation    Boolean @default(false)
 }

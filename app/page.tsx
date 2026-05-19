@@ -4,19 +4,21 @@ export default function Home(){
 
 return(
 
-<div className="
-min-h-screen
-bg-slate-950
-text-white
+<div className="min-h-screen bg-slate-950 text-white">
+
+<nav className="
+border-b
+border-slate-800
 ">
 
 <div className="
 max-w-7xl
 mx-auto
 px-8
-py-8
+py-6
 flex
 justify-between
+items-center
 ">
 
 <h1 className="
@@ -28,7 +30,11 @@ KONIQTECH
 
 </h1>
 
-<div className="space-x-5">
+<div className="
+flex
+gap-5
+items-center
+">
 
 <Link href="/login">
 
@@ -54,18 +60,33 @@ Start Free
 
 </div>
 
+</nav>
+
 <section className="
 max-w-7xl
 mx-auto
-px-8
-py-24
 grid
-grid-cols-2
-gap-16
+lg:grid-cols-2
+gap-20
 items-center
+px-8
+py-28
 ">
 
 <div>
+
+<div className="
+inline-flex
+bg-slate-800
+rounded-full
+px-4
+py-2
+mb-8
+">
+
+AI CRM PLATFORM
+
+</div>
 
 <h1 className="
 text-7xl
@@ -73,7 +94,13 @@ font-bold
 leading-tight
 ">
 
-AI CRM for Home Service Companies
+AI CRM for
+
+Roofing HVAC
+
+Plumbing
+
+Landscaping
 
 </h1>
 
@@ -83,7 +110,7 @@ text-slate-300
 mt-8
 ">
 
-Roofing • HVAC • Plumbing • Landscaping
+Lead management • Dispatch • Quotes • Billing • AI • Documents • Automation
 
 </p>
 
@@ -111,7 +138,7 @@ Start Free
 href="/portal"
 className="
 border
-border-white
+border-slate-600
 px-8
 py-4
 rounded-xl
@@ -127,13 +154,80 @@ View Demo
 </div>
 
 <div className="
-bg-slate-800
+bg-slate-900
 rounded-3xl
-h-[600px]
 p-10
+border
+border-slate-800
 ">
 
-CRM Preview
+<div className="
+grid
+grid-cols-2
+gap-6
+">
+
+<div className="
+bg-slate-800
+rounded-2xl
+p-8
+">
+
+<h2 className="text-4xl font-bold">
+
+241
+
+</h2>
+
+<p>
+
+Leads
+
+</p>
+
+</div>
+
+<div className="
+bg-slate-800
+rounded-2xl
+p-8
+">
+
+<h2 className="text-4xl font-bold">
+
+$82K
+
+</h2>
+
+<p>
+
+Revenue
+
+</p>
+
+</div>
+
+<div className="
+bg-slate-800
+rounded-2xl
+p-8
+">
+
+43 Jobs
+
+</div>
+
+<div className="
+bg-slate-800
+rounded-2xl
+p-8
+">
+
+112 Customers
+
+</div>
+
+</div>
 
 </div>
 

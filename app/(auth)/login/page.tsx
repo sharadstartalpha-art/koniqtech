@@ -1,9 +1,46 @@
+import Link from "next/link"
+
 export default function Login(){
 
 return(
 
 <div className="
 min-h-screen
+grid
+lg:grid-cols-2
+">
+
+<div className="
+bg-slate-950
+text-white
+p-20
+flex
+flex-col
+justify-center
+">
+
+<h1 className="
+text-6xl
+font-bold
+">
+
+KONIQ CRM
+
+</h1>
+
+<p className="
+text-xl
+text-slate-300
+mt-6
+">
+
+AI CRM for home service companies
+
+</p>
+
+</div>
+
+<div className="
 flex
 items-center
 justify-center
@@ -12,31 +49,33 @@ bg-slate-100
 
 <div className="
 bg-white
-w-[500px]
+w-[520px]
 rounded-3xl
-shadow-xl
-p-10
-space-y-6
+shadow-2xl
+p-12
 ">
 
 <h1 className="
-text-4xl
+text-5xl
 font-bold
+mb-10
 ">
 
 Login
 
 </h1>
 
-<form className="space-y-4">
+<form className="
+space-y-5
+">
 
 <input
 placeholder="Email"
 className="
 w-full
-border
-rounded-xl
 p-4
+rounded-xl
+border
 "
 />
 
@@ -45,9 +84,9 @@ type="password"
 placeholder="Password"
 className="
 w-full
-border
-rounded-xl
 p-4
+rounded-xl
+border
 "
 />
 
@@ -56,8 +95,8 @@ className="
 w-full
 bg-blue-600
 text-white
-rounded-xl
 p-4
+rounded-xl
 "
 >
 
@@ -66,6 +105,29 @@ Sign In
 </button>
 
 </form>
+
+<p className="
+mt-8
+text-center
+">
+
+No account?
+
+<Link
+href="/register"
+className="
+text-blue-600
+ml-2
+"
+>
+
+Register
+
+</Link>
+
+</p>
+
+</div>
 
 </div>
 

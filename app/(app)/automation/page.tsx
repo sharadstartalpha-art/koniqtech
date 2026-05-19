@@ -1,18 +1,8 @@
-import Builder
+import AutomationBuilder
+from "@/modules/automation/components/AutomationBuilder"
 
-from
-"@/modules/automation/components/AutomationBuilder"
+export default function Page(){
 
-export default function Automation(){
-
-return(
-
-<div className="p-10">
-
-<Builder/>
-
-</div>
-
-)
+return <AutomationBuilder/>
 
 }

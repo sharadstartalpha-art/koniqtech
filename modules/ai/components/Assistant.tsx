@@ -4,20 +4,18 @@ return(
 
 <div className="p-8">
 
-<h1 className="text-4xl font-bold">
+<h1>
 
-AI Assistant
+AI Center
 
 </h1>
 
 <textarea
 className="
-w-full
-h-40
 border
+w-full
+h-48
 p-4
-rounded-xl
-mt-5
 "
 />
 

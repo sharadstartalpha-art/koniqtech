@@ -2,33 +2,13 @@ export default function BrandingForm(){
 
 return(
 
-<div className="p-8">
+<div className="space-y-4 p-8">
 
-<h1 className="text-4xl font-bold">
+<input placeholder="Logo"/>
 
-White Label Settings
+<input placeholder="Primary color"/>
 
-</h1>
-
-<input
-placeholder="Logo"
-className="
-border
-p-3
-w-full
-mt-5
-"
-/>
-
-<input
-placeholder="Primary Color"
-className="
-border
-p-3
-w-full
-mt-3
-"
-/>
+<input placeholder="Tenant name"/>
 
 </div>
 

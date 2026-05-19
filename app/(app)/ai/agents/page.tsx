@@ -1,8 +1,8 @@
-import AgentGrid
-from "@/modules/ai/components/AgentGrid"
+import AiAgents
+from "@/modules/ai/components/AiAgents"
 
 export default function Page(){
 
-return <AgentGrid/>
+return <AiAgents/>
 
 }

@@ -1,70 +1,18 @@
-"use client"
-
-import {
-useState
-}
-
-from "react"
-
-export default function Builder(){
-
-const[
-steps,
-setSteps
-]=useState<any[]>([])
-
-function add(){
-
-setSteps([
-
-...steps,
-
-{
-
-type:
-"email"
-
-}
-
-])
-
-}
+export default function AutomationBuilder(){
 
 return(
 
-<div>
+<div className="p-8">
 
-<button
-onClick={add}
+Trigger
 
-className=
-"border p-3">
+↓
 
-Add Step
+Condition
 
-</button>
+↓
 
-{
-
-steps.map(
-
-(x,i)=>(
-
-<div
-key={i}
-
-className=
-"border p-3 mt-3">
-
-{x.type}
-
-</div>
-
-)
-
-)
-
-}
+Action
 
 </div>
 

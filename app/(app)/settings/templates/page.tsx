@@ -1,8 +1,8 @@
-import BrandingForm
-from "@/modules/settings/components/BrandingForm"
+import TemplateLibrary
+from "@/modules/settings/components/TemplateLibrary"
 
 export default function Page(){
 
-return <BrandingForm/>
+return <TemplateLibrary/>
 
 }

@@ -1,69 +1,51 @@
-"use client"
+export default function DragPipeline(){
 
 const stages=[
-
 "New",
 "Qualified",
 "Proposal",
 "Won"
-
 ]
-
-export default function DragPipeline(){
 
 return(
 
 <div className="p-8">
 
-<h1 className="text-4xl font-bold mb-8">
+<h1 className="text-4xl font-bold">
 
 Pipeline Kanban
 
 </h1>
 
-<div className="grid grid-cols-4 gap-6">
+<div className="grid grid-cols-4 gap-5 mt-8">
 
-{
-
-stages.map(
-
-s=>(
+{stages.map(stage=>(
 
 <div
-key={s}
+key={stage}
 className="
 bg-white
 rounded-xl
+p-5
 shadow
-p-4
-space-y-4
-min-h-[500px]
 "
 >
 
-<h2 className="font-bold">
+<h2>
 
-{s}
+{stage}
 
 </h2>
 
-<div className="
-bg-slate-100
-rounded-lg
-p-4
-">
+<div className="bg-slate-100 mt-3 p-3 rounded">
 
-Roof Replacement
+Roof Lead
 
 </div>
 
 </div>
 
-)
-
-)
-
-}
+))}
 
 </div>
 

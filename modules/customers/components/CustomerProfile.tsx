@@ -1,39 +1,28 @@
-export default function CustomerProfile({
-
-id
-
-}:{
-
-id:string
-
-}){
+export default function CustomerProfile(){
 
 return(
 
-<div className="
-p-8
-space-y-6
-">
+<div className="p-8 space-y-6">
 
-<h1 className="
-text-4xl
-font-bold
-">
+<h1 className="text-4xl font-bold">
 
-Customer
+Customer Profile
 
 </h1>
 
-<div className="
-bg-white
-border
-rounded-xl
-p-6
-">
+<div className="grid grid-cols-2 gap-6">
 
-Customer ID:
+<div className="p-5 bg-white rounded-xl shadow">
 
-{id}
+John Smith
+
+</div>
+
+<div className="p-5 bg-white rounded-xl shadow">
+
+Roof project
+
+</div>
 
 </div>
 

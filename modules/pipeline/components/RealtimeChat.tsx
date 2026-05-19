@@ -1,41 +1,20 @@
-"use client"
-
-import {
-
-io
-
-}
-
-from
-"socket.io-client"
-
-const socket=
-
-io(
-"http://localhost:3001"
-)
-
-export default function Chat(){
-
-socket.on(
-
-"message",
-
-msg=>{
-
-console.log(
-msg
-)
-
-}
-
-)
+export default function RealtimeChat(){
 
 return(
 
-<div>
+<div className="p-8">
+
+<h1 className="text-4xl font-bold">
 
 Realtime Chat
+
+</h1>
+
+<div className="mt-6 bg-white p-6 rounded-xl">
+
+Hello team
+
+</div>
 
 </div>
 

@@ -1,8 +1,15 @@
-import LeadKanban
-from "@/modules/leads/components/LeadKanban"
+import LeadKanban from "@/modules/leads/components/LeadKanban"
 
-export default function LeadsPage(){
+export default function Page(){
 
-return <LeadKanban/>
+return(
+
+<div className="p-8">
+
+<LeadKanban/>
+
+</div>
+
+)
 
 }

@@ -1,103 +1,46 @@
-"use client"
-
-const invoices=[
-
-{
-
-id:"INV001",
-
-amount:19900,
-
-status:"paid"
-
-},
-
-{
-
-id:"INV002",
-
-amount:12000,
-
-status:"pending"
-
-}
-
-]
-
 export default function InvoiceTable(){
 
 return(
 
-<table
-className=
-"w-full border">
+<div className="p-8">
 
-<thead>
+<h1 className="text-4xl font-bold">
 
-<tr>
+Invoices
 
-<th>
+</h1>
 
-Invoice
-
-</th>
-
-<th>
-
-Amount
-
-</th>
-
-<th>
-
-Status
-
-</th>
-
-</tr>
-
-</thead>
+<table className="w-full mt-6">
 
 <tbody>
 
-{
-
-invoices.map(
-
-x=>(
-
-<tr
-key={x.id}>
+<tr>
 
 <td>
 
-{x.id}
+INV-1001
 
 </td>
 
 <td>
 
-${x.amount}
+Paid
 
 </td>
 
 <td>
 
-{x.status}
+$1500
 
 </td>
 
 </tr>
-
-)
-
-)
-
-}
 
 </tbody>
 
 </table>
+
+</div>
 
 )
 

@@ -1,18 +1,8 @@
 import QuoteBuilder
+from "@/modules/quotes/components/QuoteBuilder"
 
-from
-"@/modules/quotes/components/QuoteBuilder"
+export default function Page(){
 
-export default function Quotes(){
-
-return(
-
-<div className="p-10">
-
-<QuoteBuilder/>
-
-</div>
-
-)
+return <QuoteBuilder/>
 
 }

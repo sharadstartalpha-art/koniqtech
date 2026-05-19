@@ -1,69 +1,22 @@
-"use client"
-
-import {
-useState
-}
-
-from "react"
-
 export default function QuoteBuilder(){
-
-const[
-items,
-setItems
-]=useState<any[]>([])
-
-function add(){
-
-setItems([
-
-...items,
-
-{
-
-name:"",
-qty:1,
-
-price:0
-
-}
-
-])
-
-}
 
 return(
 
-<div>
+<div className="p-8">
 
-<button
-onClick={add}>
+<h1 className="text-4xl font-bold">
 
-Add Item
+Quote Builder
 
-</button>
+</h1>
 
-{
+<div className="mt-6 bg-white p-6 rounded-xl">
 
-items.map(
+Roof install
 
-(_,i)=>(
+$12,500
 
-<input
-key={i}
-
-className=
-"border"
-
->
-
-</input>
-
-)
-
-)
-
-}
+</div>
 
 </div>
 

@@ -1,18 +1,8 @@
-import Chat
+import RealtimeChat
+from "@/modules/pipeline/components/RealtimeChat"
 
-from
-"@/modules/messages/components/ChatWindow"
+export default function Page(){
 
-export default function Messages(){
-
-return(
-
-<div className="p-10">
-
-<Chat/>
-
-</div>
-
-)
+return <RealtimeChat/>
 
 }

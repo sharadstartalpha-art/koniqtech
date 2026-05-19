@@ -1,32 +1,71 @@
-import LoginForm
-
-from "@/modules/auth/components/LoginForm"
-
-export default function Page(){
+export default function Login(){
 
 return(
 
-<div className="min-h-screen grid lg:grid-cols-2">
+<div className="
+min-h-screen
+flex
+items-center
+justify-center
+bg-slate-100
+">
 
-<div className="bg-slate-950 text-white p-16">
+<div className="
+bg-white
+w-[500px]
+rounded-3xl
+shadow-xl
+p-10
+space-y-6
+">
 
-<h1 className="text-6xl font-bold">
+<h1 className="
+text-4xl
+font-bold
+">
 
-KONIQ CRM
+Login
 
 </h1>
 
-<p className="mt-8">
+<form className="space-y-4">
 
-AI CRM Platform
+<input
+placeholder="Email"
+className="
+w-full
+border
+rounded-xl
+p-4
+"
+/>
 
-</p>
+<input
+type="password"
+placeholder="Password"
+className="
+w-full
+border
+rounded-xl
+p-4
+"
+/>
 
-</div>
+<button
+className="
+w-full
+bg-blue-600
+text-white
+rounded-xl
+p-4
+"
+>
 
-<div className="flex items-center justify-center">
+Sign In
 
-<LoginForm/>
+</button>
+
+</form>
 
 </div>
 

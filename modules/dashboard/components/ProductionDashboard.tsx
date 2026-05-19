@@ -1,46 +1,102 @@
 export default function ProductionDashboard(){
 
+const cards=[
+
+{
+title:"Revenue",
+value:"$82,400"
+},
+
+{
+title:"Leads",
+value:"241"
+},
+
+{
+title:"Jobs",
+value:"43"
+},
+
+{
+title:"Customers",
+value:"112"
+}
+
+]
+
 return(
 
-<div className="p-8 bg-slate-50 min-h-screen">
+<div className="space-y-8">
 
-<div className="grid grid-cols-4 gap-6">
+<div>
 
-<div className="bg-white rounded-2xl p-6 shadow">
+<h1 className="
+text-5xl
+font-bold
+">
 
-Revenue
+Dashboard
 
-<h2 className="text-4xl font-bold">
+</h1>
 
-$82k
+<p className="text-slate-500">
+
+Operations overview
+
+</p>
+
+</div>
+
+<div className="
+grid
+grid-cols-4
+gap-6
+">
+
+{cards.map(card=>(
+
+<div
+key={card.title}
+className="
+bg-white
+rounded-2xl
+shadow-sm
+p-8
+border
+"
+>
+
+<p className="text-slate-500">
+
+{card.title}
+
+</p>
+
+<h2 className="
+text-4xl
+font-bold
+mt-4
+">
+
+{card.value}
 
 </h2>
 
 </div>
 
-<div className="bg-white rounded-2xl p-6 shadow">
-
-Leads
-
-241
+))}
 
 </div>
 
-<div className="bg-white rounded-2xl p-6 shadow">
+<div className="
+bg-white
+rounded-2xl
+p-8
+shadow-sm
+h-[420px]
+">
 
-Jobs
-
-43
-
-</div>
-
-<div className="bg-white rounded-2xl p-6 shadow">
-
-Customers
-
-112
-
-</div>
+Revenue Analytics Chart
 
 </div>
 

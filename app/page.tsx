@@ -1,20 +1,34 @@
 import Link from "next/link"
 
-export default function HomePage(){
+export default function Home(){
 
 return(
 
-<div className="min-h-screen bg-slate-950 text-white">
+<div className="
+min-h-screen
+bg-slate-950
+text-white
+">
 
-<header className="max-w-7xl mx-auto px-8 py-6 flex justify-between">
+<div className="
+max-w-7xl
+mx-auto
+px-8
+py-8
+flex
+justify-between
+">
 
-<h1 className="text-3xl font-bold">
+<h1 className="
+text-3xl
+font-bold
+">
 
 KONIQTECH
 
 </h1>
 
-<nav className="space-x-8">
+<div className="space-x-5">
 
 <Link href="/login">
 
@@ -22,50 +36,71 @@ Login
 
 </Link>
 
-<Link href="/register">
+<Link
+href="/register"
+className="
+bg-blue-600
+px-5
+py-3
+rounded-xl
+"
+>
 
 Start Free
 
 </Link>
 
-</nav>
+</div>
 
-</header>
+</div>
 
-<section className="max-w-7xl mx-auto px-8 py-24">
-
-<div className="grid lg:grid-cols-2 gap-16">
+<section className="
+max-w-7xl
+mx-auto
+px-8
+py-24
+grid
+grid-cols-2
+gap-16
+items-center
+">
 
 <div>
 
-<h2 className="text-6xl font-bold leading-tight">
+<h1 className="
+text-7xl
+font-bold
+leading-tight
+">
 
-AI CRM for
+AI CRM for Home Service Companies
 
-Roofing
+</h1>
 
-HVAC
+<p className="
+text-xl
+text-slate-300
+mt-8
+">
 
-Plumbing
-
-Landscaping
-
-</h2>
-
-<p className="mt-8 text-slate-300">
-
-All-in-one CRM + AI + Dispatch + Docs + Billing
+Roofing • HVAC • Plumbing • Landscaping
 
 </p>
 
-<div className="mt-8 flex gap-4">
+<div className="
+flex
+gap-4
+mt-10
+">
 
 <Link
-
 href="/register"
-
-className="bg-blue-600 px-6 py-4 rounded-xl"
-
+className="
+bg-blue-600
+px-8
+py-4
+rounded-xl
+"
 >
 
 Start Free
@@ -73,11 +108,14 @@ Start Free
 </Link>
 
 <Link
-
 href="/portal"
-
-className="border px-6 py-4 rounded-xl"
-
+className="
+border
+border-white
+px-8
+py-4
+rounded-xl
+"
 >
 
 View Demo
@@ -88,11 +126,14 @@ View Demo
 
 </div>
 
-<div className="bg-slate-900 rounded-3xl p-8">
+<div className="
+bg-slate-800
+rounded-3xl
+h-[600px]
+p-10
+">
 
 CRM Preview
-
-</div>
 
 </div>
 

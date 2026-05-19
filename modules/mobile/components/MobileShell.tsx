@@ -2,15 +2,19 @@ export default function MobileShell(){
 
 return(
 
-<div className="min-h-screen">
+<div className="
+max-w-sm
+mx-auto
+bg-white
+min-h-screen
+p-5
+">
 
-Dashboard
+Home
 
-Leads
+Jobs
 
 Messages
-
-AI
 
 Settings
 

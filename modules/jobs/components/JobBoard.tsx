@@ -1,41 +1,44 @@
 export default function JobBoard(){
 
-const columns=[
+const jobs=[
 
-"scheduled",
+"Roof Install",
 
-"in_progress",
+"HVAC Repair",
 
-"completed"
+"Pipe Replacement"
 
 ]
 
 return(
 
-<div className="grid grid-cols-3 gap-5">
+<div className="p-8 space-y-6">
+
+<h1 className="text-4xl font-bold">
+
+Jobs
+
+</h1>
 
 {
 
-columns.map(
-
-x=>(
+jobs.map(job=>(
 
 <div
-
-key={x}
-
-className=
-"border min-h-[300px] p-5"
-
+key={job}
+className="
+bg-white
+rounded-xl
+p-5
+shadow
+"
 >
 
-{x}
+{job}
 
 </div>
 
-)
-
-)
+))
 
 }
 

@@ -1,32 +1,37 @@
-"use client"
-
-import Sidebar from "./Sidebar"
-import Topbar from "./Topbar"
-import MobileShell from "./MobileShell"
-
 export default function AppShell({
+
 children
+
 }:{
+
 children:React.ReactNode
+
 }){
 
 return(
 
-<div className="min-h-screen flex bg-slate-50">
+<div className="min-h-screen flex">
 
-<Sidebar/>
+<aside className="
+w-72
+bg-slate-900
+text-white
+p-6
+">
 
-<div className="flex-1">
+KONIQ CRM
 
-<Topbar/>
+</aside>
 
-<main className="p-8">
+<main className="
+flex-1
+bg-slate-100
+p-8
+">
 
 {children}
-<MobileShell/>
-</main>
 
-</div>
+</main>
 
 </div>
 

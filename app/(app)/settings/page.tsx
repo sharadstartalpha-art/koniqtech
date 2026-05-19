@@ -1,26 +1,28 @@
-import Link from
-"next/link"
-
 export default function Settings(){
 
 return(
 
-<div className="p-10">
+<div className="p-8">
 
 <h1>
 
-Settings
+Tenant Settings
 
 </h1>
 
-<div className="mt-5">
+<div className="grid md:grid-cols-2 gap-6 mt-8">
 
-<Link
-href="/settings/profile">
+<div className="bg-white p-6">
 
-Profile
+Brand Color
 
-</Link>
+</div>
+
+<div className="bg-white p-6">
+
+Logo
+
+</div>
 
 </div>
 

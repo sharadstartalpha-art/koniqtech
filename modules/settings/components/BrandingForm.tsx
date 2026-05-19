@@ -3,9 +3,8 @@ export default function BrandingForm(){
 return(
 
 <div className="
-max-w-2xl
-p-8
-space-y-4
+space-y-6
+max-w-xl
 ">
 
 <h1 className="
@@ -13,46 +12,40 @@ text-4xl
 font-bold
 ">
 
-Branding
+Brand Settings
 
 </h1>
 
 <input
 placeholder="Company Name"
 className="
+w-full
 border
 p-3
-w-full
-rounded
+rounded-xl
 "
 />
 
 <input
 placeholder="Primary Color"
 className="
+w-full
 border
 p-3
-w-full
-rounded
+rounded-xl
 "
 />
 
 <input
-placeholder="Subdomain"
-className="
-border
-p-3
-w-full
-rounded
-"
+type="file"
 />
 
 <button className="
 bg-black
 text-white
-px-5
+px-6
 py-3
-rounded
+rounded-xl
 ">
 
 Save

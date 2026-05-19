@@ -1,12 +1,18 @@
 "use client"
 
+import {useState} from "react"
+
 export default function Assistant(){
+
+const[
+msg,
+setMsg
+]=useState("")
 
 return(
 
 <div className="
-p-8
-space-y-4
+space-y-6
 ">
 
 <h1 className="
@@ -19,14 +25,32 @@ AI Assistant
 </h1>
 
 <textarea
+value={msg}
+onChange={
+e=>setMsg(
+e.target.value
+)
+}
 className="
-w-full
 border
-rounded
-p-4
+w-full
 h-40
+rounded-xl
+p-4
 "
 />
+
+<button className="
+bg-black
+text-white
+px-6
+py-3
+rounded-xl
+">
+
+Ask AI
+
+</button>
 
 </div>
 

@@ -1,18 +1,8 @@
 import Assistant
+from "@/modules/ai/components/Assistant"
 
-from
-"@/modules/ai/components/Assistant"
+export default function Page(){
 
-export default function AI(){
-
-return(
-
-<div className="p-10">
-
-<Assistant/>
-
-</div>
-
-)
+return <Assistant/>
 
 }

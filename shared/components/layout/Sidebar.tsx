@@ -1,31 +1,18 @@
+"use client"
+
 import Link from "next/link"
 
 const items=[
 
 "dashboard",
-
 "leads",
-
 "customers",
-
 "pipeline",
-
-"quotes",
-
 "jobs",
-
 "calendar",
-
 "messages",
-
-"automation",
-
-"billing",
-
 "reports",
-
 "settings",
-
 "ai"
 
 ]
@@ -38,23 +25,21 @@ return(
 w-72
 bg-white
 border-r
-h-screen
+min-h-screen
 p-6
+space-y-8
 ">
 
 <h1 className="
-text-4xl
+text-3xl
 font-bold
-mb-10
 ">
 
-KONIQ
+KONIQ CRM
 
 </h1>
 
-<div className="
-space-y-3
-">
+<nav className="space-y-4">
 
 {
 
@@ -63,19 +48,16 @@ items.map(
 x=>(
 
 <Link
-
 key={x}
-
 href={`/${x}`}
-
 className="
 block
-rounded-xl
-p-3
+rounded-lg
+px-4
+py-3
 hover:bg-slate-100
 capitalize
 "
-
 >
 
 {x}
@@ -88,7 +70,7 @@ capitalize
 
 }
 
-</div>
+</nav>
 
 </div>
 

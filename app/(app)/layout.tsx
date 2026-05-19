@@ -1,30 +1,19 @@
-import Sidebar from
-"@/shared/components/layout/Sidebar"
-
-import Topbar from
-"@/shared/components/layout/Topbar"
+import AppShell
+from "@/shared/components/layout/AppShell"
 
 export default function Layout({
-
 children
-
-}:any){
+}:{
+children:React.ReactNode
+}){
 
 return(
 
-<div className="flex">
-
-<Sidebar/>
-
-<div className="flex-1">
-
-<Topbar/>
+<AppShell>
 
 {children}
 
-</div>
-
-</div>
+</AppShell>
 
 )
 

@@ -1,29 +1,20 @@
-import {
+import {Server}
 
-Server
+from "socket.io"
 
-}
+export const io=
 
-from
-"socket.io"
-
-const io=
-
-new Server(
-
-3001,
-
-{
+new Server({
 
 cors:{
 
-origin:"*"
+origin:
+
+"https://koniqtech.com"
 
 }
 
-}
-
-)
+})
 
 io.on(
 
@@ -31,21 +22,9 @@ io.on(
 
 socket=>{
 
-socket.on(
+console.log(
 
-"message",
-
-data=>{
-
-io.emit(
-
-"message",
-
-data
-
-)
-
-}
+socket.id
 
 )
 

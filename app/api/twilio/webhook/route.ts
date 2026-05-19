@@ -1,8 +1,4 @@
-import {
-
-NextResponse
-
-}
+import {NextResponse}
 
 from "next/server"
 

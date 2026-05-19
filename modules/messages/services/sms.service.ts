@@ -1,15 +1,10 @@
-import {
-
-twilio
-
-}
+import {twilio}
 
 from "@/shared/lib/twilio"
 
 export async function sendSMS(
 
 to:string,
-
 body:string
 
 ){
@@ -22,7 +17,7 @@ body,
 
 from:
 
-process.env.TWILIO_PHONE
+process.env.THONE!
 
 })
 

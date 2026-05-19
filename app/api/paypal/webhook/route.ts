@@ -1,54 +1,42 @@
 import {
+
 NextRequest,
+
 NextResponse
+
 }
 
 from "next/server"
 
+import {
+
+syncPayPal
+
+}
+
+from "@/modules/billing/services/paypal-sync"
+
 export async function POST(
 
-request:
-NextRequest
+request:NextRequest
 
 ){
 
 const body=
+
 await request.json()
 
 console.log(
 
-"PAYPAL",
+"paypal webhook",
 
 body
 
 )
 
-switch(
-body.event_type
-){
+await syncPayPal()
 
-case
-"BILLING.SUBSCRIPTION.ACTIVATED":
-
-console.log(
-"ACTIVE"
-)
-
-break
-
-case
-"PAYMENT.SALE.COMPLETED":
-
-console.log(
-"PAID"
-)
-
-break
-
-}
-
-return NextResponse
-.json({
+return NextResponse.json({
 
 ok:true
 

@@ -1,9 +1,8 @@
-import Twilio
-from "twilio"
+import twilioPkg from "twilio"
 
 export const twilio=
 
-Twilio(
+twilioPkg(
 
 process.env.TWILIO_SID!,
 

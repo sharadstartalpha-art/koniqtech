@@ -541,3 +541,19 @@ model LandscapingProject {
 
   irrigation    Boolean @default(false)
 }
+
+
+
+model AuditLog {
+
+  id String @id @default(cuid())
+
+  action String
+
+  orgId String
+
+  userId String?
+
+  createdAt DateTime @default(now())
+
+}

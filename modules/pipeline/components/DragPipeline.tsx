@@ -1,26 +1,73 @@
 "use client"
 
-import {
+const stages=[
 
-DndContext
+"New",
+"Qualified",
+"Proposal",
+"Won"
 
-}
-
-from "@dnd-kit/core"
+]
 
 export default function DragPipeline(){
 
 return(
 
-<DndContext>
+<div className="p-8">
 
-<div>
+<h1 className="text-4xl font-bold mb-8">
 
-Pipeline
+Pipeline Kanban
+
+</h1>
+
+<div className="grid grid-cols-4 gap-6">
+
+{
+
+stages.map(
+
+s=>(
+
+<div
+key={s}
+className="
+bg-white
+rounded-xl
+shadow
+p-4
+space-y-4
+min-h-[500px]
+"
+>
+
+<h2 className="font-bold">
+
+{s}
+
+</h2>
+
+<div className="
+bg-slate-100
+rounded-lg
+p-4
+">
+
+Roof Replacement
 
 </div>
 
-</DndContext>
+</div>
+
+)
+
+)
+
+}
+
+</div>
+
+</div>
 
 )
 

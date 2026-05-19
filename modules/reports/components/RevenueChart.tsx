@@ -1,69 +1,18 @@
 "use client"
 
-import {
-
-LineChart,
-
-Line,
-
-XAxis,
-
-YAxis
-
-}
-
-from
-"recharts"
-
-const data=[
-
-{
-
-month:"Jan",
-
-revenue:12000
-
-},
-
-{
-
-month:"Feb",
-
-revenue:19000
-
-}
-
-]
-
-export default function Revenue(){
+export default function RevenueChart(){
 
 return(
 
-<LineChart
+<div className="
+bg-white
+rounded-xl
+p-8
+">
 
-width={600}
+Revenue analytics
 
-height={300}
-
-data={data}
-
->
-
-<XAxis
-dataKey=
-"month"
-
-/>
-
-<YAxis/>
-
-<Line
-dataKey=
-"revenue"
-
-/>
-
-</LineChart>
+</div>
 
 )
 

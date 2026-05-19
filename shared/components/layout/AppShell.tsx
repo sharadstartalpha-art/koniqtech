@@ -2,6 +2,7 @@
 
 import Sidebar from "./Sidebar"
 import Topbar from "./Topbar"
+import MobileShell from "./MobileShell"
 
 export default function AppShell({
 children
@@ -22,7 +23,7 @@ return(
 <main className="p-8">
 
 {children}
-
+<MobileShell/>
 </main>
 
 </div>

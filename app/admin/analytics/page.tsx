@@ -1,8 +1,8 @@
-import AdminCharts
-from "@/modules/reports/components/AdminCharts"
+import RevenueChart
+from "@/modules/reports/components/RevenueChart"
 
 export default function Page(){
 
-return <AdminCharts/>
+return <RevenueChart/>
 
 }

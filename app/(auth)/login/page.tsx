@@ -1,148 +1,187 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
+export default function LoginPage(){
 
-  const submit = async () => {
-    setLoading(true)
+const router=useRouter()
 
-    const r = await fetch(
-      "/api/auth/login",
-      {
-        method: "POST",
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+const [loading,setLoading]=useState(false)
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
+async function login(){
 
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      }
-    )
+setLoading(true)
 
-    const d = await r.json()
+const res=
 
-    setLoading(false)
+await fetch(
 
-    if (!r.ok) {
-      alert(
-        d.error ||
-        "Login failed"
-      )
+"/api/auth/login",
 
-      return
-    }
+{
 
-    window.location.href =
-      d.redirect
-  }
+method:"POST",
 
-  return (
-    <div className="min-h-screen grid md:grid-cols-2">
+headers:{
 
-      <div className="bg-black text-white flex items-center p-20">
+"Content-Type":
+"application/json"
 
-        <div>
+},
 
-          <h1 className="text-6xl font-bold">
-            KONIQ CRM
-          </h1>
+body:JSON.stringify({
 
-          <p className="mt-6 text-2xl text-gray-300">
-            AI CRM for home service companies
-          </p>
+email,
+password
 
-        </div>
+})
 
-      </div>
+}
 
-      <div className="bg-slate-100 flex items-center justify-center">
+)
 
-        <div className="bg-white p-14 rounded-3xl w-[520px] shadow-xl">
+const data=
 
-          <input
-            value={email}
-            onChange={(e) =>
-              setEmail(
-                e.target.value
-              )
-            }
-            placeholder="Email"
-            className="
-              w-full
-              p-5
-              border
-              rounded-2xl
-              mb-5
-              text-black
-              outline-none
-            "
-          />
+await res.json()
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) =>
-              setPassword(
-                e.target.value
-              )
-            }
-            placeholder="Password"
-            className="
-              w-full
-              p-5
-              border
-              rounded-2xl
-              mb-5
-              text-black
-              outline-none
-            "
-          />
+setLoading(false)
 
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="
-              w-full
-              bg-blue-600
-              text-white
-              p-5
-              rounded-2xl
-              disabled:opacity-50
-            "
-          >
+if(!res.ok){
 
-            {
-              loading
-                ? "Signing in..."
-                : "Sign In"
-            }
+alert(
 
-          </button>
+data.error ||
 
-          <div className="text-center mt-8">
+"Login failed"
 
-            <Link
-              href="/register"
-              className="text-blue-600"
-            >
-              Register
-            </Link>
+)
 
-          </div>
+return
 
-        </div>
+}
 
-      </div>
+router.push(
 
-    </div>
-  )
+"/dashboard"
+
+)
+
+}
+
+return(
+
+<div className="min-h-screen grid md:grid-cols-2">
+
+<div className="bg-black text-white flex items-center p-20">
+
+<div>
+
+<h1 className="text-6xl font-bold">
+
+KONIQ CRM
+
+</h1>
+
+<p className="mt-6 text-2xl text-gray-300">
+
+AI CRM for home service companies
+
+</p>
+
+</div>
+
+</div>
+
+<div className="bg-slate-100 flex items-center justify-center">
+
+<div className="bg-white p-14 rounded-3xl w-[520px] shadow-xl">
+
+<input
+
+value={email}
+
+onChange={(e)=>
+
+setEmail(
+e.target.value
+)
+
+}
+
+placeholder="Email"
+
+className="w-full p-5 border rounded-2xl mb-5 text-black"
+
+/>
+
+<input
+
+type="password"
+
+value={password}
+
+onChange={(e)=>
+
+setPassword(
+e.target.value
+)
+
+}
+
+placeholder="Password"
+
+className="w-full p-5 border rounded-2xl mb-5 text-black"
+
+/>
+
+<button
+
+onClick={login}
+
+disabled={loading}
+
+className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+
+>
+
+{
+
+loading ?
+
+"Signing in..." :
+
+"Sign In"
+
+}
+
+</button>
+
+<div className="text-center mt-8">
+
+<Link
+
+href="/register"
+
+className="text-blue-600"
+
+>
+
+Register
+
+</Link>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+
 }

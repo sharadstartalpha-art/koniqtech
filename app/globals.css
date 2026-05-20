@@ -31,3 +31,16 @@ text-decoration:none;
 color:inherit;
 
 }
+
+
+input{
+
+color:black;
+
+}
+
+input::placeholder{
+
+color:#94a3b8;
+
+}

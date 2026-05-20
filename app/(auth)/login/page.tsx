@@ -4,16 +4,17 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-export default function Login() {
-  const router = useRouter()
+export default function LoginPage(){
 
-  const [email, setEmail] = useState("admin@koniqtech.com")
-  const [password, setPassword] = useState("")
+const router=useRouter()
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+const [loading,setLoading]=useState(false)
 
-    async function login(){
+async function login(){
+
+setLoading(true)
 
 const res=
 
@@ -28,7 +29,6 @@ method:"POST",
 headers:{
 
 "Content-Type":
-
 "application/json"
 
 },
@@ -36,7 +36,6 @@ headers:{
 body:JSON.stringify({
 
 email,
-
 password
 
 })
@@ -49,11 +48,15 @@ const data=
 
 await res.json()
 
+setLoading(false)
+
 if(!res.ok){
 
 alert(
 
-data.error
+data.error ||
+
+"Login failed"
 
 )
 
@@ -61,111 +64,124 @@ return
 
 }
 
-window.location.href=
+router.push(
 
 "/dashboard"
 
+)
+
 }
+
+return(
+
+<div className="min-h-screen grid md:grid-cols-2">
+
+<div className="bg-black text-white flex items-center p-20">
+
+<div>
+
+<h1 className="text-6xl font-bold">
+
+KONIQ CRM
+
+</h1>
+
+<p className="mt-6 text-2xl text-gray-300">
+
+AI CRM for home service companies
+
+</p>
+
+</div>
+
+</div>
+
+<div className="bg-slate-100 flex items-center justify-center">
+
+<div className="bg-white p-14 rounded-3xl w-[520px] shadow-xl">
+
+<input
+
+value={email}
+
+onChange={(e)=>
+
+setEmail(
+e.target.value
+)
+
 }
 
-  return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+placeholder="Email"
 
-      <div className="bg-slate-950 text-white p-20 flex flex-col justify-center">
+className="w-full p-5 border rounded-2xl mb-5 text-black"
 
-        <h1 className="text-6xl font-bold">
-          KONIQ CRM
-        </h1>
+/>
 
-        <p className="text-xl text-slate-300 mt-6">
-          AI CRM for home service companies
-        </p>
+<input
 
-      </div>
+type="password"
 
-      <div className="bg-slate-100 flex items-center justify-center">
+value={password}
 
-        <div className="bg-white w-[520px] rounded-3xl shadow-2xl p-12">
+onChange={(e)=>
 
-          <h1 className="text-5xl font-bold mb-10">
-            Login
-          </h1>
+setPassword(
+e.target.value
+)
 
-          <form
-            onSubmit={submit}
-            className="space-y-5"
-          >
+}
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="
-                w-full
-                h-14
-                rounded-2xl
-                border
-                border-slate-300
-                px-5
-                text-black
-                outline-none
-                focus:border-blue-500
-              "
-            />
+placeholder="Password"
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="
-                w-full
-                h-14
-                rounded-2xl
-                border
-                border-slate-300
-                px-5
-                text-black
-                outline-none
-                focus:border-blue-500
-              "
-            />
+className="w-full p-5 border rounded-2xl mb-5 text-black"
 
-            <button
-              type="submit"
-              className="
-                w-full
-                bg-blue-600
-                text-white
-                p-4
-                rounded-xl
-                hover:bg-blue-700
-                transition
-              "
-            >
-              Sign In
-            </button>
+/>
 
-          </form>
+<button
 
-          <p className="mt-8 text-center">
+onClick={login}
 
-            No account?
+disabled={loading}
 
-            <Link
-              href="/register"
-              className="text-blue-600 ml-2"
-            >
-              Register
-            </Link>
+className="w-full bg-blue-600 text-white p-5 rounded-2xl"
 
-          </p>
+>
 
-        </div>
+{
 
-      </div>
+loading ?
 
-    </div>
-  )
+"Signing in..." :
+
+"Sign In"
+
+}
+
+</button>
+
+<div className="text-center mt-8">
+
+<Link
+
+href="/register"
+
+className="text-blue-600"
+
+>
+
+Register
+
+</Link>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+
 }

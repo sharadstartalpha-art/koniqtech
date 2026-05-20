@@ -18,7 +18,7 @@ const passwordHash=
 
 await bcrypt.hash(
 
-"password",
+"admin123",
 
 10
 

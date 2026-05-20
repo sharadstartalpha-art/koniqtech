@@ -2,120 +2,116 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 
-export default function LoginPage(){
+export default function LoginPage() {
 
-const router=useRouter()
+  const router = useRouter()
 
-const [email,setEmail]=useState("")
-const [password,setPassword]=useState("")
-const [loading,setLoading]=useState(false)
+  const [email,setEmail] = useState("")
+  const [password,setPassword] = useState("")
 
-async function login(){
+  const [loading,setLoading] = useState(false)
 
-setLoading(true)
+  async function login() {
 
-const res=
+    try {
 
-await fetch(
+      setLoading(true)
 
-"/api/auth/login",
+      const res = await fetch(
+        "/api/auth/login",
+        {
+          method:"POST",
 
-{
+          headers:{
+            "Content-Type":
+            "application/json"
+          },
 
-method:"POST",
+          body:JSON.stringify({
+            email,
+            password
+          })
+        }
+      )
 
-headers:{
+      const data = await res.json()
 
-"Content-Type":
-"application/json"
+      setLoading(false)
 
-},
+      if(!res.ok){
 
-body:JSON.stringify({
+        alert(
+          data.error ||
+          "Login failed"
+        )
 
-email,
-password
+        return
+      }
 
-})
+      router.push(
+        data.redirect ||
+        "/dashboard"
+      )
 
-}
+      router.refresh()
 
-)
+    }
+    catch(err){
 
-const data=
+      setLoading(false)
 
-await res.json()
+      alert(
+        "Server error"
+      )
 
-setLoading(false)
+    }
 
-if(!res.ok){
+  }
 
-alert(
+  return (
 
-data.error ||
+<div className="min-h-screen grid grid-cols-2">
 
-"Login failed"
+<div className="bg-black text-white flex flex-col justify-center px-24">
 
-)
-
-return
-
-}
-
-router.push(
-
-"/dashboard"
-
-)
-
-}
-
-return(
-
-<div className="min-h-screen grid md:grid-cols-2">
-
-<div className="bg-black text-white flex items-center p-20">
-
-<div>
-
-<h1 className="text-6xl font-bold">
-
+<h1 className="text-6xl font-bold mb-8">
 KONIQ CRM
-
 </h1>
 
-<p className="mt-6 text-2xl text-gray-300">
-
+<p className="text-2xl text-gray-300">
 AI CRM for home service companies
-
 </p>
-
-</div>
 
 </div>
 
 <div className="bg-slate-100 flex items-center justify-center">
 
-<div className="bg-white p-14 rounded-3xl w-[520px] shadow-xl">
+<div className="bg-white rounded-3xl p-12 shadow-xl w-[520px]">
+
+<h2 className="text-3xl font-bold mb-8">
+Sign In
+</h2>
 
 <input
 
 value={email}
 
 onChange={(e)=>
-
 setEmail(
 e.target.value
 )
-
 }
 
 placeholder="Email"
 
-className="w-full p-5 border rounded-2xl mb-5 text-black"
-
+className="
+w-full
+border
+rounded-xl
+p-4
+mb-5
+"
 />
 
 <input
@@ -125,17 +121,20 @@ type="password"
 value={password}
 
 onChange={(e)=>
-
 setPassword(
 e.target.value
 )
-
 }
 
 placeholder="Password"
 
-className="w-full p-5 border rounded-2xl mb-5 text-black"
-
+className="
+w-full
+border
+rounded-xl
+p-4
+mb-8
+"
 />
 
 <button
@@ -144,37 +143,37 @@ onClick={login}
 
 disabled={loading}
 
-className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+className="
+w-full
+bg-blue-600
+text-white
+rounded-xl
+p-4
+font-semibold
+"
 
 >
 
-{
-
-loading ?
-
-"Signing in..." :
-
-"Sign In"
-
-}
+{loading
+?
+"Signing in..."
+:
+"Login"}
 
 </button>
 
-<div className="text-center mt-8">
+<div className="mt-6 text-center">
 
-<Link
-
+<a
 href="/register"
-
-className="text-blue-600"
-
+className="
+text-blue-600
+"
 >
 
-Register
+Create account
 
-</Link>
-
-</div>
+</a>
 
 </div>
 
@@ -182,6 +181,8 @@ Register
 
 </div>
 
-)
+</div>
+
+  )
 
 }

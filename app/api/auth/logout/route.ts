@@ -1,36 +1,54 @@
 import { NextResponse } from "next/server"
 
-export async function POST(){
+export async function GET() {
 
-const res=
+  const response =
+    NextResponse.redirect(
 
-NextResponse.redirect(
+      new URL(
+        "/login",
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "https://koniqtech.com"
+      )
 
-new URL(
+    )
 
-"/login",
+  response.cookies.set(
+    "auth",
+    "",
+    {
+      expires:new Date(0),
+      path:"/"
+    }
+  )
 
-process.env.NEXT_PUBLIC_APP_URL
+  response.cookies.set(
+    "tenant",
+    "",
+    {
+      expires:new Date(0),
+      path:"/"
+    }
+  )
 
-)
-
-)
-
-res.cookies.set(
-
-"token",
-
-"",
-
-{
-
-expires:new Date(0),
-path:"/"
-
+  return response
 }
 
-)
+export async function POST(){
 
-return res
+  const response=
+    NextResponse.json({
+      success:true
+    })
+
+  response.cookies.delete(
+    "auth"
+  )
+
+  response.cookies.delete(
+    "tenant"
+  )
+
+  return response
 
 }

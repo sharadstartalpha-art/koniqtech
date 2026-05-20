@@ -1,152 +1,132 @@
 import Link from "next/link"
 
 export default function AppLayout({
-children
-}:{
-children:React.ReactNode
-}){
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="min-h-screen flex bg-slate-100">
 
-return(
+      <aside className="w-72 bg-slate-950 text-white flex flex-col">
 
-<div className="min-h-screen flex bg-slate-100">
+        <div className="p-6 border-b border-slate-800">
 
-<aside className="w-72 bg-slate-950 text-white flex flex-col">
+          <img
+            src="/logo.png"
+            className="h-14 object-contain"
+          />
 
-<div className="p-6 border-b border-slate-800">
+          <p className="text-xs text-slate-400 mt-2">
+            AI Service Platform
+          </p>
 
-<img
-src="/logo.png"
-className="h-14 object-contain"
-/>
+        </div>
 
-<p className="text-xs text-slate-400 mt-2">
+        <nav className="flex-1 p-6 space-y-3">
 
-AI Service Platform
+          <Menu href="/dashboard" label="Dashboard" />
 
-</p>
+          <Menu href="/leads" label="Leads" />
+          <Menu href="/customers" label="Customers" />
+          <Menu href="/pipeline" label="Pipeline" />
+          <Menu href="/jobs" label="Jobs" />
+          <Menu href="/calendar" label="Calendar" />
+          <Menu href="/messages" label="Messages" />
+          <Menu href="/quotes" label="Quotes" />
+          <Menu href="/documents" label="Documents" />
 
-</div>
+          {/* New Modules */}
 
-<nav className="flex-1 p-6 space-y-3">
+          <Menu href="/dispatch" label="Dispatch" />
+          <Menu href="/billing" label="Billing" />
+          <Menu href="/subscriptions" label="Subscriptions" />
+          <Menu href="/notifications" label="Notifications" />
+          <Menu href="/team" label="Team" />
+          <Menu href="/roles" label="Roles" />
+          <Menu href="/analytics" label="Analytics" />
+          <Menu href="/ai" label="AI" />
+          <Menu href="/monitoring" label="Monitoring" />
 
-<Menu href="/dashboard" label="Dashboard"/>
+          <Menu href="/reports" label="Reports" />
+          <Menu href="/settings" label="Settings" />
 
-<Menu href="/leads" label="Leads"/>
+        </nav>
 
-<Menu href="/customers" label="Customers"/>
+        <div className="p-6 border-t border-slate-800">
 
-<Menu href="/pipeline" label="Pipeline"/>
+          <form
+            action="/api/auth/logout"
+            method="POST"
+          >
 
-<Menu href="/jobs" label="Jobs"/>
+            <button className="w-full bg-red-600 rounded-xl p-3">
+              Logout
+            </button>
 
-<Menu href="/calendar" label="Calendar"/>
+          </form>
 
-<Menu href="/messages" label="Messages"/>
+        </div>
 
-<Menu href="/quotes" label="Quotes"/>
+      </aside>
 
-<Menu href="/documents" label="Documents"/>
+      <div className="flex-1">
 
-<Menu href="/reports" label="Reports"/>
+        <header className="bg-white h-20 border-b px-10 flex items-center justify-between">
 
-<Menu href="/settings" label="Settings"/>
+          <div>
+            <h2 className="text-2xl font-bold">
+              Dashboard
+            </h2>
+          </div>
 
-</nav>
+          <div className="flex gap-4 items-center">
 
-<div className="p-6 border-t border-slate-800">
+            <div className="bg-slate-200 w-10 h-10 rounded-full" />
 
-<form action="/api/auth/logout" method="POST">
+            <div>
+              <p className="font-semibold">
+                Koniq Admin
+              </p>
 
-<button className="w-full bg-red-600 rounded-xl p-3">
+              <p className="text-sm text-slate-500">
+                Owner
+              </p>
+            </div>
 
-Logout
+          </div>
 
-</button>
+        </header>
 
-</form>
+        <main className="p-10">
+          {children}
+        </main>
 
-</div>
+      </div>
 
-</aside>
-
-<div className="flex-1">
-
-<header className="bg-white h-20 border-b px-10 flex items-center justify-between">
-
-<div>
-
-<h2 className="text-2xl font-bold">
-
-Dashboard
-
-</h2>
-
-</div>
-
-<div className="flex gap-4 items-center">
-
-<div className="bg-slate-200 w-10 h-10 rounded-full"/>
-
-<div>
-
-<p className="font-semibold">
-
-Koniq Admin
-
-</p>
-
-<p className="text-sm text-slate-500">
-
-Owner
-
-</p>
-
-</div>
-
-</div>
-
-</header>
-
-<main className="p-10">
-
-{children}
-
-</main>
-
-</div>
-
-</div>
-
-)
-
+    </div>
+  )
 }
 
 function Menu({
-
-href,
-label
-
-}:{
-
-href:string
-label:string
-
-}){
-
-return(
-
-<Link
-
-href={href}
-
-className="block p-4 rounded-xl hover:bg-slate-800"
-
->
-
-{label}
-
-</Link>
-
-)
-
+  href,
+  label,
+}: {
+  href: string
+  label: string
+}) {
+  return (
+    <Link
+      href={href}
+      className="
+        block
+        p-4
+        rounded-xl
+        hover:bg-slate-800
+        transition
+      "
+    >
+      {label}
+    </Link>
+  )
 }

@@ -1,36 +1,40 @@
-export default function AIPage(){
+"use client"
+
+import {useState} from "react"
+
+export default function AI(){
+
+const[q,setQ]=useState("")
 
 return(
 
-<div className="p-8">
+<div className="bg-white rounded-xl p-6">
 
-<h1 className="text-5xl font-bold">
+<h1 className="text-2xl mb-6">
 
-AI Center
+AI Assistant
 
 </h1>
 
-<div className="grid md:grid-cols-3 gap-6 mt-8">
+<textarea
 
-<div className="bg-white p-6 rounded-xl">
+value={q}
 
-Quote Agent
+onChange={(e)=>
 
-</div>
+setQ(e.target.value)
 
-<div className="bg-white p-6 rounded-xl">
+}
 
-Dispatch Agent
+className="border p-4 rounded w-full h-40"
 
-</div>
+/>
 
-<div className="bg-white p-6 rounded-xl">
+<button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
 
-Sales Agent
+Run
 
-</div>
-
-</div>
+</button>
 
 </div>
 

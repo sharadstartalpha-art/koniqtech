@@ -1,68 +1,118 @@
 import { NextRequest, NextResponse } from "next/server"
 
-export function middleware(
-req: NextRequest
-){
+export function proxy(
+  req: NextRequest
+) {
 
-const auth =
-req.cookies.get(
-"auth"
-)
+  const auth =
+    req.cookies.get(
+      "auth"
+    )?.value
 
-const path=
-req.nextUrl.pathname
+  const path =
+    req.nextUrl.pathname
 
-const publicRoutes=[
+  const publicRoutes = [
 
-"/login",
-"/register",
+    "/login",
 
-"/api/auth/login",
+    "/register",
 
-"/api/auth/register",
+    "/verify-email",
 
-"/api/auth/send-otp",
+    "/forgot-password",
 
-"/api/auth/verify-otp"
+    "/api/auth/login",
 
-]
+    "/api/auth/register",
 
-if(
-!auth &&
-!publicRoutes.some(
-r=>path.startsWith(r)
-)
-){
+    "/api/auth/send-otp",
 
-return NextResponse.redirect(
-new URL(
-"/login",
-req.url
-)
-)
+    "/api/auth/verify-otp",
+
+    "/api/auth/logout"
+
+  ]
+
+  const isPublic =
+    publicRoutes.some(
+      route =>
+      path.startsWith(
+        route
+      )
+    )
+
+  if (
+    !auth &&
+    !isPublic
+  ) {
+
+    return NextResponse.redirect(
+
+      new URL(
+        "/login",
+        req.url
+      )
+
+    )
+
+  }
+
+  if (
+    auth &&
+    (
+      path === "/login" ||
+      path === "/register"
+    )
+  ) {
+
+    return NextResponse.redirect(
+
+      new URL(
+        "/dashboard",
+        req.url
+      )
+
+    )
+
+  }
+
+  return NextResponse.next()
 
 }
 
-return NextResponse.next()
+export const config = {
 
-}
+  matcher: [
 
-export const config={
+    "/dashboard/:path*",
 
-matcher:[
+    "/leads/:path*",
 
-"/dashboard/:path*",
+    "/customers/:path*",
 
-"/leads/:path*",
+    "/jobs/:path*",
 
-"/customers/:path*",
+    "/pipeline/:path*",
 
-"/jobs/:path*",
+    "/calendar/:path*",
 
-"/pipeline/:path*",
+    "/billing/:path*",
 
-"/settings/:path*"
+    "/messages/:path*",
 
-]
+    "/settings/:path*",
+
+    "/dispatch/:path*",
+
+    "/notifications/:path*",
+
+    "/analytics/:path*",
+
+    "/monitoring/:path*",
+
+    "/ai/:path*"
+
+  ]
 
 }

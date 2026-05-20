@@ -3,8 +3,8 @@ import prisma from "./prisma"
 export async function audit(
 
 action:string,
-orgId:string,
-userId?:string
+userId:string,
+orgId:string
 
 ){
 
@@ -14,9 +14,9 @@ data:{
 
 action,
 
-orgId,
+userId,
 
-userId
+orgId
 
 }
 

@@ -1,20 +1,20 @@
-export default function Page(){
+export default function PDFQuotes(){
 
 return(
 
 <div className="space-y-6">
 
-<h1 className="text-4xl font-bold">
+<h1 className="text-2xl">
 
-Quote PDF
+PDF Quotes
 
 </h1>
 
-<a href="/api/quotes/pdf/1">
+<button className="bg-blue-600 text-white px-4 py-2 rounded">
 
 Generate PDF
 
-</a>
+</button>
 
 </div>
 

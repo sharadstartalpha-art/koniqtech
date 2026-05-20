@@ -2,19 +2,23 @@ import {Server}
 
 from "socket.io"
 
-export const io=
+const io=
 
-new Server({
+new Server(
+
+3001,
+
+{
 
 cors:{
 
-origin:
-
-"https://koniqtech.com"
+origin:"*"
 
 }
 
-})
+}
+
+)
 
 io.on(
 
@@ -24,10 +28,34 @@ socket=>{
 
 console.log(
 
-socket.id
+"connected"
+
+)
+
+socket.on(
+
+"tech-location",
+
+data=>{
+
+io.emit(
+
+"live-location",
+
+data
 
 )
 
 }
+
+)
+
+}
+
+)
+
+console.log(
+
+"socket running"
 
 )

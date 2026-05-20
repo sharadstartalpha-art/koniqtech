@@ -1,22 +1,44 @@
-export const ROLES=[
+export function hasPermission(
 
-"OWNER",
-"ADMIN",
-"MANAGER",
-"TECHNICIAN",
-"SALES",
-"CUSTOMER",
-"SUPER_ADMIN"
-
-]
-
-export function hasRole(
-
-userRole:string,
-allowed:string[]
+role:string,
+permission:string
 
 ){
 
-return allowed.includes(userRole)
+const map={
+
+owner:[
+
+"*"
+
+],
+
+manager:[
+
+"lead",
+
+"job"
+
+],
+
+tech:[
+
+"job"
+
+]
+
+}
+
+return (
+
+map[
+role as keyof typeof map
+]
+
+||[]
+
+)
+
+.includes(permission)
 
 }

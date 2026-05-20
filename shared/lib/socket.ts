@@ -6,6 +6,6 @@ io(
 
 process.env.NEXT_PUBLIC_SOCKET_URL||
 
-"http://localhost:3001"
+"https://koniqtech.com"
 
 )

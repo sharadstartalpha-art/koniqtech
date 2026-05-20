@@ -1,8 +1,29 @@
-import AuditLogs
-from "@/modules/platform/components/AuditLogs"
+export default function Audit(){
 
-export default function Page(){
+return(
 
-return <AuditLogs/>
+<div className="bg-white rounded-xl p-6">
+
+<h1>
+
+Audit Logs
+
+</h1>
+
+<div className="mt-6">
+
+Lead updated
+
+</div>
+
+<div>
+
+Invoice paid
+
+</div>
+
+</div>
+
+)
 
 }

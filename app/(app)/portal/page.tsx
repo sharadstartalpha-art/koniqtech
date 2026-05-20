@@ -2,33 +2,29 @@ export default function Portal(){
 
 return(
 
-<div className="p-10">
+<div className="space-y-6">
 
-<h1 className="text-4xl font-bold">
+<h1 className="text-2xl">
 
 Customer Portal
 
 </h1>
 
-<div className="grid md:grid-cols-3 gap-6 mt-10">
-
-<div className="bg-white p-6 rounded-2xl shadow">
-
-Jobs
-
-</div>
-
-<div className="bg-white p-6 rounded-2xl shadow">
+<div className="bg-white rounded-xl p-6">
 
 Invoices
 
 </div>
 
-<div className="bg-white p-6 rounded-2xl shadow">
+<div className="bg-white rounded-xl p-6">
 
-Messages
+Quotes
 
 </div>
+
+<div className="bg-white rounded-xl p-6">
+
+Appointments
 
 </div>
 

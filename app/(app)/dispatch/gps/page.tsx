@@ -1,8 +1,33 @@
-import GpsTracker
-from "@/modules/dispatch/components/GpsTracker"
+"use client"
 
-export default function Page(){
+import dynamic from "next/dynamic"
 
-return <GpsTracker/>
+const Map=dynamic(
+
+()=>import("./map"),
+
+{
+ssr:false
+}
+
+)
+
+export default function GPSPage(){
+
+return(
+
+<div className="space-y-6">
+
+<h1 className="text-2xl font-semibold">
+
+Live GPS
+
+</h1>
+
+<Map/>
+
+</div>
+
+)
 
 }

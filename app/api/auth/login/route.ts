@@ -1,17 +1,26 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import prisma from "@/shared/lib/prisma"
 import bcrypt from "bcryptjs"
-import  prisma  from "@/shared/lib/prisma"
+import jwt from "jsonwebtoken"
 
-export async function POST(req: NextRequest){
+export async function POST(
+req:Request
+){
 
 try{
 
 const body=await req.json()
 
-const email=body.email
-const password=body.password
+const {
 
-const user=await prisma.user.findUnique({
+email,
+password
+
+}=body
+
+const user=
+
+await prisma.user.findUnique({
 
 where:{
 email
@@ -26,73 +35,121 @@ organization:true
 if(!user){
 
 return NextResponse.json(
-{error:"Invalid credentials"},
-{status:401}
+
+{
+error:"User not found"
+},
+
+{
+status:404
+}
+
 )
 
 }
 
-const ok=await bcrypt.compare(
+const valid=
+
+await bcrypt.compare(
+
 password,
+
 user.passwordHash
+
 )
 
-if(!ok){
+if(!valid){
 
 return NextResponse.json(
-{error:"Invalid credentials"},
-{status:401}
+
+{
+error:"Invalid password"
+},
+
+{
+status:401
+}
+
 )
 
 }
 
-const res=NextResponse.json({
+const token=
+
+jwt.sign(
+
+{
+
+id:user.id,
+
+email:user.email,
+
+role:user.role,
+
+orgId:user.orgId
+
+},
+
+process.env.JWT_SECRET!,
+
+{
+
+expiresIn:"7d"
+
+}
+
+)
+
+const response=
+
+NextResponse.json({
 
 ok:true,
 
-redirect:"/dashboard"
+token,
+
+user
 
 })
 
-res.cookies.set(
+response.cookies.set(
 
-"auth",
+"token",
 
-user.id,
+token,
 
 {
+
 httpOnly:true,
+
 sameSite:"lax",
+
+secure:true,
+
 path:"/"
+
 }
 
 )
 
-res.cookies.set(
-
-"tenant",
-
-user.orgId,
-
-{
-httpOnly:true,
-sameSite:"lax",
-path:"/"
-}
-
-)
-
-return res
+return response
 
 }
 
-catch(e){
+catch(error){
 
-console.log(e)
+console.log(error)
 
 return NextResponse.json(
-{error:"Login failed"},
-{status:500}
+
+{
+error:"Login failed"
+},
+
+{
+status:500
+}
+
 )
 
 }

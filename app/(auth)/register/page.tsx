@@ -1,162 +1,193 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-export default function Register() {
-  const router = useRouter()
+export default function RegisterPage(){
 
-  const [name, setName] = useState("")
-  const [company, setCompany] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+const [name,setName]=useState("")
+const [company,setCompany]=useState("")
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+const [otp,setOtp]=useState("")
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+const [step,setStep]=useState(1)
 
-    await fetch("/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        company,
-        email,
-        password,
-      }),
-    })
+async function sendOtp(){
 
-    router.push("/login")
-  }
+const res=await fetch(
+"/api/auth/send-otp",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+email
+})
+}
+)
 
-  return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      
-      <div className="bg-blue-700 text-white p-20 flex flex-col justify-center">
-        <h1 className="text-6xl font-bold">
-          Start Free
-        </h1>
+if(res.ok){
 
-        <p className="text-xl mt-6">
-          Launch your CRM in minutes
-        </p>
-      </div>
+setStep(2)
 
-      <div className="bg-slate-100 flex items-center justify-center">
-        <div className="bg-white w-[560px] rounded-3xl shadow-xl p-12">
+alert("OTP sent")
 
-          <h1 className="text-5xl font-bold mb-8">
-            Create Account
-          </h1>
+}
 
-          <form onSubmit={submit} className="space-y-5">
+}
 
-            <div className="space-y-4">
+async function register(){
 
-              <input
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-slate-300
-                  px-5
-                  text-black
-                  outline-none
-                  focus:border-blue-500
-                "
-              />
+const res=await fetch(
+"/api/auth/verify-otp",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
 
-              <input
-                placeholder="Company"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-slate-300
-                  px-5
-                  text-black
-                  outline-none
-                  focus:border-blue-500
-                "
-              />
+name,
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-slate-300
-                  px-5
-                  text-black
-                  outline-none
-                  focus:border-blue-500
-                "
-              />
+organization:company,
 
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="
-                  w-full
-                  h-14
-                  rounded-2xl
-                  border
-                  border-slate-300
-                  px-5
-                  text-black
-                  outline-none
-                  focus:border-blue-500
-                "
-              />
-            </div>
+email,
 
-            <button
-              type="submit"
-              className="
-                w-full
-                bg-blue-600
-                text-white
-                p-4
-                rounded-xl
-                hover:bg-blue-700
-                transition
-              "
-            >
-              Register
-            </button>
+password,
 
-          </form>
+code:otp
 
-          <p className="text-center mt-8">
-            Already registered?
+})
+}
+)
 
-            <Link
-              href="/login"
-              className="text-blue-600 ml-2"
-            >
-              Login
-            </Link>
-          </p>
+if(res.ok){
 
-        </div>
-      </div>
+window.location.href="/login"
 
-    </div>
-  )
+return
+
+}
+
+alert("Registration failed")
+
+}
+
+return(
+
+<div className="min-h-screen grid lg:grid-cols-2">
+
+<div className="bg-blue-700 text-white flex items-center px-20">
+
+<div>
+
+<h1 className="text-7xl font-bold mb-8">
+
+Start Free
+
+</h1>
+
+<p className="text-3xl">
+
+Launch your CRM in minutes
+
+</p>
+
+</div>
+
+</div>
+
+<div className="bg-slate-100 flex items-center justify-center">
+
+<div className="bg-white rounded-3xl w-full max-w-xl p-12 shadow-xl space-y-6">
+
+<input
+className="w-full p-5 rounded-2xl border"
+placeholder="Name"
+value={name}
+onChange={e=>setName(e.target.value)}
+/>
+
+<input
+className="w-full p-5 rounded-2xl border"
+placeholder="Company"
+value={company}
+onChange={e=>setCompany(e.target.value)}
+/>
+
+<input
+className="w-full p-5 rounded-2xl border"
+placeholder="Email"
+value={email}
+onChange={e=>setEmail(e.target.value)}
+/>
+
+<input
+className="w-full p-5 rounded-2xl border"
+type="password"
+placeholder="Password"
+value={password}
+onChange={e=>setPassword(e.target.value)}
+/>
+
+{
+
+step===1?
+
+<button
+onClick={sendOtp}
+className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+>
+
+Send OTP
+
+</button>
+
+:
+
+<>
+
+<input
+className="w-full p-5 rounded-2xl border"
+placeholder="OTP"
+value={otp}
+onChange={e=>setOtp(e.target.value)}
+/>
+
+<button
+onClick={register}
+className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+>
+
+Register
+
+</button>
+
+</>
+
+}
+
+<div className="text-center">
+
+<Link
+href="/login"
+className="text-blue-600"
+>
+
+Login
+
+</Link>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+
 }

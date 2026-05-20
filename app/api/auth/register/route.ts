@@ -1,57 +1,168 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+
 import prisma from "@/shared/lib/prisma"
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
+export async function POST(
+  req: Request
+){
 
-    const { name, email, password, company } = body
+try{
 
-    const exists = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    })
+const body=
 
-    if (exists) {
-      return NextResponse.json(
-        {
-          error: "User already exists",
-        },
-        {
-          status: 400,
-        }
-      )
-    }
+await req.json()
 
-    const passwordHash = await bcrypt.hash(
-      password,
-      10
-    )
+const {
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        organization: company, // required field
-        role: "owner",
-        passwordHash,
-      },
-    })
+name,
 
-    return NextResponse.json(user)
+email,
 
-  } catch (error) {
-    console.error(error)
+password,
 
-    return NextResponse.json(
-      {
-        error: "Registration failed",
-      },
-      {
-        status: 500,
-      }
-    )
-  }
+company,
+
+otp
+
+}=body
+
+const existing=
+
+await prisma.user.findUnique({
+
+where:{
+email
+}
+
+})
+
+if(existing){
+
+return NextResponse.json(
+
+{
+error:"User already exists"
+},
+
+{
+status:400
+}
+
+)
+
+}
+
+const otpRecord=
+
+await prisma.otpCode.findFirst({
+
+where:{
+
+email,
+
+code:otp,
+
+verified:false,
+
+expiresAt:{
+
+gt:new Date()
+
+}
+
+}
+
+})
+
+if(!otpRecord){
+
+return NextResponse.json(
+
+{
+error:"Invalid OTP"
+},
+
+{
+status:400
+}
+
+)
+
+}
+
+const passwordHash=
+
+await bcrypt.hash(
+
+password,
+
+10
+
+)
+
+const user=
+
+await prisma.user.create({
+
+data:{
+
+name,
+
+email,
+
+organization:company,
+
+role:"owner",
+
+passwordHash
+
+}
+
+})
+
+await prisma.otpCode.update({
+
+where:{
+
+id:otpRecord.id
+
+},
+
+data:{
+
+verified:true
+
+}
+
+})
+
+return NextResponse.json({
+
+ok:true,
+
+user
+
+})
+
+}
+
+catch(error){
+
+console.error(error)
+
+return NextResponse.json(
+
+{
+error:"Registration failed"
+},
+
+{
+status:500
+}
+
+)
+
+}
+
 }

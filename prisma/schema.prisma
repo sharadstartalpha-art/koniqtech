@@ -400,3 +400,18 @@ enum MessageChannel {
   whatsapp
   internal
 }
+model OtpCode{
+
+id String @id @default(cuid())
+
+email String
+
+code String
+
+expiresAt DateTime
+
+verified Boolean @default(false)
+
+createdAt DateTime @default(now())
+
+}

@@ -1,10 +1,22 @@
-import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
+import { NextResponse } from "next/server"
+
+function makeSlug(
+text:string
+){
+
+return text
+.toLowerCase()
+.replace(/\s+/g,"-")
+.replace(/[^a-z0-9-]/g,"")
+
+}
+
 export async function POST(
-req: Request
+req:Request
 ){
 
 try{
@@ -16,14 +28,14 @@ await req.json()
 const {
 
 name,
+company,
 email,
 password,
-company,
 otp
 
 }=body
 
-const existing=
+const existingUser=
 
 await prisma.user.findUnique({
 
@@ -33,7 +45,7 @@ email
 
 })
 
-if(existing){
+if(existingUser){
 
 return NextResponse.json(
 
@@ -42,7 +54,8 @@ error:"User already exists"
 },
 
 {
-status:400}
+status:400
+}
 
 )
 
@@ -58,16 +71,18 @@ email,
 
 code:otp,
 
-verified:false,
-
 expiresAt:{
+
 gt:new Date()
+
 }
 
 },
 
 orderBy:{
+
 createdAt:"desc"
+
 }
 
 })
@@ -77,7 +92,7 @@ if(!otpRecord){
 return NextResponse.json(
 
 {
-error:"OTP invalid"
+error:"Invalid OTP"
 },
 
 {
@@ -88,11 +103,34 @@ status:400
 
 }
 
+const org=
+
+await prisma.organization.create({
+
+data:{
+
+name:company,
+
+slug:
+
+makeSlug(company)+
+
+"-"+
+
+Date.now()
+
+}
+
+})
+
 const passwordHash=
 
 await bcrypt.hash(
+
 password,
+
 10
+
 )
 
 const user=
@@ -105,11 +143,19 @@ name,
 
 email,
 
-organization:company,
-
 passwordHash,
 
-role:"owner"
+role:"owner",
+
+organization:{
+
+connect:{
+
+id:org.id
+
+}
+
+}
 
 }
 
@@ -141,14 +187,14 @@ user
 
 }
 
-catch(err){
+catch(error){
 
-console.error(err)
+console.error(error)
 
 return NextResponse.json(
 
 {
-error:"register failed"
+error:"Registration failed"
 },
 
 {

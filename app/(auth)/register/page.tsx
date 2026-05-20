@@ -53,7 +53,6 @@ method:"POST",
 headers:{
 
 "Content-Type":
-
 "application/json"
 
 },
@@ -83,9 +82,7 @@ await res.json()
 if(!res.ok){
 
 alert(
-
 data.error
-
 )
 
 return
@@ -97,7 +94,6 @@ window.location.href=
 "/login"
 
 }
-
 return(
 
 <div className="min-h-screen grid lg:grid-cols-2">

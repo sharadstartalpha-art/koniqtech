@@ -1,8 +1,23 @@
-import DocumentCenter
-from "@/modules/documents/components/DocumentCenter"
+export default function Documents(){
 
-export default function Page(){
+return(
 
-return <DocumentCenter/>
+<div className="space-y-8">
+
+<h1 className="text-4xl text-slate-900">
+
+Documents
+
+</h1>
+
+<div className="bg-white rounded-3xl p-8">
+
+Upload Files
+
+</div>
+
+</div>
+
+)
 
 }

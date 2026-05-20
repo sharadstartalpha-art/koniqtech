@@ -1,8 +1,23 @@
-import RealtimeChat
-from "@/modules/pipeline/components/RealtimeChat"
+export default function Messages(){
 
-export default function Page(){
+return(
 
-return <RealtimeChat/>
+<div className="grid grid-cols-4 gap-6">
+
+<div className="bg-white rounded-3xl p-6">
+
+Conversations
+
+</div>
+
+<div className="col-span-3 bg-white rounded-3xl p-6">
+
+Chat Window
+
+</div>
+
+</div>
+
+)
 
 }

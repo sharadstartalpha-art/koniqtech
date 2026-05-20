@@ -10,7 +10,7 @@ return(
 
 <div className="min-h-screen flex bg-slate-100">
 
-<aside className="w-72 bg-slate-950 text-white flex flex-col">
+<aside className="w-72 bg-slate-950 text-slate-900 flex flex-col">
 
 <div className="p-8 border-b border-slate-800">
 

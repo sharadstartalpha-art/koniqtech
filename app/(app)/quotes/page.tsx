@@ -1,8 +1,23 @@
-import QuoteBuilder
-from "@/modules/quotes/components/QuoteBuilder"
+export default function Quotes(){
 
-export default function Page(){
+return(
 
-return <QuoteBuilder/>
+<div>
+
+<h1 className="text-4xl text-slate-900">
+
+Quotes
+
+</h1>
+
+<div className="bg-white mt-8 p-8 rounded-3xl">
+
+Quote Builder
+
+</div>
+
+</div>
+
+)
 
 }

@@ -69,7 +69,7 @@ Leads
 
 <button
 onClick={createLead}
-className="bg-blue-600 text-white px-6 py-3 rounded-xl">
+className="bg-blue-600 text-white px-4 py-2 text-sm rounded-xl">
 
 Add Lead
 

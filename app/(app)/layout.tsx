@@ -12,15 +12,14 @@ return(
 
 <aside className="w-72 bg-slate-950 text-white flex flex-col">
 
-<div className="p-8 border-b border-slate-800">
+<div className="p-6 border-b border-slate-800">
 
-<h1 className="text-4xl font-bold">
+<img
+src="/logo.png"
+className="h-14 object-contain"
+/>
 
-KONIQ CRM
-
-</h1>
-
-<p className="text-slate-400 mt-2">
+<p className="text-xs text-slate-400 mt-2">
 
 AI Service Platform
 

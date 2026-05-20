@@ -1,19 +1,23 @@
 "use client"
 
-import { useEffect,useState } from "react"
+import {useEffect,useState} from "react"
 
-export default function LeadsPage(){
+export default function Leads(){
 
-const [leads,setLeads]=useState([])
+const [items,setItems]=useState([])
+
 const [name,setName]=useState("")
 const [email,setEmail]=useState("")
 
 async function load(){
 
 const r=await fetch("/api/leads")
-const d=await r.json()
 
-setLeads(d)
+setItems(
+
+await r.json()
+
+)
 
 }
 
@@ -23,18 +27,21 @@ load()
 
 },[])
 
-async function createLead(){
+async function addLead(){
 
 await fetch(
 
 "/api/leads",
 
 {
+
 method:"POST",
 
 headers:{
+
 "Content-Type":
 "application/json"
+
 },
 
 body:JSON.stringify({
@@ -48,8 +55,26 @@ email
 
 )
 
+load()
+
 setName("")
 setEmail("")
+
+}
+
+async function remove(id:string){
+
+await fetch(
+
+`/api/leads/${id}`,
+
+{
+
+method:"DELETE"
+
+}
+
+)
 
 load()
 
@@ -57,81 +82,71 @@ load()
 
 return(
 
-<div className="space-y-8">
+<div className="space-y-6">
 
 <div className="flex justify-between">
 
-<h1 className="text-4xl font-bold text-slate-900">
+<h1 className="text-2xl font-semibold">
 
 Leads
 
 </h1>
 
 <button
-onClick={createLead}
-className="bg-blue-600 text-white px-4 py-2 text-sm rounded-xl">
+onClick={addLead}
+className="bg-blue-600 text-white px-4 py-2 rounded-lg">
 
-Add Lead
+Create
 
 </button>
 
 </div>
 
-<div className="bg-white p-8 rounded-3xl shadow">
-
-<div className="grid grid-cols-2 gap-4">
+<div className="bg-white p-6 rounded-xl grid grid-cols-2 gap-4">
 
 <input
+placeholder="Lead"
+
 value={name}
-onChange={(e)=>setName(e.target.value)}
-placeholder="Lead Name"
-className="border p-4 rounded-xl text-slate-900"
+
+onChange={(e)=>
+
+setName(e.target.value)
+
+}
+
+className="border p-3 rounded-lg"
 />
 
 <input
-value={email}
-onChange={(e)=>setEmail(e.target.value)}
 placeholder="Email"
-className="border p-4 rounded-xl text-slate-900"
+
+value={email}
+
+onChange={(e)=>
+
+setEmail(e.target.value)
+
+}
+
+className="border p-3 rounded-lg"
 />
 
 </div>
 
-</div>
-
-<div className="bg-white rounded-3xl shadow">
+<div className="bg-white rounded-xl">
 
 <table className="w-full">
-
-<thead>
-
-<tr className="border-b">
-
-<th className="p-5 text-left text-slate-700">
-
-Name
-
-</th>
-
-<th className="text-left text-slate-700">
-
-Email
-
-</th>
-
-</tr>
-
-</thead>
 
 <tbody>
 
 {
 
-leads.map((x:any)=>(
+items.map((x:any)=>(
 
 <tr key={x.id}>
 
-<td className="p-5">
+<td className="p-4">
 
 {x.name}
 
@@ -140,6 +155,23 @@ leads.map((x:any)=>(
 <td>
 
 {x.email}
+
+</td>
+
+<td>
+
+<button
+onClick={()=>
+
+remove(x.id)
+
+}
+
+className="text-red-600">
+
+Delete
+
+</button>
 
 </td>
 

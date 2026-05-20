@@ -2,17 +2,17 @@ export default function Documents(){
 
 return(
 
-<div className="space-y-8">
+<div className="space-y-6">
 
-<h1 className="text-4xl text-slate-900">
+<h1 className="text-2xl">
 
 Documents
 
 </h1>
 
-<div className="bg-white rounded-3xl p-8">
+<div className="bg-white p-8 rounded-xl">
 
-Upload Files
+<input type="file"/>
 
 </div>
 

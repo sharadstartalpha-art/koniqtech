@@ -2,49 +2,35 @@ export default function Customers(){
 
 return(
 
-<div className="space-y-8">
+<div className="space-y-6">
 
-<h1 className="text-4xl font-bold text-slate-900">
+<h1 className="text-2xl font-semibold">
 
 Customers
 
 </h1>
 
-<div className="grid grid-cols-3 gap-6">
+<div className="bg-white rounded-xl p-6">
 
-<Card t="Total" v="112"/>
+<table className="w-full">
 
-<Card t="Active" v="89"/>
+<thead>
 
-<Card t="VIP" v="23"/>
+<tr>
+
+<th>Name</th>
+
+<th>Company</th>
+
+<th>Status</th>
+
+</tr>
+
+</thead>
+
+</table>
 
 </div>
-
-<div className="bg-white rounded-3xl p-8 shadow">
-
-Customer Grid
-
-</div>
-
-</div>
-
-)
-
-}
-
-function Card({t,v}:any){
-
-return(
-
-<div className="bg-white p-8 rounded-3xl">
-
-<p>{t}</p>
-
-<h2 className="text-4xl">
-
-{v}
-
-</h2>
 
 </div>
 

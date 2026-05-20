@@ -40,38 +40,61 @@ alert("OTP sent")
 
 async function register(){
 
-const res=await fetch(
-"/api/auth/verify-otp",
+const res=
+
+await fetch(
+
+"/api/auth/register",
+
 {
+
 method:"POST",
+
 headers:{
-"Content-Type":"application/json"
+
+"Content-Type":
+
+"application/json"
+
 },
+
 body:JSON.stringify({
 
 name,
 
-organization:company,
+company,
 
 email,
 
 password,
 
-code:otp
+otp
 
 })
+
 }
+
 )
 
-if(res.ok){
+const data=
 
-window.location.href="/login"
+await res.json()
+
+if(!res.ok){
+
+alert(
+
+data.error
+
+)
 
 return
 
 }
 
-alert("Registration failed")
+window.location.href=
+
+"/login"
 
 }
 

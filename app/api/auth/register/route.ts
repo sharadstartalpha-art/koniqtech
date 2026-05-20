@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs"
 import prisma from "@/shared/lib/prisma"
 
 export async function POST(
-  req: Request
+req: Request
 ){
 
 try{
@@ -16,13 +16,9 @@ await req.json()
 const {
 
 name,
-
 email,
-
 password,
-
 company,
-
 otp
 
 }=body
@@ -46,8 +42,7 @@ error:"User already exists"
 },
 
 {
-status:400
-}
+status:400}
 
 )
 
@@ -66,11 +61,13 @@ code:otp,
 verified:false,
 
 expiresAt:{
-
 gt:new Date()
-
 }
 
+},
+
+orderBy:{
+createdAt:"desc"
 }
 
 })
@@ -80,7 +77,7 @@ if(!otpRecord){
 return NextResponse.json(
 
 {
-error:"Invalid OTP"
+error:"OTP invalid"
 },
 
 {
@@ -94,11 +91,8 @@ status:400
 const passwordHash=
 
 await bcrypt.hash(
-
 password,
-
 10
-
 )
 
 const user=
@@ -113,9 +107,9 @@ email,
 
 organization:company,
 
-role:"owner",
+passwordHash,
 
-passwordHash
+role:"owner"
 
 }
 
@@ -147,14 +141,14 @@ user
 
 }
 
-catch(error){
+catch(err){
 
-console.error(error)
+console.error(err)
 
 return NextResponse.json(
 
 {
-error:"Registration failed"
+error:"register failed"
 },
 
 {

@@ -13,19 +13,60 @@ export default function Login() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    })
+    async function login(){
 
-    router.push("/dashboard")
-  }
+const res=
+
+await fetch(
+
+"/api/auth/login",
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+email,
+
+password
+
+})
+
+}
+
+)
+
+const data=
+
+await res.json()
+
+if(!res.ok){
+
+alert(
+
+data.error
+
+)
+
+return
+
+}
+
+window.location.href=
+
+"/dashboard"
+
+}
+}
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">

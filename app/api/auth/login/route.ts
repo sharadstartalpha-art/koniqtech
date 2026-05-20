@@ -1,12 +1,20 @@
-import { NextResponse } from "next/server"
-
 import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
-export async function POST(req:Request){
+import { NextResponse }
 
-const body=await req.json()
+from "next/server"
+
+export async function POST(
+
+req:Request
+
+){
+
+const body=
+
+await req.json()
 
 const user=
 
@@ -25,22 +33,18 @@ if(!user){
 return NextResponse.json(
 
 {
-
-error:"invalid"
-
+error:"User not found"
 },
 
 {
-
-status:401
-
+status:400
 }
 
 )
 
 }
 
-const ok=
+const valid=
 
 await bcrypt.compare(
 
@@ -50,20 +54,16 @@ user.passwordHash
 
 )
 
-if(!ok){
+if(!valid){
 
 return NextResponse.json(
 
 {
-
-error:"invalid"
-
+error:"Wrong password"
 },
 
 {
-
-status:401
-
+status:400
 }
 
 )

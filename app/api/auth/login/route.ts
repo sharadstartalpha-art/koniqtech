@@ -1,85 +1,117 @@
-import { NextRequest, NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
 import prisma from "@/shared/lib/prisma"
 
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json()
+import bcrypt from "bcryptjs"
 
-    const email = body.email?.trim().toLowerCase()
-    const password = body.password
+import { cookies } from "next/headers"
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password required" },
-        { status: 400 }
-      )
-    }
+import { NextResponse } from "next/server"
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        organization: true,
-      },
-    })
+export async function POST(
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      )
-    }
+req:Request
 
-    const valid = await bcrypt.compare(
-      password,
-      user.passwordHash
-    )
+){
 
-    if (!valid) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      )
-    }
+const body=
 
-    const response = NextResponse.json({
-      success: true,
-      redirect: "/dashboard",
-    })
+await req.json()
 
-    response.cookies.set(
-      "auth",
-      user.id,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      }
-    )
+const user=
 
-    response.cookies.set(
-      "tenant",
-      user.orgId,
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      }
-    )
+await prisma.user.findUnique({
 
-    return response
+where:{
 
-  } catch (error) {
+email:body.email
 
-    console.log(error)
+}
 
-    return NextResponse.json(
-      { error: "Login failed" },
-      { status: 500 }
-    )
-  }
+})
+
+if(!user){
+
+return NextResponse.json(
+
+{
+
+error:"Invalid login"
+
+},
+
+{
+
+status:401
+
+}
+
+)
+
+}
+
+const valid=
+
+await bcrypt.compare(
+
+body.password,
+
+user.passwordHash
+
+)
+
+if(!valid){
+
+return NextResponse.json(
+
+{
+
+error:"Invalid login"
+
+},
+
+{
+
+status:401
+
+}
+
+)
+
+}
+
+const store=
+
+await cookies()
+
+store.set(
+
+"token",
+
+user.email,
+
+{
+
+httpOnly:true,
+
+path:"/"
+
+}
+
+)
+
+return NextResponse.json({
+
+success:true,
+
+role:user.role,
+
+redirect:
+
+user.role==="super_admin"
+
+?"/admin/dashboard"
+
+:"/dashboard"
+
+})
+
 }

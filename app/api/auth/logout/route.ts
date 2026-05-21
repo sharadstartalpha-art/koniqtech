@@ -1,9 +1,10 @@
 import { cookies } from "next/headers"
+
 import { NextResponse } from "next/server"
 
-export async function POST() {
+export async function POST(){
 
-const store = await cookies()
+const store=await cookies()
 
 store.delete("token")
 
@@ -11,18 +12,10 @@ store.delete("session")
 
 store.delete("auth")
 
-return NextResponse.redirect(
+return NextResponse.json({
 
-new URL(
+success:true
 
-"/login",
-
-process.env.NEXT_PUBLIC_BASE_URL ||
-
-"http://localhost:3000"
-
-)
-
-)
+})
 
 }

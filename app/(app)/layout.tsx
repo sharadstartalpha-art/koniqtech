@@ -16,25 +16,18 @@ CreditCard,
 Truck,
 BarChart3,
 Brain,
-Activity,
-
 Bell,
-
+Settings,
+Search,
 MoreHorizontal,
-
 User,
 Moon,
 Home,
-Settings,
-LogOut,
+LogOut
 
-ChevronRight
+} from "lucide-react"
 
-}
-
-from "lucide-react"
-
-const menu=[
+const menus=[
 
 ["Dashboard","/dashboard",LayoutDashboard],
 
@@ -58,11 +51,21 @@ const menu=[
 
 ["AI","/ai",Brain],
 
-["Monitoring","/monitoring",Activity]
+["Notifications","/notifications",Bell],
+
+["Settings","/settings",Settings],
+
+["QA","/qa",Settings],
+
+["Bugs","/bugs",Settings],
+
+["Infra","/infra",Settings],
+
+["Integrations","/integrations",Settings]
 
 ]
 
-export default function Layout({
+export default function AppLayout({
 
 children
 
@@ -72,87 +75,35 @@ children:React.ReactNode
 
 }){
 
-const path=usePathname()
-
-const [
-
-open,
-
-setOpen
-
-]=useState(false)
+const pathname=usePathname()
 
 return(
 
-<div className="h-screen flex bg-white">
+<div className="h-screen flex bg-[#f8f8f8]">
 
 {/* SIDEBAR */}
 
-<aside className="
+<aside className="w-[248px] bg-white border-r border-slate-200 flex flex-col">
 
-w-[248px]
-
-border-r
-
-bg-[#fafafa]
-
-flex
-
-flex-col
-
-relative
-
-overflow-visible
-
-">
-
-{/* HEADER */}
-
-<div className="
-
-h-20
-
-border-b
-
-px-6
-
-flex
-
-items-center
-
-gap-3
-
-">
+<div className="h-24 border-b border-slate-200 px-7 flex items-center gap-4">
 
 <img
 
 src="/logo.png"
 
-className="w-8 h-8"
+className="w-10 h-10 object-contain"
 
 />
 
 <div>
 
-<p className="
-
-font-semibold
-
-text-black
-
-">
+<h1 className="font-semibold text-xl">
 
 koniqtech
 
-</p>
+</h1>
 
-<p className="
-
-text-xs
-
-text-slate-500
-
-">
+<p className="text-slate-500 text-sm">
 
 CRM
 
@@ -162,27 +113,13 @@ CRM
 
 </div>
 
-{/* MENU */}
-
-<div className="
-
-flex-1
-
-overflow-y-auto
-
-px-3
-
-py-4
-
-space-y-1
-
-">
+<div className="flex-1 overflow-auto py-4 px-3 space-y-1">
 
 {
 
-menu.map(
+menus.map(
 
-([name,href,Icon]:any)=>(
+([label,href,Icon]:any)=>(
 
 <Link
 
@@ -192,35 +129,26 @@ href={href}
 
 className={`
 
-h-11
-
-px-3
-
-rounded-xl
-
 flex
-
 items-center
-
-gap-3
-
-text-black
-
-text-sm
-
+gap-4
+px-4
+h-11
+rounded-xl
+text-[16px]
 transition
 
 ${
 
-path===href
+pathname===href
 
 ?
 
-"bg-[#ececec]"
+"bg-slate-100"
 
 :
 
-"hover:bg-[#ececec]"
+"hover:bg-slate-100"
 
 }
 
@@ -228,13 +156,9 @@ path===href
 
 >
 
-<Icon
+<Icon size={18}/>
 
-size={16}
-
-/>
-
-{name}
+{label}
 
 </Link>
 
@@ -246,296 +170,56 @@ size={16}
 
 </div>
 
-{/* FOOTER */}
-
-<div className="
-
-border-t
-
-p-3
-
-relative
-
-overflow-visible
-
-">
-
-<div className="
-
-flex
-
-items-center
-
-justify-between
-
-">
-
-<div className="
-
-flex
-
-items-center
-
-gap-3
-
-">
-
-<div className="
-
-w-8
-
-h-8
-
-rounded-full
-
-bg-slate-200
-
-"/>
-
-<p className="
-
-text-sm
-
-text-black
-
-">
-
-info@koniqtech.com
-
-</p>
-
-</div>
-
-<button
-
-onClick={()=>
-
-setOpen(
-
-!open
-
-)
-
-}
-
-className="
-
-w-8
-
-h-8
-
-rounded-lg
-
-hover:bg-slate-200
-
-flex
-
-items-center
-
-justify-center
-
-"
-
->
-
-<MoreHorizontal
-
-size={18}
-
-/>
-
-</button>
-
-</div>
-
-{/* POPUP */}
-
-{
-
-open&&(
-
-<div className="
-
-absolute
-
-bottom-16
-
-left-2
-
-w-[220px]
-
-bg-white
-
-border
-
-rounded-2xl
-
-shadow-2xl
-
-z-[999]
-
-overflow-hidden
-
-">
-
-<Row
-
-icon={User}
-
-label="My profile"
-
-/>
-
-<Row
-
-icon={Moon}
-
-label="Toggle theme"
-
-right="M"
-
-/>
-
-<Row
-
-icon={Home}
-
-label="Homepage"
-
-/>
-
-<Row
-
-icon={Settings}
-
-label="Settings"
-
-/>
-
-<div className="border-t"/>
-
-<form
-action="/api/auth/logout"
-method="POST"
->
-
-<button
-className="
-w-full
-h-12
-px-4
-flex
-items-center
-gap-3
-hover:bg-slate-50
-"
->
-
-<LogOut size={16}/>
-
-Logout
-
-</button>
-
-</form>
-
-</div>
-
-)
-
-}
-
-</div>
+<FooterMenu/>
 
 </aside>
 
-{/* RIGHT */}
+{/* CONTENT */}
 
 <div className="flex-1 flex flex-col">
 
-<header className="
+<header className="h-24 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
 
-h-20
+<div className="w-[680px] relative">
 
-border-b
+<Search
 
-px-8
+size={18}
 
-bg-white
+className="absolute left-5 top-4 text-slate-400"
 
-flex
-
-items-center
-
-justify-between
-
-">
+/>
 
 <input
 
 placeholder="Search..."
 
 className="
-
-w-[680px]
-
+w-full
 h-11
-
-rounded-xl
-
+pl-12
+rounded-2xl
 border
-
-px-4
-
-text-black
-
-placeholder:text-slate-400
-
+border-slate-200
+bg-[#fafafa]
 outline-none
-
 "
-
-/>
-
-<div className="
-
-flex
-
-items-center
-
-gap-5
-
-">
-
-<Bell
-
-size={18}
-
-/>
-
-<img
-
-src="/logo.png"
-
-className="w-8 h-8"
 
 />
 
 </div>
 
+<img
+
+src="/logo.png"
+
+className="w-10 h-10 object-contain"
+
+/>
+
 </header>
 
-<main className="
-
-flex-1
-
-bg-slate-50
-
-overflow-auto
-
-p-8
-
-">
+<main className="flex-1 overflow-auto p-8">
 
 {children}
 
@@ -549,13 +233,160 @@ p-8
 
 }
 
-function Row({
+function FooterMenu(){
 
-icon:Icon,
+const [open,setOpen]=useState(false)
+
+async function logout(){
+
+await fetch(
+
+"/api/auth/logout",
+
+{
+
+method:"POST"
+
+}
+
+)
+
+window.location.href="/login"
+
+}
+
+return(
+
+<div className="border-t border-slate-200 p-3 relative">
+
+<button
+
+onClick={()=>setOpen(!open)}
+
+className="
+w-full
+flex
+items-center
+justify-between
+"
+
+>
+
+<div className="flex items-center gap-3">
+
+<div className="
+w-10
+h-10
+rounded-full
+bg-slate-200
+"/>
+
+<p className="text-sm">
+
+info@koniqtech.com
+
+</p>
+
+</div>
+
+<MoreHorizontal size={18}/>
+
+</button>
+
+{
+
+open && (
+
+<div className="
+absolute
+left-3
+bottom-16
+w-[220px]
+bg-white
+border
+border-slate-200
+rounded-3xl
+shadow-xl
+overflow-hidden
+z-50
+">
+
+<Item
+
+icon={<User size={16}/>}
+
+label="My profile"
+
+/>
+
+<Item
+
+icon={<Moon size={16}/>}
+
+label="Toggle theme"
+
+badge="M"
+
+/>
+
+<Item
+
+icon={<Home size={16}/>}
+
+label="Homepage"
+
+/>
+
+<Item
+
+icon={<Settings size={16}/>}
+
+label="Settings"
+
+/>
+
+<button
+
+onClick={logout}
+
+className="
+w-full
+px-5
+py-4
+flex
+items-center
+gap-3
+hover:bg-slate-100
+border-t
+"
+
+>
+
+<LogOut size={16}/>
+
+Logout
+
+</button>
+
+</div>
+
+)
+
+}
+
+</div>
+
+)
+
+}
+
+function Item({
+
+icon,
 
 label,
 
-right
+badge
 
 }:any){
 
@@ -564,44 +395,24 @@ return(
 <button
 
 className="
-
 w-full
-
-h-12
-
-px-4
-
+px-5
+py-4
 flex
-
 items-center
-
 justify-between
-
-hover:bg-slate-50
-
+hover:bg-slate-100
 "
 
 >
 
 <div className="
-
 flex
-
 items-center
-
 gap-3
-
-text-black
-
-text-sm
-
 ">
 
-<Icon
-
-size={16}
-
-/>
+{icon}
 
 {label}
 
@@ -609,23 +420,18 @@ size={16}
 
 {
 
-right&&(
+badge && (
 
-<span className="
-
-text-xs
-
+<div className="
 bg-slate-200
-
 px-2
-
-rounded
-
+rounded-md
+text-xs
 ">
 
-{right}
+{badge}
 
-</span>
+</div>
 
 )
 

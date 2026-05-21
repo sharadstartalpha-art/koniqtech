@@ -134,17 +134,14 @@ $199 / month
 
 </div>
 
-<a
-
-href="/api/paypal/create"
-
-className="block w-full mt-10 bg-blue-600 text-white text-center rounded-2xl p-6 text-xl font-bold"
-
+<button
+ onClick={()=>{
+   window.location.href=
+   "/api/paypal/create"
+ }}
 >
-
-Continue To PayPal
-
-</a>
+ Continue To PayPal
+</button>
 
 </div>
 

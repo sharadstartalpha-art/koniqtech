@@ -1,44 +1,67 @@
-export default function PlansPage(){
+export default function Page(){
 
-return(
+const plans=[
 
-<div className="grid grid-cols-3 gap-8">
+{
+name:"Starter",
+price:99
+},
 
-<Card crm="Roofing"/>
+{
+name:"Pro",
+price:199
+},
 
-<Card crm="HVAC"/>
-
-<Card crm="Plumbing"/>
-
-<Card crm="Landscaping"/>
-
-</div>
-
-)
-
+{
+name:"Enterprise",
+price:499
 }
 
-function Card({
-
-crm
-
-}:any){
+]
 
 return(
 
-<div className="bg-white p-8 rounded-3xl">
+<div className="space-y-8">
 
-<h2 className="text-2xl font-bold">
+<h1 className="text-4xl font-bold">
 
-{crm}
+Plans
+
+</h1>
+
+<div className="grid grid-cols-3 gap-6">
+
+{
+
+plans.map(plan=>(
+
+<div
+
+key={plan.name}
+
+className="bg-white rounded-3xl p-8 border"
+
+>
+
+<h2 className="text-3xl font-bold">
+
+{plan.name}
 
 </h2>
 
-<p>
+<p className="mt-4">
 
-$199/month
+${plan.price}
 
 </p>
+
+</div>
+
+))
+
+}
+
+</div>
 
 </div>
 

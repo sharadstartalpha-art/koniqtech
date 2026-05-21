@@ -1,7 +1,9 @@
 import prisma from "@/shared/lib/prisma"
-import { extendSubscription } from "./server"
+import Link from "next/link"
 
-export default async function OrgPage({
+export const dynamic="force-dynamic"
+
+export default async function Page({
 
 params
 
@@ -12,14 +14,14 @@ const org=
 await prisma.organization.findUnique({
 
 where:{
-
 id:params.id
-
 },
 
 include:{
 
-users:true
+users:true,
+
+subscriptions:true
 
 }
 
@@ -27,7 +29,11 @@ users:true
 
 if(!org){
 
-return <div>Not found</div>
+return(
+<div>
+Organization not found
+</div>
+)
 
 }
 
@@ -35,111 +41,95 @@ return(
 
 <div className="space-y-8">
 
-<h1 className="text-4xl font-bold">
+<h1 className="text-5xl font-bold">
 
 {org.name}
 
 </h1>
 
-<div className="bg-white rounded-3xl p-8">
+<div className="grid grid-cols-4 gap-6">
 
-<p>
+<Card
+title="CRM"
+value={org.crmType}
+/>
 
-CRM:
+<Card
+title="Plan"
+value={org.plan}
+/>
 
-{org.crmType}
+<Card
+title="Users"
+value={org.users.length}
+/>
 
-</p>
+<Card
+title="Subscriptions"
+value={org.subscriptions.length}
+/>
 
-<p>
+</div>
 
-Plan:
+<div className="flex gap-4">
 
-{org.plan}
+<Link
+href={`/admin/organizations/${org.id}/subscription`}
+className="bg-blue-600 text-white px-6 py-3 rounded-xl"
+>
 
-</p>
+Subscription
 
-<p>
+</Link>
 
-Users limit:
+<Link
+href={`/admin/organizations/${org.id}/users`}
+className="bg-black text-white px-6 py-3 rounded-xl"
+>
 
-{org.usersLimit}
+Users
 
-</p>
+</Link>
 
-<p>
+<Link
+href={`/admin/organizations/${org.id}/billing`}
+className="bg-green-600 text-white px-6 py-3 rounded-xl"
+>
 
-Expires:
+Billing
 
-{
+</Link>
 
-org.subscriptionEndsAt?.toDateString()
+</div>
+
+</div>
+
+)
 
 }
 
+function Card({
+
+title,
+value
+
+}:any){
+
+return(
+
+<div className="bg-white p-8 rounded-3xl border">
+
+<p>
+
+{title}
+
 </p>
 
-<form
+<h2 className="text-3xl font-bold mt-4">
 
-action={extendSubscription}
+{String(value)}
 
-className="mt-8 flex gap-4"
-
->
-
-<input
-
-hidden
-
-name="id"
-
-value={org.id}
-
-/>
-
-<select
-
-name="months"
-
-className="border p-4 rounded"
-
->
-
-<option value="1">
-
-1 Month
-
-</option>
-
-<option value="3">
-
-3 Months
-
-</option>
-
-<option value="6">
-
-6 Months
-
-</option>
-
-<option value="12">
-
-12 Months
-
-</option>
-
-</select>
-
-<button className="bg-blue-600 text-white px-8 rounded">
-
-Grant Access
-
-</button>
-
-</form>
-
-</div>
+</h2>
 
 </div>
 

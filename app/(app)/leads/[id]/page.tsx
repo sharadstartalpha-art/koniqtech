@@ -1,30 +1,84 @@
-export default function LeadEdit(){
+export default function Page(){
 
 return(
 
-<div className="bg-white p-8 rounded-3xl border">
+<div className="space-y-8">
 
-<h1 className="text-3xl font-bold mb-8">
+<h1 className="text-5xl font-bold">
 
-Edit Lead
+Lead Details
 
 </h1>
 
-<input className="border p-4 rounded-xl w-full mb-4"/>
+<div className="grid grid-cols-3 gap-8">
 
-<select className="border p-4 rounded-xl w-full">
+<div className="bg-white rounded-3xl p-8">
 
-<option>New</option>
+<h2 className="font-bold">
 
-<option>Contacted</option>
+Lead Profile
 
-<option>Estimate</option>
+</h2>
 
-<option>Won</option>
+<p className="mt-5">
 
-<option>Lost</option>
+John Roofing
 
-</select>
+</p>
+
+<p>
+
+AI Score:92
+
+</p>
+
+<p>
+
+Stage:Estimate
+
+</p>
+
+</div>
+
+<div className="bg-white rounded-3xl p-8 col-span-2">
+
+<h2 className="font-bold">
+
+Timeline
+
+</h2>
+
+<div className="space-y-3 mt-5">
+
+<Item text="Lead created"/>
+
+<Item text="Call completed"/>
+
+<Item text="Estimate sent"/>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+
+}
+
+function Item({
+
+text
+
+}:any){
+
+return(
+
+<div className="bg-slate-100 p-4 rounded">
+
+{text}
 
 </div>
 

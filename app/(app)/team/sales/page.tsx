@@ -6,22 +6,18 @@ return(
 
 <h1 className="text-5xl font-bold">
 
-Dispatch Board
+Sales Team
 
 </h1>
 
 <div className="grid grid-cols-3 gap-6">
 
-<Col
-title="Unassigned"
+<Member
+name="Sarah"
 />
 
-<Col
-title="Assigned"
-/>
-
-<Col
-title="Completed"
+<Member
+name="Mike"
 />
 
 </div>
@@ -32,9 +28,9 @@ title="Completed"
 
 }
 
-function Col({
+function Member({
 
-title
+name
 
 }:any){
 
@@ -42,17 +38,17 @@ return(
 
 <div className="bg-white rounded-3xl p-8">
 
-<h2 className="font-bold">
+<h2>
 
-{title}
+{name}
 
 </h2>
 
-<div className="mt-5 bg-slate-100 p-4 rounded">
+<p>
 
-Roof Repair
+Sales Rep
 
-</div>
+</p>
 
 </div>
 

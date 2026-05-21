@@ -1,82 +1,56 @@
-export default function CustomerProfile(){
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div className="space-y-8">
 
-<div className="bg-white rounded-3xl border p-8">
+<h1 className="text-5xl font-bold">
 
-<h1 className="text-3xl font-bold">
-
-John Smith
+Customer
 
 </h1>
 
+<div className="grid grid-cols-2 gap-8">
+
+<div className="bg-white p-8 rounded-3xl">
+
+<h2>
+
+Customer Profile
+
+</h2>
+
 <p>
 
-Dallas Texas
+John Smith
+
+</p>
+
+<p>
+
+Miami
 
 </p>
 
 </div>
 
-<div className="grid grid-cols-2 gap-6">
+<div className="bg-white p-8 rounded-3xl">
 
-<Card title="Property">
+<h2>
 
-Roof replacement
+Properties
 
-</Card>
+</h2>
 
-<Card title="Address">
+<div className="mt-5">
 
-Dallas TX USA
+Roof Type:
 
-</Card>
-
-<Card title="Invoices">
-
-4
-
-</Card>
-
-<Card title="Jobs">
-
-12
-
-</Card>
-
-</div>
-
-<div className="bg-white p-8 rounded-3xl border">
-
-Notes
+Shingle
 
 </div>
 
 </div>
-
-)
-
-}
-
-function Card({
-
-title,
-
-children
-
-}:any){
-
-return(
-
-<div className="bg-white border p-8 rounded-3xl">
-
-<h2>{title}</h2>
-
-<div className="mt-4">
-
-{children}
 
 </div>
 

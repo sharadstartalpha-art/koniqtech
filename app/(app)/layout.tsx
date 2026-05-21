@@ -1,243 +1,124 @@
-"use client"
-
 import Link from "next/link"
-import Image from "next/image"
-import { usePathname } from "next/navigation"
 
-export default function AppLayout({
-  children,
-}:{
-  children:React.ReactNode
-}){
+const menu=[
 
-const pathname=
-usePathname()
+["Dashboard","/dashboard"],
 
-async function logout(){
+["Leads","/leads"],
 
-await fetch(
-"/api/auth/logout",
-{
-method:"POST"
-}
-)
+["Customers","/customers"],
 
-window.location.href=
-"/login"
+["Pipeline","/pipeline"],
 
-}
+["Jobs","/jobs"],
 
-const menus=[
+["Dispatch","/dispatch"],
 
-{
-href:"/dashboard",
-label:"Dashboard"
-},
+["Calendar","/calendar"],
 
-{
-href:"/leads",
-label:"Leads"
-},
+["Analytics","/analytics"],
 
-{
-href:"/customers",
-label:"Customers"
-},
+["Billing","/billing"],
 
-{
-href:"/pipeline",
-label:"Pipeline"
-},
+["AI","/ai"],
 
-{
-href:"/jobs",
-label:"Jobs"
-},
-
-{
-href:"/calendar",
-label:"Calendar"
-},
-
-{
-href:"/messages",
-label:"Messages"
-},
-
-{
-href:"/quotes",
-label:"Quotes"
-},
-
-{
-href:"/documents",
-label:"Documents"
-},
-
-{
-href:"/dispatch",
-label:"Dispatch"
-},
-
-{
-href:"/billing",
-label:"Billing"
-},
-
-{
-href:"/subscriptions",
-label:"Subscriptions"
-},
-
-{
-href:"/notifications",
-label:"Notifications"
-},
-
-{
-href:"/team",
-label:"Team"
-},
-
-{
-href:"/roles",
-label:"Roles"
-},
-
-{
-href:"/analytics",
-label:"Analytics"
-},
-
-{
-href:"/ai",
-label:"AI"
-
-},
-
-{
-href:"/monitoring",
-label:"Monitoring"
-},
-
-{
-href:"/reports",
-label:"Reports"
-},
-
-{
-href:"/settings",
-label:"Settings"
-}
+["Settings","/settings"]
 
 ]
 
+export default function Layout({
+
+children
+
+}:{
+
+children:React.ReactNode
+
+}){
+
 return(
 
-<div className="
-min-h-screen
-flex
-bg-slate-100
-">
+<div className="h-screen flex">
 
 <aside className="
 w-72
-bg-slate-950
-text-white
+bg-white
+border-r
 flex
 flex-col
-shadow-xl
 ">
 
 <div className="
-p-6
+h-20
+px-6
 border-b
-border-slate-800
+flex
+items-center
+gap-3
 ">
 
-<Image
+<img
 
 src="/logo.png"
 
-alt="logo"
-
-width={150}
-
-height={60}
-
 className="
-object-contain
+h-10
 "
 
 />
 
+<div>
+
 <p className="
-text-xs
-text-slate-400
-mt-3
+font-bold
 ">
 
-AI Service Platform
+KONIQ
+
+</p>
+
+<p className="
+text-xs
+text-slate-500
+">
+
+CRM
 
 </p>
 
 </div>
 
+</div>
+
 <nav className="
 flex-1
-overflow-y-auto
 p-5
 space-y-2
 ">
 
 {
 
-menus.map(
-item=>(
+menu.map(
+
+m=>(
 
 <Link
 
-key={item.href}
+key={m[0]}
 
-href={item.href}
+href={m[1]}
 
-className={`
-
+className="
 block
-
 px-4
-
 py-3
-
 rounded-xl
-
-text-sm
-
-font-medium
-
-transition
-
-${
-
-pathname.startsWith(
-item.href
-)
-
-?
-
-"bg-blue-600 text-white"
-
-:
-
-"text-slate-300 hover:bg-slate-800"
-
-}
-
-`}
+hover:bg-slate-100
+"
 
 >
 
-{item.label}
+{m[0]}
 
 </Link>
 
@@ -249,151 +130,60 @@ item.href
 
 </nav>
 
-<div className="
-p-5
-border-t
-border-slate-800
-">
-
-<button
-
-onClick={logout}
-
-className="
-
-w-full
-
-bg-red-500
-
-hover:bg-red-600
-
-transition
-
-text-white
-
-rounded-xl
-
-py-3
-
-font-medium
-
-"
-
->
-
-Logout
-
-</button>
-
-</div>
-
 </aside>
 
 <div className="
 flex-1
-flex
-flex-col
+bg-slate-50
 ">
 
 <header className="
-
 bg-white
-
 h-20
-
 border-b
-
-px-10
-
+px-8
 flex
-
 items-center
-
 justify-between
-
-shadow-sm
-
 ">
 
-<div>
+<input
 
-<h2 className="
-text-2xl
-font-bold
-text-slate-800
-">
+placeholder="
+Search"
 
-{
+className="
+border
+rounded-xl
+px-4
+py-2
+w-96
+"
 
-pathname
-.replace(
-"/",
-""
-)
-
-||
-
-"dashboard"
-
-}
-
-</h2>
-
-<p className="
-text-sm
-text-slate-500
-capitalize
-">
-
-KONIQ CRM
-
-</p>
-
-</div>
+/>
 
 <div className="
 flex
-items-center
 gap-4
 ">
 
-<div className="
-w-11
-h-11
+<button>
+
+🔔
+
+</button>
+
+<img
+
+src="/avatar.png"
+
+className="
+w-10
+h-10
 rounded-full
-bg-blue-100
-flex
-items-center
-justify-center
-font-bold
-text-blue-600
-">
+"
 
-K
-
-</div>
-
-<div>
-
-<p className="
-font-semibold
-text-slate-800
-">
-
-Koniq Admin
-
-</p>
-
-<p className="
-text-sm
-text-slate-500
-">
-
-Owner
-
-</p>
-
-</div>
+/>
 
 </div>
 
@@ -401,8 +191,6 @@ Owner
 
 <main className="
 p-8
-overflow-auto
-flex-1
 ">
 
 {children}

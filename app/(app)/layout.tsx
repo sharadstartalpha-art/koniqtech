@@ -1,6 +1,7 @@
 "use client"
-import SidebarLink from "@/shared/components/sidebar-link"
+
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import {
@@ -16,116 +17,45 @@ Truck,
 BarChart3,
 Brain,
 Activity,
-Bug,
-Shield,
-Plug,
+MoreHorizontal,
 Bell,
 User,
-Settings,
-Moon,
 Home,
-LogOut,
-MoreHorizontal
+Moon,
+Settings,
+LogOut
 
-}
+} from "lucide-react"
 
-from "lucide-react"
+const items=[
 
-const menu=[
+["Dashboard","/dashboard",LayoutDashboard],
 
-{
-name:"Dashboard",
-href:"/dashboard",
-icon:LayoutDashboard
-},
+["Leads","/leads",Users],
 
-{
-name:"Leads",
-href:"/leads",
-icon:Users
-},
+["Customers","/customers",Users],
 
-{
-name:"Customers",
-href:"/customers",
-icon:Users
-},
+["Pipeline","/pipeline",GitBranch],
 
-{
-name:"Pipeline",
-href:"/pipeline",
-icon:GitBranch
-},
+["Jobs","/jobs",Briefcase],
 
-{
-name:"Jobs",
-href:"/jobs",
-icon:Briefcase
-},
+["Calendar","/calendar",Calendar],
 
-{
-name:"Calendar",
-href:"/calendar",
-icon:Calendar
-},
+["Messages","/messages",MessageSquare],
 
-{
-name:"Messages",
-href:"/messages",
-icon:MessageSquare
-},
+["Billing","/billing",CreditCard],
 
-{
-name:"Billing",
-href:"/billing",
-icon:CreditCard
-},
+["Dispatch","/dispatch",Truck],
 
-{
-name:"Dispatch",
-href:"/dispatch",
-icon:Truck
-},
+["Analytics","/analytics",BarChart3],
 
-{
-name:"Analytics",
-href:"/analytics",
-icon:BarChart3
-},
+["AI","/ai",Brain],
 
-{
-name:"AI",
-href:"/ai",
-icon:Brain
-},
-
-{
-name:"Monitoring",
-href:"/monitoring",
-icon:Activity
-},
-
-{
-name:"QA",
-href:"/qa",
-icon:Shield
-},
-
-{
-name:"Bugs",
-href:"/bugs",
-icon:Bug
-},
-
-{
-name:"Integrations",
-href:"/integrations",
-icon:Plug
-}
+["Monitoring","/monitoring",Activity]
 
 ]
 
-export default function AppLayout({
+export default function Layout({
 
 children
 
@@ -134,6 +64,8 @@ children
 children:React.ReactNode
 
 }){
+
+const path=usePathname()
 
 const [
 
@@ -147,13 +79,15 @@ return(
 
 <div className="h-screen flex bg-white">
 
-<aside className="
+{/* SIDEBAR */}
+
+<div className="
 
 w-[248px]
 
-border-r
-
 bg-[#fafafa]
+
+border-r
 
 flex
 
@@ -161,15 +95,13 @@ flex-col
 
 ">
 
-{/* TOP */}
-
 <div className="
 
 h-20
 
 border-b
 
-px-5
+px-6
 
 flex
 
@@ -193,7 +125,7 @@ className="w-8 h-8"
 
 font-semibold
 
-text-slate-900
+text-black
 
 ">
 
@@ -217,8 +149,6 @@ CRM
 
 </div>
 
-{/* MENU */}
-
 <div className="
 
 flex-1
@@ -227,7 +157,7 @@ overflow-auto
 
 px-3
 
-py-4
+py-5
 
 space-y-1
 
@@ -235,29 +165,67 @@ space-y-1
 
 {
 
-menu.map(
+items.map(
 
-item=>{
+([name,href,Icon]:any)=>(
 
-const Icon=item.icon
+<Link
 
-return(
+key={href}
 
-<SidebarLink
+href={href}
 
-key={item.name}
+className={`
 
-href={item.href}
+flex
 
-icon={Icon}
+items-center
 
-label={item.name}
+gap-3
+
+h-10
+
+px-3
+
+rounded-xl
+
+text-sm
+
+text-black
+
+transition
+
+${
+
+path===href
+
+?
+
+"bg-[#e9e9e9]"
+
+:
+
+"hover:bg-[#ececec]"
+
+}
+
+`}
+
+>
+
+<Icon
+
+size={16}
+
+color="#52525b"
 
 />
 
-)
+{name}
 
-}
+</Link>
+
+)
 
 )
 
@@ -309,21 +277,17 @@ bg-slate-200
 
 "/>
 
-<div>
-
 <p className="
 
 text-sm
 
-font-medium
+text-black
 
 ">
 
 info@koniqtech.com
 
 </p>
-
-</div>
 
 </div>
 
@@ -338,12 +302,6 @@ setOpen(
 )
 
 }
-
-className="
-
-text-slate-500
-
-"
 
 >
 
@@ -365,9 +323,9 @@ open&&(
 
 absolute
 
-left-3
+bottom-14
 
-bottom-16
+left-2
 
 w-[220px]
 
@@ -381,11 +339,9 @@ shadow-xl
 
 overflow-hidden
 
-z-50
-
 ">
 
-<MenuRow
+<Row
 
 icon={User}
 
@@ -393,7 +349,7 @@ label="My profile"
 
 />
 
-<MenuRow
+<Row
 
 icon={Moon}
 
@@ -401,7 +357,7 @@ label="Toggle theme"
 
 />
 
-<MenuRow
+<Row
 
 icon={Home}
 
@@ -409,7 +365,7 @@ label="Homepage"
 
 />
 
-<MenuRow
+<Row
 
 icon={Settings}
 
@@ -431,15 +387,15 @@ className="
 
 w-full
 
-px-4
+h-11
 
-h-12
+px-4
 
 flex
 
-gap-3
-
 items-center
+
+gap-3
 
 hover:bg-slate-50
 
@@ -467,9 +423,9 @@ Logout
 
 </div>
 
-</aside>
+</div>
 
-{/* RIGHT */}
+{/* CONTENT */}
 
 <div className="flex-1 flex flex-col">
 
@@ -507,9 +463,9 @@ border
 
 px-4
 
-text-sm
+text-black
 
-outline-none
+placeholder:text-slate-400
 
 "
 
@@ -519,9 +475,9 @@ outline-none
 
 flex
 
-items-center
-
 gap-5
+
+items-center
 
 ">
 
@@ -535,13 +491,7 @@ size={18}
 
 src="/logo.png"
 
-className="
-
-w-9
-
-h-9
-
-"
+className="w-8 h-8"
 
 />
 
@@ -573,7 +523,7 @@ overflow-auto
 
 }
 
-function MenuRow({
+function Row({
 
 icon:Icon,
 
@@ -589,7 +539,7 @@ className="
 
 w-full
 
-h-12
+h-11
 
 px-4
 
@@ -599,15 +549,19 @@ items-center
 
 gap-3
 
-hover:bg-slate-50
+text-black
 
-text-sm
+hover:bg-slate-50
 
 "
 
 >
 
-<Icon size={16}/>
+<Icon
+
+size={16}
+
+/>
 
 {label}
 

@@ -19,7 +19,7 @@ new URL(
 
 process.env.NEXT_PUBLIC_APP_URL ||
 
-"https://koniqtech.com/"
+"http://localhost:3000"
 
 )
 

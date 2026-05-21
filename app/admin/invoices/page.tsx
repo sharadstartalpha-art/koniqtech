@@ -4,13 +4,13 @@ export const dynamic="force-dynamic"
 
 export default async function Page(){
 
-const subscriptions=
+const invoices=
 
-await prisma.subscription.findMany({
+await prisma.invoice.findMany({
 
 orderBy:{
 
-id:"desc"
+dueDate:"desc"
 
 }
 
@@ -22,7 +22,7 @@ return(
 
 <h1 className="text-4xl font-bold">
 
-Subscriptions
+Invoices
 
 </h1>
 
@@ -36,13 +36,13 @@ Subscriptions
 
 <th className="p-5">
 
-Plan
+Org
 
 </th>
 
 <th>
 
-Org ID
+Customer
 
 </th>
 
@@ -54,13 +54,13 @@ Amount
 
 <th>
 
-Provider
+Status
 
 </th>
 
 <th>
 
-Status
+Due Date
 
 </th>
 
@@ -72,40 +72,44 @@ Status
 
 {
 
-subscriptions.map(sub=>(
+invoices.map(i=>(
 
 <tr
-key={sub.id}
+key={i.id}
 className="border-t"
 >
 
 <td className="p-5">
 
-{sub.plan}
+{i.orgId}
 
 </td>
 
 <td>
 
-{sub.orgId}
+{i.customerId}
 
 </td>
 
 <td>
 
-${sub.amount}
+${Number(i.amount)}
 
 </td>
 
 <td>
 
-{sub.provider}
+{i.status}
 
 </td>
 
 <td>
 
-{sub.status}
+{
+
+i.dueDate?.toDateString()
+
+}
 
 </td>
 

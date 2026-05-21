@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/prisma"
-import { extend } from "../actions"
+import { extendSubscription } from "./server"
 
 export default async function OrgPage({
 
@@ -15,9 +15,21 @@ where:{
 
 id:params.id
 
+},
+
+include:{
+
+users:true
+
 }
 
 })
+
+if(!org){
+
+return <div>Not found</div>
+
+}
 
 return(
 
@@ -25,25 +37,33 @@ return(
 
 <h1 className="text-4xl font-bold">
 
-{org?.name}
+{org.name}
 
 </h1>
 
-<div className="bg-white p-8 rounded-3xl">
+<div className="bg-white rounded-3xl p-8">
 
 <p>
 
 CRM:
 
-{org?.crmType}
+{org.crmType}
 
 </p>
 
 <p>
 
-Users:
+Plan:
 
-{org?.usersLimit}
+{org.plan}
+
+</p>
+
+<p>
+
+Users limit:
+
+{org.usersLimit}
 
 </p>
 
@@ -53,7 +73,7 @@ Expires:
 
 {
 
-org?.subscriptionEndsAt?.toString()
+org.subscriptionEndsAt?.toDateString()
 
 }
 
@@ -61,7 +81,9 @@ org?.subscriptionEndsAt?.toString()
 
 <form
 
-action={extend}
+action={extendSubscription}
+
+className="mt-8 flex gap-4"
 
 >
 
@@ -71,7 +93,7 @@ hidden
 
 name="id"
 
-value={org?.id}
+value={org.id}
 
 />
 
@@ -85,31 +107,31 @@ className="border p-4 rounded"
 
 <option value="1">
 
-1 month
+1 Month
 
 </option>
 
 <option value="3">
 
-3 months
+3 Months
 
 </option>
 
 <option value="6">
 
-6 months
+6 Months
 
 </option>
 
 <option value="12">
 
-12 months
+12 Months
 
 </option>
 
 </select>
 
-<button>
+<button className="bg-blue-600 text-white px-8 rounded">
 
 Grant Access
 

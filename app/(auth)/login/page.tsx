@@ -1,86 +1,105 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
 
-  const router = useRouter()
+  const [email,setEmail]=useState("")
+  const [password,setPassword]=useState("")
+  const [loading,setLoading]=useState(false)
 
-  const [email,setEmail] = useState("")
-  const [password,setPassword] = useState("")
+  async function login(){
 
-  const [loading,setLoading] = useState(false)
-
-  async function login() {
-
-    try {
+    try{
 
       setLoading(true)
 
-      const res = await fetch(
+      const res=
+
+      await fetch(
+
         "/api/auth/login",
+
         {
+
           method:"POST",
 
           headers:{
+
             "Content-Type":
             "application/json"
+
           },
 
           body:JSON.stringify({
+
             email,
             password
+
           })
+
         }
+
       )
 
-      const data = await res.json()
+      const data=
 
-      setLoading(false)
+      await res.json()
 
       if(!res.ok){
 
+        setLoading(false)
+
         alert(
+
           data.error ||
+
           "Login failed"
+
         )
 
         return
+
       }
 
-      router.push(
-        data.redirect ||
-        "/dashboard"
-      )
+      window.location.href=
 
-      router.refresh()
+      data.redirect ||
+
+      "/dashboard"
 
     }
+
     catch(err){
 
       setLoading(false)
 
       alert(
+
         "Server error"
+
       )
 
     }
 
   }
 
-  return (
+  return(
 
 <div className="min-h-screen grid grid-cols-2">
 
 <div className="bg-black text-white flex flex-col justify-center px-24">
 
 <h1 className="text-6xl font-bold mb-8">
+
 KONIQ CRM
+
 </h1>
 
 <p className="text-2xl text-gray-300">
+
 AI CRM for home service companies
+
 </p>
 
 </div>
@@ -90,7 +109,9 @@ AI CRM for home service companies
 <div className="bg-white rounded-3xl p-12 shadow-xl w-[520px]">
 
 <h2 className="text-3xl font-bold mb-8">
+
 Sign In
+
 </h2>
 
 <input
@@ -98,20 +119,27 @@ Sign In
 value={email}
 
 onChange={(e)=>
+
 setEmail(
+
 e.target.value
+
 )
+
 }
 
 placeholder="Email"
 
 className="
+
 w-full
 border
 rounded-xl
 p-4
 mb-5
+
 "
+
 />
 
 <input
@@ -121,20 +149,27 @@ type="password"
 value={password}
 
 onChange={(e)=>
+
 setPassword(
+
 e.target.value
+
 )
+
 }
 
 placeholder="Password"
 
 className="
+
 w-full
 border
 rounded-xl
 p-4
 mb-8
+
 "
+
 />
 
 <button
@@ -144,31 +179,42 @@ onClick={login}
 disabled={loading}
 
 className="
+
 w-full
+h-14
 bg-blue-600
 text-white
 rounded-xl
-p-4
 font-semibold
+
 "
 
 >
 
-{loading
+{
+
+loading
+
 ?
+
 "Signing in..."
+
 :
-"Login"}
+
+"Login"
+
+}
 
 </button>
 
 <div className="mt-6 text-center">
 
 <a
+
 href="/register"
-className="
-text-blue-600
-"
+
+className="text-blue-600"
+
 >
 
 Create account

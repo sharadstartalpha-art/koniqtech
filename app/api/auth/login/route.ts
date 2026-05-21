@@ -12,9 +12,23 @@ req:Request
 
 ){
 
+try{
+
 const body=
 
 await req.json()
+
+const email=
+
+body.email
+
+?.trim()
+
+.toLowerCase()
+
+const password=
+
+body.password
 
 const user=
 
@@ -22,7 +36,7 @@ await prisma.user.findUnique({
 
 where:{
 
-email:body.email
+email
 
 }
 
@@ -30,11 +44,21 @@ email:body.email
 
 if(!user){
 
+console.log(
+
+"LOGIN USER NOT FOUND",
+
+email
+
+)
+
 return NextResponse.json(
 
 {
 
-error:"Invalid login"
+error:
+
+"Invalid email or password"
 
 },
 
@@ -52,7 +76,7 @@ const valid=
 
 await bcrypt.compare(
 
-body.password,
+password,
 
 user.passwordHash
 
@@ -60,11 +84,21 @@ user.passwordHash
 
 if(!valid){
 
+console.log(
+
+"PASSWORD INVALID",
+
+email
+
+)
+
 return NextResponse.json(
 
 {
 
-error:"Invalid login"
+error:
+
+"Invalid email or password"
 
 },
 
@@ -92,9 +126,23 @@ user.email,
 
 httpOnly:true,
 
+secure:true,
+
+sameSite:"lax",
+
 path:"/"
 
 }
+
+)
+
+console.log(
+
+"LOGIN SUCCESS",
+
+user.email,
+
+user.role
 
 )
 
@@ -108,10 +156,48 @@ redirect:
 
 user.role==="super_admin"
 
-?"/admin/dashboard"
+?
 
-:"/dashboard"
+"/admin/dashboard"
+
+:
+
+"/dashboard"
 
 })
+
+}
+
+catch(
+
+e
+
+){
+
+console.error(
+
+e
+
+)
+
+return NextResponse.json(
+
+{
+
+error:
+
+"Server error"
+
+},
+
+{
+
+status:500
+
+}
+
+)
+
+}
 
 }

@@ -1,23 +1,21 @@
-export default function Marketplace(){
+export default function Stock(){
 
 return(
 
 <div className="
 grid
-grid-cols-4
+grid-cols-3
 gap-6
 ">
 
 <Card
-name="QuickBooks"
+name="Roof Tile"
+qty="122"
 />
 
 <Card
-name="Stripe"
-/>
-
-<Card
-name="Twilio"
+name="PVC Pipe"
+qty="54"
 />
 
 </div>
@@ -34,11 +32,22 @@ return(
 
 <div className="
 bg-white
+p-6
 rounded-xl
-p-8
 ">
 
+<h2>
+
 {p.name}
+
+</h2>
+
+<p>
+
+Qty:
+{p.qty}
+
+</p>
 
 </div>
 

@@ -2,41 +2,25 @@ export default function Roles(){
 
 return(
 
-<div className="bg-white p-6 rounded-xl">
+<div className="
+bg-white
+rounded-xl
+p-8
+">
 
-<h1 className="text-2xl mb-6">
+<h1>
 
-Permissions
+RBAC
 
 </h1>
 
-<div className="space-y-4">
-
 <label>
 
 <input type="checkbox"/>
 
- Leads CRUD
+Manage Leads
 
 </label>
-
-<label>
-
-<input type="checkbox"/>
-
- Billing
-
-</label>
-
-<label>
-
-<input type="checkbox"/>
-
- Dispatch
-
-</label>
-
-</div>
 
 </div>
 

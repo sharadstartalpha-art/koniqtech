@@ -2,49 +2,41 @@ export default function Team(){
 
 return(
 
-<div className="space-y-6">
+<div>
 
-<h1 className="text-2xl">
+<h1 className="
+text-3xl
+font-bold
+mb-6
+">
 
 Team
 
 </h1>
 
-<div className="bg-white rounded-xl p-6">
-
-<table className="w-full">
-
-<thead>
-
-<tr>
-
-<th>User</th>
-
-<th>Role</th>
-
-<th>Status</th>
-
-</tr>
-
-</thead>
+<table className="
+bg-white
+w-full
+rounded-xl
+">
 
 <tbody>
 
 <tr>
 
-<td>Admin</td>
+<td>
+Admin
+</td>
 
-<td>Owner</td>
-
-<td>Active</td>
+<td>
+Owner
+</td>
 
 </tr>
 
 </tbody>
 
 </table>
-
-</div>
 
 </div>
 

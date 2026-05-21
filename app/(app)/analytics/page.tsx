@@ -2,29 +2,24 @@ export default function Analytics(){
 
 return(
 
-<div className="space-y-6">
+<div className="
+bg-white
+rounded-xl
+p-8
+">
 
-<h1 className="text-2xl">
+<h1>
 
 Analytics
 
 </h1>
 
-<div className="grid grid-cols-2 gap-6">
-
-<div className="bg-white rounded-xl h-80 p-6">
-
-Revenue Chart
-
-</div>
-
-<div className="bg-white rounded-xl h-80 p-6">
-
-Lead Chart
-
-</div>
-
-</div>
+<div className="
+h-96
+bg-slate-100
+rounded-xl
+mt-6
+"/>
 
 </div>
 

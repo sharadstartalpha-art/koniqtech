@@ -17,17 +17,24 @@ Truck,
 BarChart3,
 Brain,
 Activity,
-MoreHorizontal,
+
 Bell,
+
+MoreHorizontal,
+
 User,
-Home,
 Moon,
+Home,
 Settings,
-LogOut
+LogOut,
 
-} from "lucide-react"
+ChevronRight
 
-const items=[
+}
+
+from "lucide-react"
+
+const menu=[
 
 ["Dashboard","/dashboard",LayoutDashboard],
 
@@ -81,19 +88,25 @@ return(
 
 {/* SIDEBAR */}
 
-<div className="
+<aside className="
 
 w-[248px]
 
-bg-[#fafafa]
-
 border-r
+
+bg-[#fafafa]
 
 flex
 
 flex-col
 
+relative
+
+overflow-visible
+
 ">
+
+{/* HEADER */}
 
 <div className="
 
@@ -149,15 +162,17 @@ CRM
 
 </div>
 
+{/* MENU */}
+
 <div className="
 
 flex-1
 
-overflow-auto
+overflow-y-auto
 
 px-3
 
-py-5
+py-4
 
 space-y-1
 
@@ -165,7 +180,7 @@ space-y-1
 
 {
 
-items.map(
+menu.map(
 
 ([name,href,Icon]:any)=>(
 
@@ -177,21 +192,21 @@ href={href}
 
 className={`
 
+h-11
+
+px-3
+
+rounded-xl
+
 flex
 
 items-center
 
 gap-3
 
-h-10
-
-px-3
-
-rounded-xl
+text-black
 
 text-sm
-
-text-black
 
 transition
 
@@ -201,7 +216,7 @@ path===href
 
 ?
 
-"bg-[#e9e9e9]"
+"bg-[#ececec]"
 
 :
 
@@ -216,8 +231,6 @@ path===href
 <Icon
 
 size={16}
-
-color="#52525b"
 
 />
 
@@ -242,6 +255,8 @@ border-t
 p-3
 
 relative
+
+overflow-visible
 
 ">
 
@@ -303,6 +318,24 @@ setOpen(
 
 }
 
+className="
+
+w-8
+
+h-8
+
+rounded-lg
+
+hover:bg-slate-200
+
+flex
+
+items-center
+
+justify-center
+
+"
+
 >
 
 <MoreHorizontal
@@ -315,6 +348,8 @@ size={18}
 
 </div>
 
+{/* POPUP */}
+
 {
 
 open&&(
@@ -323,7 +358,7 @@ open&&(
 
 absolute
 
-bottom-14
+bottom-16
 
 left-2
 
@@ -335,7 +370,9 @@ border
 
 rounded-2xl
 
-shadow-xl
+shadow-2xl
+
+z-[999]
 
 overflow-hidden
 
@@ -355,6 +392,8 @@ icon={Moon}
 
 label="Toggle theme"
 
+right="M"
+
 />
 
 <Row
@@ -373,6 +412,8 @@ label="Settings"
 
 />
 
+<div className="border-t"/>
+
 <form
 
 action="/api/auth/logout"
@@ -387,7 +428,7 @@ className="
 
 w-full
 
-h-11
+h-12
 
 px-4
 
@@ -398,6 +439,8 @@ items-center
 gap-3
 
 hover:bg-slate-50
+
+text-black
 
 "
 
@@ -423,9 +466,9 @@ Logout
 
 </div>
 
-</div>
+</aside>
 
-{/* CONTENT */}
+{/* RIGHT */}
 
 <div className="flex-1 flex flex-col">
 
@@ -467,6 +510,8 @@ text-black
 
 placeholder:text-slate-400
 
+outline-none
+
 "
 
 />
@@ -475,9 +520,9 @@ placeholder:text-slate-400
 
 flex
 
-gap-5
-
 items-center
+
+gap-5
 
 ">
 
@@ -505,9 +550,9 @@ flex-1
 
 bg-slate-50
 
-p-8
-
 overflow-auto
+
+p-8
 
 ">
 
@@ -527,7 +572,9 @@ function Row({
 
 icon:Icon,
 
-label
+label,
+
+right
 
 }:any){
 
@@ -539,9 +586,23 @@ className="
 
 w-full
 
-h-11
+h-12
 
 px-4
+
+flex
+
+items-center
+
+justify-between
+
+hover:bg-slate-50
+
+"
+
+>
+
+<div className="
 
 flex
 
@@ -551,11 +612,9 @@ gap-3
 
 text-black
 
-hover:bg-slate-50
+text-sm
 
-"
-
->
+">
 
 <Icon
 
@@ -564,6 +623,32 @@ size={16}
 />
 
 {label}
+
+</div>
+
+{
+
+right&&(
+
+<span className="
+
+text-xs
+
+bg-slate-200
+
+px-2
+
+rounded
+
+">
+
+{right}
+
+</span>
+
+)
+
+}
 
 </button>
 

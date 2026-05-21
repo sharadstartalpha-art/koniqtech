@@ -16,12 +16,16 @@ model Organization {
   logo          String?
   phone         String?
   email         String?
+  active Boolean @default(true)
   address       String?
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
   aiLogs        AiLog[]
+  subscriptionEndsAt DateTime?
+  trialEndsAt DateTime?
   automations   Automation[]
   conversations Conversation[]
+  usersLimit Int @default(5)
   customers     Customer[]
   deals         Deal[]
   events        Event[]

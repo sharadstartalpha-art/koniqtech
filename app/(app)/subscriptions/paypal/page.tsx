@@ -26,47 +26,47 @@ await searchParams
 
 const crm=
 
-params.crm ||
+params.crm||
 
 "roofing"
 
 const company=
 
-params.company ||
+params.company||
 
-""
+"-"
 
 const email=
 
-params.email ||
+params.email||
 
-""
+"-"
 
 return(
 
-<div className="min-h-screen bg-slate-100 flex items-center justify-center">
+<div className="max-w-5xl mx-auto p-10">
 
-<div className="bg-white rounded-3xl p-12 w-[720px] shadow-xl">
+<div className="bg-white rounded-3xl p-12 shadow">
 
-<h1 className="text-4xl font-bold">
+<h1 className="text-6xl font-bold mb-8">
 
 Subscribe
 
 </h1>
 
-<p className="mt-4 text-slate-500">
+<p className="text-xl text-slate-500 mb-10">
 
 CRM Selected:
 
-<span className="font-semibold ml-2">
+<b className="ml-3">
 
 {crm}
 
-</span>
+</b>
 
 </p>
 
-<div className="mt-8 border rounded-3xl p-8">
+<div className="border rounded-3xl p-10 space-y-8">
 
 <div className="flex justify-between">
 
@@ -76,15 +76,15 @@ Plan
 
 </span>
 
-<span>
+<b>
 
 PRO
 
-</span>
+</b>
 
 </div>
 
-<div className="flex justify-between mt-5">
+<div className="flex justify-between">
 
 <span>
 
@@ -92,15 +92,15 @@ Company
 
 </span>
 
-<span>
+<b>
 
 {company}
 
-</span>
+</b>
 
 </div>
 
-<div className="flex justify-between mt-5">
+<div className="flex justify-between">
 
 <span>
 
@@ -108,15 +108,15 @@ Email
 
 </span>
 
-<span>
+<b>
 
 {email}
 
-</span>
+</b>
 
 </div>
 
-<div className="flex justify-between mt-5">
+<div className="flex justify-between">
 
 <span>
 
@@ -124,11 +124,11 @@ Billing
 
 </span>
 
-<span>
+<b>
 
 $199 / month
 
-</span>
+</b>
 
 </div>
 
@@ -138,7 +138,7 @@ $199 / month
 
 href="/api/paypal/create"
 
-className="block mt-8 bg-blue-600 text-white text-center p-5 rounded-2xl"
+className="block w-full mt-10 bg-blue-600 text-white text-center rounded-2xl p-6 text-xl font-bold"
 
 >
 

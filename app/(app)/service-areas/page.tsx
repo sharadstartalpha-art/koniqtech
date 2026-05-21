@@ -1,48 +1,51 @@
-export default function ServiceAreas(){
+export default function Page(){
+
+const areas=[
+
+"Dallas",
+"Miami",
+"Houston",
+"Austin"
+
+]
 
 return(
 
-<div className="
-bg-white
-rounded-xl
-p-8
-">
+<div className="space-y-8">
 
-<h1 className="
-text-3xl
-font-bold
-mb-8
-">
+<h1 className="text-5xl font-bold">
 
 Service Areas
 
 </h1>
 
-<table className="
-w-full
-">
+<div className="grid grid-cols-4 gap-6">
 
-<tbody>
+{
 
-<tr>
+areas.map(area=>(
 
-<td>
+<div
 
-Dallas
+key={area}
 
-</td>
+className="bg-white rounded-3xl p-8 border"
 
-<td>
+>
 
-Active
+<h2 className="text-2xl font-bold">
 
-</td>
+{area}
 
-</tr>
+</h2>
 
-</tbody>
+</div>
 
-</table>
+))
+
+}
+
+</div>
 
 </div>
 

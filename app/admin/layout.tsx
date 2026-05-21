@@ -1,110 +1,50 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
+import { usePathname } from "next/navigation"
 
 import {
 
-Search,
+LayoutDashboard,
 Building2,
 Users,
 CreditCard,
 BarChart3,
+Brain,
 Shield,
 Database,
-Brain,
 Bell,
 Settings,
-LogOut,
-MoreHorizontal
+Search,
+MoreHorizontal,
+LogOut
 
 }
 
 from "lucide-react"
 
-import {
-
-usePathname
-
-}
-
-from "next/navigation"
-
-import {
-
-useState
-
-}
-
-from "react"
-
 const menu=[
 
-[
-"Dashboard",
-"/admin/dashboard",
-BarChart3
-],
+["Dashboard","/admin/dashboard",LayoutDashboard],
 
-[
-"Organizations",
-"/admin/organizations",
-Building2
-],
+["Organizations","/admin/organizations",Building2],
 
-[
-"Users",
-"/admin/users",
-Users
-],
+["Users","/admin/users",Users],
 
-[
-"Plans",
-"/admin/plans",
-CreditCard
-],
+["Plans","/admin/plans",CreditCard],
 
-[
-"Billing",
-"/admin/billing",
-CreditCard
-],
+["Analytics","/admin/analytics",BarChart3],
 
-[
-"Analytics",
-"/admin/analytics",
-BarChart3
-],
+["AI","/admin/ai-analytics",Brain],
 
-[
-"AI",
-"/admin/ai-analytics",
-Brain
-],
+["Audit","/admin/audit",Shield],
 
-[
-"Monitoring",
-"/admin/monitoring",
-Bell
-],
+["Monitoring","/admin/monitoring",Bell],
 
-[
-"Audit",
-"/admin/audit",
-Shield
-],
+["Data","/admin/data",Database],
 
-[
-"Data",
-"/admin/data",
-Database
-],
-
-[
-"Settings",
-"/admin/settings",
-Settings
-
-]
+["Settings","/admin/settings",Settings]
 
 ]
 
@@ -118,7 +58,7 @@ children:React.ReactNode
 
 }){
 
-const path=
+const pathname=
 
 usePathname()
 
@@ -134,25 +74,25 @@ useState(false)
 
 return(
 
-<div className="h-screen flex bg-[#fafafa]">
+<div className="flex h-screen bg-[#fafafa] text-black overflow-hidden">
 
-<aside className="w-[250px] bg-white border-r flex flex-col">
+{/* SIDEBAR */}
 
-<div className="px-7 py-8 border-b">
+<aside className="w-[250px] bg-white border-r flex flex-col shrink-0">
 
-<div className="flex gap-4">
+<div className="h-[84px] border-b flex items-center px-7">
 
 <img
 
 src="/logo.png"
 
-className="w-9 h-9 object-contain"
+className="w-10 h-10 object-contain"
 
 />
 
-<div>
+<div className="ml-4">
 
-<h1 className="font-semibold text-[22px]">
+<h1 className="font-semibold text-[20px]">
 
 koniqtech
 
@@ -168,9 +108,7 @@ Super Admin
 
 </div>
 
-</div>
-
-<nav className="flex-1 overflow-auto px-3 py-5">
+<div className="flex-1 overflow-auto p-3">
 
 <div className="space-y-1">
 
@@ -202,11 +140,11 @@ gap-3
 px-4
 py-3
 rounded-xl
-text-[15px]
 transition
 
 ${
-path===href
+
+pathname===href
 
 ?
 
@@ -215,17 +153,14 @@ path===href
 :
 
 "hover:bg-[#f5f5f5]"
+
 }
 
 `}
 
 >
 
-<Icon
-
-size={18}
-
-/>
+<Icon size={18}/>
 
 {label}
 
@@ -239,7 +174,7 @@ size={18}
 
 </div>
 
-</nav>
+</div>
 
 <div className="border-t p-3 relative">
 
@@ -269,13 +204,13 @@ hover:bg-[#f5f5f5]
 
 >
 
-<div className="flex gap-3">
+<div className="flex items-center gap-3">
 
 <div className="w-10 h-10 rounded-full bg-slate-200"/>
 
-<div>
+<div className="text-left">
 
-<p className="font-medium">
+<p className="text-sm font-medium">
 
 superadmin@koniqtech.com
 
@@ -291,9 +226,7 @@ Super Admin
 
 </div>
 
-<MoreHorizontal
-size={18}
-/>
+<MoreHorizontal size={18}/>
 
 </button>
 
@@ -308,35 +241,24 @@ bottom-20
 left-3
 w-[220px]
 bg-white
-border
 rounded-3xl
+border
 shadow-xl
 overflow-hidden
+z-50
 
 ">
 
-<Item
-
-icon={Users}
-
+<MenuItem
 label="Profile"
-
 />
 
-<Item
-
-icon={Building2}
-
+<MenuItem
 label="Organizations"
-
 />
 
-<Item
-
-icon={Settings}
-
+<MenuItem
 label="Settings"
-
 />
 
 <a
@@ -346,8 +268,8 @@ href="/api/auth/logout"
 className="
 
 flex
-gap-3
 items-center
+gap-3
 px-5
 py-4
 border-t
@@ -357,9 +279,7 @@ hover:bg-[#f5f5f5]
 
 >
 
-<LogOut
-size={18}
-/>
+<LogOut size={18}/>
 
 Logout
 
@@ -375,11 +295,13 @@ Logout
 
 </aside>
 
-<div className="flex-1 flex flex-col">
+{/* MAIN */}
+
+<div className="flex-1 flex flex-col overflow-hidden">
 
 <header className="
 
-h-[82px]
+h-[84px]
 bg-white
 border-b
 px-8
@@ -415,10 +337,11 @@ className="
 
 w-[680px]
 h-[50px]
-rounded-2xl
 border
+rounded-2xl
 pl-14
 outline-none
+bg-white
 
 "
 
@@ -430,24 +353,13 @@ outline-none
 
 src="/logo.png"
 
-className="
-
-w-10
-h-10
-
-"
+className="w-10 h-10"
 
 />
 
 </header>
 
-<main className="
-
-flex-1
-overflow-auto
-p-8
-
-">
+<main className="flex-1 overflow-auto p-8 bg-[#fafafa]">
 
 {children}
 
@@ -461,13 +373,15 @@ p-8
 
 }
 
-function Item({
-
-icon:Icon,
+function MenuItem({
 
 label
 
-}:any){
+}:{
+
+label:string
+
+}){
 
 return(
 
@@ -476,20 +390,14 @@ return(
 className="
 
 w-full
-flex
-gap-3
-items-center
 px-5
 py-4
+text-left
 hover:bg-[#f5f5f5]
 
 "
 
 >
-
-<Icon
-size={18}
-/>
 
 {label}
 

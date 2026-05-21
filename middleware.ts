@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
 
-export function proxy(
-  req: NextRequest
-) {
+export function middleware(
+  req:NextRequest
+){
 
-  const auth =
+  const token=
+
     req.cookies.get(
-      "auth"
+      "token"
     )?.value
 
-  const path =
+  const path=
+
     req.nextUrl.pathname
 
-  const publicRoutes = [
+  const publicRoutes=[
 
     "/login",
 
@@ -34,43 +36,70 @@ export function proxy(
 
   ]
 
-  const isPublic =
+  const isPublic=
+
     publicRoutes.some(
-      route =>
+
+      route=>
+
       path.startsWith(
         route
       )
+
     )
 
-  if (
-    !auth &&
+  /*
+  NOT LOGGED IN
+  */
+
+  if(
+
+    !token &&
+
     !isPublic
-  ) {
+
+  ){
 
     return NextResponse.redirect(
 
       new URL(
+
         "/login",
+
         req.url
+
       )
 
     )
 
   }
 
-  if (
-    auth &&
+  /*
+  ALREADY LOGGED IN
+  */
+
+  if(
+
+    token &&
+
     (
-      path === "/login" ||
-      path === "/register"
+
+      path==="/login" ||
+
+      path==="/register"
+
     )
-  ) {
+
+  ){
 
     return NextResponse.redirect(
 
       new URL(
+
         "/dashboard",
+
         req.url
+
       )
 
     )
@@ -81,11 +110,13 @@ export function proxy(
 
 }
 
-export const config = {
+export const config={
 
-  matcher: [
+  matcher:[
 
     "/dashboard/:path*",
+
+    "/admin/:path*",
 
     "/leads/:path*",
 

@@ -1,203 +1,152 @@
 import prisma from "@/shared/lib/prisma"
-
 import bcrypt from "bcryptjs"
-
 import { cookies } from "next/headers"
-
 import { NextResponse } from "next/server"
 
-export async function POST(
+export async function POST(req:Request){
 
-req:Request
+  try{
 
-){
+    const body=await req.json()
 
-try{
+    const user=
 
-const body=
+    await prisma.user.findUnique({
 
-await req.json()
+      where:{
 
-const email=
+        email:body.email.toLowerCase()
 
-body.email
+      }
 
-?.trim()
+    })
 
-.toLowerCase()
+    if(!user){
 
-const password=
+      return NextResponse.json(
 
-body.password
+        {
 
-const user=
+          error:"User not found"
 
-await prisma.user.findUnique({
+        },
 
-where:{
+        {
 
-email
+          status:401
 
-}
+        }
 
-})
+      )
 
-if(!user){
+    }
 
-console.log(
+    const valid=
 
-"LOGIN USER NOT FOUND",
+    await bcrypt.compare(
 
-email
+      body.password,
 
-)
+      user.passwordHash
 
-return NextResponse.json(
+    )
 
-{
+    if(!valid){
 
-error:
+      return NextResponse.json(
 
-"Invalid email or password"
+        {
 
-},
+          error:"Wrong password"
 
-{
+        },
 
-status:401
+        {
 
-}
+          status:401
 
-)
+        }
 
-}
+      )
 
-const valid=
+    }
 
-await bcrypt.compare(
+    const store=await cookies()
 
-password,
+    store.set(
 
-user.passwordHash
+      "token",
 
-)
+      user.email,
 
-if(!valid){
+      {
 
-console.log(
+        httpOnly:true,
 
-"PASSWORD INVALID",
+        path:"/",
 
-email
+        secure:true,
 
-)
+        sameSite:"lax"
 
-return NextResponse.json(
+      }
 
-{
+    )
 
-error:
+    console.log(
 
-"Invalid email or password"
+      "LOGIN SUCCESS",
 
-},
+      user.email,
 
-{
+      user.role
 
-status:401
+    )
 
-}
+    let redirect="/dashboard"
 
-)
+    if(
 
-}
+      user.role==="super_admin"
 
-const store=
+    ){
 
-await cookies()
+      redirect="/admin/dashboard"
 
-store.set(
+    }
 
-"token",
+    return NextResponse.json({
 
-user.email,
+      success:true,
 
-{
+      role:user.role,
 
-httpOnly:true,
+      redirect
 
-secure:true,
+    })
 
-sameSite:"lax",
+  }
 
-path:"/"
+  catch(err){
 
-}
+    console.log(err)
 
-)
+    return NextResponse.json(
 
-console.log(
+      {
 
-"LOGIN SUCCESS",
+        error:"Server error"
 
-user.email,
+      },
 
-user.role
+      {
 
-)
+        status:500
 
-return NextResponse.json({
+      }
 
-success:true,
+    )
 
-role:user.role,
-
-redirect:
-
-user.role==="super_admin"
-
-?
-
-"/admin/dashboard"
-
-:
-
-"/dashboard"
-
-})
-
-}
-
-catch(
-
-e
-
-){
-
-console.error(
-
-e
-
-)
-
-return NextResponse.json(
-
-{
-
-error:
-
-"Server error"
-
-},
-
-{
-
-status:500
-
-}
-
-)
-
-}
+  }
 
 }

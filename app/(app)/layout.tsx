@@ -20,6 +20,7 @@ Bell,
 Settings,
 Search,
 MoreHorizontal,
+
 User,
 Moon,
 Home,
@@ -27,45 +28,30 @@ LogOut
 
 } from "lucide-react"
 
-const menus=[
+const MENU=[
 
 ["Dashboard","/dashboard",LayoutDashboard],
-
 ["Leads","/leads",Users],
-
 ["Customers","/customers",Users],
-
 ["Pipeline","/pipeline",GitBranch],
-
 ["Jobs","/jobs",Briefcase],
-
 ["Calendar","/calendar",Calendar],
-
 ["Messages","/messages",MessageSquare],
-
 ["Billing","/billing",CreditCard],
-
 ["Dispatch","/dispatch",Truck],
-
 ["Analytics","/analytics",BarChart3],
-
 ["AI","/ai",Brain],
-
 ["Notifications","/notifications",Bell],
-
 ["Settings","/settings",Settings],
 
 ["QA","/qa",Settings],
-
 ["Bugs","/bugs",Settings],
-
 ["Infra","/infra",Settings],
-
 ["Integrations","/integrations",Settings]
 
 ]
 
-export default function AppLayout({
+export default function Layout({
 
 children
 
@@ -85,25 +71,24 @@ return(
 
 <aside className="w-[248px] bg-white border-r border-slate-200 flex flex-col">
 
-<div className="h-24 border-b border-slate-200 px-7 flex items-center gap-4">
+{/* LOGO */}
+
+<div className="h-24 px-8 border-b border-slate-200 flex items-center gap-4">
 
 <img
-
 src="/logo.png"
-
 className="w-10 h-10 object-contain"
-
 />
 
 <div>
 
-<h1 className="font-semibold text-xl">
+<h1 className="font-semibold text-[22px] text-black">
 
 koniqtech
 
 </h1>
 
-<p className="text-slate-500 text-sm">
+<p className="text-sm text-slate-500">
 
 CRM
 
@@ -113,11 +98,13 @@ CRM
 
 </div>
 
-<div className="flex-1 overflow-auto py-4 px-3 space-y-1">
+{/* MENU */}
+
+<div className="flex-1 overflow-auto px-3 py-4 space-y-1">
 
 {
 
-menus.map(
+MENU.map(
 
 ([label,href,Icon]:any)=>(
 
@@ -129,13 +116,17 @@ href={href}
 
 className={`
 
+h-11
+px-4
+rounded-xl
+
 flex
 items-center
 gap-4
-px-4
-h-11
-rounded-xl
-text-[16px]
+
+text-[15px]
+font-medium
+
 transition
 
 ${
@@ -144,11 +135,11 @@ pathname===href
 
 ?
 
-"bg-slate-100"
+"bg-slate-100 text-black"
 
 :
 
-"hover:bg-slate-100"
+"text-slate-800 hover:bg-slate-100"
 
 }
 
@@ -158,7 +149,11 @@ pathname===href
 
 <Icon size={18}/>
 
+<span>
+
 {label}
+
+</span>
 
 </Link>
 
@@ -180,13 +175,18 @@ pathname===href
 
 <header className="h-24 bg-white border-b border-slate-200 px-8 flex items-center justify-between">
 
-<div className="w-[680px] relative">
+<div className="relative w-[680px]">
 
 <Search
 
 size={18}
 
-className="absolute left-5 top-4 text-slate-400"
+className="
+absolute
+left-5
+top-3.5
+text-slate-400
+"
 
 />
 
@@ -203,6 +203,7 @@ border
 border-slate-200
 bg-[#fafafa]
 outline-none
+text-black
 "
 
 />
@@ -213,7 +214,7 @@ outline-none
 
 src="/logo.png"
 
-className="w-10 h-10 object-contain"
+className="w-10 h-10"
 
 />
 
@@ -257,107 +258,73 @@ window.location.href="/login"
 
 return(
 
-<div className="border-t border-slate-200 p-3 relative">
-
-<button
-
-onClick={()=>setOpen(!open)}
-
-className="
-w-full
-flex
-items-center
-justify-between
-"
-
->
-
-<div className="flex items-center gap-3">
-
-<div className="
-w-10
-h-10
-rounded-full
-bg-slate-200
-"/>
-
-<p className="text-sm">
-
-info@koniqtech.com
-
-</p>
-
-</div>
-
-<MoreHorizontal size={18}/>
-
-</button>
+<div className="border-t border-slate-200 p-3 relative bg-white">
 
 {
 
 open && (
 
 <div className="
+
 absolute
 left-3
 bottom-16
+
 w-[220px]
+
 bg-white
+rounded-3xl
+
 border
 border-slate-200
-rounded-3xl
+
 shadow-xl
+
 overflow-hidden
+
 z-50
+
 ">
 
-<Item
+<Row icon={<User size={16}/>}
 
-icon={<User size={16}/>}
+label="My profile"/>
 
-label="My profile"
-
-/>
-
-<Item
-
-icon={<Moon size={16}/>}
+<Row icon={<Moon size={16}/>}
 
 label="Toggle theme"
 
-badge="M"
+badge="M"/>
 
-/>
+<Row icon={<Home size={16}/>}
 
-<Item
+label="Homepage"/>
 
-icon={<Home size={16}/>}
+<Row icon={<Settings size={16}/>}
 
-label="Homepage"
-
-/>
-
-<Item
-
-icon={<Settings size={16}/>}
-
-label="Settings"
-
-/>
+label="Settings"/>
 
 <button
 
 onClick={logout}
 
 className="
+
 w-full
+
 px-5
 py-4
+
 flex
 items-center
 gap-3
+
 hover:bg-slate-100
+
 border-t
+
+text-black
+
 "
 
 >
@@ -374,18 +341,52 @@ Logout
 
 }
 
+<button
+
+onClick={()=>setOpen(!open)}
+
+className="
+w-full
+
+flex
+items-center
+justify-between
+
+"
+
+>
+
+<div className="flex items-center gap-3">
+
+<div className="
+w-10
+h-10
+rounded-full
+bg-slate-200
+"/>
+
+<p className="text-sm text-black">
+
+info@koniqtech.com
+
+</p>
+
+</div>
+
+<MoreHorizontal size={18}/>
+
+</button>
+
 </div>
 
 )
 
 }
 
-function Item({
+function Row({
 
 icon,
-
 label,
-
 badge
 
 }:any){
@@ -395,22 +396,25 @@ return(
 <button
 
 className="
+
 w-full
+
 px-5
 py-4
+
 flex
 items-center
 justify-between
+
 hover:bg-slate-100
+
+text-black
+
 "
 
 >
 
-<div className="
-flex
-items-center
-gap-3
-">
+<div className="flex items-center gap-3">
 
 {icon}
 

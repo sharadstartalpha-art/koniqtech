@@ -1,54 +1,74 @@
-export default function Jobs(){
+export default function Page(){
 
 return(
 
-<div>
+<div className="space-y-8">
 
-<h1 className="text-3xl font-bold mb-8">
+<h1 className="text-5xl font-bold">
 
 Jobs
 
 </h1>
 
-<div className="bg-white rounded-3xl border">
+<div className="bg-white rounded-3xl p-8">
 
-<table className="w-full">
+<div className="space-y-5">
 
-<thead>
+<Job
+name="Roof Replacement"
+tech="Mike"
+status="Assigned"
+/>
 
-<tr>
-
-<th>Status</th>
-
-<th>Tech</th>
-
-<th>Date</th>
-
-<th>Photos</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-<tr>
-
-<td>Scheduled</td>
-
-<td>David</td>
-
-<td>Tomorrow</td>
-
-<td>3</td>
-
-</tr>
-
-</tbody>
-
-</table>
+<Job
+name="Inspection"
+tech="John"
+status="Completed"
+/>
 
 </div>
+
+</div>
+
+</div>
+
+)
+
+}
+
+function Job({
+
+name,
+tech,
+status
+
+}:any){
+
+return(
+
+<div className="border rounded-xl p-5">
+
+<h2 className="font-bold">
+
+{name}
+
+</h2>
+
+<p>
+
+Technician:
+
+{tech}
+
+</p>
+
+<p>
+
+Status:
+
+{status}
+
+</p>
 
 </div>
 

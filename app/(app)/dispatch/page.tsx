@@ -1,98 +1,61 @@
-"use client"
-
-export default function Dispatch(){
-
-const techs=[
-
-"Mike",
-"John",
-"Alex"
-
-]
-
-const jobs=[
-
-"Roof Repair",
-"HVAC Install",
-"Plumbing Visit"
-
-]
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div className="space-y-8">
 
-<div className="flex justify-between">
+<h1 className="text-5xl font-bold">
 
-<h1 className="text-2xl font-semibold">
-
-Dispatch Board
+Dispatch
 
 </h1>
 
-<button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
+<div className="bg-white rounded-3xl p-8">
 
-Assign Job
+<Card
+tech="Mike"
+job="Roof repair"
+/>
 
-</button>
-
-</div>
-
-<div className="grid grid-cols-3 gap-6">
-
-<div className="bg-white p-6 rounded-xl">
-
-<h2 className="font-semibold mb-4">
-
-Technicians
-
-</h2>
-
-{
-
-techs.map(x=>(
-
-<div
-key={x}
-className="border p-3 rounded mb-3">
-
-{x}
+<Card
+tech="John"
+job="Inspection"
+/>
 
 </div>
 
-))
+</div>
+
+)
 
 }
 
-</div>
+function Card({
 
-<div className="col-span-2 bg-white rounded-xl p-6">
+tech,
+job
 
-<h2 className="font-semibold mb-4">
+}:any){
 
-Schedule
+return(
 
-</h2>
+<div className="border rounded-xl p-5 mb-4">
 
-{
+<p>
 
-jobs.map(x=>(
+Tech:
 
-<div
-key={x}
-className="bg-slate-100 p-4 rounded mb-3">
+{tech}
 
-{x}
+</p>
 
-</div>
+<p>
 
-))
+Job:
 
-}
+{job}
 
-</div>
-
-</div>
+</p>
 
 </div>
 

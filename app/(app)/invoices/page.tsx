@@ -1,42 +1,14 @@
-export const dynamic="force-dynamic"
-
 export default function Page(){
-
-const leads=[
-
-{
-name:"John Smith",
-stage:"New",
-score:92
-},
-
-{
-name:"Mike Roof",
-stage:"Estimate",
-score:78
-}
-
-]
 
 return(
 
 <div className="space-y-8">
 
-<div className="flex justify-between">
-
 <h1 className="text-5xl font-bold">
 
-Leads
+Invoices
 
 </h1>
-
-<button className="bg-blue-600 text-white px-6 py-4 rounded-xl">
-
-Create Lead
-
-</button>
-
-</div>
 
 <div className="bg-white rounded-3xl border overflow-hidden">
 
@@ -48,19 +20,19 @@ Create Lead
 
 <th className="p-5">
 
-Lead
+Invoice
 
 </th>
 
 <th>
 
-Stage
+Amount
 
 </th>
 
 <th>
 
-AI Score
+Status
 
 </th>
 
@@ -70,38 +42,27 @@ AI Score
 
 <tbody>
 
-{
-
-leads.map((x,i)=>(
-
-<tr
-key={i}
-className="border-t"
->
+<tr>
 
 <td className="p-5">
 
-{x.name}
+INV-1
 
 </td>
 
 <td>
 
-{x.stage}
+$1200
 
 </td>
 
 <td>
 
-{x.score}
+Paid
 
 </td>
 
 </tr>
-
-))
-
-}
 
 </tbody>
 

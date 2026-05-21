@@ -1,36 +1,32 @@
-export default function Calendar(){
+export default function Page(){
 
 return(
 
-<div className="bg-white rounded-3xl border p-8 h-[700px]">
+<div>
 
-<h1 className="text-3xl mb-8">
+<h1 className="text-5xl font-bold mb-8">
 
-Appointments Calendar
+Calendar
 
 </h1>
+
+<div className="bg-white rounded-3xl h-[700px] p-8">
 
 <div className="grid grid-cols-7 gap-4">
 
 {
 
-Array
-
-.from({
+Array.from({
 
 length:35
 
-})
-
-.map(
-
-(_,i)=>(
+}).map((_,i)=>(
 
 <div
 
 key={i}
 
-className="border rounded-xl h-24"
+className="border h-32 rounded-xl p-3"
 
 >
 
@@ -38,11 +34,11 @@ className="border rounded-xl h-24"
 
 </div>
 
-)
-
-)
+))
 
 }
+
+</div>
 
 </div>
 

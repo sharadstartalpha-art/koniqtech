@@ -1,24 +1,61 @@
-export default function Quotes(){
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div className="space-y-8">
 
-<h1 className="text-2xl">
+<h1 className="text-5xl font-bold">
 
 Quotes
 
 </h1>
 
-<div className="bg-white p-6 rounded-xl">
+<div className="bg-white rounded-3xl p-8">
 
-<button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
+<div className="space-y-4">
 
-Generate PDF
+<Item
+name="Roof install"
+amount="$12000"
+/>
 
-</button>
+<Item
+name="Repair"
+amount="$2500"
+/>
 
 </div>
+
+</div>
+
+</div>
+
+)
+
+}
+
+function Item({
+
+name,
+amount
+
+}:any){
+
+return(
+
+<div className="border rounded-xl p-5 flex justify-between">
+
+<span>
+
+{name}
+
+</span>
+
+<span>
+
+{amount}
+
+</span>
 
 </div>
 

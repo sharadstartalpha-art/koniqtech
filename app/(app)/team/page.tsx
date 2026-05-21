@@ -1,42 +1,62 @@
-export default function Team(){
+export default function Page(){
 
 return(
 
-<div>
+<div className="space-y-8">
 
-<h1 className="
-text-3xl
-font-bold
-mb-6
-">
+<h1 className="text-5xl font-bold">
 
 Team
 
 </h1>
 
-<table className="
-bg-white
-w-full
-rounded-xl
-">
+<div className="grid grid-cols-3 gap-6">
 
-<tbody>
+<Member
+name="Mike"
+role="Technician"
+/>
 
-<tr>
+<Member
+name="John"
+role="Sales"
+/>
 
-<td>
-Admin
-</td>
+<Member
+name="Sarah"
+role="Dispatcher"
+/>
 
-<td>
-Owner
-</td>
+</div>
 
-</tr>
+</div>
 
-</tbody>
+)
 
-</table>
+}
+
+function Member({
+
+name,
+role
+
+}:any){
+
+return(
+
+<div className="bg-white rounded-3xl p-8">
+
+<h2 className="font-bold">
+
+{name}
+
+</h2>
+
+<p>
+
+{role}
+
+</p>
 
 </div>
 

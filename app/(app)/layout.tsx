@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-const menu=[
+const menu = [
 
 ["Dashboard","/dashboard"],
 
@@ -12,21 +12,31 @@ const menu=[
 
 ["Jobs","/jobs"],
 
-["Dispatch","/dispatch"],
-
 ["Calendar","/calendar"],
 
-["Analytics","/analytics"],
+["Messages","/messages"],
 
 ["Billing","/billing"],
 
+["Dispatch","/dispatch"],
+
+["Analytics","/analytics"],
+
 ["AI","/ai"],
 
-["Settings","/settings"]
+["Monitoring","/monitoring"],
+
+["QA","/qa"],
+
+["Bugs","/bugs"],
+
+["Infra","/infra"],
+
+["Integrations","/integrations"]
 
 ]
 
-export default function Layout({
+export default function AppLayout({
 
 children
 
@@ -38,23 +48,38 @@ children:React.ReactNode
 
 return(
 
-<div className="h-screen flex">
+<div className="h-screen flex bg-white">
+
+{/* LEFT */}
 
 <aside className="
-w-72
-bg-white
+
+w-[250px]
+
 border-r
+
+bg-[#fafafa]
+
 flex
+
 flex-col
+
 ">
 
 <div className="
+
 h-20
+
 px-6
+
 border-b
+
 flex
+
 items-center
-gap-3
+
+gap-4
+
 ">
 
 <img
@@ -62,7 +87,13 @@ gap-3
 src="/logo.png"
 
 className="
-h-10
+
+w-9
+
+h-9
+
+object-contain
+
 "
 
 />
@@ -70,16 +101,25 @@ h-10
 <div>
 
 <p className="
-font-bold
+
+font-semibold
+
+text-[16px]
+
+text-slate-900
+
 ">
 
-KONIQ
+KoniqTech
 
 </p>
 
 <p className="
+
 text-xs
+
 text-slate-500
+
 ">
 
 CRM
@@ -91,9 +131,17 @@ CRM
 </div>
 
 <nav className="
+
 flex-1
-p-5
-space-y-2
+
+overflow-y-auto
+
+px-4
+
+py-6
+
+space-y-1
+
 ">
 
 {
@@ -102,25 +150,15 @@ menu.map(
 
 m=>(
 
-<Link
+<Menu
 
 key={m[0]}
 
 href={m[1]}
 
-className="
-block
-px-4
-py-3
-rounded-xl
-hover:bg-slate-100
-"
+label={m[0]}
 
->
-
-{m[0]}
-
-</Link>
+/>
 
 )
 
@@ -130,41 +168,126 @@ hover:bg-slate-100
 
 </nav>
 
-</aside>
+<div className="
+
+border-t
+
+p-5
+
+">
 
 <div className="
+
+flex
+
+items-center
+
+gap-3
+
+">
+
+<div className="
+
+w-8
+
+h-8
+
+rounded-full
+
+bg-slate-200
+
+"/>
+
+<div>
+
+<p className="
+
+text-sm
+
+font-medium
+
+text-slate-900
+
+">
+
+info@koniqtech.com
+
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</aside>
+
+{/* RIGHT */}
+
+<div className="
+
 flex-1
-bg-slate-50
+
+flex
+
+flex-col
+
 ">
 
 <header className="
-bg-white
+
 h-20
+
 border-b
+
 px-8
+
+bg-white
+
 flex
+
 items-center
+
 justify-between
+
 ">
 
 <input
 
-placeholder="
-Search"
+placeholder="Search..."
 
 className="
-border
+
+w-[640px]
+
+h-11
+
 rounded-xl
+
+border
+
+border-slate-200
+
 px-4
-py-2
-w-96
+
+outline-none
+
+text-slate-900
+
+placeholder:text-slate-400
+
 "
 
 />
 
 <div className="
+
 flex
-gap-4
+
+items-center
+
+gap-6
+
 ">
 
 <button>
@@ -175,12 +298,18 @@ gap-4
 
 <img
 
-src="/avatar.png"
+src="/logo.png"
 
 className="
+
 w-10
+
 h-10
+
 rounded-full
+
+object-cover
+
 "
 
 />
@@ -190,7 +319,15 @@ rounded-full
 </header>
 
 <main className="
+
+flex-1
+
+bg-[#f8fafc]
+
+overflow-auto
+
 p-8
+
 ">
 
 {children}
@@ -200,6 +337,62 @@ p-8
 </div>
 
 </div>
+
+)
+
+}
+
+function Menu({
+
+href,
+
+label
+
+}:{
+
+href:string
+
+label:string
+
+}){
+
+return(
+
+<Link
+
+href={href}
+
+className="
+
+flex
+
+items-center
+
+gap-3
+
+px-4
+
+py-3
+
+rounded-xl
+
+text-slate-700
+
+text-sm
+
+hover:bg-white
+
+hover:shadow-sm
+
+transition
+
+"
+
+>
+
+{label}
+
+</Link>
 
 )
 

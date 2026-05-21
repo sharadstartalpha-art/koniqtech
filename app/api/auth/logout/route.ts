@@ -1,28 +1,45 @@
 import { cookies } from "next/headers"
+
 import { NextResponse } from "next/server"
 
-export async function POST(){
+async function clearAuth(){
 
-const store=await cookies()
+const store=
+
+await cookies()
 
 store.delete("token")
+
 store.delete("session")
+
 store.delete("auth")
 
-const response=NextResponse.json({
+return NextResponse.redirect(
 
-success:true
+new URL(
 
-})
+"/login",
 
-response.headers.set(
+process.env.NEXT_PUBLIC_APP_URL
 
-"Cache-Control",
+||
 
-"no-store, no-cache, must-revalidate"
+"http://localhost:3000"
 
 )
 
-return response
+)
+
+}
+
+export async function GET(){
+
+return clearAuth()
+
+}
+
+export async function POST(){
+
+return clearAuth()
 
 }

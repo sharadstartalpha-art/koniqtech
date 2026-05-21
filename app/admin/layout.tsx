@@ -261,12 +261,19 @@ label="Organizations"
 label="Settings"
 />
 
-<a
+<button
 
-href="/api/auth/logout"
+onClick={()=>{
+
+window.location.href=
+
+"/api/auth/logout"
+
+}}
 
 className="
 
+w-full
 flex
 items-center
 gap-3
@@ -283,7 +290,7 @@ hover:bg-[#f5f5f5]
 
 Logout
 
-</a>
+</button>
 
 </div>
 

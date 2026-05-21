@@ -1,16 +1,17 @@
 import {
+
 PrismaClient,
 Industry,
 UserRole,
 SubscriptionStatus
+
 }
 
 from "@prisma/client"
 
 import bcrypt from "bcryptjs"
 
-const prisma=
-new PrismaClient()
+const prisma=new PrismaClient()
 
 async function main(){
 
@@ -28,56 +29,59 @@ await bcrypt.hash(
 ORG
 */
 
-let org=
+const org=
 
-await prisma.organization.findUnique({
+await prisma.organization.upsert({
 
 where:{
 
 slug:
+
 "elite-roofing-us"
 
-}
+},
 
-})
+update:{},
 
-if(!org){
-
-org=
-
-await prisma.organization.create({
-
-data:{
+create:{
 
 name:
+
 "Elite Roofing Solutions",
 
 slug:
+
 "elite-roofing-us",
 
 industry:
+
 Industry.roofing,
 
 plan:
+
 "pro",
 
 email:
+
 "admin@eliteroofingusa.com",
 
 phone:
+
 "+1-469-555-1000",
 
 address:
+
 "Dallas Texas USA"
 
 }
 
 })
 
-}
+
 
 /*
-ADMIN
+SUPER ADMIN
+NO DUPLICATE
 */
 
 await prisma.user.upsert({
@@ -85,38 +89,100 @@ await prisma.user.upsert({
 where:{
 
 email:
-"admin@koniqtech.com"
+
+"superadmin@koniqtech.com"
 
 },
 
 update:{
 
-passwordHash,
-
-orgId:
-org.id
+passwordHash
 
 },
 
 create:{
 
 name:
-"Koniq Admin",
+
+"Koniq Super Admin",
 
 email:
-"admin@koniqtech.com",
+
+"superadmin@koniqtech.com",
 
 passwordHash,
 
 role:
-UserRole.owner,
 
-orgId:
-org.id
+UserRole.super_admin,
+
+organization:{
+
+connect:{
+
+id:org.id
+
+}
+
+}
 
 }
 
 })
+
+
+
+/*
+OWNER
+*/
+
+await prisma.user.upsert({
+
+where:{
+
+email:
+
+"admin@eliteroofingusa.com"
+
+},
+
+update:{
+
+passwordHash
+
+},
+
+create:{
+
+name:
+
+"Elite Owner",
+
+email:
+
+"admin@eliteroofingusa.com",
+
+passwordHash,
+
+role:
+
+UserRole.owner,
+
+organization:{
+
+connect:{
+
+id:org.id
+
+}
+
+}
+
+}
+
+})
+
+
 
 /*
 SALES
@@ -127,6 +193,7 @@ await prisma.user.upsert({
 where:{
 
 email:
+
 "sales@eliteroofingusa.com"
 
 },
@@ -136,22 +203,34 @@ update:{},
 create:{
 
 name:
+
 "Sarah Williams",
 
 email:
+
 "sales@eliteroofingusa.com",
 
 passwordHash,
 
 role:
+
 UserRole.sales,
 
-orgId:
-org.id
+organization:{
+
+connect:{
+
+id:org.id
+
+}
+
+}
 
 }
 
 })
+
+
 
 /*
 TECH
@@ -162,6 +241,7 @@ await prisma.user.upsert({
 where:{
 
 email:
+
 "tech@eliteroofingusa.com"
 
 },
@@ -171,107 +251,134 @@ update:{},
 create:{
 
 name:
+
 "David Wilson",
 
 email:
+
 "tech@eliteroofingusa.com",
 
 passwordHash,
 
 role:
+
 UserRole.technician,
 
-orgId:
-org.id
+organization:{
+
+connect:{
+
+id:org.id
+
+}
+
+}
 
 }
 
 })
 
+
+
 /*
 SETTINGS
+NO DUPLICATE
 */
 
-const settings=
-
-await prisma.organizationSettings.findUnique({
+await prisma.organizationSettings.upsert({
 
 where:{
 
 orgId:
+
 org.id
 
-}
+},
 
-})
+update:{},
 
-if(!settings){
-
-await prisma.organizationSettings.create({
-
-data:{
+create:{
 
 orgId:
+
 org.id,
 
 timezone:
+
 "America/Chicago",
 
 currency:
+
 "USD"
 
 }
 
 })
 
-}
+
 
 /*
-PAYPAL SUB
+SUBSCRIPTION
+199 USD
+NO DUPLICATE
 */
 
-const sub=
-
-await prisma.subscription.findFirst({
+await prisma.subscription.upsert({
 
 where:{
 
 externalId:
+
 "PAYPAL-SUB-US-10001"
 
-}
+},
 
-})
+update:{},
 
-if(!sub){
-
-await prisma.subscription.create({
-
-data:{
+create:{
 
 orgId:
+
 org.id,
 
 provider:
+
 "paypal",
 
 externalId:
+
 "PAYPAL-SUB-US-10001",
 
 plan:
-"pro",
+
+"PRO",
 
 status:
-SubscriptionStatus.active
+
+SubscriptionStatus.active,
+
+amount:
+
+199,
+
+currency:
+
+"USD",
+
+interval:
+
+"month"
 
 }
 
 })
 
-}
+
 
 console.log(
+
 "SEED OK"
+
 )
 
 }

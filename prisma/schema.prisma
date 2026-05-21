@@ -247,9 +247,12 @@ model Subscription {
   id           String             @id @default(uuid())
   orgId        String
   provider     String
-  externalId   String?
+  externalId String @unique
   plan         String
   status       SubscriptionStatus
+  amount Float @default(199)
+  currency String @default("USD")
+  interval String @default("month")
   renewAt      DateTime?
   organization Organization       @relation(fields: [orgId], references: [id])
 }
@@ -354,6 +357,7 @@ enum Industry {
 }
 
 enum UserRole {
+  super_admin
   owner
   admin
   manager

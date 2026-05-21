@@ -27,6 +27,7 @@ model Organization {
   events        Event[]
   invoices      Invoice[]
   jobs          Job[]
+  crmType CRMType
   leads         Lead[]
   settings      OrganizationSettings?
   pipelines     Pipeline[]
@@ -365,6 +366,20 @@ enum UserRole {
   technician
   support
   accountant
+}
+
+enum CRMType {
+
+roofing
+
+hvac
+
+plumbing
+
+landscaping
+
+cleaning
+
 }
 
 enum LeadStatus {

@@ -4,53 +4,200 @@ import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
-export async function registerUser(
-    data:any
+import { CRMType } from "@prisma/client"
+
+function makeSlug(
+text:string
 ){
 
-    const hash =
-        await bcrypt.hash(
-            data.password,
-            10
-        )
+return text
 
-    const org =
-        await prisma.organization.create({
+.toLowerCase()
 
-            data:{
+.replace(/\s+/g,"-")
 
-                name:
-                    data.company,
+.replace(/[^a-z0-9-]/g,"")
 
-                slug:
-                    data.company
-                    .toLowerCase()
-                    .replace(/\s/g,"-")
-            }
+}
 
-        })
+export async function registerUser(
 
-    await prisma.user.create({
+data:any
 
-        data:{
+){
 
-            orgId:
-                org.id,
+const existing=
 
-            name:
-                data.name,
+await prisma.user.findUnique({
 
-            email:
-                data.email,
+where:{
 
-            passwordHash:
-                hash,
+email:
 
-            role:
-                "owner"
+data.email
 
-        }
+}
 
-    })
+})
+
+if(existing){
+
+throw new Error(
+
+"User already exists"
+
+)
+
+}
+
+const hash=
+
+await bcrypt.hash(
+
+data.password,
+
+10
+
+)
+
+const org=
+
+await prisma.organization.create({
+
+data:{
+
+name:
+
+data.company,
+
+slug:
+
+makeSlug(
+
+data.company
+
+)+
+
+"-"+
+
+Date.now(),
+
+crmType:
+
+data.crmType ||
+
+CRMType.roofing,
+
+industry:
+
+"roofing",
+
+plan:
+
+"pro",
+
+email:
+
+data.email
+
+}
+
+})
+
+await prisma.organizationSettings.create({
+
+data:{
+
+orgId:
+
+org.id,
+
+timezone:
+
+"America/Chicago",
+
+currency:
+
+"USD"
+
+}
+
+})
+
+await prisma.subscription.create({
+
+data:{
+
+orgId:
+
+org.id,
+
+provider:
+
+"paypal",
+
+externalId:
+
+"SUB-"+
+
+Date.now(),
+
+plan:
+
+"pro",
+
+status:
+
+"active",
+
+amount:
+
+199,
+
+currency:
+
+"USD",
+
+interval:
+
+"month"
+
+}
+
+})
+
+await prisma.user.create({
+
+data:{
+
+orgId:
+
+org.id,
+
+name:
+
+data.name,
+
+email:
+
+data.email,
+
+passwordHash:
+
+hash,
+
+role:
+
+"owner"
+
+}
+
+})
+
+return{
+
+success:true
+
+}
 
 }

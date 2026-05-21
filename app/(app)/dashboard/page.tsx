@@ -1,12 +1,88 @@
+import prisma from "@/shared/lib/prisma"
+
+import { cookies } from "next/headers"
+
 export const dynamic="force-dynamic"
 
 export const revalidate=0
 
-export default function Dashboard(){
+export default async function Dashboard(){
+
+const token=
+
+(await cookies())
+
+.get(
+
+"token"
+
+)?.value
+
+const user=
+
+await prisma.user.findUnique({
+
+where:{
+
+email:token
+
+},
+
+include:{
+
+organization:true
+
+}
+
+})
+
+if(!user){
+
+return null
+
+}
 
 return(
 
 <div className="space-y-8">
+
+<div className="bg-white rounded-3xl border p-8">
+
+<p className="text-slate-500">
+
+Subscription
+
+</p>
+
+<h2 className="text-3xl font-bold mt-4">
+
+{
+
+user.organization?.plan
+
+}
+
+</h2>
+
+<p className="mt-3">
+
+$199 / month
+
+</p>
+
+<p>
+
+CRM:
+
+{
+
+user.organization?.crmType
+
+}
+
+</p>
+
+</div>
 
 <div className="grid grid-cols-4 gap-6">
 
@@ -125,8 +201,11 @@ Upcoming Jobs
 }
 
 function Card({
+
 title,
+
 value
+
 }:any){
 
 return(
@@ -152,7 +231,9 @@ return(
 }
 
 function Item({
+
 text
+
 }:any){
 
 return(
@@ -168,8 +249,11 @@ return(
 }
 
 function Stage({
+
 n,
+
 label
+
 }:any){
 
 return(

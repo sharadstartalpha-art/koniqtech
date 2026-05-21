@@ -4,19 +4,26 @@ import prisma from "@/shared/lib/prisma"
 
 import { NextResponse } from "next/server"
 
+import { CRMType } from "@prisma/client"
+
 function makeSlug(
 text:string
 ){
 
 return text
+
 .toLowerCase()
+
 .replace(/\s+/g,"-")
+
 .replace(/[^a-z0-9-]/g,"")
 
 }
 
 export async function POST(
+
 req:Request
+
 ){
 
 try{
@@ -28,10 +35,17 @@ await req.json()
 const {
 
 name,
+
 company,
+
 email,
+
 password,
-otp
+
+
+otp,
+
+crmType
 
 }=body
 
@@ -40,7 +54,9 @@ const existingUser=
 await prisma.user.findUnique({
 
 where:{
+
 email
+
 }
 
 })
@@ -50,11 +66,17 @@ if(existingUser){
 return NextResponse.json(
 
 {
-error:"User already exists"
+
+error:
+
+"User already exists"
+
 },
 
 {
+
 status:400
+
 }
 
 )
@@ -81,7 +103,9 @@ gt:new Date()
 
 orderBy:{
 
-createdAt:"desc"
+createdAt:
+
+"desc"
 
 }
 
@@ -92,11 +116,17 @@ if(!otpRecord){
 return NextResponse.json(
 
 {
-error:"Invalid OTP"
+
+error:
+
+"Invalid OTP"
+
 },
 
 {
+
 status:400
+
 }
 
 )
@@ -113,11 +143,29 @@ name:company,
 
 slug:
 
-makeSlug(company)+
+makeSlug(
+
+company
+
+)+
 
 "-"+
 
-Date.now()
+Date.now(),
+
+crmType:
+
+crmType ||
+
+CRMType.roofing,
+
+industry:
+
+"roofing",
+
+plan:
+
+"pro"
 
 }
 
@@ -145,7 +193,9 @@ email,
 
 passwordHash,
 
-role:"owner",
+role:
+
+"owner",
 
 organization:{
 
@@ -161,11 +211,76 @@ id:org.id
 
 })
 
+await prisma.organizationSettings.create({
+
+data:{
+
+orgId:
+
+org.id,
+
+timezone:
+
+"America/Chicago",
+
+currency:
+
+"USD"
+
+}
+
+})
+
+await prisma.subscription.create({
+
+data:{
+
+orgId:
+
+org.id,
+
+provider:
+
+"paypal",
+
+externalId:
+
+"SUB-"+
+
+Date.now(),
+
+plan:
+
+"pro",
+
+status:"active",
+
+
+
+
+amount:
+
+199,
+
+currency:
+
+"USD",
+
+interval:
+
+"month"
+
+}
+
+})
+
 await prisma.otpCode.update({
 
 where:{
 
-id:otpRecord.id
+id:
+
+otpRecord.id
 
 },
 
@@ -179,7 +294,11 @@ verified:true
 
 return NextResponse.json({
 
-ok:true,
+success:true,
+
+redirect:
+
+"/payment",
 
 user
 
@@ -189,16 +308,26 @@ user
 
 catch(error){
 
-console.error(error)
+console.error(
+
+error
+
+)
 
 return NextResponse.json(
 
 {
-error:"Registration failed"
+
+error:
+
+"Registration failed"
+
 },
 
 {
+
 status:500
+
 }
 
 )

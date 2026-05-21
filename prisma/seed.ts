@@ -1,402 +1,263 @@
 import {
-
-PrismaClient,
-Industry,
-UserRole,
-SubscriptionStatus
-
-}
-
-from "@prisma/client"
+  PrismaClient,
+  Industry,
+  UserRole,
+  SubscriptionStatus
+} from "@prisma/client"
 
 import bcrypt from "bcryptjs"
 
-const prisma=new PrismaClient()
+const prisma = new PrismaClient()
 
-async function main(){
+async function main() {
+  const passwordHash = await bcrypt.hash(
+    "admin123",
+    10
+  )
 
-const passwordHash=
+  /*
+   ORGANIZATION
+  */
 
-await bcrypt.hash(
+  const org =
+    await prisma.organization.upsert({
+      where: {
+        slug: "elite-roofing-us"
+      },
 
-"admin123",
+      update: {},
 
-10
+      create: {
+        name: "Elite Roofing Solutions",
 
-)
+        slug: "elite-roofing-us",
 
-/*
-ORG
-*/
+        industry:
+          Industry.roofing,
 
-const org=
+        crmType: "roofing",
 
-await prisma.organization.upsert({
+        plan: "pro",
 
-where:{
+        email:
+          "admin@eliteroofingusa.com",
 
-slug:
+        phone:
+          "+1-469-555-1000",
 
-"elite-roofing-us"
+        address:
+          "Dallas Texas USA"
+      }
+    })
 
-},
+  /*
+   SUPER ADMIN
+  */
 
-update:{},
+  await prisma.user.upsert({
+    where: {
+      email:
+        "superadmin@koniqtech.com"
+    },
 
-create:{
+    update: {
+      passwordHash
+    },
 
-name:
+    create: {
+      name:
+        "Koniq Super Admin",
 
-"Elite Roofing Solutions",
+      email:
+        "superadmin@koniqtech.com",
 
-slug:
+      passwordHash,
 
-"elite-roofing-us",
+      role:
+        UserRole.super_admin,
 
-industry:
+      organization: {
+        connect: {
+          id: org.id
+        }
+      }
+    }
+  })
 
-Industry.roofing,
+  /*
+   OWNER
+  */
 
-plan:
+  await prisma.user.upsert({
+    where: {
+      email:
+        "admin@eliteroofingusa.com"
+    },
 
-"pro",
+    update: {
+      passwordHash
+    },
 
-email:
+    create: {
+      name:
+        "Elite Owner",
 
-"admin@eliteroofingusa.com",
+      email:
+        "admin@eliteroofingusa.com",
 
-phone:
+      passwordHash,
 
-"+1-469-555-1000",
+      role:
+        UserRole.owner,
+
+      organization: {
+        connect: {
+          id: org.id
+        }
+      }
+    }
+  })
+
+  /*
+   SALES USER
+  */
+
+  await prisma.user.upsert({
+    where: {
+      email:
+        "sales@eliteroofingusa.com"
+    },
 
-address:
+    update: {},
+
+    create: {
+      name:
+        "Sarah Williams",
 
-"Dallas Texas USA"
+      email:
+        "sales@eliteroofingusa.com",
 
-}
+      passwordHash,
 
-})
+      role:
+        UserRole.sales,
 
+      organization: {
+        connect: {
+          id: org.id
+        }
+      }
+    }
+  })
 
+  /*
+   TECHNICIAN
+  */
 
-/*
-SUPER ADMIN
-NO DUPLICATE
-*/
+  await prisma.user.upsert({
+    where: {
+      email:
+        "tech@eliteroofingusa.com"
+    },
 
-await prisma.user.upsert({
+    update: {},
 
-where:{
+    create: {
+      name:
+        "David Wilson",
 
-email:
+      email:
+        "tech@eliteroofingusa.com",
 
-"superadmin@koniqtech.com"
+      passwordHash,
 
-},
+      role:
+        UserRole.technician,
 
-update:{
+      organization: {
+        connect: {
+          id: org.id
+        }
+      }
+    }
+  })
 
-passwordHash
+  /*
+   ORGANIZATION SETTINGS
+  */
 
-},
+  await prisma.organizationSettings.upsert({
+    where: {
+      orgId: org.id
+    },
 
-create:{
+    update: {},
 
-name:
+    create: {
+      orgId:
+        org.id,
 
-"Koniq Super Admin",
+      timezone:
+        "America/Chicago",
 
-email:
+      currency:
+        "USD"
+    }
+  })
 
-"superadmin@koniqtech.com",
+  /*
+   SUBSCRIPTION
+  */
 
-passwordHash,
+  await prisma.subscription.upsert({
+    where: {
+      externalId:
+        "PAYPAL-SUB-US-10001"
+    },
 
-role:
+    update: {},
 
-UserRole.super_admin,
+    create: {
+      orgId:
+        org.id,
 
-organization:{
+      provider:
+        "paypal",
 
-connect:{
+      externalId:
+        "PAYPAL-SUB-US-10001",
 
-id:org.id
+      plan:
+        "PRO",
 
-}
+      status:
+        SubscriptionStatus.active,
 
-}
+      amount:
+        199,
 
-}
+      currency:
+        "USD",
 
-})
+      interval:
+        "month"
+    }
+  })
 
-
-
-/*
-OWNER
-*/
-
-await prisma.user.upsert({
-
-where:{
-
-email:
-
-"admin@eliteroofingusa.com"
-
-},
-
-update:{
-
-passwordHash
-
-},
-
-create:{
-
-name:
-
-"Elite Owner",
-
-email:
-
-"admin@eliteroofingusa.com",
-
-passwordHash,
-
-role:
-
-UserRole.owner,
-
-organization:{
-
-connect:{
-
-id:org.id
-
-}
-
-}
-
-}
-
-})
-
-
-
-/*
-SALES
-*/
-
-await prisma.user.upsert({
-
-where:{
-
-email:
-
-"sales@eliteroofingusa.com"
-
-},
-
-update:{},
-
-create:{
-
-name:
-
-"Sarah Williams",
-
-email:
-
-"sales@eliteroofingusa.com",
-
-passwordHash,
-
-role:
-
-UserRole.sales,
-
-organization:{
-
-connect:{
-
-id:org.id
-
-}
-
-}
-
-}
-
-})
-
-
-
-/*
-TECH
-*/
-
-await prisma.user.upsert({
-
-where:{
-
-email:
-
-"tech@eliteroofingusa.com"
-
-},
-
-update:{},
-
-create:{
-
-name:
-
-"David Wilson",
-
-email:
-
-"tech@eliteroofingusa.com",
-
-passwordHash,
-
-role:
-
-UserRole.technician,
-
-organization:{
-
-connect:{
-
-id:org.id
-
-}
-
-}
-
-}
-
-})
-
-
-
-/*
-SETTINGS
-NO DUPLICATE
-*/
-
-await prisma.organizationSettings.upsert({
-
-where:{
-
-orgId:
-
-org.id
-
-},
-
-update:{},
-
-create:{
-
-orgId:
-
-org.id,
-
-timezone:
-
-"America/Chicago",
-
-currency:
-
-"USD"
-
-}
-
-})
-
-
-
-/*
-SUBSCRIPTION
-199 USD
-NO DUPLICATE
-*/
-
-await prisma.subscription.upsert({
-
-where:{
-
-externalId:
-
-"PAYPAL-SUB-US-10001"
-
-},
-
-update:{},
-
-create:{
-
-orgId:
-
-org.id,
-
-provider:
-
-"paypal",
-
-externalId:
-
-"PAYPAL-SUB-US-10001",
-
-plan:
-
-"PRO",
-
-status:
-
-SubscriptionStatus.active,
-
-amount:
-
-199,
-
-currency:
-
-"USD",
-
-interval:
-
-"month"
-
-}
-
-})
-
-
-
-console.log(
-
-"SEED OK"
-
-)
-
+  console.log(
+    "SEED OK"
+  )
 }
 
 main()
+  .then(async () => {
+    await prisma.$disconnect()
+  })
 
-.then(async()=>{
+  .catch(async (e) => {
+    console.error(e)
 
-await prisma.$disconnect()
+    await prisma.$disconnect()
 
-})
-
-.catch(async(e)=>{
-
-console.error(e)
-
-await prisma.$disconnect()
-
-process.exit(1)
-
-})
+    process.exit(1)
+  })

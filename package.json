@@ -18,6 +18,7 @@
     "@fontsource/inter": "^5.2.8",
     "@hello-pangea/dnd": "^18.0.1",
     "@paypal/paypal-server-sdk": "^2.3.0",
+    "@pinecone-database/pinecone": "^7.2.0",
     "@prisma/client": "^6.9.0",
     "@sentry/nextjs": "^10.53.1",
     "@tailwindcss/postcss": "^4.3.0",
@@ -67,6 +68,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/imap": "^0.8.43",
     "@types/jest": "^30.0.0",
@@ -82,6 +84,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "postcss": "^8.5.15",
     "tailwindcss": "^3.4.19",
     "ts-jest": "^29.4.10",

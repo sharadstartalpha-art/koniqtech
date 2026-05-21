@@ -415,42 +415,23 @@ label="Settings"
 <div className="border-t"/>
 
 <form
-
 action="/api/auth/logout"
-
 method="POST"
-
 >
 
 <button
-
 className="
-
 w-full
-
 h-12
-
 px-4
-
 flex
-
 items-center
-
 gap-3
-
 hover:bg-slate-50
-
-text-black
-
 "
-
 >
 
-<LogOut
-
-size={16}
-
-/>
+<LogOut size={16}/>
 
 Logout
 

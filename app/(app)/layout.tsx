@@ -1,38 +1,127 @@
+"use client"
+import SidebarLink from "@/shared/components/sidebar-link"
 import Link from "next/link"
+import { useState } from "react"
 
-const menu = [
+import {
 
-["Dashboard","/dashboard"],
+LayoutDashboard,
+Users,
+GitBranch,
+Briefcase,
+Calendar,
+MessageSquare,
+CreditCard,
+Truck,
+BarChart3,
+Brain,
+Activity,
+Bug,
+Shield,
+Plug,
+Bell,
+User,
+Settings,
+Moon,
+Home,
+LogOut,
+MoreHorizontal
 
-["Leads","/leads"],
+}
 
-["Customers","/customers"],
+from "lucide-react"
 
-["Pipeline","/pipeline"],
+const menu=[
 
-["Jobs","/jobs"],
+{
+name:"Dashboard",
+href:"/dashboard",
+icon:LayoutDashboard
+},
 
-["Calendar","/calendar"],
+{
+name:"Leads",
+href:"/leads",
+icon:Users
+},
 
-["Messages","/messages"],
+{
+name:"Customers",
+href:"/customers",
+icon:Users
+},
 
-["Billing","/billing"],
+{
+name:"Pipeline",
+href:"/pipeline",
+icon:GitBranch
+},
 
-["Dispatch","/dispatch"],
+{
+name:"Jobs",
+href:"/jobs",
+icon:Briefcase
+},
 
-["Analytics","/analytics"],
+{
+name:"Calendar",
+href:"/calendar",
+icon:Calendar
+},
 
-["AI","/ai"],
+{
+name:"Messages",
+href:"/messages",
+icon:MessageSquare
+},
 
-["Monitoring","/monitoring"],
+{
+name:"Billing",
+href:"/billing",
+icon:CreditCard
+},
 
-["QA","/qa"],
+{
+name:"Dispatch",
+href:"/dispatch",
+icon:Truck
+},
 
-["Bugs","/bugs"],
+{
+name:"Analytics",
+href:"/analytics",
+icon:BarChart3
+},
 
-["Infra","/infra"],
+{
+name:"AI",
+href:"/ai",
+icon:Brain
+},
 
-["Integrations","/integrations"]
+{
+name:"Monitoring",
+href:"/monitoring",
+icon:Activity
+},
+
+{
+name:"QA",
+href:"/qa",
+icon:Shield
+},
+
+{
+name:"Bugs",
+href:"/bugs",
+icon:Bug
+},
+
+{
+name:"Integrations",
+href:"/integrations",
+icon:Plug
+}
 
 ]
 
@@ -46,15 +135,21 @@ children:React.ReactNode
 
 }){
 
+const [
+
+open,
+
+setOpen
+
+]=useState(false)
+
 return(
 
 <div className="h-screen flex bg-white">
 
-{/* LEFT */}
-
 <aside className="
 
-w-[250px]
+w-[248px]
 
 border-r
 
@@ -66,19 +161,21 @@ flex-col
 
 ">
 
+{/* TOP */}
+
 <div className="
 
 h-20
 
-px-6
-
 border-b
+
+px-5
 
 flex
 
 items-center
 
-gap-4
+gap-3
 
 ">
 
@@ -86,15 +183,7 @@ gap-4
 
 src="/logo.png"
 
-className="
-
-w-9
-
-h-9
-
-object-contain
-
-"
+className="w-8 h-8"
 
 />
 
@@ -104,13 +193,11 @@ object-contain
 
 font-semibold
 
-text-[16px]
-
 text-slate-900
 
 ">
 
-KoniqTech
+koniqtech
 
 </p>
 
@@ -130,15 +217,17 @@ CRM
 
 </div>
 
-<nav className="
+{/* MENU */}
+
+<div className="
 
 flex-1
 
-overflow-y-auto
+overflow-auto
 
-px-4
+px-3
 
-py-6
+py-4
 
 space-y-1
 
@@ -148,31 +237,53 @@ space-y-1
 
 menu.map(
 
-m=>(
+item=>{
 
-<Menu
+const Icon=item.icon
 
-key={m[0]}
+return(
 
-href={m[1]}
+<SidebarLink
 
-label={m[0]}
+key={item.name}
+
+href={item.href}
+
+icon={Icon}
+
+label={item.name}
 
 />
 
 )
 
+}
+
 )
 
 }
 
-</nav>
+</div>
+
+{/* FOOTER */}
 
 <div className="
 
 border-t
 
-p-5
+p-3
+
+relative
+
+">
+
+<div className="
+
+flex
+
+items-center
+
+justify-between
 
 ">
 
@@ -206,8 +317,6 @@ text-sm
 
 font-medium
 
-text-slate-900
-
 ">
 
 info@koniqtech.com
@@ -218,21 +327,151 @@ info@koniqtech.com
 
 </div>
 
+<button
+
+onClick={()=>
+
+setOpen(
+
+!open
+
+)
+
+}
+
+className="
+
+text-slate-500
+
+"
+
+>
+
+<MoreHorizontal
+
+size={18}
+
+/>
+
+</button>
+
+</div>
+
+{
+
+open&&(
+
+<div className="
+
+absolute
+
+left-3
+
+bottom-16
+
+w-[220px]
+
+bg-white
+
+border
+
+rounded-2xl
+
+shadow-xl
+
+overflow-hidden
+
+z-50
+
+">
+
+<MenuRow
+
+icon={User}
+
+label="My profile"
+
+/>
+
+<MenuRow
+
+icon={Moon}
+
+label="Toggle theme"
+
+/>
+
+<MenuRow
+
+icon={Home}
+
+label="Homepage"
+
+/>
+
+<MenuRow
+
+icon={Settings}
+
+label="Settings"
+
+/>
+
+<form
+
+action="/api/auth/logout"
+
+method="POST"
+
+>
+
+<button
+
+className="
+
+w-full
+
+px-4
+
+h-12
+
+flex
+
+gap-3
+
+items-center
+
+hover:bg-slate-50
+
+"
+
+>
+
+<LogOut
+
+size={16}
+
+/>
+
+Logout
+
+</button>
+
+</form>
+
+</div>
+
+)
+
+}
+
 </div>
 
 </aside>
 
 {/* RIGHT */}
 
-<div className="
-
-flex-1
-
-flex
-
-flex-col
-
-">
+<div className="flex-1 flex flex-col">
 
 <header className="
 
@@ -258,7 +497,7 @@ placeholder="Search..."
 
 className="
 
-w-[640px]
+w-[680px]
 
 h-11
 
@@ -266,15 +505,11 @@ rounded-xl
 
 border
 
-border-slate-200
-
 px-4
 
+text-sm
+
 outline-none
-
-text-slate-900
-
-placeholder:text-slate-400
 
 "
 
@@ -286,15 +521,15 @@ flex
 
 items-center
 
-gap-6
+gap-5
 
 ">
 
-<button>
+<Bell
 
-🔔
+size={18}
 
-</button>
+/>
 
 <img
 
@@ -302,13 +537,9 @@ src="/logo.png"
 
 className="
 
-w-10
+w-9
 
-h-10
-
-rounded-full
-
-object-cover
+h-9
 
 "
 
@@ -322,11 +553,11 @@ object-cover
 
 flex-1
 
-bg-[#f8fafc]
-
-overflow-auto
+bg-slate-50
 
 p-8
+
+overflow-auto
 
 ">
 
@@ -342,27 +573,25 @@ p-8
 
 }
 
-function Menu({
+function MenuRow({
 
-href,
+icon:Icon,
 
 label
 
-}:{
-
-href:string
-
-label:string
-
-}){
+}:any){
 
 return(
 
-<Link
-
-href={href}
+<button
 
 className="
+
+w-full
+
+h-12
+
+px-4
 
 flex
 
@@ -370,29 +599,19 @@ items-center
 
 gap-3
 
-px-4
-
-py-3
-
-rounded-xl
-
-text-slate-700
+hover:bg-slate-50
 
 text-sm
-
-hover:bg-white
-
-hover:shadow-sm
-
-transition
 
 "
 
 >
 
+<Icon size={16}/>
+
 {label}
 
-</Link>
+</button>
 
 )
 

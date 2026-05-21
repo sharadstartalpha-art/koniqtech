@@ -1,24 +1,54 @@
+const cols=[
+
+"New",
+
+"Contacted",
+
+"Estimate",
+
+"Won",
+
+"Lost"
+
+]
+
 export default function Pipeline(){
 
 return(
 
 <div>
 
-<h1 className="text-4xl text-slate-900 mb-8">
+<h1 className="text-3xl font-bold mb-8">
 
 Sales Pipeline
 
 </h1>
 
-<div className="grid grid-cols-4 gap-6">
+<div className="grid grid-cols-5 gap-6">
 
-<Col t="New"/>
+{
 
-<Col t="Quoted"/>
+cols.map(
 
-<Col t="Won"/>
+c=>(
 
-<Col t="Lost"/>
+<div
+
+key={c}
+
+className="bg-white rounded-3xl border p-6"
+
+>
+
+<h2 className="font-semibold mb-6">
+
+{c}
+
+</h2>
+
+<div className="bg-slate-50 rounded-xl p-4">
+
+Lead Card
 
 </div>
 
@@ -26,19 +56,11 @@ Sales Pipeline
 
 )
 
+)
+
 }
 
-function Col({t}:any){
-
-return(
-
-<div className="bg-white p-6 rounded-3xl min-h-[600px]">
-
-<h2 className="font-bold">
-
-{t}
-
-</h2>
+</div>
 
 </div>
 

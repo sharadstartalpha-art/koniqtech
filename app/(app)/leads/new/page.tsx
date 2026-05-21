@@ -1,61 +1,60 @@
-"use client"
-
-import {useState}
-from "react"
-
-import {
-createLead
-}
-
-from
-"@/modules/leads/actions/createLead.action"
-
 export default function NewLead(){
-
-const[
-name,
-setName
-]=useState("")
-
-async function save(){
-
-await createLead({
-
-firstName:name,
-
-orgId:
-"ADD_ORG"
-
-})
-
-}
 
 return(
 
-<div className="p-10">
+<div className="space-y-8">
 
-<input
+<h1 className="text-3xl font-bold">
 
-className="border p-3"
+Create Lead
 
-onChange={e=>
+</h1>
 
-setName(
-e.target.value
-)
+<div className="bg-white p-8 rounded-3xl border">
 
-}
+<div className="grid grid-cols-2 gap-6">
+
+<input placeholder="Name" className="border p-4 rounded-xl"/>
+
+<input placeholder="Email" className="border p-4 rounded-xl"/>
+
+<input placeholder="Phone" className="border p-4 rounded-xl"/>
+
+<select className="border p-4 rounded-xl">
+
+<option>Roofing</option>
+<option>HVAC</option>
+<option>Plumbing</option>
+
+</select>
+
+<textarea
+
+placeholder="Notes"
+
+className="border p-4 rounded-xl col-span-2 h-40"
 
 />
 
-<button
-onClick={save}
+</div>
 
-className="border p-3">
+<div className="mt-8 flex gap-4">
 
-Save
+<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
+
+Save Lead
 
 </button>
+
+<button className="border px-8 py-4 rounded-xl">
+
+AI Score
+
+</button>
+
+</div>
+
+</div>
 
 </div>
 

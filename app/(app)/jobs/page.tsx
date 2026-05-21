@@ -2,33 +2,51 @@ export default function Jobs(){
 
 return(
 
-<div className="space-y-6">
+<div>
 
-<h1 className="text-2xl">
+<h1 className="text-3xl font-bold mb-8">
 
 Jobs
 
 </h1>
 
-<div className="grid grid-cols-3 gap-4">
+<div className="bg-white rounded-3xl border">
 
-<div className="bg-white p-5 rounded-xl">
+<table className="w-full">
 
-Scheduled
+<thead>
 
-</div>
+<tr>
 
-<div className="bg-white p-5 rounded-xl">
+<th>Status</th>
 
-Assigned
+<th>Tech</th>
 
-</div>
+<th>Date</th>
 
-<div className="bg-white p-5 rounded-xl">
+<th>Photos</th>
 
-Completed
+</tr>
 
-</div>
+</thead>
+
+<tbody>
+
+<tr>
+
+<td>Scheduled</td>
+
+<td>David</td>
+
+<td>Tomorrow</td>
+
+<td>3</td>
+
+</tr>
+
+</tbody>
+
+</table>
 
 </div>
 

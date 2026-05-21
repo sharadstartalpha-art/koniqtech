@@ -1,13 +1,21 @@
-export function tenantWhere(
+import {cookies}
 
-orgId:string
+from "next/headers"
 
-){
+export async function tenantId(){
 
-return{
+const store=
 
-orgId
+await cookies()
 
-}
+return store
+
+.get(
+
+"tenant"
+
+)
+
+?.value
 
 }

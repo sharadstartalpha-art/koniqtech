@@ -1,82 +1,96 @@
 import prisma from "@/shared/lib/prisma"
 
+export const dynamic = "force-dynamic"
+
 export default async function Page(
 {
 params
-}:any
+}:{
+params:Promise<{id:string}>
+}
 ){
 
-const lead=
+const { id } = await params
 
-await prisma.lead.findUnique({
+const lead = await prisma.lead.findUnique({
 
 where:{
-id:params.id
+id
 }
 
 })
+
+if(!lead){
+
+return(
+
+<div className="p-10">
+
+Lead not found
+
+</div>
+
+)
+
+}
 
 return(
 
 <div className="max-w-3xl mx-auto">
 
-<div className="bg-white p-10 rounded-3xl">
+<div className="bg-white p-8 rounded-3xl border">
 
-<h1 className="text-4xl font-bold mb-8">
+<h1 className="text-3xl font-bold mb-8">
 
 Edit Lead
 
 </h1>
 
 <form
-action={`/api/leads/${lead?.id}`}
+
+action={`/api/leads/${lead.id}`}
+
+method="POST"
+
+className="space-y-4"
+
 >
 
 <input
-
-defaultValue={
-
-lead?.firstName || ""
-
-}
-
-className="w-full border p-4 rounded-xl mb-4"
-
+name="firstName"
+defaultValue={lead.firstName ?? ""}
+placeholder="First Name"
+className="w-full border rounded-xl p-4"
 />
 
 <input
-
-defaultValue={
-
-lead?.email || ""
-
-}
-
-className="w-full border p-4 rounded-xl mb-4"
-
+name="lastName"
+defaultValue={lead.lastName ?? ""}
+placeholder="Last Name"
+className="w-full border rounded-xl p-4"
 />
 
 <input
+name="email"
+defaultValue={lead.email ?? ""}
+placeholder="Email"
+className="w-full border rounded-xl p-4"
+/>
 
-defaultValue={
-
-lead?.phone || ""
-
-}
-
-className="w-full border p-4 rounded-xl mb-4"
-
+<input
+name="phone"
+defaultValue={lead.phone ?? ""}
+placeholder="Phone"
+className="w-full border rounded-xl p-4"
 />
 
 <select
 
-defaultValue={
+name="status"
 
-lead?.status || "new"
+defaultValue={String(lead.status)}
 
-}
-
-className="w-full border p-4 rounded-xl"
+className="w-full border rounded-xl p-4"
 
 >
 
@@ -105,9 +119,14 @@ Lost
 </option>
 
 </select>
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
 
-Save
+<button
+
+className="bg-green-600 text-white px-6 py-3 rounded-xl"
+
+>
+
+Save Lead
 
 </button>
 

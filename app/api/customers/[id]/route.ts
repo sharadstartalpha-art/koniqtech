@@ -1,22 +1,14 @@
 import prisma from "@/shared/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function PUT(
+export async function POST(
 
-req: NextRequest,
+req:NextRequest,
 
 {
-
 params
-
 }:{
-
-params: Promise<{
-
-id:string
-
-}>
-
+params:Promise<{id:string}>
 }
 
 ){
@@ -27,61 +19,91 @@ const { id }=
 
 await params
 
-const body=
+const form=
 
-await req.json()
-
-const customer=
+await req.formData()
 
 await prisma.customer.update({
 
 where:{
-
 id
-
 },
 
 data:{
 
 firstName:
 
-body.firstName ||
+String(
 
-body.name ||
+form.get(
 
-"Customer",
+"firstName"
+
+) || ""
+
+),
 
 lastName:
 
-body.lastName ||
+String(
 
-"",
+form.get(
+
+"lastName"
+
+) || ""
+
+),
 
 email:
 
-body.email ||
+String(
 
-null,
+form.get(
+
+"email"
+
+) || ""
+
+) || null,
 
 phone:
 
-body.phone ||
+String(
 
-null,
+form.get(
+
+"phone"
+
+) || ""
+
+) || null,
 
 companyName:
 
-body.companyName ||
+String(
 
-null
+form.get(
+
+"companyName"
+
+) || ""
+
+)
 
 }
 
 })
 
-return NextResponse.json(
+return NextResponse.redirect(
 
-customer
+new URL(
+
+"/customers",
+
+req.url
+
+)
 
 )
 
@@ -115,22 +137,16 @@ status:500
 
 }
 
+
+
 export async function DELETE(
 
-req: NextRequest,
+req:NextRequest,
 
 {
-
 params
-
 }:{
-
-params: Promise<{
-
-id:string
-
-}>
-
+params:Promise<{id:string}>
 }
 
 ){
@@ -144,9 +160,7 @@ await params
 await prisma.customer.delete({
 
 where:{
-
 id
-
 }
 
 })
@@ -159,9 +173,7 @@ success:true
 
 }
 
-catch(error){
-
-console.log(error)
+catch{
 
 return NextResponse.json(
 

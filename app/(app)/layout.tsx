@@ -2,7 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState,useEffect,useRef } from "react"
+import {
+useEffect,
+useRef,
+useState
+} from "react"
 
 import {
 getSession,
@@ -25,8 +29,8 @@ Bell,
 Settings,
 Search,
 ChevronDown,
-User,
-LogOut
+LogOut,
+MoreHorizontal
 
 } from "lucide-react"
 
@@ -158,6 +162,7 @@ flex-col
 h-24
 px-8
 border-b
+
 flex
 items-center
 gap-4
@@ -189,8 +194,10 @@ CRM
 <div className="
 flex-1
 overflow-auto
+
 px-3
 py-4
+
 space-y-1
 ">
 
@@ -216,6 +223,8 @@ rounded-xl
 flex
 items-center
 gap-4
+
+transition
 
 ${
 
@@ -249,16 +258,13 @@ pathname===href
 
 </div>
 
-<div className="
-border-t
-p-4
-text-sm
-text-slate-500
-">
+<SidebarFooter
 
-{email}
+name={name}
 
-</div>
+email={email}
+
+/>
 
 </aside>
 
@@ -270,8 +276,10 @@ flex-col
 
 <header className="
 h-24
+
 bg-white
 border-b
+
 px-8
 
 flex
@@ -290,8 +298,10 @@ size={18}
 
 className="
 absolute
+
 left-5
 top-3.5
+
 text-slate-400
 "
 
@@ -318,10 +328,13 @@ bg-slate-50
 </div>
 
 <div
+
 ref={ref}
+
 className="
 relative
 "
+
 >
 
 <button
@@ -362,8 +375,13 @@ items-center
 justify-center
 ">
 
-{name.charAt(0)
-.toUpperCase()}
+{
+
+name
+.charAt(0)
+.toUpperCase()
+
+}
 
 </div>
 
@@ -372,8 +390,8 @@ text-left
 ">
 
 <p className="
-font-medium
 text-sm
+font-medium
 ">
 
 {name}
@@ -391,7 +409,9 @@ text-slate-500
 
 </div>
 
-<ChevronDown size={16}/>
+<ChevronDown
+size={16}
+/>
 
 </button>
 
@@ -405,7 +425,7 @@ absolute
 right-0
 top-16
 
-w-[260px]
+w-[250px]
 
 bg-white
 
@@ -461,7 +481,9 @@ hover:bg-slate-50
 
 >
 
-<Settings size={16}/>
+<Settings
+size={16}
+/>
 
 Settings
 
@@ -496,7 +518,9 @@ hover:bg-red-50
 
 >
 
-<LogOut size={16}/>
+<LogOut
+size={16}
+/>
 
 Logout
 
@@ -523,6 +547,289 @@ p-8
 </main>
 
 </div>
+
+</div>
+
+)
+
+}
+
+function SidebarFooter({
+
+name,
+email
+
+}:{
+
+name:string
+email:string
+
+}){
+
+const [open,setOpen]=
+useState(false)
+
+const ref=
+useRef<HTMLDivElement>(null)
+
+useEffect(()=>{
+
+function outside(
+e:any
+){
+
+if(
+
+ref.current &&
+
+!ref.current.contains(
+e.target
+)
+
+){
+
+setOpen(false)
+
+}
+
+}
+
+document.addEventListener(
+"mousedown",
+outside
+)
+
+return()=>{
+
+document.removeEventListener(
+"mousedown",
+outside
+)
+
+}
+
+},[])
+
+return(
+
+<div
+
+ref={ref}
+
+className="
+border-t
+
+relative
+
+bg-white
+"
+
+>
+
+<button
+
+onClick={()=>
+setOpen(
+!open
+)
+}
+
+className="
+w-full
+
+h-16
+
+px-4
+
+flex
+items-center
+justify-between
+
+hover:bg-slate-50
+"
+
+>
+
+<div className="
+flex
+items-center
+gap-3
+">
+
+<div className="
+w-8
+h-8
+
+rounded-full
+
+bg-slate-200
+
+flex
+items-center
+justify-center
+
+text-sm
+font-medium
+">
+
+{
+
+name
+?.charAt(0)
+?.toUpperCase()
+
+||
+
+"K"
+
+}
+
+</div>
+
+<p className="
+text-sm
+
+font-medium
+
+truncate
+
+max-w-[150px]
+">
+
+{
+
+email ||
+
+"No user"
+
+}
+
+</p>
+
+</div>
+
+<MoreHorizontal
+size={18}
+/>
+
+</button>
+
+{
+
+open && (
+
+<div className="
+absolute
+
+left-2
+bottom-20
+
+w-[220px]
+
+bg-white
+
+border
+
+rounded-3xl
+
+shadow-xl
+
+overflow-hidden
+
+z-50
+">
+
+<div className="
+p-4
+border-b
+">
+
+<p className="
+font-medium
+">
+
+{name}
+
+</p>
+
+<p className="
+text-sm
+text-slate-500
+truncate
+">
+
+{email}
+
+</p>
+
+</div>
+
+<Link
+
+href="/settings"
+
+className="
+p-4
+
+flex
+items-center
+gap-3
+
+hover:bg-slate-50
+"
+
+>
+
+<Settings
+size={16}
+/>
+
+Settings
+
+</Link>
+
+<button
+
+onClick={()=>{
+
+signOut({
+
+callbackUrl:
+"/login"
+
+})
+
+}}
+
+className="
+w-full
+
+p-4
+
+flex
+items-center
+gap-3
+
+text-red-600
+
+hover:bg-red-50
+"
+
+>
+
+<LogOut
+size={16}
+/>
+
+Logout
+
+</button>
+
+</div>
+
+)
+
+}
 
 </div>
 

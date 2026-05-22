@@ -4,78 +4,96 @@ import prisma from "@/shared/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export const {
-  handlers,
-  auth,
-  signIn,
-  signOut
-} = NextAuth({
 
-  session: {
-    strategy: "jwt"
+  handlers,
+
+  auth,
+
+  signIn,
+
+  signOut
+
+}=NextAuth({
+
+  trustHost:true,
+
+  session:{
+
+    strategy:"jwt"
+
   },
 
-  providers: [
+  providers:[
 
     Credentials({
 
-      credentials: {
+      credentials:{
 
-        email: {},
+        email:{},
 
-        password: {}
+        password:{}
 
       },
 
-      async authorize(credentials) {
+      async authorize(credentials){
 
-        if (
+        if(
           !credentials?.email ||
           !credentials?.password
-        ) {
+        ){
+
           return null
+
         }
 
-        const user =
-          await prisma.user.findUnique({
+        const user=
+        await prisma.user.findUnique({
 
-            where: {
-              email:
-                String(
-                  credentials.email
-                )
-            }
+          where:{
 
-          })
-
-        if (!user) {
-          return null
-        }
-
-        const ok =
-          await bcrypt.compare(
-
+            email:
             String(
-              credentials.password
-            ),
+              credentials.email
+            )
 
-            user.passwordHash
-          )
+          }
 
-        if (!ok) {
+        })
+
+        if(!user){
+
           return null
+
         }
 
-        return {
+        const ok=
+        await bcrypt.compare(
 
-          id: user.id,
+          String(
+            credentials.password
+          ),
 
-          name: user.name,
+          user.passwordHash
 
-          email: user.email,
+        )
 
-          role: user.role,
+        if(!ok){
 
-          orgId: user.orgId
+          return null
+
+        }
+
+        return{
+
+          id:user.id,
+
+          name:user.name,
+
+          email:user.email,
+
+          orgId:user.orgId,
+
+          role:user.role
 
         }
 
@@ -85,7 +103,7 @@ export const {
 
   ],
 
-  callbacks: {
+  callbacks:{
 
     async jwt({
 
@@ -93,18 +111,18 @@ export const {
 
       user
 
-    }) {
+    }){
 
-      if (user) {
+      if(user){
 
-        token.id =
-          (user as any).id
+        token.id=
+        (user as any).id
 
-        token.role =
-          (user as any).role
+        token.orgId=
+        (user as any).orgId
 
-        token.orgId =
-          (user as any).orgId
+        token.role=
+        (user as any).role
 
       }
 
@@ -118,30 +136,24 @@ export const {
 
       token
 
-    }) {
+    }){
 
-      if (session.user) {
-
-        ;(
-          session.user as any
-        ).id =
-          String(
-            token.id || ""
-          )
+      if(session.user){
 
         ;(
           session.user as any
-        ).role =
-          String(
-            token.role || ""
-          )
+        ).id=
+        token.id as string
 
         ;(
           session.user as any
-        ).orgId =
-          String(
-            token.orgId || ""
-          )
+        ).orgId=
+        token.orgId as string
+
+        ;(
+          session.user as any
+        ).role=
+        token.role as string
 
       }
 
@@ -151,13 +163,13 @@ export const {
 
   },
 
-  pages: {
+  pages:{
 
-    signIn: "/login"
+    signIn:"/login"
 
   },
 
   secret:
-    process.env.AUTH_SECRET
+  process.env.AUTH_SECRET
 
 })

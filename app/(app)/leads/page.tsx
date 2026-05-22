@@ -39,6 +39,10 @@ buttonLabel="New Lead"
 
 buttonHref="/leads/create"
 
+editPath="/leads/edit"
+
+onDeletePath="/api/leads"
+
 columns={[
 
 {

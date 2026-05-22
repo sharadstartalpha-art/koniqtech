@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 export default async function Topbar(){
 
 const session=
+
 await auth()
 
 return(
@@ -13,8 +14,6 @@ h-20
 bg-white
 
 border-b
-
-border-[#e5e7eb]
 
 px-8
 
@@ -28,25 +27,21 @@ justify-between
 placeholder="Search..."
 
 className="
-
-w-[420px]
-
 h-11
+
+w-[360px]
 
 bg-[#f5f5f5]
 
 border
 
-border-[#e7e7e7]
+rounded-xl
 
-rounded-2xl
-
-px-5
+px-4
 
 text-sm
 
 outline-none
-
 "
 
 />
@@ -57,21 +52,19 @@ items-center
 gap-5
 ">
 
-<button className="text-xl">
+<button>
 
 🔔
 
 </button>
 
 <div className="
-flex
-flex-col
-items-end
+text-right
 ">
 
 <p className="
-text-sm
 font-medium
+text-sm
 ">
 
 {
@@ -84,6 +77,7 @@ session?.user?.name
 
 <p className="
 text-xs
+
 text-slate-500
 ">
 

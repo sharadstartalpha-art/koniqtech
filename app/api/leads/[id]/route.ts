@@ -1,17 +1,31 @@
 import prisma from "@/shared/lib/prisma"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 export async function PUT(
 
-req:Request,
+req: NextRequest,
 
 {
 
 params
 
-}:any
+}:{
+
+params: Promise<{
+
+id:string
+
+}>
+
+}
 
 ){
+
+try{
+
+const { id }=
+
+await params
 
 const body=
 
@@ -23,7 +37,7 @@ await prisma.lead.update({
 
 where:{
 
-id:params.id
+id
 
 },
 
@@ -65,7 +79,13 @@ source:
 
 body.source ||
 
-"website"
+"website",
+
+notes:
+
+body.notes ||
+
+null
 
 }
 
@@ -79,23 +99,63 @@ lead
 
 }
 
+catch{
+
+return NextResponse.json(
+
+{
+
+success:false,
+
+message:
+
+"Lead update failed"
+
+},
+
+{
+
+status:500
+
+}
+
+)
+
+}
+
+}
+
 export async function DELETE(
 
-req:Request,
+req: NextRequest,
 
 {
 
 params
 
-}:any
+}:{
+
+params: Promise<{
+
+id:string
+
+}>
+
+}
 
 ){
+
+try{
+
+const { id }=
+
+await params
 
 await prisma.lead.delete({
 
 where:{
 
-id:params.id
+id
 
 }
 
@@ -106,5 +166,31 @@ return NextResponse.json({
 success:true
 
 })
+
+}
+
+catch{
+
+return NextResponse.json(
+
+{
+
+success:false,
+
+message:
+
+"Lead delete failed"
+
+},
+
+{
+
+status:500
+
+}
+
+)
+
+}
 
 }

@@ -36,6 +36,10 @@ buttonLabel="Add Customer"
 
 buttonHref="/customers/create"
 
+editPath="/customers/edit"
+
+onDeletePath="/api/customers"
+
 columns={[
 
 {

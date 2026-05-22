@@ -3,33 +3,17 @@
 import Link from "next/link"
 import { useState } from "react"
 
-type Column={
-
-key:string
-label:string
-
-}
-
 export default function DataTable({
 
 title,
 buttonLabel,
 buttonHref,
 columns,
-rows
+rows,
+onDeletePath,
+editPath
 
-}:{
-
-title:string
-
-buttonLabel:string
-buttonHref:string
-
-columns:Column[]
-
-rows:any[]
-
-}){
+}:any){
 
 const [search,setSearch]=useState("")
 
@@ -37,9 +21,9 @@ const filtered=
 
 rows.filter(
 
-row=>
+(r:any)=>
 
-JSON.stringify(row)
+JSON.stringify(r)
 
 .toLowerCase()
 
@@ -51,6 +35,38 @@ search.toLowerCase()
 
 )
 
+async function remove(id:string){
+
+if(
+
+!confirm(
+
+"Delete item?"
+
+)
+
+){
+
+return
+
+}
+
+await fetch(
+
+`${onDeletePath}/${id}`,
+
+{
+
+method:"DELETE"
+
+}
+
+)
+
+window.location.reload()
+
+}
+
 return(
 
 <div className="space-y-6">
@@ -61,12 +77,13 @@ items-center
 justify-between
 ">
 
-<div>
-
 <h1 className="
-text-[54px]
+text-[44px]
+
 font-semibold
-tracking-[-2px]
+
+tracking-[-1px]
+
 text-black
 ">
 
@@ -74,22 +91,25 @@ text-black
 
 </h1>
 
-</div>
-
 <Link
 
 href={buttonHref}
 
 className="
-h-12
-px-6
+h-11
 
-bg-black
+px-5
+
+bg-green-600
+
+hover:bg-green-700
+
 text-white
 
 rounded-2xl
 
 text-sm
+
 font-medium
 
 flex
@@ -108,7 +128,6 @@ items-center
 bg-white
 
 border
-border-[#e5e7eb]
 
 rounded-3xl
 
@@ -118,9 +137,9 @@ overflow-hidden
 <div className="
 h-16
 
-border-b
-
 px-6
+
+border-b
 
 flex
 items-center
@@ -144,81 +163,76 @@ e.target.value
 placeholder="Search..."
 
 className="
+h-10
 
-h-11
-
-w-[380px]
-
-rounded-2xl
+w-[320px]
 
 bg-[#f5f5f5]
 
 border
 
-border-[#e7e7e7]
+rounded-xl
 
 px-4
 
 text-sm
 
 outline-none
-
 "
 
 />
 
-<p className="
+<div className="
 text-sm
 text-slate-500
 ">
 
 Page 1
 
-</p>
+</div>
 
 </div>
 
-<div className="overflow-x-auto">
-
-<table className="
-w-full
-min-w-[900px]
-">
+<table className="w-full">
 
 <thead>
 
 <tr className="
 bg-[#fafafa]
 
-text-sm
-
-text-slate-500
-
 border-b
+
+text-sm
 ">
+
+<th className="px-6 h-11">
+
+SL
+
+</th>
 
 {
 
 columns.map(
 
-col=>(
+(c:any)=>(
 
 <th
 
-key={col.key}
+key={c.key}
 
 className="
 px-6
-h-12
-
-font-medium
+h-11
 
 text-left
+
+font-medium
 "
 
 >
 
-{col.label}
+{c.label}
 
 </th>
 
@@ -247,7 +261,7 @@ Actions
 
 filtered.map(
 
-(row:any)=>(
+(row:any,index:number)=>(
 
 <tr
 
@@ -263,28 +277,32 @@ text-sm
 
 >
 
+<td className="
+px-6
+h-14
+">
+
+{index+1}
+
+</td>
+
 {
 
 columns.map(
 
-col=>(
+(c:any)=>(
 
 <td
 
-key={col.key}
+key={c.key}
 
 className="
 px-6
-h-14
 "
 
 >
 
-{
-
-row[col.key]
-
-}
+{row[c.key]}
 
 </td>
 
@@ -303,33 +321,58 @@ flex
 gap-2
 ">
 
-<button className="
-h-8
+<Link
+
+href={`${editPath}/${row.id}`}
+
+className="
 px-3
 
-rounded-lg
+h-8
 
 bg-slate-100
 
+rounded-lg
+
 text-xs
-">
+
+flex
+items-center
+"
+
+>
 
 Edit
 
-</button>
+</Link>
 
-<button className="
-h-8
+<button
+
+onClick={()=>
+
+remove(
+
+row.id
+
+)
+
+}
+
+className="
 px-3
 
-rounded-lg
+h-8
 
 bg-red-50
 
 text-red-600
 
+rounded-lg
+
 text-xs
-">
+"
+
+>
 
 Delete
 
@@ -350,8 +393,6 @@ Delete
 </tbody>
 
 </table>
-
-</div>
 
 <div className="
 h-14
@@ -375,7 +416,9 @@ Page 1 of 1
 
 <div>
 
-{filtered.length} items
+{filtered.length}
+
+items
 
 </div>
 

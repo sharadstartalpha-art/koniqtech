@@ -1,420 +1,184 @@
 import prisma from "@/shared/lib/prisma"
-
 import { auth } from "@/auth"
-
 import Link from "next/link"
-
 import { redirect } from "next/navigation"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
-export default async function DashboardPage(){
+export default async function DashboardPage() {
 
-const session=
-await auth()
+  const session = await auth()
 
-if(!session?.user){
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-redirect("/login")
+  const role = (session.user as any)?.role
 
-}
+  if (role === "super_admin") {
+    redirect("/admin/dashboard")
+  }
 
-const role=
+  const dbUser = await prisma.user.findUnique({
+    where: {
+      email: session.user.email!
+    },
+    include: {
+      organization: true
+    }
+  })
 
-(session.user as any)
-?.role
+  if (!dbUser) {
+    return <div>User missing</div>
+  }
 
-if(
+  const [
+    leads,
+    customers,
+    jobs
+  ] = await Promise.all([
 
-role===
+    prisma.lead.count({
+      where: { orgId: dbUser.orgId }
+    }),
 
-"super_admin"
+    prisma.customer.count({
+      where: { orgId: dbUser.orgId }
+    }),
 
-){
+    prisma.job.count({
+      where: { orgId: dbUser.orgId }
+    })
 
-redirect(
-"/admin/dashboard"
-)
+  ])
 
-}
+  return (
 
-const dbUser=
+    <div className="space-y-8">
 
-await prisma.user.findUnique({
+      <div>
 
-where:{
+        <h1 className="text-6xl font-bold">
+          Dashboard
+        </h1>
 
-email:
-session.user.email!
+        <p className="text-slate-500 mt-2">
+          Welcome back {dbUser.name}
+        </p>
 
-},
+      </div>
 
-include:{
+      <div className="grid grid-cols-3 gap-6">
 
-organization:true
+        <Card title="Leads" value={leads}/>
+        <Card title="Customers" value={customers}/>
+        <Card title="Jobs" value={jobs}/>
 
-}
+      </div>
 
-})
+      <div className="bg-white border rounded-3xl p-10">
 
-if(!dbUser){
+        <div className="flex justify-between">
 
-return(
+          <div>
 
-<div className="p-10">
+            <h2 className="text-4xl font-bold">
+              Subscription
+            </h2>
 
-<h1 className="text-2xl font-semibold">
+            <div className="mt-8 space-y-4">
 
-User not found
+              <p>
 
-</h1>
+                Plan:
 
-</div>
+                <b className="ml-2">
 
-)
+                  {
+                    dbUser.organization?.plan
+                    ?? "Free"
+                  }
 
-}
+                </b>
 
-const [
+              </p>
 
-leads,
-customers,
-jobs
+              <p>
 
-]=await Promise.all([
+                Expires:
 
-prisma.lead.count({
+                <b className="ml-2">
 
-where:{
+                  {
 
-orgId:
-dbUser.orgId
+                    dbUser.organization
+                    ?.subscriptionEndsAt
 
-}
+                    ?
 
-}),
+                    dbUser.organization
+                    .subscriptionEndsAt
+                    .toDateString()
 
-prisma.customer.count({
+                    :
 
-where:{
+                    "No subscription"
 
-orgId:
-dbUser.orgId
+                  }
 
-}
+                </b>
 
-}),
+              </p>
 
-prisma.job.count({
+            </div>
 
-where:{
+          </div>
 
-orgId:
-dbUser.orgId
+          <Link
+            href="/billing"
+            className="
+            bg-black
+            text-white
+            px-8
+            py-4
+            rounded-2xl
+            h-fit
+            "
+          >
 
-}
+            Manage Billing
 
-})
+          </Link>
 
-])
+        </div>
 
-const subscriptionEnds=
+      </div>
 
-dbUser.organization
-?.subscriptionEndsAt
+    </div>
 
-const expiringSoon=
-
-subscriptionEnds
-
-?
-
-new Date(
-subscriptionEnds
-).getTime()
-
--
-
-Date.now()
-
-<
-
-1000*
-60*
-60*
-24*
-7
-
-:
-
-false
-
-return(
-
-<div className="space-y-8">
-
-<div>
-
-<h1 className="text-6xl font-bold">
-
-Dashboard
-
-</h1>
-
-<p className="text-slate-500 mt-2">
-
-Welcome back
-
-{
-
-dbUser.name
-
-}
-
-</p>
-
-</div>
-
-<div className="grid grid-cols-3 gap-6">
-
-<Card
-
-title="Leads"
-
-value={leads}
-
-/>
-
-<Card
-
-title="Customers"
-
-value={customers}
-
-/>
-
-<Card
-
-title="Jobs"
-
-value={jobs}
-
-/>
-
-</div>
-
-<div className="bg-white rounded-3xl border p-10">
-
-<div className="flex justify-between items-start">
-
-<div>
-
-<h2 className="text-4xl font-bold">
-
-Subscription
-
-</h2>
-
-<div className="mt-8 space-y-3">
-
-<p>
-
-Plan:
-
-<span className="font-semibold ml-2">
-
-{
-
-dbUser.organization
-?.plan
-
-||
-
-"Free"
-
-}
-
-</span>
-
-</p>
-
-<p>
-
-Expires:
-
-<span className="font-semibold ml-2">
-
-{
-
-subscriptionEnds
-
-?
-
-subscriptionEnds
-.toDateString()
-
-:
-
-"No subscription"
-
-}
-
-</span>
-
-</p>
-
-</div>
-
-{
-
-expiringSoon && (
-
-<div className="
-mt-6
-inline-flex
-px-4
-py-2
-rounded-xl
-bg-yellow-100
-text-yellow-700
-font-medium
-">
-
-Subscription expiring soon
-
-</div>
-
-)
-
-}
-
-</div>
-
-<Link
-
-href="/billing"
-
-className="
-bg-black
-text-white
-px-8
-py-4
-rounded-2xl
-"
-
->
-
-Update Subscription
-
-</Link>
-
-</div>
-
-</div>
-
-<div className="bg-white rounded-3xl border p-10">
-
-<h2 className="text-2xl font-bold mb-6">
-
-Recent Activity
-
-</h2>
-
-<div className="space-y-4">
-
-<Activity
-
-text="No recent leads"
-
-/>
-
-<Activity
-
-text="No recent customers"
-
-/>
-
-<Activity
-
-text="No recent jobs"
-
-/>
-
-</div>
-
-</div>
-
-</div>
-
-)
+  )
 
 }
 
 function Card({
+  title,
+  value
+}:any){
 
-title,
-value
+  return(
 
-}:{
+    <div className="bg-white border rounded-3xl p-8">
 
-title:string
-value:number
+      <p className="text-slate-500">
+        {title}
+      </p>
 
-}){
+      <h2 className="text-6xl font-bold mt-4">
+        {value}
+      </h2>
 
-return(
+    </div>
 
-<div className="
-bg-white
-border
-rounded-3xl
-p-8
-">
-
-<p className="text-slate-500">
-
-{title}
-
-</p>
-
-<h2 className="
-text-6xl
-font-bold
-mt-4
-">
-
-{value}
-
-</h2>
-
-</div>
-
-)
-
-}
-
-function Activity({
-
-text
-
-}:{
-
-text:string
-
-}){
-
-return(
-
-<div className="
-p-4
-rounded-2xl
-bg-slate-50
-">
-
-{text}
-
-</div>
-
-)
+  )
 
 }

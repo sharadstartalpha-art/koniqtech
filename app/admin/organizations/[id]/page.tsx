@@ -1,418 +1,496 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
 async function extendSubscription(
-formData:FormData
-){
+  formData: FormData
+) {
 
-"use server"
+  "use server"
 
-const orgId=
-String(
-formData.get("orgId")
-)
+  const orgId =
+    String(
+      formData.get("orgId")
+    )
 
-const months=
-Number(
-formData.get("months")
-)
+  const months =
+    Number(
+      formData.get("months")
+    )
 
-if(!orgId)return
+  if (!orgId) return
 
-const org=
-await prisma.organization.findUnique({
+  const org =
+    await prisma.organization.findUnique({
 
-where:{
-id:orgId
+      where: {
+        id: orgId
+      }
+
+    })
+
+  if (!org) return
+
+  const baseDate =
+
+    org.subscriptionEndsAt &&
+      org.subscriptionEndsAt > new Date()
+
+      ? org.subscriptionEndsAt
+
+      : new Date()
+
+  const expires =
+    new Date(baseDate)
+
+  expires.setMonth(
+
+    expires.getMonth() + months
+
+  )
+
+  await prisma.organization.update({
+
+    where: {
+      id: orgId
+    },
+
+    data: {
+
+      subscriptionEndsAt:
+        expires,
+
+      active: true
+
+    }
+
+  })
+
+  revalidatePath(
+
+    `/admin/organizations/${orgId}`
+
+  )
+
 }
 
-})
+type Props = {
 
-if(!org)return
-
-const base=
-
-org.subscriptionEndsAt &&
-org.subscriptionEndsAt>
-new Date()
-
-?org.subscriptionEndsAt
-
-:new Date()
-
-const expires=
-new Date(base)
-
-expires.setMonth(
-
-expires.getMonth()+months
-
-)
-
-await prisma.organization.update({
-
-where:{
-id:orgId
-},
-
-data:{
-
-subscriptionEndsAt:
-expires,
-
-active:true
-
-}
-
-})
-
-}
-
-type Props={
-
-params:Promise<{
-
-id:string
-
-}>
+  params: Promise<{
+    id: string
+  }>
 
 }
 
 export default async function Page({
 
-params
+  params
 
-}:Props){
+}: Props) {
 
-const {id}=
+  const { id } =
+    await params
 
-await params
+  if (!id) {
 
-if(!id){
+    notFound()
 
-notFound()
+  }
 
-}
+  const org =
+    await prisma.organization.findUnique({
 
-const org=
-await prisma.organization.findUnique({
+      where: {
+        id
+      },
 
-where:{
-id
-},
+      include: {
 
-include:{
+        users: true
 
-users:true
+      }
 
-}
+    })
 
-})
+  if (!org) {
 
-if(!org){
+    notFound()
 
-notFound()
+  }
 
-}
+  const subscriptionActive =
 
-return(
+    org.subscriptionEndsAt &&
 
-<div className="max-w-7xl mx-auto p-10 space-y-8">
+    org.subscriptionEndsAt >
 
-<div className="flex justify-between">
+    new Date()
 
-<div>
+  return (
 
-<h1 className="text-5xl font-bold">
+    <div className="max-w-7xl mx-auto p-10 space-y-8">
 
-{org.name}
+      <div className="flex justify-between items-start">
 
-</h1>
+        <div>
 
-<p className="text-slate-500 mt-2">
+          <h1 className="text-5xl font-bold">
 
-{org.email}
+            {org.name}
 
-</p>
+          </h1>
 
-</div>
+          <p className="text-slate-500 mt-2">
 
-<div className="flex gap-4">
+            {org.email}
 
-<Link
+          </p>
 
-href={`/admin/organizations/${id}/users`}
+        </div>
 
-className="border px-6 py-3 rounded-xl"
+        <div className="flex gap-4">
 
->
+          <Link
 
-Users
+            href={`/admin/organizations/${id}/users`}
 
-</Link>
+            className="
+            border
+            px-6
+            py-3
+            rounded-xl
+            "
 
-<Link
+          >
 
-href={`/admin/organizations/${id}/billing`}
+            Users
 
-className="border px-6 py-3 rounded-xl"
+          </Link>
 
->
+          <Link
 
-Billing
+            href={`/admin/organizations/${id}/billing`}
 
-</Link>
+            className="
+            border
+            px-6
+            py-3
+            rounded-xl
+            "
 
-</div>
+          >
 
-</div>
+            Billing
 
-<div className="grid grid-cols-4 gap-6">
+          </Link>
 
-<div className="bg-white border rounded-3xl p-8">
+        </div>
 
-<p className="text-slate-500">
+      </div>
 
-CRM
+      <div className="grid grid-cols-5 gap-6">
 
-</p>
+        <div className="bg-white border rounded-3xl p-8">
 
-<h2 className="text-2xl font-bold">
+          <p className="text-slate-500">
 
-{org.crmType}
+            CRM
 
-</h2>
+          </p>
 
-</div>
+          <h2 className="text-2xl font-bold">
 
-<div className="bg-white border rounded-3xl p-8">
+            {org.crmType}
 
-<p className="text-slate-500">
+          </h2>
 
-Plan
+        </div>
 
-</p>
+        <div className="bg-white border rounded-3xl p-8">
 
-<h2 className="text-2xl font-bold">
+          <p className="text-slate-500">
 
-{org.plan}
+            Plan
 
-</h2>
+          </p>
 
-</div>
+          <h2 className="text-2xl font-bold">
 
-<div className="bg-white border rounded-3xl p-8">
+            {org.plan}
 
-<p className="text-slate-500">
+          </h2>
 
-Users
+        </div>
 
-</p>
+        <div className="bg-white border rounded-3xl p-8">
 
-<h2 className="text-2xl font-bold">
+          <p className="text-slate-500">
 
-{org.users.length}
+            Users
 
-</h2>
+          </p>
 
-</div>
+          <h2 className="text-2xl font-bold">
 
-<div className="bg-white border rounded-3xl p-8">
+            {org.users.length}
 
-<p className="text-slate-500">
+          </h2>
 
-Expires
+        </div>
 
-</p>
+        <div className="bg-white border rounded-3xl p-8">
 
-<h2 className="font-bold">
+          <p className="text-slate-500">
 
-{
+            Expires
 
-org.subscriptionEndsAt
-?.toDateString()
+          </p>
 
-||
+          <h2 className="font-bold">
 
-"No subscription"
+            {
 
-}
+              org.subscriptionEndsAt
 
-</h2>
+                ?
 
-</div>
+                org.subscriptionEndsAt
+                  .toDateString()
 
-</div>
+                :
 
-<div className="bg-white border rounded-3xl p-8">
+                "No subscription"
 
-<h2 className="text-3xl font-bold mb-6">
+            }
 
-Grant Subscription
+          </h2>
 
-</h2>
+        </div>
 
-<form
+        <div className="bg-white border rounded-3xl p-8">
 
-action={extendSubscription}
+          <p className="text-slate-500">
 
-className="flex gap-4"
+            Status
 
->
+          </p>
 
-<input
+          <h2 className={
 
-hidden
+            subscriptionActive
 
-name="orgId"
+              ?
 
-value={org.id}
+              "font-bold text-green-600"
 
-/>
+              :
 
-<select
+              "font-bold text-red-600"
 
-name="months"
+          }>
 
-className="border p-4 rounded-xl"
+            {
 
->
+              subscriptionActive
 
-<option value="1">
+                ?
 
-1 month
+                "ACTIVE"
 
-</option>
+                :
 
-<option value="3">
+                "EXPIRED"
 
-3 months
+            }
 
-</option>
+          </h2>
 
-<option value="6">
+        </div>
 
-6 months
+      </div>
 
-</option>
+      <div className="bg-white border rounded-3xl p-8">
 
-<option value="12">
+        <h2 className="text-3xl font-bold mb-6">
 
-12 months
+          Grant Subscription
 
-</option>
+        </h2>
 
-<option value="24">
+        <form
 
-24 months
+          action={extendSubscription}
 
-</option>
+          className="flex gap-4"
 
-</select>
+        >
 
-<button
+          <input
 
-className="bg-black text-white px-8 rounded-xl"
+            hidden
 
->
+            name="orgId"
 
-Grant Access
+            value={org.id}
 
-</button>
+            readOnly
 
-</form>
+          />
 
-</div>
+          <select
 
-<div className="bg-white border rounded-3xl overflow-hidden">
+            name="months"
 
-<div className="p-8 border-b">
+            className="
+            border
+            p-4
+            rounded-xl
+            "
 
-<h2 className="text-3xl font-bold">
+          >
 
-Users
+            <option value="1">
 
-</h2>
+              1 month
 
-</div>
+            </option>
 
-<table className="w-full">
+            <option value="3">
 
-<thead className="bg-slate-100">
+              3 months
 
-<tr>
+            </option>
 
-<th className="p-5 text-left">
+            <option value="6">
 
-Name
+              6 months
 
-</th>
+            </option>
 
-<th>
+            <option value="12">
 
-Email
+              12 months
 
-</th>
+            </option>
 
-<th>
+            <option value="24">
 
-Role
+              24 months
 
-</th>
+            </option>
 
-</tr>
+          </select>
 
-</thead>
+          <button
 
-<tbody>
+            type="submit"
 
-{
+            className="
+            bg-black
+            text-white
+            px-8
+            rounded-xl
+            "
 
-org.users.map(user=>(
+          >
 
-<tr
+            Grant Access
 
-key={user.id}
+          </button>
 
-className="border-t"
+        </form>
 
->
+      </div>
 
-<td className="p-5">
+      <div className="bg-white border rounded-3xl overflow-hidden">
 
-{user.name}
+        <div className="p-8 border-b">
 
-</td>
+          <h2 className="text-3xl font-bold">
 
-<td>
+            Users
 
-{user.email}
+          </h2>
 
-</td>
+        </div>
 
-<td>
+        <table className="w-full">
 
-{user.role}
+          <thead className="bg-slate-100">
 
-</td>
+            <tr>
 
-</tr>
+              <th className="p-5 text-left">
 
-))
+                Name
 
-}
+              </th>
 
-</tbody>
+              <th>
 
-</table>
+                Email
 
-</div>
+              </th>
 
-</div>
+              <th>
 
-)
+                Role
+
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {
+
+              org.users.map(user => (
+
+                <tr
+
+                  key={user.id}
+
+                  className="border-t"
+
+                >
+
+                  <td className="p-5">
+
+                    {user.name}
+
+                  </td>
+
+                  <td>
+
+                    {user.email}
+
+                  </td>
+
+                  <td>
+
+                    {user.role}
+
+                  </td>
+
+                </tr>
+
+              ))
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  )
 
 }

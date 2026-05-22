@@ -35,18 +35,56 @@ redirect:false
 
 setLoading(false)
 
-if(res?.ok){
+if(!res?.ok){
 
-window.location.href=
-"/dashboard"
+alert(
+"Invalid credentials"
+)
 
 return
 
 }
 
-alert(
-"Invalid credentials"
+/*
+fetch session
+*/
+
+const sessionRes=
+await fetch(
+
+"/api/auth/session",
+
+{
+
+cache:"no-store"
+
+}
+
 )
+
+const session=
+await sessionRes.json()
+
+const role=
+session?.user?.role
+
+if(
+
+role===
+
+"SUPER_ADMIN"
+
+){
+
+window.location.href=
+"/admin/dashboard"
+
+return
+
+}
+
+window.location.href=
+"/dashboard"
 
 }
 

@@ -1,40 +1,57 @@
 import prisma from "@/shared/lib/prisma"
+
 import { auth } from "@/auth"
+
 import Link from "next/link"
 
-export const dynamic="force-dynamic"
+import { redirect } from "next/navigation"
+
+export const dynamic=
+"force-dynamic"
 
 export default async function Page(){
 
-const session=await auth()
+const session=
+await auth()
 
-if(!session?.user?.email){
+if(!session?.user){
 
-return(
+redirect(
+"/login"
+)
 
-<div className="p-10">
+}
 
-<h1 className="text-2xl">
+if(
 
-Please login again
+(session.user as any)
+.role===
 
-</h1>
+"SUPER_ADMIN"
 
-</div>
+){
 
+redirect(
+"/admin/dashboard"
 )
 
 }
 
 const dbUser=
+
 await prisma.user.findUnique({
 
 where:{
-email:session.user.email
+
+email:
+session.user.email!
+
 },
 
 include:{
+
 organization:true
+
 }
 
 })
@@ -54,28 +71,40 @@ User missing
 }
 
 const leads=
+
 await prisma.lead.count({
 
 where:{
-orgId:dbUser.orgId
+
+orgId:
+dbUser.orgId
+
 }
 
 })
 
 const customers=
+
 await prisma.customer.count({
 
 where:{
-orgId:dbUser.orgId
+
+orgId:
+dbUser.orgId
+
 }
 
 })
 
 const jobs=
+
 await prisma.job.count({
 
 where:{
-orgId:dbUser.orgId
+
+orgId:
+dbUser.orgId
+
 }
 
 })
@@ -84,7 +113,7 @@ return(
 
 <div className="space-y-8">
 
-<h1 className="text-5xl font-bold">
+<h1 className="text-6xl font-bold">
 
 Dashboard
 
@@ -92,63 +121,57 @@ Dashboard
 
 <div className="grid grid-cols-3 gap-6">
 
-<div className="bg-white p-8 rounded-3xl border">
+<Card
+title="Leads"
+value={leads}
+/>
 
-<p>Leads</p>
+<Card
+title="Customers"
+value={customers}
+/>
 
-<h2 className="text-5xl font-bold">
-
-{leads}
-
-</h2>
-
-</div>
-
-<div className="bg-white p-8 rounded-3xl border">
-
-<p>Customers</p>
-
-<h2 className="text-5xl font-bold">
-
-{customers}
-
-</h2>
+<Card
+title="Jobs"
+value={jobs}
+/>
 
 </div>
 
-<div className="bg-white p-8 rounded-3xl border">
+<div className="bg-white border rounded-3xl p-10">
 
-<p>Jobs</p>
-
-<h2 className="text-5xl font-bold">
-
-{jobs}
-
-</h2>
-
-</div>
-
-</div>
-
-<div className="bg-white border rounded-3xl p-8">
-
-<h2 className="text-2xl font-bold">
+<h2 className="text-4xl font-bold">
 
 Subscription
 
 </h2>
 
-<p className="mt-4">
+<div className="mt-8 space-y-3">
+
+<p>
 
 Plan:
 
-{dbUser.organization?.plan}
+<b>
+
+{
+
+dbUser.organization
+?.plan ||
+
+"Free"
+
+}
+
+</b>
 
 </p>
 
 <p>
 
 Expires:
+
+<b>
 
 {
 
@@ -163,7 +186,11 @@ dbUser.organization
 
 }
 
+</b>
+
 </p>
+
+</div>
 
 <Link
 
@@ -171,12 +198,12 @@ href="/billing"
 
 className="
 inline-block
-mt-6
+mt-8
 bg-black
 text-white
-px-6
-py-3
-rounded-xl
+px-8
+py-4
+rounded-2xl
 "
 
 >
@@ -186,6 +213,35 @@ Update Subscription
 </Link>
 
 </div>
+
+</div>
+
+)
+
+}
+
+function Card({
+
+title,
+value
+
+}:any){
+
+return(
+
+<div className="bg-white border rounded-3xl p-8">
+
+<p>
+
+{title}
+
+</p>
+
+<h2 className="text-6xl font-bold mt-4">
+
+{value}
+
+</h2>
 
 </div>
 

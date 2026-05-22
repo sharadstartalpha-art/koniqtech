@@ -1,156 +1,173 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+
 import prisma from "@/shared/lib/prisma"
+
 import bcrypt from "bcryptjs"
 
 export const {
 
-  handlers,
-  auth,
-  signIn,
-  signOut
+handlers,
+auth,
+signIn,
+signOut
 
 }=NextAuth({
 
-  secret:process.env.AUTH_SECRET,
+secret:
+process.env.AUTH_SECRET,
 
-  trustHost:true,
+trustHost:true,
 
-  session:{
-    strategy:"jwt"
-  },
+session:{
+strategy:"jwt"
+},
 
-  providers:[
+providers:[
 
-    Credentials({
+Credentials({
 
-      credentials:{
+credentials:{
 
-        email:{},
-        password:{}
+email:{},
+password:{}
 
-      },
+},
 
-      async authorize(credentials){
+async authorize(credentials){
 
-        if(
-          !credentials?.email ||
-          !credentials?.password
-        ){
-          return null
-        }
+if(
 
-        const user=
-        await prisma.user.findUnique({
+!credentials?.email ||
 
-          where:{
-            email:
-            String(
-              credentials.email
-            )
-          }
+!credentials?.password
 
-        })
+){
 
-        if(!user){
-          return null
-        }
+return null
 
-        const ok=
-        await bcrypt.compare(
+}
 
-          String(
-            credentials.password
-          ),
+const user=
 
-          user.passwordHash
+await prisma.user.findUnique({
 
-        )
+where:{
 
-        if(!ok){
-          return null
-        }
+email:String(
+credentials.email
+)
 
-        return{
+},
 
-          id:user.id,
+include:{
 
-          email:user.email,
+organization:true
 
-          name:user.name,
+}
 
-          orgId:user.orgId,
+})
 
-          role:user.role
+if(!user){
 
-        }
+return null
 
-      }
+}
 
-    })
+const ok=
 
-  ],
+await bcrypt.compare(
 
-  callbacks:{
+String(
+credentials.password
+),
 
-    async jwt({
+user.passwordHash
 
-      token,
-      user
+)
 
-    }){
+if(!ok){
 
-      if(user){
+return null
 
-        token.id=
-        (user as any).id
+}
 
-        token.orgId=
-        (user as any).orgId
+return{
 
-        token.role=
-        (user as any).role
+id:user.id,
 
-      }
+email:user.email,
 
-      return token
+name:user.name,
 
-    },
+role:user.role,
 
-    async session({
+orgId:user.orgId
 
-      session,
-      token
+}
 
-    }){
+}
 
-      if(session.user){
+})
 
-        ;(
-          session.user as any
-        ).id=
-        token.id as string
+],
 
-        ;(
-          session.user as any
-        ).orgId=
-        token.orgId as string
+callbacks:{
 
-        ;(
-          session.user as any
-        ).role=
-        token.role as string
+async jwt({
 
-      }
+token,
+user
 
-      return session
+}){
 
-    }
+if(user){
 
-  },
+token.id=
+(user as any).id
 
-  pages:{
-    signIn:"/login"
-  }
+token.role=
+(user as any).role
+
+token.orgId=
+(user as any).orgId
+
+}
+
+return token
+
+},
+
+async session({
+
+session,
+token
+
+}){
+
+if(session.user){
+
+(session.user as any).id=
+token.id as string
+
+(session.user as any).role=
+token.role as string
+
+(session.user as any).orgId=
+token.orgId as string
+
+}
+
+return session
+
+}
+
+},
+
+pages:{
+
+signIn:"/login"
+
+}
 
 })

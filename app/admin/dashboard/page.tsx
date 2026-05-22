@@ -1,6 +1,38 @@
 import prisma from "@/shared/lib/prisma"
 
+import { auth } from "@/auth"
+
+import { redirect } from "next/navigation"
+
+export const dynamic="force-dynamic"
+
 export default async function AdminDashboard(){
+
+const session=
+await auth()
+
+if(!session?.user){
+
+redirect("/login")
+
+}
+
+const role=
+
+(session.user as any)
+?.role
+
+if(
+
+role!==
+
+"SUPER_ADMIN"
+
+){
+
+redirect("/dashboard")
+
+}
 
 const totalOrganizations=
 
@@ -26,19 +58,33 @@ const revenue=
 
 activeSubs*199
 
+const organizations=
+
+await prisma.organization.findMany({
+
+take:5,
+
+orderBy:{
+
+createdAt:"desc"
+
+}
+
+})
+
 return(
 
 <div className="space-y-8">
 
 <div>
 
-<h1 className="text-3xl font-bold">
+<h1 className="text-5xl font-bold">
 
 Super Admin Dashboard
 
 </h1>
 
-<p className="text-slate-500 mt-2">
+<p className="text-slate-500 mt-3">
 
 Koniq SaaS Control Center
 
@@ -49,42 +95,108 @@ Koniq SaaS Control Center
 <div className="grid grid-cols-4 gap-6">
 
 <Card
+
 title="Organizations"
-value={String(totalOrganizations)}
+
+value={
+String(
+totalOrganizations
+)
+}
+
 />
 
 <Card
+
 title="Users"
-value={String(totalUsers)}
+
+value={
+String(
+totalUsers
+)
+}
+
 />
 
 <Card
+
 title="Active Plans"
-value={String(activeSubs)}
+
+value={
+String(
+activeSubs
+)
+}
+
 />
 
 <Card
+
 title="MRR"
+
 value={`$${revenue}`}
+
 />
 
 </div>
 
 <div className="grid grid-cols-2 gap-6">
 
-<div className="bg-white rounded-3xl border p-8 h-96">
+<div className="bg-white border rounded-3xl p-8">
 
-<h2 className="font-semibold mb-6">
+<h2 className="font-bold text-xl mb-6">
 
 Latest Organizations
 
 </h2>
 
+<div className="space-y-4">
+
+{
+
+organizations.map(
+
+(org:any)=>(
+
+<div
+
+key={org.id}
+
+className="
+p-4
+rounded-xl
+bg-slate-50
+"
+
+>
+
+<p className="font-semibold">
+
+{org.name}
+
+</p>
+
+<p className="text-sm text-slate-500">
+
+{org.plan}
+
+</p>
+
 </div>
 
-<div className="bg-white rounded-3xl border p-8 h-96">
+)
 
-<h2 className="font-semibold mb-6">
+)
+
+}
+
+</div>
+
+</div>
+
+<div className="bg-white border rounded-3xl p-8">
+
+<h2 className="font-bold text-xl mb-6">
 
 System Health
 
@@ -92,21 +204,13 @@ System Health
 
 <div className="space-y-4">
 
-<Item
-label="API"
-/>
+<Item label="API"/>
 
-<Item
-label="Database"
-/>
+<Item label="Database"/>
 
-<Item
-label="AI Workers"
-/>
+<Item label="AI Workers"/>
 
-<Item
-label="Queues"
-/>
+<Item label="Queues"/>
 
 </div>
 
@@ -123,16 +227,9 @@ label="Queues"
 function Card({
 
 title,
-
 value
 
-}:{
-
-title:string
-
-value:string
-
-}){
+}:any){
 
 return(
 
@@ -144,7 +241,7 @@ return(
 
 </p>
 
-<h2 className="text-3xl font-bold mt-4">
+<h2 className="text-5xl font-bold mt-4">
 
 {value}
 
@@ -160,15 +257,11 @@ function Item({
 
 label
 
-}:{
-
-label:string
-
-}){
+}:any){
 
 return(
 
-<div className="flex justify-between p-4 rounded-xl bg-slate-50">
+<div className="bg-slate-50 p-4 rounded-xl flex justify-between">
 
 <span>
 

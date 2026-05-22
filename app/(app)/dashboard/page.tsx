@@ -6,26 +6,27 @@ import Link from "next/link"
 
 import { redirect } from "next/navigation"
 
-export const dynamic=
-"force-dynamic"
+export const dynamic="force-dynamic"
 
-export default async function Page(){
+export default async function DashboardPage(){
 
 const session=
 await auth()
 
 if(!session?.user){
 
-redirect(
-"/login"
-)
+redirect("/login")
 
 }
 
-if(
+const role=
 
 (session.user as any)
-.role===
+?.role
+
+if(
+
+role===
 
 "SUPER_ADMIN"
 
@@ -62,7 +63,11 @@ return(
 
 <div className="p-10">
 
-User missing
+<h1 className="text-2xl font-semibold">
+
+User not found
+
+</h1>
 
 </div>
 
@@ -70,9 +75,37 @@ User missing
 
 }
 
-const leads=
+const [
 
-await prisma.lead.count({
+leads,
+customers,
+jobs
+
+]=await Promise.all([
+
+prisma.lead.count({
+
+where:{
+
+orgId:
+dbUser.orgId
+
+}
+
+}),
+
+prisma.customer.count({
+
+where:{
+
+orgId:
+dbUser.orgId
+
+}
+
+}),
+
+prisma.job.count({
 
 where:{
 
@@ -83,35 +116,44 @@ dbUser.orgId
 
 })
 
-const customers=
+])
 
-await prisma.customer.count({
+const subscriptionEnds=
 
-where:{
+dbUser.organization
+?.subscriptionEndsAt
 
-orgId:
-dbUser.orgId
+const expiringSoon=
 
-}
+subscriptionEnds
 
-})
+?
 
-const jobs=
+new Date(
+subscriptionEnds
+).getTime()
 
-await prisma.job.count({
+-
 
-where:{
+Date.now()
 
-orgId:
-dbUser.orgId
+<
 
-}
+1000*
+60*
+60*
+24*
+7
 
-})
+:
+
+false
 
 return(
 
 <div className="space-y-8">
+
+<div>
 
 <h1 className="text-6xl font-bold">
 
@@ -119,26 +161,53 @@ Dashboard
 
 </h1>
 
+<p className="text-slate-500 mt-2">
+
+Welcome back
+
+{
+
+dbUser.name
+
+}
+
+</p>
+
+</div>
+
 <div className="grid grid-cols-3 gap-6">
 
 <Card
+
 title="Leads"
+
 value={leads}
+
 />
 
 <Card
+
 title="Customers"
+
 value={customers}
+
 />
 
 <Card
+
 title="Jobs"
+
 value={jobs}
+
 />
 
 </div>
 
-<div className="bg-white border rounded-3xl p-10">
+<div className="bg-white rounded-3xl border p-10">
+
+<div className="flex justify-between items-start">
+
+<div>
 
 <h2 className="text-4xl font-bold">
 
@@ -152,18 +221,20 @@ Subscription
 
 Plan:
 
-<b>
+<span className="font-semibold ml-2">
 
 {
 
 dbUser.organization
-?.plan ||
+?.plan
+
+||
 
 "Free"
 
 }
 
-</b>
+</span>
 
 </p>
 
@@ -171,24 +242,51 @@ dbUser.organization
 
 Expires:
 
-<b>
+<span className="font-semibold ml-2">
 
 {
 
-dbUser.organization
-?.subscriptionEndsAt
+subscriptionEnds
 
-?.toDateString()
+?
 
-||
+subscriptionEnds
+.toDateString()
+
+:
 
 "No subscription"
 
 }
 
-</b>
+</span>
 
 </p>
+
+</div>
+
+{
+
+expiringSoon && (
+
+<div className="
+mt-6
+inline-flex
+px-4
+py-2
+rounded-xl
+bg-yellow-100
+text-yellow-700
+font-medium
+">
+
+Subscription expiring soon
+
+</div>
+
+)
+
+}
 
 </div>
 
@@ -197,8 +295,6 @@ dbUser.organization
 href="/billing"
 
 className="
-inline-block
-mt-8
 bg-black
 text-white
 px-8
@@ -216,6 +312,40 @@ Update Subscription
 
 </div>
 
+<div className="bg-white rounded-3xl border p-10">
+
+<h2 className="text-2xl font-bold mb-6">
+
+Recent Activity
+
+</h2>
+
+<div className="space-y-4">
+
+<Activity
+
+text="No recent leads"
+
+/>
+
+<Activity
+
+text="No recent customers"
+
+/>
+
+<Activity
+
+text="No recent jobs"
+
+/>
+
+</div>
+
+</div>
+
+</div>
+
 )
 
 }
@@ -225,23 +355,63 @@ function Card({
 title,
 value
 
-}:any){
+}:{
+
+title:string
+value:number
+
+}){
 
 return(
 
-<div className="bg-white border rounded-3xl p-8">
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
 
-<p>
+<p className="text-slate-500">
 
 {title}
 
 </p>
 
-<h2 className="text-6xl font-bold mt-4">
+<h2 className="
+text-6xl
+font-bold
+mt-4
+">
 
 {value}
 
 </h2>
+
+</div>
+
+)
+
+}
+
+function Activity({
+
+text
+
+}:{
+
+text:string
+
+}){
+
+return(
+
+<div className="
+p-4
+rounded-2xl
+bg-slate-50
+">
+
+{text}
 
 </div>
 

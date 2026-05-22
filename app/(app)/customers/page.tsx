@@ -2,118 +2,327 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 
-export const dynamic = "force-dynamic"
+export const dynamic="force-dynamic"
 
-export default async function Page() {
+export default async function Page({
 
-  const session = await auth()
+searchParams
 
-  const orgId = (session?.user as any)?.orgId
+}:any){
 
-  if (!orgId) {
-    return <div>No organization found</div>
-  }
+const session=
+await auth()
 
-  const customers = await prisma.customer.findMany({
+const orgId=
 
-    where: {
-      orgId
-    },
+(session?.user as any)
+?.orgId
 
-    orderBy: {
-      createdAt: "desc"
-    }
+if(!orgId){
 
-  })
+return(
 
-  return (
+<div>
 
-    <div className="space-y-8">
+No organization
 
-      <div className="flex justify-between">
+</div>
 
-        <h1 className="text-5xl font-bold">
+)
 
-          Customers
+}
 
-        </h1>
+const q=
 
-        <Link
-          href="/customers/create"
-          className="bg-black text-white px-6 py-3 rounded-xl"
-        >
+searchParams.q || ""
 
-          Add Customer
+const customers=
 
-        </Link>
+await prisma.customer.findMany({
 
-      </div>
+where:{
 
-      <div className="bg-white border rounded-3xl overflow-hidden">
+orgId,
 
-        <table className="w-full">
+OR:[
 
-          <thead className="bg-slate-100">
+{
 
-            <tr>
+firstName:{
 
-              <th className="p-5 text-left">
-                Name
-              </th>
+contains:q,
 
-              <th>
-                Email
-              </th>
+mode:"insensitive"
 
-              <th>
-                Phone
-              </th>
+}
 
-            </tr>
+},
 
-          </thead>
+{
 
-          <tbody>
+email:{
 
-            {customers.map(customer => (
+contains:q,
 
-              <tr
-                key={customer.id}
-                className="border-t"
-              >
+mode:"insensitive"
 
-                <td className="p-5">
+}
 
-                  {customer.firstName}
-                  {" "}
-                  {customer.lastName}
+}
 
-                </td>
+]
 
-                <td>
+},
 
-                  {customer.email}
+orderBy:{
 
-                </td>
+createdAt:"desc"
 
-                <td>
+}
 
-                  {customer.phone}
+})
 
-                </td>
+return(
 
-              </tr>
+<div className="space-y-8">
 
-            ))}
+<div className="
+flex
+justify-between
+items-center
+">
 
-          </tbody>
+<div>
 
-        </table>
+<h1 className="text-5xl font-bold">
 
-      </div>
+Customers
 
-    </div>
+</h1>
 
-  )
+<p className="
+text-slate-500
+mt-2
+">
+
+Customer management
+
+</p>
+
+</div>
+
+<Link
+
+href="/customers/create"
+
+className="
+bg-black
+text-white
+px-6
+py-3
+rounded-xl
+"
+
+>
+
+Add Customer
+
+</Link>
+
+</div>
+
+<div className="
+bg-white
+border
+rounded-3xl
+overflow-hidden
+">
+
+<div className="
+p-5
+border-b
+">
+
+<form>
+
+<input
+
+name="q"
+
+defaultValue={q}
+
+placeholder="Search customers"
+
+className="
+w-[360px]
+h-11
+border
+rounded-xl
+px-4
+"
+
+/>
+
+</form>
+
+</div>
+
+<div className="overflow-x-auto">
+
+<table className="
+w-full
+min-w-[900px]
+">
+
+<thead className="
+bg-slate-50
+">
+
+<tr>
+
+<th className="
+p-5
+text-left
+">
+
+Name
+
+</th>
+
+<th>
+
+Email
+
+</th>
+
+<th>
+
+Phone
+
+</th>
+
+<th>
+
+Actions
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{
+
+customers.map(
+
+customer=>(
+
+<tr
+
+key={customer.id}
+
+className="
+border-t
+hover:bg-slate-50
+"
+
+>
+
+<td className="p-5">
+
+{
+
+customer.firstName
+
+}
+
+{
+
+customer.lastName
+
+}
+
+</td>
+
+<td>
+
+{customer.email}
+
+</td>
+
+<td>
+
+{customer.phone}
+
+</td>
+
+<td>
+
+<div className="flex gap-4">
+
+<Link
+
+href={`
+
+/customers/edit/${customer.id}
+
+`}
+
+className="
+text-blue-600
+"
+
+>
+
+Edit
+
+</Link>
+
+<button className="
+text-red-600
+">
+
+Delete
+
+</button>
+
+</div>
+
+</td>
+
+</tr>
+
+)
+
+)
+
+}
+
+</tbody>
+
+</table>
+
+</div>
+
+<div className="
+border-t
+p-5
+text-sm
+text-slate-500
+">
+
+{customers.length}
+
+customers
+
+</div>
+
+</div>
+
+</div>
+
+)
 
 }

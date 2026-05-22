@@ -4,6 +4,8 @@ import { signIn } from "next-auth/react"
 
 import { useState } from "react"
 
+import Link from "next/link"
+
 import {
 
 Shield,
@@ -109,9 +111,7 @@ return(
 
 <div className="
 min-h-screen
-
 grid
-
 lg:grid-cols-2
 ">
 
@@ -134,7 +134,6 @@ to-black
 
 <div className="
 absolute
-
 inset-0
 
 bg-[radial-gradient(circle_at_top_right,#1e293b,transparent_45%)]
@@ -142,7 +141,6 @@ bg-[radial-gradient(circle_at_top_right,#1e293b,transparent_45%)]
 
 <div className="
 relative
-
 z-10
 
 flex
@@ -154,8 +152,6 @@ p-20
 text-white
 ">
 
-<div>
-
 <div className="
 flex
 items-center
@@ -163,14 +159,8 @@ gap-4
 ">
 
 <img
-
 src="/logo.png"
-
-className="
-w-12
-h-12
-"
-
+className="w-12 h-12"
 />
 
 <div>
@@ -180,7 +170,7 @@ text-2xl
 font-semibold
 ">
 
-Koniqtech
+koniqtech
 
 </h1>
 
@@ -191,8 +181,6 @@ text-slate-400
 AI CRM Platform
 
 </p>
-
-</div>
 
 </div>
 
@@ -212,13 +200,9 @@ py-2
 rounded-full
 
 bg-white/10
-
-backdrop-blur
 ">
 
-<Sparkles
-size={16}
-/>
+<Sparkles size={16}/>
 
 AI Powered CRM
 
@@ -229,14 +213,13 @@ text-7xl
 
 font-bold
 
-leading-tight
-
 mt-8
+leading-tight
 ">
 
 Grow your
 
-home service
+service
 
 business
 
@@ -252,10 +235,11 @@ mt-8
 max-w-xl
 ">
 
-Manage leads, customers,
-dispatch, billing, AI,
-automation and field teams
-from one platform.
+Manage leads,
+customers,
+billing,
+dispatch,
+AI and field teams.
 
 </p>
 
@@ -283,15 +267,6 @@ label="Secure Auth"
 />
 
 </div>
-
-</div>
-
-<div className="
-text-slate-500
-text-sm
-">
-
-© 2026 koniqtech CRM
 
 </div>
 
@@ -325,13 +300,9 @@ border
 rounded-[32px]
 
 p-12
-
-shadow-sm
 "
 
 >
-
-<div>
 
 <p className="
 text-sm
@@ -347,8 +318,6 @@ text-5xl
 
 font-semibold
 
-tracking-tight
-
 mt-2
 ">
 
@@ -359,14 +328,12 @@ Sign In
 <p className="
 text-slate-500
 
-mt-4
+mt-3
 ">
 
 Access your CRM workspace
 
 </p>
-
-</div>
 
 <div className="
 space-y-5
@@ -386,7 +353,7 @@ e.target.value
 
 }
 
-placeholder="Email address"
+placeholder="Email"
 
 className="
 w-full
@@ -400,10 +367,6 @@ rounded-2xl
 border
 
 bg-slate-50
-
-outline-none
-
-focus:bg-white
 "
 
 />
@@ -436,13 +399,48 @@ rounded-2xl
 border
 
 bg-slate-50
-
-outline-none
-
-focus:bg-white
 "
 
 />
+
+<div className="
+flex
+justify-between
+
+text-sm
+">
+
+<Link
+
+href="/register"
+
+className="
+text-slate-500
+hover:text-black
+"
+
+>
+
+Create account
+
+</Link>
+
+<Link
+
+href="/forgot-password"
+
+className="
+text-slate-500
+hover:text-black
+"
+
+>
+
+Forgot password?
+
+</Link>
+
+</div>
 
 <button
 
@@ -483,28 +481,13 @@ loading
 
 Continue
 
-<ArrowRight
-size={16}
-/>
+<ArrowRight size={16}/>
 
 </>
 
 }
 
 </button>
-
-</div>
-
-<div className="
-mt-8
-
-text-sm
-
-text-slate-500
-text-center
-">
-
-Powered by Koniq SaaS CRM
 
 </div>
 
@@ -538,8 +521,6 @@ py-3
 rounded-2xl
 
 bg-white/10
-
-backdrop-blur
 ">
 
 {icon}

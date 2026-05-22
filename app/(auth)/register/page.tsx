@@ -4,6 +4,15 @@ import { useState } from "react"
 
 import Link from "next/link"
 
+import {
+
+ArrowRight,
+Sparkles
+
+}
+
+from "lucide-react"
+
 export default function RegisterPage(){
 
 const [name,setName]=useState("")
@@ -14,11 +23,14 @@ const [email,setEmail]=useState("")
 
 const [password,setPassword]=useState("")
 
-const [crmType,setCrmType]=useState("roofing")
+const [crmType,setCrmType]=
+useState("roofing")
 
-const [otp,setOtp]=useState("")
+const [otp,setOtp]=
+useState("")
 
-const [step,setStep]=useState(1)
+const [step,setStep]=
+useState(1)
 
 async function sendOtp(){
 
@@ -54,11 +66,7 @@ if(res.ok){
 
 setStep(2)
 
-alert(
-
-"OTP sent"
-
-)
+alert("OTP sent")
 
 }
 
@@ -87,15 +95,10 @@ headers:{
 body:JSON.stringify({
 
 name,
-
 company,
-
 email,
-
 password,
-
 otp,
-
 crmType
 
 })
@@ -105,15 +108,12 @@ crmType
 )
 
 const data=
-
 await res.json()
 
 if(!res.ok){
 
 alert(
-
 data.error
-
 )
 
 return
@@ -128,21 +128,73 @@ window.location.href=
 
 return(
 
-<div className="min-h-screen grid lg:grid-cols-2">
+<div className="
+min-h-screen
 
-<div className="bg-black text-white flex items-center px-24">
+grid
+
+lg:grid-cols-2
+">
+
+<div className="
+hidden
+lg:flex
+
+bg-black
+
+text-white
+
+items-center
+
+px-24
+">
 
 <div>
 
-<h1 className="text-7xl font-bold">
+<div className="
+inline-flex
 
-KONIQ CRM
+gap-2
+
+px-4
+py-2
+
+rounded-full
+
+bg-white/10
+">
+
+<Sparkles size={16}/>
+
+CRM Platform
+
+</div>
+
+<h1 className="
+text-7xl
+
+font-bold
+
+mt-8
+">
+
+Create your
+
+workspace
 
 </h1>
 
-<p className="text-2xl text-slate-300 mt-8">
+<p className="
+text-slate-300
 
-Choose your industry CRM
+text-xl
+
+mt-8
+">
+
+Launch your CRM
+with subscriptions,
+AI and automation.
 
 </p>
 
@@ -150,19 +202,71 @@ Choose your industry CRM
 
 </div>
 
-<div className="bg-slate-100 flex items-center justify-center">
+<div className="
+bg-slate-50
 
-<div className="bg-white rounded-3xl p-12 shadow-xl w-[560px]">
+flex
+items-center
+justify-center
 
-<h2 className="text-3xl font-bold mb-8">
+p-10
+">
 
-Create Account
+<div className="
+w-full
 
-</h2>
+max-w-[560px]
+
+bg-white
+
+border
+
+rounded-[32px]
+
+p-12
+">
+
+<h1 className="
+text-4xl
+
+font-semibold
+">
+
+Create account
+
+</h1>
+
+<p className="
+text-slate-500
+
+mt-3
+">
+
+Start your CRM workspace
+
+</p>
+
+<div className="
+space-y-4
+
+mt-8
+">
 
 <input
 
-className="w-full border rounded-2xl p-5 mb-4"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 placeholder="Name"
 
@@ -171,9 +275,7 @@ value={name}
 onChange={e=>
 
 setName(
-
 e.target.value
-
 )
 
 }
@@ -182,7 +284,19 @@ e.target.value
 
 <input
 
-className="w-full border rounded-2xl p-5 mb-4"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 placeholder="Company"
 
@@ -191,9 +305,7 @@ value={company}
 onChange={e=>
 
 setCompany(
-
 e.target.value
-
 )
 
 }
@@ -207,14 +319,24 @@ value={crmType}
 onChange={e=>
 
 setCrmType(
-
 e.target.value
-
 )
 
 }
 
-className="w-full border rounded-2xl p-5 mb-4"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 >
 
@@ -246,7 +368,19 @@ Landscaping CRM ($199)
 
 <input
 
-className="w-full border rounded-2xl p-5 mb-4"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 placeholder="Email"
 
@@ -255,9 +389,7 @@ value={email}
 onChange={e=>
 
 setEmail(
-
 e.target.value
-
 )
 
 }
@@ -268,7 +400,19 @@ e.target.value
 
 type="password"
 
-className="w-full border rounded-2xl p-5 mb-6"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 placeholder="Password"
 
@@ -277,9 +421,7 @@ value={password}
 onChange={e=>
 
 setPassword(
-
 e.target.value
-
 )
 
 }
@@ -296,7 +438,17 @@ step===1
 
 onClick={sendOtp}
 
-className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+className="
+w-full
+
+h-14
+
+bg-black
+
+text-white
+
+rounded-2xl
+"
 
 >
 
@@ -310,7 +462,19 @@ Send OTP
 
 <input
 
-className="w-full border rounded-2xl p-5 mb-4"
+className="
+w-full
+
+h-14
+
+px-5
+
+rounded-2xl
+
+border
+
+bg-slate-50
+"
 
 placeholder="OTP"
 
@@ -319,9 +483,7 @@ value={otp}
 onChange={e=>
 
 setOtp(
-
 e.target.value
-
 )
 
 }
@@ -332,11 +494,28 @@ e.target.value
 
 onClick={register}
 
-className="w-full bg-blue-600 text-white p-5 rounded-2xl"
+className="
+w-full
+
+h-14
+
+bg-black
+
+text-white
+
+rounded-2xl
+
+flex
+items-center
+justify-center
+gap-2
+"
 
 >
 
-Continue To Payment
+Continue
+
+<ArrowRight size={16}/>
 
 </button>
 
@@ -344,13 +523,27 @@ Continue To Payment
 
 }
 
-<div className="text-center mt-6">
+</div>
+
+<div className="
+text-center
+
+mt-8
+
+text-sm
+">
+
+Already have account?
 
 <Link
 
 href="/login"
 
-className="text-blue-600"
+className="
+ml-2
+
+font-medium
+"
 
 >
 

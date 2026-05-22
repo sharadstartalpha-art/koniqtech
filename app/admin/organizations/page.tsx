@@ -3,145 +3,327 @@ import Link from "next/link"
 
 export const dynamic="force-dynamic"
 
-export default async function Page({
+async function extendSubscription(
+formData:FormData
+){
 
-searchParams
+"use server"
 
-}:any){
+const orgId=
+String(
+formData.get("orgId")
+)
 
-const q=
-
-searchParams?.q||
-
-""
-
-const page=
-
+const months=
 Number(
+formData.get("months")
+)
 
-searchParams?.page||
+const org=
+await prisma.organization.findUnique({
 
-1
+where:{
+id:orgId
+}
+
+})
+
+if(!org)return
+
+const current=
+
+org.subscriptionEndsAt &&
+org.subscriptionEndsAt>
+new Date()
+
+?org.subscriptionEndsAt
+
+:new Date()
+
+const expires=
+new Date(current)
+
+expires.setMonth(
+
+expires.getMonth()+months
 
 )
 
-const limit=10
-
-const skip=
-
-(page-1)*limit
-
-const organizations=
-
-await prisma.organization.findMany({
+await prisma.organization.update({
 
 where:{
-
-OR:[
-
-{
-
-name:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
+id:orgId
 },
 
-{
+data:{
 
-email:{
+subscriptionEndsAt:
+expires,
 
-contains:q,
-
-mode:"insensitive"
-
-}
+active:true
 
 }
 
-]
+})
 
+}
+
+export default async function Page({
+
+params
+
+}:any){
+
+const org=
+await prisma.organization.findUnique({
+
+where:{
+id:params.id
 },
 
 include:{
 
 users:true
 
-},
-
-skip,
-
-take:limit,
-
-orderBy:{
-
-createdAt:"desc"
-
 }
 
 })
 
-const total=
-
-await prisma.organization.count({
-
-where:{
-
-name:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-}
-
-})
-
-const pages=
-
-Math.ceil(
-
-total/limit
-
-)
+if(!org){
 
 return(
 
-<div className="space-y-8">
+<div className="p-10">
+
+Organization not found
+
+</div>
+
+)
+
+}
+
+return(
+
+<div className="max-w-7xl mx-auto p-10 space-y-8">
 
 <div className="flex justify-between">
 
-<h1 className="text-4xl font-bold">
+<div>
 
-Organizations
+<h1 className="text-5xl font-bold">
+
+{org.name}
 
 </h1>
 
-<form>
+<p className="text-slate-500 mt-2">
+
+{org.email}
+
+</p>
+
+</div>
+
+<div className="flex gap-4">
+
+<Link
+
+href={`/admin/organizations/${org.id}/users`}
+
+className="border rounded-xl px-6 py-3"
+
+>
+
+Users
+
+</Link>
+
+<Link
+
+href={`/admin/organizations/${org.id}/billing`}
+
+className="border rounded-xl px-6 py-3"
+
+>
+
+Billing
+
+</Link>
+
+</div>
+
+</div>
+
+<div className="grid grid-cols-4 gap-6">
+
+<div className="border rounded-3xl bg-white p-8">
+
+<p className="text-slate-500">
+
+CRM
+
+</p>
+
+<h2 className="text-2xl font-bold mt-2">
+
+{org.crmType}
+
+</h2>
+
+</div>
+
+<div className="border rounded-3xl bg-white p-8">
+
+<p className="text-slate-500">
+
+Plan
+
+</p>
+
+<h2 className="text-2xl font-bold mt-2">
+
+{org.plan}
+
+</h2>
+
+</div>
+
+<div className="border rounded-3xl bg-white p-8">
+
+<p className="text-slate-500">
+
+Users
+
+</p>
+
+<h2 className="text-2xl font-bold mt-2">
+
+{org.users.length}
+
+</h2>
+
+</div>
+
+<div className="border rounded-3xl bg-white p-8">
+
+<p className="text-slate-500">
+
+Expires
+
+</p>
+
+<h2 className="font-bold mt-2">
+
+{
+
+org.subscriptionEndsAt
+
+?.toDateString()
+
+||
+
+"No subscription"
+
+}
+
+</h2>
+
+</div>
+
+</div>
+
+<div className="bg-white border rounded-3xl p-8">
+
+<h2 className="text-3xl font-bold mb-8">
+
+Grant Subscription Access
+
+</h2>
+
+<form
+
+action={extendSubscription}
+
+className="flex gap-4"
+
+>
 
 <input
 
-name="q"
+hidden
 
-defaultValue={q}
+name="orgId"
 
-placeholder="Search organization"
-
-className="border p-4 rounded-xl w-80"
+value={org.id}
 
 />
+
+<select
+
+name="months"
+
+className="border rounded-xl p-4"
+
+>
+
+<option value="1">
+
+1 month
+
+</option>
+
+<option value="3">
+
+3 months
+
+</option>
+
+<option value="6">
+
+6 months
+
+</option>
+
+<option value="12">
+
+12 months
+
+</option>
+
+<option value="24">
+
+24 months
+
+</option>
+
+</select>
+
+<button
+
+className="bg-black text-white rounded-xl px-8"
+
+>
+
+Grant Access
+
+</button>
 
 </form>
 
 </div>
 
-<div className="bg-white rounded-3xl border overflow-hidden">
+<div className="bg-white border rounded-3xl overflow-hidden">
+
+<div className="p-8 border-b">
+
+<h2 className="text-3xl font-bold">
+
+Organization Users
+
+</h2>
+
+</div>
 
 <table className="w-full">
 
@@ -149,39 +331,21 @@ className="border p-4 rounded-xl w-80"
 
 <tr>
 
-<th className="p-5 text-left">
+<th className="text-left p-5">
 
-Company
-
-</th>
-
-<th>
-
-CRM
+Name
 
 </th>
 
 <th>
 
-Plan
+Email
 
 </th>
 
 <th>
 
-Users
-
-</th>
-
-<th>
-
-Expires
-
-</th>
-
-<th>
-
-Action
+Role
 
 </th>
 
@@ -193,11 +357,13 @@ Action
 
 {
 
-organizations.map(org=>(
+org.users.map(
+
+(user)=>(
 
 <tr
 
-key={org.id}
+key={user.id}
 
 className="border-t"
 
@@ -205,97 +371,33 @@ className="border-t"
 
 <td className="p-5">
 
-{org.name}
+{user.name}
 
 </td>
 
 <td>
 
-{org.crmType}
+{user.email}
 
 </td>
 
 <td>
 
-{org.plan}
-
-</td>
-
-<td>
-
-{org.users.length}
-
-</td>
-
-<td>
-
-{
-
-org.subscriptionEndsAt?.toDateString()
-
-}
-
-</td>
-
-<td>
-
-<Link
-
-href={`/admin/organizations/${org.id}`}
-
-className="text-blue-600"
-
->
-
-Open
-
-</Link>
+{user.role}
 
 </td>
 
 </tr>
 
-))
+)
+
+)
 
 }
 
 </tbody>
 
 </table>
-
-</div>
-
-<div className="flex gap-3">
-
-{
-
-Array.from({
-
-length:pages
-
-}).map((_,i)=>(
-
-<Link
-
-key={i}
-
-href={
-
-`?page=${i+1}&q=${q}`
-
-}
-
-className="px-4 py-2 border rounded"
-
->
-
-{i+1}
-
-</Link>
-
-))
-
-}
 
 </div>
 

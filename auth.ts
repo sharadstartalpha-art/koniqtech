@@ -12,6 +12,9 @@ signOut
 
 }=NextAuth({
 
+secret:
+process.env.AUTH_SECRET,
+
 session:{
 strategy:"jwt"
 },
@@ -20,19 +23,11 @@ providers:[
 
 Credentials({
 
-name:"credentials",
-
 credentials:{
 
-email:{
-label:"Email",
-type:"email"
-},
+email:{},
 
-password:{
-label:"Password",
-type:"password"
-}
+password:{}
 
 },
 
@@ -51,22 +46,21 @@ const user=
 await prisma.user.findUnique({
 
 where:{
-email:String(
+email:
+String(
 credentials.email
 )
 }
 
 })
 
-if(
-!user
-){
+if(!user){
 
 return null
 
 }
 
-const valid=
+const ok=
 await bcrypt.compare(
 
 String(
@@ -77,7 +71,7 @@ user.passwordHash
 
 )
 
-if(!valid){
+if(!ok){
 
 return null
 
@@ -91,13 +85,13 @@ name:user.name,
 
 email:user.email,
 
-image:user.avatar,
-
 orgId:user.orgId,
 
-role:user.role
+role:user.role,
 
-}
+image:user.avatar
+
+} as any
 
 }
 
@@ -105,15 +99,14 @@ role:user.role
 
 ],
 
-pages:{
-
-signIn:"/login"
-
-},
-
 callbacks:{
 
-async jwt({token,user}){
+async jwt({
+
+token,
+user
+
+}){
 
 if(user){
 
@@ -158,7 +151,10 @@ return session
 
 },
 
-secret:
-process.env.AUTH_SECRET
+pages:{
+
+signIn:"/login"
+
+}
 
 })

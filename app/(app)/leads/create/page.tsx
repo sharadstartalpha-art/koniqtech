@@ -1,154 +1,90 @@
 import prisma from "@/shared/lib/prisma"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 
-async function createLead(
-formData:FormData
-){
+async function createLead(formData: FormData) {
 
-"use server"
+  "use server"
 
-const session=
-await getServerSession()
+  const session = await auth()
 
-const user=
-session?.user
+  const orgId = (session?.user as any)?.orgId
 
-if(!user)return
+  if (!orgId) return
 
-const dbUser=
-await prisma.user.findUnique({
+  await prisma.lead.create({
 
-where:{
-email:user.email!
-}
+    data: {
 
-})
+      orgId,
 
-if(!dbUser)return
+      firstName:
+        String(formData.get("firstName")),
 
-await prisma.lead.create({
+      lastName:
+        String(formData.get("lastName")),
 
-data:{
+      email:
+        String(formData.get("email")),
 
-orgId:dbUser.orgId,
+      phone:
+        String(formData.get("phone")),
 
-firstName:
-String(
-formData.get(
-"firstName"
-)
-),
+      status: "new"
 
-lastName:
-String(
-formData.get(
-"lastName"
-)
-),
+    }
 
-email:
-String(
-formData.get(
-"email"
-)
-),
+  })
 
-phone:
-String(
-formData.get(
-"phone"
-)
-),
-
-status:"new",
-
-source:"website"
+  redirect("/leads")
 
 }
 
-})
+export default function Page() {
 
-redirect("/leads")
+  return (
 
-}
+    <form
+      action={createLead}
+      className="space-y-4 max-w-xl"
+    >
 
-export default function Page(){
+      <h1 className="text-5xl font-bold">
+        Create Lead
+      </h1>
 
-return(
+      <input
+        name="firstName"
+        placeholder="First name"
+        className="border p-4 w-full rounded-xl"
+      />
 
-<form
-action={createLead}
-className="
-max-w-3xl
-mx-auto
-space-y-4
-bg-white
-border
-p-8
-rounded-3xl
-"
->
+      <input
+        name="lastName"
+        placeholder="Last name"
+        className="border p-4 w-full rounded-xl"
+      />
 
-<input
-name="firstName"
-placeholder="First name"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+      <input
+        name="email"
+        placeholder="Email"
+        className="border p-4 w-full rounded-xl"
+      />
 
-<input
-name="lastName"
-placeholder="Last name"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+      <input
+        name="phone"
+        placeholder="Phone"
+        className="border p-4 w-full rounded-xl"
+      />
 
-<input
-name="email"
-placeholder="Email"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+      <button className="bg-black text-white px-8 py-4 rounded-xl">
 
-<input
-name="phone"
-placeholder="Phone"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+        Save
 
-<button
-className="
-bg-black
-text-white
-p-4
-rounded-xl
-"
->
+      </button>
 
-Create Lead
+    </form>
 
-</button>
-
-</form>
-
-)
+  )
 
 }

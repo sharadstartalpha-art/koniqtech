@@ -1,174 +1,97 @@
 import prisma from "@/shared/lib/prisma"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import Link from "next/link"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
-export default async function Page(){
+export default async function Page() {
 
-const session=
-await getServerSession()
+  const session = await auth()
 
-if(!session?.user?.email){
+  const orgId = (session?.user as any)?.orgId
 
-return null
+  if (!orgId) {
+    return <div className="p-10">No organization found</div>
+  }
 
-}
+  const leads = await prisma.lead.findMany({
+    where: {
+      orgId
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  })
 
-const dbUser=
-await prisma.user.findUnique({
+  return (
+    <div className="space-y-8">
 
-where:{
-email:session.user.email
-}
+      <div className="flex justify-between">
 
-})
+        <h1 className="text-5xl font-bold">
+          Leads
+        </h1>
 
-if(!dbUser){
+        <Link
+          href="/leads/create"
+          className="bg-black text-white px-6 py-3 rounded-xl"
+        >
+          New Lead
+        </Link>
 
-return null
+      </div>
 
-}
+      <div className="bg-white rounded-3xl border overflow-hidden">
 
-const leads=
-await prisma.lead.findMany({
+        <table className="w-full">
 
-where:{
-orgId:dbUser.orgId
-},
+          <thead className="bg-slate-100">
 
-orderBy:{
-createdAt:"desc"
-}
+            <tr>
+              <th className="p-5 text-left">Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Status</th>
+            </tr>
 
-})
+          </thead>
 
-return(
+          <tbody>
 
-<div className="space-y-8">
+            {leads.map(lead => (
 
-<div className="flex justify-between">
+              <tr
+                key={lead.id}
+                className="border-t"
+              >
 
-<h1 className="text-5xl font-bold">
+                <td className="p-5">
+                  {lead.firstName} {lead.lastName}
+                </td>
 
-Leads
+                <td>
+                  {lead.email}
+                </td>
 
-</h1>
+                <td>
+                  {lead.phone}
+                </td>
 
-<Link
+                <td>
+                  {lead.status}
+                </td>
 
-href="/leads/create"
+              </tr>
 
-className="
-bg-black
-text-white
-px-6
-py-3
-rounded-xl
-"
+            ))}
 
->
+          </tbody>
 
-Create Lead
+        </table>
 
-</Link>
+      </div>
 
-</div>
-
-<div className="
-bg-white
-border
-rounded-3xl
-overflow-hidden
-">
-
-<table className="w-full">
-
-<thead>
-
-<tr className="bg-slate-100">
-
-<th className="p-5">
-
-Name
-
-</th>
-
-<th>
-
-Email
-
-</th>
-
-<th>
-
-Phone
-
-</th>
-
-<th>
-
-Status
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{
-
-leads.map(item=>(
-
-<tr
-key={item.id}
-className="border-t"
->
-
-<td className="p-5">
-
-{
-
-item.firstName
-
-}
-
-</td>
-
-<td>
-
-{item.email}
-
-</td>
-
-<td>
-
-{item.phone}
-
-</td>
-
-<td>
-
-{item.status}
-
-</td>
-
-</tr>
-
-))
-
-}
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-)
+    </div>
+  )
 
 }

@@ -1,225 +1,119 @@
 import prisma from "@/shared/lib/prisma"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import Link from "next/link"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
-export default async function Page({
+export default async function Page() {
 
-searchParams
+  const session = await auth()
 
-}:any){
+  const orgId = (session?.user as any)?.orgId
 
-const page=
-Number(
-searchParams?.page||1
-)
+  if (!orgId) {
+    return <div>No organization found</div>
+  }
 
-const limit=10
+  const customers = await prisma.customer.findMany({
 
-const skip=
-(page-1)*limit
+    where: {
+      orgId
+    },
 
-const session=
-await getServerSession()
+    orderBy: {
+      createdAt: "desc"
+    }
 
-if(!session?.user?.email){
+  })
 
-return null
+  return (
 
-}
+    <div className="space-y-8">
 
-const dbUser=
-await prisma.user.findUnique({
+      <div className="flex justify-between">
 
-where:{
-email:session.user.email
-}
+        <h1 className="text-5xl font-bold">
 
-})
+          Customers
 
-if(!dbUser){
+        </h1>
 
-return null
+        <Link
+          href="/customers/create"
+          className="bg-black text-white px-6 py-3 rounded-xl"
+        >
 
-}
+          Add Customer
 
-const customers=
-await prisma.customer.findMany({
+        </Link>
 
-where:{
-orgId:dbUser.orgId
-},
+      </div>
 
-skip,
+      <div className="bg-white border rounded-3xl overflow-hidden">
 
-take:limit,
+        <table className="w-full">
 
-orderBy:{
-createdAt:"desc"
-}
+          <thead className="bg-slate-100">
 
-})
+            <tr>
 
-const total=
-await prisma.customer.count({
+              <th className="p-5 text-left">
+                Name
+              </th>
 
-where:{
-orgId:dbUser.orgId
-}
+              <th>
+                Email
+              </th>
 
-})
+              <th>
+                Phone
+              </th>
 
-const pages=
-Math.ceil(
-total/limit
-)
+            </tr>
 
-return(
+          </thead>
 
-<div className="space-y-8">
+          <tbody>
 
-<div className="flex justify-between">
+            {customers.map(customer => (
 
-<h1 className="text-5xl font-bold">
+              <tr
+                key={customer.id}
+                className="border-t"
+              >
 
-Customers
+                <td className="p-5">
 
-</h1>
+                  {customer.firstName}
+                  {" "}
+                  {customer.lastName}
 
-<Link
+                </td>
 
-href="/customers/create"
+                <td>
 
-className="
-bg-black
-text-white
-px-6
-py-3
-rounded-xl
-"
+                  {customer.email}
 
->
+                </td>
 
-Add Customer
+                <td>
 
-</Link>
+                  {customer.phone}
 
-</div>
+                </td>
 
-<div className="
-bg-white
-border
-rounded-3xl
-overflow-hidden
-">
+              </tr>
 
-<table className="w-full">
+            ))}
 
-<thead>
+          </tbody>
 
-<tr className="bg-slate-100">
+        </table>
 
-<th className="p-5">
+      </div>
 
-Name
+    </div>
 
-</th>
-
-<th>
-
-Phone
-
-</th>
-
-<th>
-
-Email
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{
-
-customers.map(c=>(
-
-<tr
-key={c.id}
-className="border-t"
->
-
-<td className="p-5">
-
-{c.firstName}
-
-</td>
-
-<td>
-
-{c.phone}
-
-</td>
-
-<td>
-
-{c.email}
-
-</td>
-
-</tr>
-
-))
-
-}
-
-</tbody>
-
-</table>
-
-</div>
-
-<div className="flex gap-2">
-
-{
-
-Array.from({
-
-length:pages
-
-}).map((_,i)=>(
-
-<Link
-
-key={i}
-
-href={`?page=${i+1}`}
-
-className="
-border
-px-4
-py-2
-rounded
-"
-
->
-
-{i+1}
-
-</Link>
-
-))
-
-}
-
-</div>
-
-</div>
-
-)
+  )
 
 }

@@ -1,172 +1,109 @@
 import prisma from "@/shared/lib/prisma"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 
 async function createCustomer(
-formData:FormData
-){
+  formData: FormData
+) {
 
-"use server"
+  "use server"
 
-const session=
-await getServerSession()
+  const session = await auth()
 
-const user=
-session?.user as any
+  const orgId =
+    (session?.user as any)?.orgId
 
-if(!user)return
+  if (!orgId) return
 
-await prisma.customer.create({
+  await prisma.customer.create({
 
-data:{
+    data: {
 
-orgId:user.orgId,
+      orgId,
 
-firstName:
-String(
-formData.get(
-"firstName"
-)
-),
+      firstName:
+        String(
+          formData.get(
+            "firstName"
+          )
+        ),
 
-lastName:
-String(
-formData.get(
-"lastName"
-)
-),
+      lastName:
+        String(
+          formData.get(
+            "lastName"
+          )
+        ),
 
-email:
-String(
-formData.get(
-"email"
-)
-),
+      email:
+        String(
+          formData.get(
+            "email"
+          )
+        ),
 
-phone:
-String(
-formData.get(
-"phone"
-)
-),
+      phone:
+        String(
+          formData.get(
+            "phone"
+          )
+        )
 
-address:
-String(
-formData.get(
-"address"
-)
-)
+    }
+
+  })
+
+  redirect("/customers")
 
 }
 
-})
+export default function Page() {
 
-redirect(
-"/customers"
-)
+  return (
 
-}
+    <form
+      action={createCustomer}
+      className="space-y-4 max-w-xl"
+    >
 
-export default function Page(){
+      <h1 className="text-5xl font-bold">
 
-return(
+        Create Customer
 
-<form
+      </h1>
 
-action={createCustomer}
+      <input
+        name="firstName"
+        placeholder="First name"
+        className="border p-4 w-full rounded-xl"
+      />
 
-className="
-max-w-3xl
-mx-auto
-space-y-4
-bg-white
-border
-p-8
-rounded-3xl
-"
+      <input
+        name="lastName"
+        placeholder="Last name"
+        className="border p-4 w-full rounded-xl"
+      />
 
->
+      <input
+        name="email"
+        placeholder="Email"
+        className="border p-4 w-full rounded-xl"
+      />
 
-<h1 className="
-text-4xl
-font-bold
-">
+      <input
+        name="phone"
+        placeholder="Phone"
+        className="border p-4 w-full rounded-xl"
+      />
 
-Create Customer
+      <button className="bg-black text-white px-8 py-4 rounded-xl">
 
-</h1>
+        Save
 
-<input
-name="firstName"
-placeholder="First name"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+      </button>
 
-<input
-name="lastName"
-placeholder="Last name"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
+    </form>
 
-<input
-name="email"
-placeholder="Email"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
-
-<input
-name="phone"
-placeholder="Phone"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
-
-<textarea
-name="address"
-placeholder="Address"
-className="
-w-full
-border
-p-4
-rounded-xl
-"
-/>
-
-<button
-className="
-bg-black
-text-white
-px-8
-py-4
-rounded-xl
-"
->
-
-Create
-
-</button>
-
-</form>
-
-)
+  )
 
 }

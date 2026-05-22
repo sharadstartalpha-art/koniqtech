@@ -70,7 +70,12 @@ if(!dbUser){
 
 return(
 
-<div>
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
 
 User not found
 
@@ -90,9 +95,7 @@ recentLeads,
 
 recentCustomers,
 
-recentJobs,
-
-subscription
+recentJobs
 
 ]=await Promise.all([
 
@@ -160,26 +163,14 @@ orderBy:{
 id:"desc"
 }
 
-}),
-
-prisma.subscription.findFirst({
-
-where:{
-orgId:dbUser.orgId
-},
-
-orderBy:{
-renewAt:"desc"
-}
-
 })
 
 ])
 
 const subscriptionEnds=
 
-subscription
-?.renewAt
+dbUser.organization
+?.subscriptionEndsAt
 
 const daysLeft=
 
@@ -223,6 +214,14 @@ Date.now()
 
 null
 
+const expired=
+
+daysLeft!==null
+
+&&
+
+daysLeft<0
+
 return(
 
 <div className="space-y-6">
@@ -249,9 +248,7 @@ Welcome back,
 
 {
 
-dbUser.name
-
-||
+dbUser.name ||
 
 "User"
 
@@ -263,9 +260,7 @@ dbUser.name
 
 <div className="
 grid
-
 md:grid-cols-3
-
 gap-4
 ">
 
@@ -309,11 +304,8 @@ icon={<Briefcase size={16}/>}
 
 <div className="
 bg-white
-
 border
-
 rounded-3xl
-
 p-8
 ">
 
@@ -351,7 +343,8 @@ ml-2
 
 {
 
-subscription?.plan
+dbUser.organization
+?.plan
 
 ||
 
@@ -398,7 +391,13 @@ subscriptionEnds
 
 {
 
-daysLeft && (
+daysLeft!==null
+
+&&
+
+!expired
+
+&& (
 
 <div className="
 mt-5
@@ -425,6 +424,36 @@ daysLeft
 }
 
 days remaining
+
+</div>
+
+)
+
+}
+
+{
+
+expired && (
+
+<div className="
+mt-5
+
+inline-flex
+
+px-3
+py-1
+
+rounded-full
+
+bg-red-50
+
+text-red-700
+
+text-sm
+font-medium
+">
+
+Subscription expired
 
 </div>
 
@@ -474,9 +503,7 @@ size={14}
 
 <div className="
 grid
-
 md:grid-cols-3
-
 gap-4
 ">
 
@@ -559,11 +586,8 @@ href={href}
 
 className="
 bg-white
-
 border
-
 rounded-3xl
-
 p-6
 
 hover:border-slate-300
@@ -594,9 +618,7 @@ text-slate-500
 
 <h2 className="
 text-5xl
-
 font-semibold
-
 mt-4
 ">
 
@@ -621,11 +643,8 @@ return(
 
 <div className="
 bg-white
-
 border
-
 rounded-3xl
-
 p-6
 ">
 

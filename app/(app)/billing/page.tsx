@@ -6,7 +6,7 @@ return(
 
 <h1 className="text-2xl">
 
-Billing
+Billing 
 
 </h1>
 

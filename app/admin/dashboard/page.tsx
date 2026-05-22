@@ -26,7 +26,7 @@ if(
 
 role!==
 
-"SUPER_ADMIN"
+"super_admin"
 
 ){
 

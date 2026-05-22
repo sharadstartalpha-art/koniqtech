@@ -1,7 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+
+import {
+useEffect,
+useRef,
+useState
+} from "react"
+
 import { usePathname } from "next/navigation"
 
 import {
@@ -17,6 +23,7 @@ Database,
 Bell,
 Settings,
 Search,
+ChevronDown,
 MoreHorizontal,
 LogOut
 
@@ -24,7 +31,7 @@ LogOut
 
 from "lucide-react"
 
-const menu=[
+const MENU=[
 
 ["Dashboard","/admin/dashboard",LayoutDashboard],
 
@@ -36,7 +43,7 @@ const menu=[
 
 ["Analytics","/admin/analytics",BarChart3],
 
-["AI","/admin/ai-analytics",Brain],
+["AI","/admin/ai",Brain],
 
 ["Audit","/admin/audit",Shield],
 
@@ -59,46 +66,104 @@ children:React.ReactNode
 }){
 
 const pathname=
-
 usePathname()
 
-const [
-
-open,
-
-setOpen
-
-]=
-
+const [open,setOpen]=
 useState(false)
+
+const ref=
+useRef<HTMLDivElement>(null)
+
+useEffect(()=>{
+
+function outside(
+e:any
+){
+
+if(
+
+ref.current &&
+
+!ref.current.contains(
+e.target
+)
+
+){
+
+setOpen(false)
+
+}
+
+}
+
+document.addEventListener(
+"mousedown",
+outside
+)
+
+return()=>{
+
+document.removeEventListener(
+"mousedown",
+outside
+)
+
+}
+
+},[])
 
 return(
 
-<div className="flex h-screen bg-[#fafafa] text-black overflow-hidden">
+<div className="
+h-screen
 
-{/* SIDEBAR */}
+flex
 
-<aside className="w-[250px] bg-white border-r flex flex-col shrink-0">
+bg-[#f8f8f8]
+">
 
-<div className="h-[84px] border-b flex items-center px-7">
+<aside className="
+w-[248px]
+
+bg-white
+
+border-r
+
+flex
+flex-col
+">
+
+<div className="
+h-24
+
+px-8
+
+border-b
+
+flex
+items-center
+gap-4
+">
 
 <img
-
 src="/logo.png"
-
-className="w-10 h-10 object-contain"
-
+className="w-10 h-10"
 />
 
-<div className="ml-4">
+<div>
 
-<h1 className="font-semibold text-[20px]">
+<h1 className="
+text-2xl
+font-semibold
+">
 
 koniqtech
 
 </h1>
 
-<p className="text-sm text-slate-500">
+<p className="
+text-slate-500
+">
 
 Super Admin
 
@@ -108,23 +173,22 @@ Super Admin
 
 </div>
 
-<div className="flex-1 overflow-auto p-3">
+<div className="
+flex-1
 
-<div className="space-y-1">
+overflow-auto
+
+px-3
+py-4
+
+space-y-1
+">
 
 {
 
-menu.map(
+MENU.map(
 
-([
-
-label,
-
-href,
-
-Icon
-
-]:any)=>(
+([label,href,Icon]:any)=>(
 
 <Link
 
@@ -134,12 +198,15 @@ href={href}
 
 className={`
 
+h-11
+px-4
+
+rounded-xl
+
 flex
 items-center
-gap-3
-px-4
-py-3
-rounded-xl
+gap-4
+
 transition
 
 ${
@@ -148,11 +215,11 @@ pathname===href
 
 ?
 
-"bg-[#f3f3f3]"
+"bg-slate-100"
 
 :
 
-"hover:bg-[#f5f5f5]"
+"hover:bg-slate-100"
 
 }
 
@@ -174,165 +241,48 @@ pathname===href
 
 </div>
 
-</div>
-
-<div className="border-t p-3 relative">
-
-<button
-
-onClick={()=>
-
-setOpen(
-
-!open
-
-)
-
-}
-
-className="
-
-w-full
-flex
-items-center
-justify-between
-p-3
-rounded-xl
-hover:bg-[#f5f5f5]
-
-"
-
->
-
-<div className="flex items-center gap-3">
-
-<div className="w-10 h-10 rounded-full bg-slate-200"/>
-
-<div className="text-left">
-
-<p className="text-sm font-medium">
-
-superadmin@koniqtech.com
-
-</p>
-
-<p className="text-xs text-slate-500">
-
-Super Admin
-
-</p>
-
-</div>
-
-</div>
-
-<MoreHorizontal size={18}/>
-
-</button>
-
-{
-
-open&&(
-
-<div className="
-
-absolute
-bottom-20
-left-3
-w-[220px]
-bg-white
-rounded-3xl
-border
-shadow-xl
-overflow-hidden
-z-50
-
-">
-
-<MenuItem
-label="Profile"
-/>
-
-<MenuItem
-label="Organizations"
-/>
-
-<MenuItem
-label="Settings"
-/>
-
-<button
-
-onClick={()=>{
-
-window.location.href=
-
-"/api/auth/logout"
-
-}}
-
-className="
-
-w-full
-flex
-items-center
-gap-3
-px-5
-py-4
-border-t
-hover:bg-[#f5f5f5]
-
-"
-
->
-
-<LogOut size={18}/>
-
-Logout
-
-</button>
-
-
-</div>
-
-)
-
-}
-
-</div>
+<SidebarFooter/>
 
 </aside>
 
-{/* MAIN */}
+<div className="
+flex-1
 
-<div className="flex-1 flex flex-col overflow-hidden">
+flex
+flex-col
+">
 
 <header className="
+h-24
 
-h-[84px]
 bg-white
+
 border-b
+
 px-8
+
 flex
 items-center
 justify-between
-
 ">
 
-<div className="relative">
+<div className="
+relative
+
+w-[680px]
+">
 
 <Search
 
 size={18}
 
 className="
-
 absolute
-left-5
-top-1/2
--translate-y-1/2
-text-slate-400
 
+left-5
+top-3.5
+
+text-slate-400
 "
 
 />
@@ -342,32 +292,228 @@ text-slate-400
 placeholder="Search..."
 
 className="
+w-full
 
-w-[680px]
-h-[50px]
-border
+h-11
+
+pl-12
+
 rounded-2xl
-pl-14
-outline-none
-bg-white
 
+border
+
+bg-slate-50
 "
 
 />
 
 </div>
 
-<img
+<div
 
-src="/logo.png"
+ref={ref}
 
-className="w-10 h-10"
+className="
+relative
+"
 
+>
+
+<button
+
+onClick={()=>
+setOpen(
+!open
+)
+}
+
+className="
+flex
+items-center
+gap-3
+
+px-4
+py-2
+
+rounded-2xl
+
+hover:bg-slate-100
+"
+
+>
+
+<div className="
+w-10
+h-10
+
+rounded-full
+
+bg-black
+
+text-white
+
+flex
+items-center
+justify-center
+">
+
+S
+
+</div>
+
+<div className="
+text-left
+">
+
+<p className="
+text-sm
+font-medium
+">
+
+Super Admin
+
+</p>
+
+<p className="
+text-xs
+text-slate-500
+">
+
+superadmin@koniqtech.com
+
+</p>
+
+</div>
+
+<ChevronDown
+size={16}
 />
+
+</button>
+
+{
+
+open && (
+
+<div className="
+absolute
+
+right-0
+top-16
+
+w-[250px]
+
+bg-white
+
+border
+
+rounded-3xl
+
+shadow-xl
+
+overflow-hidden
+
+z-50
+">
+
+<div className="
+p-5
+border-b
+">
+
+<p className="
+font-semibold
+">
+
+Super Admin
+
+</p>
+
+<p className="
+text-sm
+text-slate-500
+">
+
+superadmin@koniqtech.com
+
+</p>
+
+</div>
+
+<Link
+
+href="/admin/settings"
+
+className="
+p-4
+
+flex
+items-center
+gap-3
+
+hover:bg-slate-50
+"
+
+>
+
+<Settings
+size={16}
+/>
+
+Settings
+
+</Link>
+
+<button
+
+onClick={()=>{
+
+window.location.href=
+"/login"
+
+}}
+
+className="
+w-full
+
+p-4
+
+flex
+items-center
+gap-3
+
+text-red-600
+
+hover:bg-red-50
+"
+
+>
+
+<LogOut
+size={16}
+/>
+
+Logout
+
+</button>
+
+</div>
+
+)
+
+}
+
+</div>
 
 </header>
 
-<main className="flex-1 overflow-auto p-8 bg-[#fafafa]">
+<main className="
+flex-1
+
+overflow-auto
+
+p-8
+">
 
 {children}
 
@@ -381,35 +527,167 @@ className="w-10 h-10"
 
 }
 
-function MenuItem({
+function SidebarFooter(){
 
-label
-
-}:{
-
-label:string
-
-}){
+const [open,setOpen]=
+useState(false)
 
 return(
 
+<div className="
+border-t
+
+relative
+
+bg-white
+">
+
 <button
 
+onClick={()=>
+setOpen(
+!open
+)
+}
+
 className="
-
 w-full
-px-5
-py-4
-text-left
-hover:bg-[#f5f5f5]
 
+h-16
+
+px-4
+
+flex
+items-center
+justify-between
+
+hover:bg-slate-50
 "
 
 >
 
-{label}
+<div className="
+flex
+items-center
+gap-3
+">
+
+<div className="
+w-8
+h-8
+
+rounded-full
+
+bg-slate-200
+"/>
+
+<div>
+
+<p className="
+text-sm
+font-medium
+">
+
+superadmin@koniqtech.com
+
+</p>
+
+<p className="
+text-xs
+text-slate-500
+">
+
+Super Admin
+
+</p>
+
+</div>
+
+</div>
+
+<MoreHorizontal
+size={18}
+/>
 
 </button>
+
+{
+
+open && (
+
+<div className="
+absolute
+
+left-2
+bottom-20
+
+w-[220px]
+
+bg-white
+
+border
+
+rounded-3xl
+
+shadow-xl
+
+overflow-hidden
+
+z-50
+">
+
+<Link
+
+href="/admin/settings"
+
+className="
+block
+
+p-4
+
+hover:bg-slate-50
+"
+
+>
+
+Settings
+
+</Link>
+
+<button
+
+onClick={()=>{
+
+window.location.href=
+"/login"
+
+}}
+
+className="
+w-full
+
+p-4
+
+text-left
+
+text-red-600
+
+hover:bg-red-50
+"
+
+>
+
+Logout
+
+</button>
+
+</div>
+
+)
+
+}
+
+</div>
 
 )
 

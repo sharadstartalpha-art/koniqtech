@@ -6,6 +6,15 @@ import Link from "next/link"
 
 import { redirect } from "next/navigation"
 
+import {
+
+Users,
+Briefcase,
+UserPlus,
+ArrowRight
+
+} from "lucide-react"
+
 export const dynamic="force-dynamic"
 
 export default async function DashboardPage(){
@@ -61,13 +70,9 @@ if(!dbUser){
 
 return(
 
-<div className="p-10">
-
-<h1 className="text-2xl font-semibold">
+<div>
 
 User not found
-
-</h1>
 
 </div>
 
@@ -79,17 +84,22 @@ const [
 
 leads,
 customers,
-jobs
+jobs,
+
+recentLeads,
+
+recentCustomers,
+
+recentJobs,
+
+subscription
 
 ]=await Promise.all([
 
 prisma.lead.count({
 
 where:{
-
-orgId:
-dbUser.orgId
-
+orgId:dbUser.orgId
 }
 
 }),
@@ -97,10 +107,7 @@ dbUser.orgId
 prisma.customer.count({
 
 where:{
-
-orgId:
-dbUser.orgId
-
+orgId:dbUser.orgId
 }
 
 }),
@@ -108,10 +115,61 @@ dbUser.orgId
 prisma.job.count({
 
 where:{
+orgId:dbUser.orgId
+}
 
-orgId:
-dbUser.orgId
+}),
 
+prisma.lead.findMany({
+
+where:{
+orgId:dbUser.orgId
+},
+
+take:3,
+
+orderBy:{
+createdAt:"desc"
+}
+
+}),
+
+prisma.customer.findMany({
+
+where:{
+orgId:dbUser.orgId
+},
+
+take:3,
+
+orderBy:{
+createdAt:"desc"
+}
+
+}),
+
+prisma.job.findMany({
+
+where:{
+orgId:dbUser.orgId
+},
+
+take:3,
+
+orderBy:{
+id:"desc"
+}
+
+}),
+
+prisma.subscription.findFirst({
+
+where:{
+orgId:dbUser.orgId
+},
+
+orderBy:{
+renewAt:"desc"
 }
 
 })
@@ -120,14 +178,18 @@ dbUser.orgId
 
 const subscriptionEnds=
 
-dbUser.organization
-?.subscriptionEndsAt
+subscription
+?.renewAt
 
-const expiringSoon=
+const daysLeft=
 
 subscriptionEnds
 
 ?
+
+Math.ceil(
+
+(
 
 new Date(
 subscriptionEnds
@@ -137,37 +199,61 @@ subscriptionEnds
 
 Date.now()
 
-<
+)
 
-1000*
-60*
-60*
-24*
-7
+/
+
+1000
+
+/
+
+60
+
+/
+
+60
+
+/
+
+24
+
+)
 
 :
 
-false
+null
 
 return(
 
-<div className="space-y-8">
+<div className="space-y-6">
 
 <div>
 
-<h1 className="text-6xl font-bold">
+<h1 className="
+text-4xl
+font-semibold
+tracking-tight
+">
 
 Dashboard
 
 </h1>
 
-<p className="text-slate-500 mt-2">
+<p className="
+text-sm
+text-slate-500
+mt-1
+">
 
-Welcome back
+Welcome back,
 
 {
 
 dbUser.name
+
+||
+
+"User"
 
 }
 
@@ -175,62 +261,101 @@ dbUser.name
 
 </div>
 
-<div className="grid grid-cols-3 gap-6">
+<div className="
+grid
 
-<Card
+md:grid-cols-3
+
+gap-4
+">
+
+<MetricCard
 
 title="Leads"
 
 value={leads}
 
+href="/leads"
+
+icon={<UserPlus size={16}/>}
+
 />
 
-<Card
+<MetricCard
 
 title="Customers"
 
 value={customers}
 
+href="/customers"
+
+icon={<Users size={16}/>}
+
 />
 
-<Card
+<MetricCard
 
 title="Jobs"
 
 value={jobs}
 
+href="/jobs"
+
+icon={<Briefcase size={16}/>}
+
 />
 
 </div>
 
-<div className="bg-white rounded-3xl border p-10">
+<div className="
+bg-white
 
-<div className="flex justify-between items-start">
+border
+
+rounded-3xl
+
+p-8
+">
+
+<div className="
+flex
+justify-between
+items-start
+">
 
 <div>
 
-<h2 className="text-4xl font-bold">
+<h2 className="
+text-2xl
+font-semibold
+">
 
 Subscription
 
 </h2>
 
-<div className="mt-8 space-y-3">
+<div className="
+mt-6
+space-y-3
+text-sm
+">
 
 <p>
 
-Plan:
+Plan
 
-<span className="font-semibold ml-2">
+<span className="
+font-semibold
+ml-2
+">
 
 {
 
-dbUser.organization
-?.plan
+subscription?.plan
 
 ||
 
-"Free"
+"free"
 
 }
 
@@ -240,9 +365,12 @@ dbUser.organization
 
 <p>
 
-Expires:
+Expires
 
-<span className="font-semibold ml-2">
+<span className="
+font-semibold
+ml-2
+">
 
 {
 
@@ -250,8 +378,11 @@ subscriptionEnds
 
 ?
 
+new Date(
+
 subscriptionEnds
-.toDateString()
+
+).toLocaleDateString()
 
 :
 
@@ -267,20 +398,33 @@ subscriptionEnds
 
 {
 
-expiringSoon && (
+daysLeft && (
 
 <div className="
-mt-6
+mt-5
+
 inline-flex
-px-4
-py-2
-rounded-xl
-bg-yellow-100
-text-yellow-700
+
+px-3
+py-1
+
+rounded-full
+
+bg-green-50
+
+text-green-700
+
+text-sm
 font-medium
 ">
 
-Subscription expiring soon
+{
+
+daysLeft
+
+}
+
+days remaining
 
 </div>
 
@@ -295,16 +439,32 @@ Subscription expiring soon
 href="/billing"
 
 className="
-bg-black
-text-white
-px-8
-py-4
-rounded-2xl
+h-10
+
+px-5
+
+rounded-xl
+
+border
+
+text-sm
+
+font-medium
+
+flex
+items-center
+gap-2
+
+hover:bg-slate-50
 "
 
 >
 
-Update Subscription
+Manage
+
+<ArrowRight
+size={14}
+/>
 
 </Link>
 
@@ -312,35 +472,67 @@ Update Subscription
 
 </div>
 
-<div className="bg-white rounded-3xl border p-10">
+<div className="
+grid
 
-<h2 className="text-2xl font-bold mb-6">
+md:grid-cols-3
 
-Recent Activity
+gap-4
+">
 
-</h2>
+<ActivityCard
 
-<div className="space-y-4">
+title="Recent Leads"
 
-<Activity
+items={
 
-text="No recent leads"
+recentLeads.map(
 
-/>
+x=>
 
-<Activity
+`${x.firstName} ${x.lastName}`
 
-text="No recent customers"
+)
 
-/>
-
-<Activity
-
-text="No recent jobs"
+}
 
 />
 
-</div>
+<ActivityCard
+
+title="Recent Customers"
+
+items={
+
+recentCustomers.map(
+
+x=>
+
+`${x.firstName} ${x.lastName}`
+
+)
+
+}
+
+/>
+
+<ActivityCard
+
+title="Recent Jobs"
+
+items={
+
+recentJobs.map(
+
+x=>
+
+x.title
+
+)
+
+}
+
+/>
 
 </div>
 
@@ -350,36 +542,61 @@ text="No recent jobs"
 
 }
 
-function Card({
+function MetricCard({
 
 title,
-value
+value,
+href,
+icon
 
-}:{
-
-title:string
-value:number
-
-}){
+}:any){
 
 return(
 
-<div className="
+<Link
+
+href={href}
+
+className="
 bg-white
+
 border
+
 rounded-3xl
-p-8
+
+p-6
+
+hover:border-slate-300
+
+transition
+"
+
+>
+
+<div className="
+flex
+justify-between
+items-center
 ">
 
-<p className="text-slate-500">
+<p className="
+text-sm
+text-slate-500
+">
 
 {title}
 
 </p>
 
+{icon}
+
+</div>
+
 <h2 className="
-text-6xl
-font-bold
+text-5xl
+
+font-semibold
+
 mt-4
 ">
 
@@ -387,31 +604,93 @@ mt-4
 
 </h2>
 
-</div>
+</Link>
 
 )
 
 }
 
-function Activity({
+function ActivityCard({
 
-text
+title,
+items
 
-}:{
-
-text:string
-
-}){
+}:any){
 
 return(
 
 <div className="
-p-4
-rounded-2xl
-bg-slate-50
+bg-white
+
+border
+
+rounded-3xl
+
+p-6
 ">
 
-{text}
+<h3 className="
+font-medium
+mb-5
+">
+
+{title}
+
+</h3>
+
+<div className="
+space-y-2
+">
+
+{
+
+items.length===0
+
+?
+
+<div className="
+text-sm
+text-slate-400
+">
+
+No activity
+
+</div>
+
+:
+
+items.map(
+
+(x:any,i:number)=>(
+
+<div
+
+key={i}
+
+className="
+text-sm
+
+bg-slate-50
+
+rounded-xl
+
+px-4
+py-3
+"
+
+>
+
+{x}
+
+</div>
+
+)
+
+)
+
+}
+
+</div>
 
 </div>
 

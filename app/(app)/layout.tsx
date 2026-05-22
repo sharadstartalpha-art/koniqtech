@@ -2,9 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState,useEffect } from "react"
+import { useState,useEffect,useRef } from "react"
 
-import { getSession } from "next-auth/react"
+import {
+getSession,
+signOut
+} from "next-auth/react"
 
 import {
 
@@ -21,10 +24,8 @@ Brain,
 Bell,
 Settings,
 Search,
-MoreHorizontal,
+ChevronDown,
 User,
-Moon,
-Home,
 LogOut
 
 } from "lucide-react"
@@ -63,11 +64,54 @@ usePathname()
 const [email,setEmail]=
 useState("")
 
+const [name,setName]=
+useState("User")
+
+const [open,setOpen]=
+useState(false)
+
+const ref=
+useRef<HTMLDivElement>(null)
+
 useEffect(()=>{
 
 load()
 
+document.addEventListener(
+"mousedown",
+outside
+)
+
+return()=>{
+
+document.removeEventListener(
+"mousedown",
+outside
+)
+
+}
+
 },[])
+
+function outside(
+e:any
+){
+
+if(
+
+ref.current &&
+
+!ref.current.contains(
+e.target
+)
+
+){
+
+setOpen(false)
+
+}
+
+}
 
 async function load(){
 
@@ -76,11 +120,23 @@ await getSession()
 
 setEmail(
 
+session?.user?.email ||
+
+""
+
+)
+
+setName(
+
+(session?.user as any)
+?.name ||
+
 session?.user?.email
+?.split("@")[0]
 
 ||
 
-""
+"User"
 
 )
 
@@ -154,6 +210,7 @@ className={`
 
 h-11
 px-4
+
 rounded-xl
 
 flex
@@ -192,11 +249,16 @@ pathname===href
 
 </div>
 
-<FooterMenu
+<div className="
+border-t
+p-4
+text-sm
+text-slate-500
+">
 
-email={email}
+{email}
 
-/>
+</div>
 
 </aside>
 
@@ -242,128 +304,94 @@ placeholder="Search..."
 className="
 w-full
 h-11
+
 pl-12
 
 rounded-2xl
 border
+
+bg-slate-50
 "
 
 />
 
 </div>
 
-<img
-
-src="/logo.png"
-
-className="w-10 h-10"
-
-/>
-
-</header>
-
-<main className="
-flex-1
-overflow-auto
-p-8
-">
-
-{children}
-
-</main>
-
-</div>
-
-</div>
-
-)
-
-}
-
-function FooterMenu({
-
-email
-
-}:{
-
-email:string
-
-}){
-
-const [open,setOpen]=
-useState(false)
-
-async function logout(){
-
-await fetch(
-
-"/api/auth/signout",
-
-{
-
-method:"POST"
-
-}
-
-)
-
-window.location.href=
-"/login"
-
-}
-
-return(
-
-<div className="
-border-t
-p-3
+<div
+ref={ref}
+className="
 relative
-">
+"
+>
 
 <button
 
 onClick={()=>
-setOpen(!open)
+setOpen(
+!open
+)
 }
 
 className="
-w-full
-
 flex
 items-center
-justify-between
+gap-3
+
+px-4
+py-2
+
+rounded-2xl
+
+hover:bg-slate-100
 "
 
 >
 
 <div className="
-flex
-items-center
-gap-3
-">
-
-<div className="
 w-10
 h-10
+
 rounded-full
-bg-slate-200
-"/>
 
-<p className="text-sm">
+bg-green-600
 
-{
+text-white
 
-email ||
+flex
+items-center
+justify-center
+">
 
-"No user"
+{name.charAt(0)
+.toUpperCase()}
 
-}
+</div>
+
+<div className="
+text-left
+">
+
+<p className="
+font-medium
+text-sm
+">
+
+{name}
+
+</p>
+
+<p className="
+text-xs
+text-slate-500
+">
+
+{email}
 
 </p>
 
 </div>
 
-<MoreHorizontal size={18}/>
+<ChevronDown size={16}/>
 
 </button>
 
@@ -374,39 +402,83 @@ open && (
 <div className="
 absolute
 
-left-3
-bottom-16
+right-0
+top-16
 
-w-[220px]
+w-[260px]
 
 bg-white
 
-rounded-3xl
-
 border
 
+rounded-3xl
+
 shadow-xl
+
+overflow-hidden
+
+z-50
 ">
 
-<Row
+<div className="
+p-5
+border-b
+">
 
-icon={<User size={16}/>}
+<p className="
+font-semibold
+">
 
-label="Profile"
+{name}
 
-/>
+</p>
 
-<Row
+<p className="
+text-sm
+text-slate-500
+truncate
+">
 
-icon={<Settings size={16}/>}
+{email}
 
-label="Settings"
+</p>
 
-/>
+</div>
+
+<Link
+
+href="/settings"
+
+className="
+p-4
+
+flex
+items-center
+gap-3
+
+hover:bg-slate-50
+"
+
+>
+
+<Settings size={16}/>
+
+Settings
+
+</Link>
 
 <button
 
-onClick={logout}
+onClick={()=>{
+
+signOut({
+
+callbackUrl:
+"/login"
+
+})
+
+}}
 
 className="
 w-full
@@ -416,6 +488,10 @@ p-4
 flex
 items-center
 gap-3
+
+text-red-600
+
+hover:bg-red-50
 "
 
 >
@@ -434,30 +510,19 @@ Logout
 
 </div>
 
-)
+</header>
 
-}
-
-function Row({
-
-icon,
-label
-
-}:any){
-
-return(
-
-<div className="
-p-4
-
-flex
-items-center
-gap-3
+<main className="
+flex-1
+overflow-auto
+p-8
 ">
 
-{icon}
+{children}
 
-{label}
+</main>
+
+</div>
 
 </div>
 

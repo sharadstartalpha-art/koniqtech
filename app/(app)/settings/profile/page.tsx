@@ -1,32 +1,64 @@
-import {
-authGuard
-}
+"use client"
 
-from
-"@/modules/auth/guards/auth.guard"
+import { useState } from "react"
 
-export default async function Profile(){
+export default function Page(){
 
-const user=
-await authGuard()
+const [name,setName]=
+useState("Koniq Admin")
+
+const [email,setEmail]=
+useState("admin@company.com")
 
 return(
 
-<div className="p-10">
+<div className="max-w-4xl">
 
-<h1 className="text-3xl">
+<h1 className="text-5xl font-bold mb-8">
 
-Profile
+Profile Settings
 
 </h1>
 
-<div className="mt-5">
+<div className="bg-white rounded-3xl p-10 space-y-6">
 
-<p>
+<input
 
-{user.role}
+value={name}
 
-</p>
+onChange={e=>
+setName(
+e.target.value
+)
+}
+
+className="w-full border p-5 rounded-xl"
+
+/>
+
+<input
+
+value={email}
+
+onChange={e=>
+setEmail(
+e.target.value
+)
+}
+
+className="w-full border p-5 rounded-xl"
+
+/>
+
+<input
+type="file"
+/>
+
+<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
+
+Save Profile
+
+</button>
 
 </div>
 

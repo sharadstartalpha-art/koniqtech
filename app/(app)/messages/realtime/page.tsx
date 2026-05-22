@@ -1,56 +1,42 @@
-"use client"
-
-import {useState} from "react"
-
-export default function Realtime(){
-
-const[msg,setMsg]=useState("")
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div className="grid grid-cols-3 gap-8">
 
-<div className="flex justify-between">
+<div className="bg-white rounded-3xl p-8">
 
-<h1 className="text-2xl font-semibold">
+<h2 className="font-bold mb-6">
 
-Realtime Messages
+Chats
 
-</h1>
+</h2>
 
-<button className="bg-blue-600 text-white px-4 py-2 rounded">
+<div className="space-y-4">
 
-Connect Twilio
+<div className="bg-slate-100 p-4 rounded-xl">
 
-</button>
+Mike
 
 </div>
 
-<div className="bg-white rounded-xl p-6">
+<div className="bg-slate-100 p-4 rounded-xl">
 
-<textarea
+John
 
-value={msg}
+</div>
 
-onChange={(e)=>
+</div>
 
-setMsg(e.target.value)
+</div>
 
-}
+<div className="col-span-2 bg-white rounded-3xl p-8">
 
-className="w-full border rounded p-4 h-32"
+<div className="h-[600px] bg-slate-100 rounded-3xl p-8">
 
-placeholder="SMS"
+Realtime messages
 
->
-
-</textarea>
-
-<button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
-
-Send
-
-</button>
+</div>
 
 </div>
 

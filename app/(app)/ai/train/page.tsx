@@ -1,69 +1,83 @@
 "use client"
 
-import {useState} from "react"
+import { useState } from "react"
 
-export default function Train(){
+export default function Page(){
 
-const[
-data,
-setData
-]=useState("")
+const [files,setFiles]=
+
+useState<File[]>([])
 
 return(
 
-<div className="
-bg-white
-rounded-xl
-p-8
-space-y-6
-">
+<div>
 
-<h1 className="
-text-2xl
-font-bold
-">
+<h1 className="text-5xl font-bold mb-8">
 
-AI Training
+AI Training Center
 
 </h1>
 
-<textarea
+<div className="bg-white rounded-3xl p-10">
 
-value={data}
+<input
+
+multiple
+
+type="file"
+
+accept=".pdf,.csv,.docx"
 
 onChange={e=>
 
-setData(
-e.target.value
+setFiles(
+
+Array.from(
+
+e.target.files||
+
+[]
+
+)
+
 )
 
 }
 
-className="
-w-full
-h-60
-border
-rounded-xl
-p-4
-"
-
-placeholder="
-training data
-"
-
 />
 
-<button className="
-bg-blue-600
-text-white
-px-5
-py-3
-rounded-xl
-">
+<div className="grid gap-4 mt-8">
 
-Train
+{
+
+files.map(
+
+f=>(
+
+<div
+key={f.name}
+className="bg-slate-100 p-5 rounded-xl"
+>
+
+{f.name}
+
+</div>
+
+)
+
+)
+
+}
+
+</div>
+
+<button className="mt-8 bg-blue-600 text-white px-8 py-4 rounded-xl">
+
+Train AI
 
 </button>
+
+</div>
 
 </div>
 

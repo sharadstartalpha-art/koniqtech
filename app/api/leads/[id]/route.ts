@@ -1,50 +1,71 @@
-import prisma
+import prisma from "@/shared/lib/prisma"
+import { NextResponse } from "next/server"
 
-from "@/shared/lib/prisma"
+export async function PUT(
 
-import {
+req:Request,
 
-NextRequest,
+{
 
-NextResponse
+params
 
-}
-
-from "next/server"
-
-export async function GET(
-
-request:NextRequest,
-
-context:{
-
-params:Promise<{
-
-id:string
-
-}>
-
-}
+}:any
 
 ){
 
-const {
+const body=
 
-id
-
-}
-
-=
-
-await context.params
+await req.json()
 
 const lead=
 
-await prisma.lead.findUnique({
+await prisma.lead.update({
 
 where:{
 
-id
+id:params.id
+
+},
+
+data:{
+
+firstName:
+
+body.firstName ||
+
+body.name ||
+
+"Lead",
+
+lastName:
+
+body.lastName ||
+
+"",
+
+email:
+
+body.email ||
+
+null,
+
+phone:
+
+body.phone ||
+
+null,
+
+status:
+
+body.status ||
+
+"new",
+
+source:
+
+body.source ||
+
+"website"
 
 }
 
@@ -60,35 +81,21 @@ lead
 
 export async function DELETE(
 
-request:NextRequest,
+req:Request,
 
-context:{
+{
 
-params:Promise<{
+params
 
-id:string
-
-}>
-
-}
+}:any
 
 ){
-
-const {
-
-id
-
-}
-
-=
-
-await context.params
 
 await prisma.lead.delete({
 
 where:{
 
-id
+id:params.id
 
 }
 
@@ -96,7 +103,7 @@ id
 
 return NextResponse.json({
 
-ok:true
+success:true
 
 })
 

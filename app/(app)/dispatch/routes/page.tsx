@@ -1,46 +1,60 @@
-export default function Routes(){
+export default function Page(){
 
 return(
 
-<div className="bg-white rounded-xl p-6">
+<div>
 
-<h1 className="text-2xl mb-6">
+<h1 className="text-5xl font-bold mb-8">
 
-Route Optimizer
+Route Planner
 
 </h1>
 
-<table className="w-full">
+<div className="grid grid-cols-2 gap-8">
 
-<thead>
+<div className="bg-white rounded-3xl p-8">
 
-<tr>
+<h2 className="font-bold mb-6">
 
-<th>Tech</th>
+Stops
 
-<th>Stops</th>
+</h2>
 
-<th>ETA</th>
+<div className="space-y-4">
 
-</tr>
+<div className="bg-slate-100 p-4 rounded-xl">
 
-</thead>
+Stop 1
 
-<tbody>
+</div>
 
-<tr>
+<div className="bg-slate-100 p-4 rounded-xl">
 
-<td>Mike</td>
+Stop 2
 
-<td>4</td>
+</div>
 
-<td>2h</td>
+<div className="bg-slate-100 p-4 rounded-xl">
 
-</tr>
+Stop 3
 
-</tbody>
+</div>
 
-</table>
+</div>
+
+</div>
+
+<div className="bg-white rounded-3xl p-8">
+
+<div className="h-[500px] bg-slate-100 rounded-3xl flex items-center justify-center">
+
+MAP
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 

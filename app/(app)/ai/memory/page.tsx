@@ -1,20 +1,54 @@
-export default function Memory(){
+export default function Page(){
+
+const memories=[
+
+"Roof pricing guide",
+
+"Customer objections",
+
+"Installation SOP",
+
+"Inspection checklist"
+
+]
 
 return(
 
-<div className="
-bg-white
-p-8
-rounded-xl
-">
+<div>
 
-Memory Store
+<h1 className="text-5xl font-bold mb-8">
 
-Lead history
+AI Memory
 
-Customer notes
+</h1>
 
-AI context
+<div className="space-y-5">
+
+{
+
+memories.map(
+
+m=>(
+
+<div
+
+key={m}
+
+className="bg-white rounded-3xl p-8"
+
+>
+
+{m}
+
+</div>
+
+)
+
+)
+
+}
+
+</div>
 
 </div>
 

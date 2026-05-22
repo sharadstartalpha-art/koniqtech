@@ -26,6 +26,7 @@
     "@tiptap/starter-kit": "^3.22.5",
     "@upstash/ratelimit": "^2.0.8",
     "@zavudev/sdk": "^0.38.0",
+    "autocannon": "^8.0.0",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.10",
@@ -68,7 +69,9 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
+    "@types/autocannon": "^7.12.7",
     "@types/bcryptjs": "^2.4.6",
     "@types/imap": "^0.8.43",
     "@types/jest": "^30.0.0",

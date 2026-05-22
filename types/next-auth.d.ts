@@ -1,23 +1,23 @@
 import "next-auth"
 
-declare module "next-auth" {
+declare module "next-auth"{
 
-  interface Session {
+interface Session{
 
-    user:{
+user:{
 
-      id:string
+id:string
 
-      orgId:string
+orgId:string
 
-      role:string
+role:string
 
-      name?:string|null
+email:string
 
-      email?:string|null
+name:string
 
-    }
+}
 
-  }
+}
 
 }

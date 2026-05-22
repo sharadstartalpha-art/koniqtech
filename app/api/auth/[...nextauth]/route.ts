@@ -1,9 +1,7 @@
 import { handlers } from "@/auth"
 
-export const {
+export const GET=
+handlers.GET
 
-  GET,
-
-  POST
-
-}=handlers
+export const POST=
+handlers.POST

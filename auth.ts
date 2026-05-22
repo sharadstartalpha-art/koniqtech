@@ -6,21 +6,18 @@ import bcrypt from "bcryptjs"
 export const {
 
   handlers,
-
   auth,
-
   signIn,
-
   signOut
 
 }=NextAuth({
 
+  secret:process.env.AUTH_SECRET,
+
   trustHost:true,
 
   session:{
-
     strategy:"jwt"
-
   },
 
   providers:[
@@ -30,7 +27,6 @@ export const {
       credentials:{
 
         email:{},
-
         password:{}
 
       },
@@ -41,29 +37,23 @@ export const {
           !credentials?.email ||
           !credentials?.password
         ){
-
           return null
-
         }
 
         const user=
         await prisma.user.findUnique({
 
           where:{
-
             email:
             String(
               credentials.email
             )
-
           }
 
         })
 
         if(!user){
-
           return null
-
         }
 
         const ok=
@@ -78,18 +68,16 @@ export const {
         )
 
         if(!ok){
-
           return null
-
         }
 
         return{
 
           id:user.id,
 
-          name:user.name,
-
           email:user.email,
+
+          name:user.name,
 
           orgId:user.orgId,
 
@@ -108,7 +96,6 @@ export const {
     async jwt({
 
       token,
-
       user
 
     }){
@@ -133,7 +120,6 @@ export const {
     async session({
 
       session,
-
       token
 
     }){
@@ -164,12 +150,7 @@ export const {
   },
 
   pages:{
-
     signIn:"/login"
-
-  },
-
-  secret:
-  process.env.AUTH_SECRET
+  }
 
 })

@@ -1,13 +1,12 @@
 import prisma from "@/shared/lib/prisma"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import Link from "next/link"
 
 export const dynamic="force-dynamic"
 
 export default async function Page(){
 
-const session=
-await getServerSession()
+const session=await auth()
 
 if(!session?.user?.email){
 
@@ -15,7 +14,11 @@ return(
 
 <div className="p-10">
 
-No session found
+<h1 className="text-2xl">
+
+Please login again
+
+</h1>
 
 </div>
 
@@ -42,7 +45,7 @@ return(
 
 <div className="p-10">
 
-User not found
+User missing
 
 </div>
 
@@ -50,13 +53,11 @@ User not found
 
 }
 
-const orgId=dbUser.orgId
-
 const leads=
 await prisma.lead.count({
 
 where:{
-orgId
+orgId:dbUser.orgId
 }
 
 })
@@ -65,7 +66,7 @@ const customers=
 await prisma.customer.count({
 
 where:{
-orgId
+orgId:dbUser.orgId
 }
 
 })
@@ -74,7 +75,7 @@ const jobs=
 await prisma.job.count({
 
 where:{
-orgId
+orgId:dbUser.orgId
 }
 
 })
@@ -91,7 +92,7 @@ Dashboard
 
 <div className="grid grid-cols-3 gap-6">
 
-<div className="bg-white border rounded-3xl p-8">
+<div className="bg-white p-8 rounded-3xl border">
 
 <p>Leads</p>
 
@@ -103,7 +104,7 @@ Dashboard
 
 </div>
 
-<div className="bg-white border rounded-3xl p-8">
+<div className="bg-white p-8 rounded-3xl border">
 
 <p>Customers</p>
 
@@ -115,7 +116,7 @@ Dashboard
 
 </div>
 
-<div className="bg-white border rounded-3xl p-8">
+<div className="bg-white p-8 rounded-3xl border">
 
 <p>Jobs</p>
 
@@ -131,13 +132,13 @@ Dashboard
 
 <div className="bg-white border rounded-3xl p-8">
 
-<h2 className="text-2xl font-bold mb-5">
+<h2 className="text-2xl font-bold">
 
 Subscription
 
 </h2>
 
-<p>
+<p className="mt-4">
 
 Plan:
 
@@ -168,11 +169,19 @@ dbUser.organization
 
 href="/billing"
 
-className="mt-4 inline-block bg-black text-white px-6 py-3 rounded-xl"
+className="
+inline-block
+mt-6
+bg-black
+text-white
+px-6
+py-3
+rounded-xl
+"
 
 >
 
-Upgrade
+Update Subscription
 
 </Link>
 

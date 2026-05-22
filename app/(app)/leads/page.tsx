@@ -1,22 +1,42 @@
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
+import { getServerSession } from "next-auth"
+
 export const dynamic="force-dynamic"
 
-export default function Page(){
+export default async function Page(){
 
-const leads=[
+const session=
+await getServerSession()
 
-{
-name:"John Smith",
-stage:"New",
-score:92
-},
+const user=
+session?.user
 
-{
-name:"Mike Roof",
-stage:"Estimate",
-score:78
+if(!user)return null
+
+const dbUser=
+await prisma.user.findUnique({
+
+where:{
+email:user.email!
 }
 
-]
+})
+
+if(!dbUser)return null
+
+const leads=
+await prisma.lead.findMany({
+
+where:{
+orgId:dbUser.orgId
+},
+
+orderBy:{
+createdAt:"desc"
+}
+
+})
 
 return(
 
@@ -30,39 +50,46 @@ Leads
 
 </h1>
 
-<button className="bg-blue-600 text-white px-6 py-4 rounded-xl">
+<Link
+href="/leads/create"
+className="
+bg-black
+text-white
+px-6
+py-4
+rounded-xl
+"
+>
 
 Create Lead
 
-</button>
+</Link>
 
 </div>
 
-<div className="bg-white rounded-3xl border overflow-hidden">
+<table className="
+w-full
+bg-white
+border
+rounded-3xl
+overflow-hidden
+">
 
-<table className="w-full">
-
-<thead>
+<thead className="bg-slate-100">
 
 <tr>
 
-<th className="p-5">
+<th className="p-5 text-left">
 
 Lead
 
 </th>
 
-<th>
+<th>Email</th>
 
-Stage
+<th>Phone</th>
 
-</th>
-
-<th>
-
-AI Score
-
-</th>
+<th>Status</th>
 
 </tr>
 
@@ -72,30 +99,36 @@ AI Score
 
 {
 
-leads.map((x,i)=>(
+leads.map(lead=>(
 
 <tr
-key={i}
+key={lead.id}
 className="border-t"
 >
 
 <td className="p-5">
 
-{x.name}
+{
+
+lead.firstName+
+
+" "+
+
+(
+lead.lastName||
+
+""
+)
+
+}
 
 </td>
 
-<td>
+<td>{lead.email}</td>
 
-{x.stage}
+<td>{lead.phone}</td>
 
-</td>
-
-<td>
-
-{x.score}
-
-</td>
+<td>{lead.status}</td>
 
 </tr>
 
@@ -106,8 +139,6 @@ className="border-t"
 </tbody>
 
 </table>
-
-</div>
 
 </div>
 

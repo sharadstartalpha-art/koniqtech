@@ -1,31 +1,24 @@
 import prisma from "@/shared/lib/prisma"
-
-import { cookies } from "next/headers"
+import { getServerSession } from "next-auth"
+import Link from "next/link"
 
 export const dynamic="force-dynamic"
 
-export const revalidate=0
+export default async function Page(){
 
-export default async function Dashboard(){
-
-const token=
-
-(await cookies())
-
-.get(
-
-"token"
-
-)?.value
+const session=
+await getServerSession()
 
 const user=
+session?.user
 
+if(!user)return null
+
+const dbUser=
 await prisma.user.findUnique({
 
 where:{
-
-email:token
-
+email:user.email!
 },
 
 include:{
@@ -36,47 +29,279 @@ organization:true
 
 })
 
-if(!user){
+if(!dbUser)return null
 
-return null
+const org=
+dbUser.organization
 
+const leads=
+await prisma.lead.count({
+
+where:{
+orgId:dbUser.orgId
 }
+
+})
+
+const customers=
+await prisma.customer.count({
+
+where:{
+orgId:dbUser.orgId
+}
+
+})
+
+const jobs=
+await prisma.job.count({
+
+where:{
+orgId:dbUser.orgId
+}
+
+})
+
+const subscriptionActive=
+
+org?.subscriptionEndsAt &&
+
+org.subscriptionEndsAt>
+
+new Date()
 
 return(
 
 <div className="space-y-8">
 
-<div className="bg-white rounded-3xl border p-8">
+<div>
 
-<p className="text-slate-500">
+<h1 className="
+text-5xl
+font-bold
+">
+
+Dashboard
+
+</h1>
+
+<p className="
+text-slate-500
+mt-2
+">
+
+{org?.name}
+
+</p>
+
+</div>
+
+<div className="
+grid
+grid-cols-4
+gap-6
+">
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
+
+<p className="
+text-slate-500
+">
+
+Leads
+
+</p>
+
+<h2 className="
+text-5xl
+font-bold
+mt-4
+">
+
+{leads}
+
+</h2>
+
+</div>
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
+
+<p className="
+text-slate-500
+">
+
+Customers
+
+</p>
+
+<h2 className="
+text-5xl
+font-bold
+mt-4
+">
+
+{customers}
+
+</h2>
+
+</div>
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
+
+<p className="
+text-slate-500
+">
+
+Jobs
+
+</p>
+
+<h2 className="
+text-5xl
+font-bold
+mt-4
+">
+
+{jobs}
+
+</h2>
+
+</div>
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
+
+<p className="
+text-slate-500
+">
+
+Plan
+
+</p>
+
+<h2 className="
+text-3xl
+font-bold
+mt-4
+">
+
+{org?.plan}
+
+</h2>
+
+</div>
+
+</div>
+
+<div className="
+grid
+grid-cols-2
+gap-6
+">
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+space-y-6
+">
+
+<h2 className="
+text-3xl
+font-bold
+">
 
 Subscription
 
+</h2>
+
+<div>
+
+<p className="
+text-slate-500
+">
+
+Status
+
 </p>
 
-<h2 className="text-3xl font-bold mt-4">
+<p className={
+
+subscriptionActive
+
+?
+
+"text-green-600 font-bold"
+
+:
+
+"text-red-600 font-bold"
+
+}>
 
 {
 
-user.organization?.plan
+subscriptionActive
+
+?
+
+"ACTIVE"
+
+:
+
+"EXPIRED"
 
 }
 
-</h2>
+</p>
 
-<p className="mt-3">
+</div>
 
-$199 / month
+<div>
+
+<p className="
+text-slate-500
+">
+
+Expires
 
 </p>
 
-<p>
-
-CRM:
+<p className="
+font-bold
+">
 
 {
 
-user.organization?.crmType
+org?.subscriptionEndsAt
+
+?
+
+org.subscriptionEndsAt
+.toDateString()
+
+:
+
+"No subscription"
 
 }
 
@@ -84,185 +309,173 @@ user.organization?.crmType
 
 </div>
 
-<div className="grid grid-cols-4 gap-6">
+<div>
 
-<Card
-title="Revenue"
-value="$82,400"
-/>
+<p className="
+text-slate-500
+">
 
-<Card
-title="Leads"
-value="241"
-/>
+Users Limit
 
-<Card
-title="Customers"
-value="112"
-/>
+</p>
 
-<Card
-title="Jobs"
-value="43"
-/>
+<p className="
+font-bold
+">
+
+{org?.usersLimit}
+
+</p>
 
 </div>
 
-<div className="grid grid-cols-3 gap-8">
+</div>
 
-<div className="col-span-2 bg-white rounded-3xl p-8 shadow">
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+space-y-6
+">
 
-<h2 className="text-xl font-bold">
+<h2 className="
+text-3xl
+font-bold
+">
 
-Revenue Overview
+Upgrade
 
 </h2>
 
-<div className="h-96 bg-slate-100 rounded-2xl mt-8 flex items-center justify-center">
+<p className="
+text-slate-500
+">
 
-Chart Area
+Renew subscription
+or upgrade plan
+
+</p>
+
+<Link
+
+href="/settings/subscription"
+
+className="
+block
+bg-black
+text-white
+text-center
+p-4
+rounded-xl
+"
+
+>
+
+Manage Subscription
+
+</Link>
+
+<Link
+
+href="/payments"
+
+className="
+block
+border
+text-center
+p-4
+rounded-xl
+"
+
+>
+
+Payment Portal
+
+</Link>
+
+<Link
+
+href="https://buy.stripe.com"
+
+target="_blank"
+
+className="
+block
+bg-green-600
+text-white
+text-center
+p-4
+rounded-xl
+"
+
+>
+
+Renew Subscription
+
+</Link>
 
 </div>
 
 </div>
 
-<div className="bg-white rounded-3xl p-8 shadow">
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
 
-<h2 className="font-bold">
+<h2 className="
+text-3xl
+font-bold
+mb-6
+">
 
 Recent Activity
 
 </h2>
 
-<div className="space-y-5 mt-6">
+<div className="
+space-y-4
+">
 
-<Item text="Lead created"/>
+<div className="
+border
+p-4
+rounded-xl
+">
 
-<Item text="Invoice paid"/>
+Leads created:
+{leads}
 
-<Item text="Quote approved"/>
+</div>
 
-<Item text="Dispatch assigned"/>
+<div className="
+border
+p-4
+rounded-xl
+">
+
+Customers:
+{customers}
+
+</div>
+
+<div className="
+border
+p-4
+rounded-xl
+">
+
+Jobs:
+{jobs}
 
 </div>
 
 </div>
 
 </div>
-
-<div className="grid grid-cols-2 gap-8">
-
-<div className="bg-white p-8 rounded-3xl">
-
-<h2 className="font-bold">
-
-Pipeline
-
-</h2>
-
-<div className="mt-8 space-y-4">
-
-<Stage n="22" label="New"/>
-
-<Stage n="14" label="Quoted"/>
-
-<Stage n="8" label="Won"/>
-
-</div>
-
-</div>
-
-<div className="bg-white p-8 rounded-3xl">
-
-<h2 className="font-bold">
-
-Upcoming Jobs
-
-</h2>
-
-<div className="mt-6 space-y-4">
-
-<Item text="Roof inspection"/>
-
-<Item text="HVAC install"/>
-
-<Item text="Plumbing repair"/>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-)
-
-}
-
-function Card({
-
-title,
-
-value
-
-}:any){
-
-return(
-
-<div className="bg-white p-8 rounded-3xl shadow">
-
-<p className="text-slate-500">
-
-{title}
-
-</p>
-
-<h2 className="text-4xl font-bold mt-3">
-
-{value}
-
-</h2>
-
-</div>
-
-)
-
-}
-
-function Item({
-
-text
-
-}:any){
-
-return(
-
-<div className="p-4 bg-slate-100 rounded-xl">
-
-{text}
-
-</div>
-
-)
-
-}
-
-function Stage({
-
-n,
-
-label
-
-}:any){
-
-return(
-
-<div className="flex justify-between bg-slate-100 p-4 rounded-xl">
-
-<span>{label}</span>
-
-<span>{n}</span>
 
 </div>
 

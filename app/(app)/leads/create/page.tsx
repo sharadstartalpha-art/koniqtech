@@ -1,87 +1,153 @@
-"use client"
+import prisma from "@/shared/lib/prisma"
+import { getServerSession } from "next-auth"
+import { redirect } from "next/navigation"
 
-import { useState } from "react"
+async function createLead(
+formData:FormData
+){
+
+"use server"
+
+const session=
+await getServerSession()
+
+const user=
+session?.user
+
+if(!user)return
+
+const dbUser=
+await prisma.user.findUnique({
+
+where:{
+email:user.email!
+}
+
+})
+
+if(!dbUser)return
+
+await prisma.lead.create({
+
+data:{
+
+orgId:dbUser.orgId,
+
+firstName:
+String(
+formData.get(
+"firstName"
+)
+),
+
+lastName:
+String(
+formData.get(
+"lastName"
+)
+),
+
+email:
+String(
+formData.get(
+"email"
+)
+),
+
+phone:
+String(
+formData.get(
+"phone"
+)
+),
+
+status:"new",
+
+source:"website"
+
+}
+
+})
+
+redirect("/leads")
+
+}
 
 export default function Page(){
 
-const [form,setForm]=useState({
-
-name:"",
-phone:"",
-email:"",
-address:"",
-service:"",
-notes:""
-
-})
-
 return(
 
-<div className="space-y-8">
+<form
+action={createLead}
+className="
+max-w-3xl
+mx-auto
+space-y-4
+bg-white
+border
+p-8
+rounded-3xl
+"
+>
 
-<h1 className="text-5xl font-bold">
+<input
+name="firstName"
+placeholder="First name"
+className="
+w-full
+border
+p-4
+rounded-xl
+"
+/>
+
+<input
+name="lastName"
+placeholder="Last name"
+className="
+w-full
+border
+p-4
+rounded-xl
+"
+/>
+
+<input
+name="email"
+placeholder="Email"
+className="
+w-full
+border
+p-4
+rounded-xl
+"
+/>
+
+<input
+name="phone"
+placeholder="Phone"
+className="
+w-full
+border
+p-4
+rounded-xl
+"
+/>
+
+<button
+className="
+bg-black
+text-white
+p-4
+rounded-xl
+"
+>
 
 Create Lead
 
-</h1>
-
-<div className="bg-white rounded-3xl p-10 space-y-5">
-
-<input
-placeholder="Customer name"
-className="w-full border p-5 rounded-xl"
-onChange={e=>
-setForm({
-...form,
-name:e.target.value
-})
-}
-/>
-
-<input
-placeholder="Phone"
-className="w-full border p-5 rounded-xl"
-/>
-
-<input
-placeholder="Email"
-className="w-full border p-5 rounded-xl"
-/>
-
-<input
-placeholder="Address"
-className="w-full border p-5 rounded-xl"
-/>
-
-<select className="w-full border p-5 rounded-xl">
-
-<option>
-
-Roof Repair
-
-</option>
-
-<option>
-
-Replacement
-
-</option>
-
-</select>
-
-<textarea
-className="w-full border p-5 rounded-xl h-40"
-/>
-
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
-
-Save Lead
-
 </button>
 
-</div>
-
-</div>
+</form>
 
 )
 

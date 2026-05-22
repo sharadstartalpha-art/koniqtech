@@ -4,157 +4,160 @@ import prisma from "@/shared/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export const {
+  handlers,
+  auth,
+  signIn,
+  signOut
+} = NextAuth({
 
-handlers,
-auth,
-signIn,
-signOut
+  session: {
+    strategy: "jwt"
+  },
 
-}=NextAuth({
+  providers: [
 
-secret:
-process.env.AUTH_SECRET,
+    Credentials({
 
-session:{
-strategy:"jwt"
-},
+      credentials: {
 
-providers:[
+        email: {},
 
-Credentials({
+        password: {}
 
-credentials:{
+      },
 
-email:{},
+      async authorize(credentials) {
 
-password:{}
+        if (
+          !credentials?.email ||
+          !credentials?.password
+        ) {
+          return null
+        }
 
-},
+        const user =
+          await prisma.user.findUnique({
 
-async authorize(credentials){
+            where: {
+              email:
+                String(
+                  credentials.email
+                )
+            }
 
-if(
-!credentials?.email ||
-!credentials?.password
-){
+          })
 
-return null
+        if (!user) {
+          return null
+        }
 
-}
+        const ok =
+          await bcrypt.compare(
 
-const user=
-await prisma.user.findUnique({
+            String(
+              credentials.password
+            ),
 
-where:{
-email:
-String(
-credentials.email
-)
-}
+            user.passwordHash
+          )
 
-})
+        if (!ok) {
+          return null
+        }
 
-if(!user){
+        return {
 
-return null
+          id: user.id,
 
-}
+          name: user.name,
 
-const ok=
-await bcrypt.compare(
+          email: user.email,
 
-String(
-credentials.password
-),
+          role: user.role,
 
-user.passwordHash
+          orgId: user.orgId
 
-)
+        }
 
-if(!ok){
+      }
 
-return null
+    })
 
-}
+  ],
 
-return{
+  callbacks: {
 
-id:user.id,
+    async jwt({
 
-name:user.name,
+      token,
 
-email:user.email,
+      user
 
-orgId:user.orgId,
+    }) {
 
-role:user.role,
+      if (user) {
 
-image:user.avatar
+        token.id =
+          (user as any).id
 
-} as any
+        token.role =
+          (user as any).role
 
-}
+        token.orgId =
+          (user as any).orgId
 
-})
+      }
 
-],
+      return token
 
-callbacks:{
+    },
 
-async jwt({
+    async session({
 
-token,
-user
+      session,
 
-}){
+      token
 
-if(user){
+    }) {
 
-(token as any).id=
-(user as any).id
+      if (session.user) {
 
-(token as any).orgId=
-(user as any).orgId
+        ;(
+          session.user as any
+        ).id =
+          String(
+            token.id || ""
+          )
 
-(token as any).role=
-(user as any).role
+        ;(
+          session.user as any
+        ).role =
+          String(
+            token.role || ""
+          )
 
-}
+        ;(
+          session.user as any
+        ).orgId =
+          String(
+            token.orgId || ""
+          )
 
-return token
+      }
 
-},
+      return session
 
-async session({
+    }
 
-session,
-token
+  },
 
-}){
+  pages: {
 
-if(session.user){
+    signIn: "/login"
 
-(session.user as any).id=
-(token as any).id
+  },
 
-(session.user as any).orgId=
-(token as any).orgId
-
-(session.user as any).role=
-(token as any).role
-
-}
-
-return session
-
-}
-
-},
-
-pages:{
-
-signIn:"/login"
-
-}
+  secret:
+    process.env.AUTH_SECRET
 
 })

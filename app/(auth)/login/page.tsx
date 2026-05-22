@@ -1,102 +1,70 @@
 "use client"
 
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 
-export default function LoginPage() {
+export default function LoginPage(){
 
-  const [email,setEmail]=useState("")
-  const [password,setPassword]=useState("")
-  const [loading,setLoading]=useState(false)
+const [email,setEmail]=useState("")
+const [password,setPassword]=useState("")
+const [loading,setLoading]=useState(false)
 
-  async function login(){
+async function submit(
+e:React.FormEvent
+){
 
-    try{
+e.preventDefault()
 
-      setLoading(true)
+setLoading(true)
 
-      const res=
+const res=
+await signIn(
 
-      await fetch(
+"credentials",
 
-        "/api/auth/login",
+{
 
-        {
+email,
+password,
 
-          method:"POST",
+redirect:false
 
-          headers:{
+}
 
-            "Content-Type":
-            "application/json"
+)
 
-          },
+setLoading(false)
 
-          body:JSON.stringify({
+if(res?.ok){
 
-            email,
-            password
+window.location.href=
+"/dashboard"
 
-          })
+return
 
-        }
+}
 
-      )
+alert(
+"Invalid login"
+)
 
-      const data=
+}
 
-      await res.json()
+return(
 
-      if(!res.ok){
+<div className="h-screen grid grid-cols-2">
 
-        setLoading(false)
+<div className="bg-black flex items-center px-24">
 
-        alert(
+<div>
 
-          data.error ||
-
-          "Login failed"
-
-        )
-
-        return
-
-      }
-
-      window.location.href=
-
-      data.redirect ||
-
-      "/dashboard"
-
-    }
-
-    catch(err){
-
-      setLoading(false)
-
-      alert(
-
-        "Server error"
-
-      )
-
-    }
-
-  }
-
-  return(
-
-<div className="min-h-screen grid grid-cols-2">
-
-<div className="bg-black text-white flex flex-col justify-center px-24">
-
-<h1 className="text-6xl font-bold mb-8">
+<h1 className="text-white text-7xl font-bold">
 
 KONIQ CRM
 
 </h1>
 
-<p className="text-2xl text-gray-300">
+<p className="text-white text-2xl mt-8">
 
 AI CRM for home service companies
 
@@ -104,40 +72,46 @@ AI CRM for home service companies
 
 </div>
 
+</div>
+
 <div className="bg-slate-100 flex items-center justify-center">
 
-<div className="bg-white rounded-3xl p-12 shadow-xl w-[520px]">
+<form
+onSubmit={submit}
+className="
+bg-white
+w-[520px]
+rounded-3xl
+p-12
+shadow
+space-y-6
+"
+>
 
-<h2 className="text-3xl font-bold mb-8">
+<h1 className="text-5xl font-bold">
 
 Sign In
 
-</h2>
+</h1>
 
 <input
 
 value={email}
 
-onChange={(e)=>
-
+onChange={e=>
 setEmail(
-
 e.target.value
-
 )
-
 }
 
 placeholder="Email"
 
 className="
-
 w-full
+h-16
 border
-rounded-xl
-p-4
-mb-5
-
+rounded-2xl
+px-5
 "
 
 />
@@ -148,45 +122,34 @@ type="password"
 
 value={password}
 
-onChange={(e)=>
-
+onChange={e=>
 setPassword(
-
 e.target.value
-
 )
-
 }
 
 placeholder="Password"
 
 className="
-
 w-full
+h-16
 border
-rounded-xl
-p-4
-mb-8
-
+rounded-2xl
+px-5
 "
 
 />
 
 <button
 
-onClick={login}
-
 disabled={loading}
 
 className="
-
 w-full
-h-14
+h-16
 bg-blue-600
 text-white
-rounded-xl
-font-semibold
-
+rounded-2xl
 "
 
 >
@@ -197,7 +160,7 @@ loading
 
 ?
 
-"Signing in..."
+"Logging in..."
 
 :
 
@@ -207,28 +170,12 @@ loading
 
 </button>
 
-<div className="mt-6 text-center">
-
-<a
-
-href="/register"
-
-className="text-blue-600"
-
->
-
-Create account
-
-</a>
+</form>
 
 </div>
 
 </div>
 
-</div>
-
-</div>
-
-  )
+)
 
 }

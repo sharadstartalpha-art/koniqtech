@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 
-export function proxy(
+export function middleware(
 
 req:NextRequest
 
 ){
 
-const token=
+const authToken=
 
 req.cookies.get(
+"authjs.session-token"
+)?.value
 
-"token"
+||
 
+req.cookies.get(
+"__Secure-authjs.session-token"
 )?.value
 
 const path=
-
 req.nextUrl.pathname
 
 const publicRoutes=[
+
+"/",
 
 "/login",
 
@@ -27,6 +32,8 @@ const publicRoutes=[
 "/verify-email",
 
 "/forgot-password",
+
+"/api/auth",
 
 "/api/auth/login",
 
@@ -47,16 +54,14 @@ publicRoutes.some(
 route=>
 
 path.startsWith(
-
 route
-
 )
 
 )
 
 if(
 
-!token &&
+!authToken &&
 
 !isPublic
 
@@ -78,7 +83,7 @@ req.url
 
 if(
 
-token &&
+authToken &&
 
 (
 
@@ -104,11 +109,18 @@ req.url
 
 }
 
-/*
-subscription check later
-*/
+const res=
+NextResponse.next()
 
-return NextResponse.next()
+res.headers.set(
+
+"Cache-Control",
+
+"no-store, no-cache, must-revalidate"
+
+)
+
+return res
 
 }
 

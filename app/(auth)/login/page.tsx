@@ -45,7 +45,7 @@ return
 }
 
 alert(
-"Invalid login"
+"Invalid credentials"
 )
 
 }
@@ -64,7 +64,7 @@ KONIQ CRM
 
 </h1>
 
-<p className="text-white text-2xl mt-8">
+<p className="text-white text-2xl mt-6">
 
 AI CRM for home service companies
 
@@ -77,15 +77,17 @@ AI CRM for home service companies
 <div className="bg-slate-100 flex items-center justify-center">
 
 <form
+
 onSubmit={submit}
+
 className="
 bg-white
 w-[520px]
-rounded-3xl
 p-12
-shadow
+rounded-3xl
 space-y-6
 "
+
 >
 
 <h1 className="text-5xl font-bold">

@@ -1,6 +1,6 @@
 import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
 import { getServerSession } from "next-auth"
+import Link from "next/link"
 
 export const dynamic="force-dynamic"
 
@@ -10,20 +10,9 @@ searchParams
 
 }:any){
 
-const session=
-await getServerSession()
-
-const user=
-session?.user as any
-
-if(!user)return null
-
-const q=
-searchParams?.q || ""
-
 const page=
 Number(
-searchParams?.page || 1
+searchParams?.page||1
 )
 
 const limit=10
@@ -31,53 +20,35 @@ const limit=10
 const skip=
 (page-1)*limit
 
+const session=
+await getServerSession()
+
+if(!session?.user?.email){
+
+return null
+
+}
+
+const dbUser=
+await prisma.user.findUnique({
+
+where:{
+email:session.user.email
+}
+
+})
+
+if(!dbUser){
+
+return null
+
+}
+
 const customers=
 await prisma.customer.findMany({
 
 where:{
-
-orgId:user.orgId,
-
-OR:[
-
-{
-
-firstName:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-},
-
-{
-
-email:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-},
-
-{
-
-phone:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-}
-
-]
-
+orgId:dbUser.orgId
 },
 
 skip,
@@ -85,9 +56,7 @@ skip,
 take:limit,
 
 orderBy:{
-
 createdAt:"desc"
-
 }
 
 })
@@ -96,9 +65,7 @@ const total=
 await prisma.customer.count({
 
 where:{
-
-orgId:user.orgId
-
+orgId:dbUser.orgId
 }
 
 })
@@ -112,46 +79,13 @@ return(
 
 <div className="space-y-8">
 
-<div className="
-flex
-justify-between
-items-center
-">
+<div className="flex justify-between">
 
-<h1 className="
-text-5xl
-font-bold
-">
+<h1 className="text-5xl font-bold">
 
 Customers
 
 </h1>
-
-<div className="
-flex
-gap-4
-">
-
-<form>
-
-<input
-
-name="q"
-
-defaultValue={q}
-
-placeholder="Search customer"
-
-className="
-border
-p-4
-rounded-xl
-w-72
-"
-
-/>
-
-</form>
 
 <Link
 
@@ -161,17 +95,15 @@ className="
 bg-black
 text-white
 px-6
-py-4
+py-3
 rounded-xl
 "
 
 >
 
-Create Customer
+Add Customer
 
 </Link>
-
-</div>
 
 </div>
 
@@ -184,23 +116,27 @@ overflow-hidden
 
 <table className="w-full">
 
-<thead className="bg-slate-100">
+<thead>
 
-<tr>
+<tr className="bg-slate-100">
 
-<th className="p-5 text-left">
+<th className="p-5">
 
-Customer
+Name
 
 </th>
 
-<th>Email</th>
+<th>
 
-<th>Phone</th>
+Phone
 
-<th>Address</th>
+</th>
 
-<th>Actions</th>
+<th>
+
+Email
+
+</th>
 
 </tr>
 
@@ -210,86 +146,28 @@ Customer
 
 {
 
-customers.map(customer=>(
+customers.map(c=>(
 
 <tr
-
-key={customer.id}
-
+key={c.id}
 className="border-t"
-
 >
 
 <td className="p-5">
 
-{
-
-customer.firstName+
-
-" "+
-
-(
-
-customer.lastName||
-
-""
-
-)
-
-}
+{c.firstName}
 
 </td>
 
 <td>
 
-{customer.email}
+{c.phone}
 
 </td>
 
 <td>
 
-{customer.phone}
-
-</td>
-
-<td>
-
-{customer.address}
-
-</td>
-
-<td>
-
-<div className="
-flex
-gap-3
-">
-
-<Link
-
-href={`/customers/${customer.id}`}
-
-className="text-blue-600"
-
->
-
-View
-
-</Link>
-
-<Link
-
-href={`/customers/edit/${customer.id}`}
-
-className="text-green-600"
-
->
-
-Edit
-
-</Link>
-
-</div>
+{c.email}
 
 </td>
 
@@ -305,10 +183,7 @@ Edit
 
 </div>
 
-<div className="
-flex
-gap-3
-">
+<div className="flex gap-2">
 
 {
 
@@ -322,7 +197,7 @@ length:pages
 
 key={i}
 
-href={`?page=${i+1}&q=${q}`}
+href={`?page=${i+1}`}
 
 className="
 border

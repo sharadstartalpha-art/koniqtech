@@ -1,6 +1,6 @@
 import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
 import { getServerSession } from "next-auth"
+import Link from "next/link"
 
 export const dynamic="force-dynamic"
 
@@ -9,21 +9,26 @@ export default async function Page(){
 const session=
 await getServerSession()
 
-const user=
-session?.user
+if(!session?.user?.email){
 
-if(!user)return null
+return null
+
+}
 
 const dbUser=
 await prisma.user.findUnique({
 
 where:{
-email:user.email!
+email:session.user.email
 }
 
 })
 
-if(!dbUser)return null
+if(!dbUser){
+
+return null
+
+}
 
 const leads=
 await prisma.lead.findMany({
@@ -51,14 +56,17 @@ Leads
 </h1>
 
 <Link
+
 href="/leads/create"
+
 className="
 bg-black
 text-white
 px-6
-py-4
+py-3
 rounded-xl
 "
+
 >
 
 Create Lead
@@ -67,29 +75,42 @@ Create Lead
 
 </div>
 
-<table className="
-w-full
+<div className="
 bg-white
 border
 rounded-3xl
 overflow-hidden
 ">
 
-<thead className="bg-slate-100">
+<table className="w-full">
 
-<tr>
+<thead>
 
-<th className="p-5 text-left">
+<tr className="bg-slate-100">
 
-Lead
+<th className="p-5">
+
+Name
 
 </th>
 
-<th>Email</th>
+<th>
 
-<th>Phone</th>
+Email
 
-<th>Status</th>
+</th>
+
+<th>
+
+Phone
+
+</th>
+
+<th>
+
+Status
+
+</th>
 
 </tr>
 
@@ -99,10 +120,10 @@ Lead
 
 {
 
-leads.map(lead=>(
+leads.map(item=>(
 
 <tr
-key={lead.id}
+key={item.id}
 className="border-t"
 >
 
@@ -110,25 +131,29 @@ className="border-t"
 
 {
 
-lead.firstName+
-
-" "+
-
-(
-lead.lastName||
-
-""
-)
+item.firstName
 
 }
 
 </td>
 
-<td>{lead.email}</td>
+<td>
 
-<td>{lead.phone}</td>
+{item.email}
 
-<td>{lead.status}</td>
+</td>
+
+<td>
+
+{item.phone}
+
+</td>
+
+<td>
+
+{item.status}
+
+</td>
 
 </tr>
 
@@ -139,6 +164,8 @@ lead.lastName||
 </tbody>
 
 </table>
+
+</div>
 
 </div>
 

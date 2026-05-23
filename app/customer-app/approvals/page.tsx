@@ -2,11 +2,11 @@ export default function Page(){
 
 return(
 
-<div>
+<button>
 
-Pay invoice
+Approve Quote
 
-</div>
+</button>
 
 )
 

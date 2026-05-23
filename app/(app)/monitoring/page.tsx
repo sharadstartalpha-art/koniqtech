@@ -1,4 +1,4 @@
-export default function Monitoring(){
+export default function Page(){
 
 return(
 
@@ -10,22 +10,18 @@ gap-6
 
 <Card
 title="CPU"
-value="44%"
 />
 
 <Card
-title="Queue"
-value="22"
+title="Memory"
 />
 
 <Card
-title="Errors"
-value="1"
+title="API"
 />
 
 <Card
-title="Latency"
-value="230ms"
+title="Workers"
 />
 
 </div>
@@ -41,22 +37,12 @@ props:any
 return(
 
 <div className="
-bg-white
-p-6
-rounded-xl
+border
+p-8
+rounded-3xl
 ">
 
-<h2>
-
 {props.title}
-
-</h2>
-
-<p>
-
-{props.value}
-
-</p>
 
 </div>
 

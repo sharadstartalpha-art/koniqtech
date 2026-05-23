@@ -1,41 +1,29 @@
 "use client"
 
-import {useState} from "react"
+import { useState }
 
-export default function Chat(){
+from "react"
 
-const[
-msg,
-setMsg
-]=useState("")
+export default function Page(){
+
+const [msg,setMsg]=
+useState("")
 
 return(
 
-<div className="
-max-w-lg
-mx-auto
-bg-white
-p-8
-rounded-xl
-">
+<div>
 
-<textarea
+<input
 
 value={msg}
 
-onChange={e=>
-setMsg(
+onChange={
+
+e=>setMsg(
 e.target.value
 )
-}
 
-className="
-w-full
-border
-h-32
-rounded-xl
-p-4
-"
+}
 
 />
 

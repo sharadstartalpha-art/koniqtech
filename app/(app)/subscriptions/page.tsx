@@ -1,82 +1,64 @@
-export default function SubscriptionPage(){
+export default function Page(){
+
+const plans=[
+
+{
+name:"Starter",
+price:"99"
+},
+
+{
+name:"Pro",
+price:"299"
+},
+
+{
+name:"Enterprise",
+price:"999"
+}
+
+]
 
 return(
 
 <div className="space-y-8">
 
-<h1 className="text-3xl font-bold">
+<h1 className="text-5xl">
+
 Subscriptions
+
 </h1>
 
-<div className="grid md:grid-cols-3 gap-6">
+<div className="grid grid-cols-3 gap-6">
 
-<Card
-title="CRM Starter"
-price="$99"
-/>
+{
 
-<Card
-title="Dispatch Pro"
-price="$249"
-/>
+plans.map(plan=>(
 
-<Card
-title="Enterprise AI"
-price="$599"
-/>
+<div
+key={plan.name}
+className="border rounded-3xl p-8"
+>
 
-</div>
+<h2>
 
-</div>
-
-)
-
-}
-
-function Card(
-props:any
-){
-
-return(
-
-<div className="
-bg-white
-rounded-2xl
-p-8
-shadow
-">
-
-<h2 className="
-font-bold
-text-xl
-">
-
-{props.title}
+{plan.name}
 
 </h2>
 
-<p className="
-text-3xl
-font-bold
-mt-4
-">
+<p>
 
-{props.price}
+${plan.price}
 
 </p>
 
-<button className="
-mt-6
-bg-blue-600
-text-white
-px-5
-py-3
-rounded-xl
-">
+</div>
 
-Select
+))
 
-</button>
+}
+
+</div>
 
 </div>
 

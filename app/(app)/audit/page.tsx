@@ -1,39 +1,36 @@
-import prisma from "@/shared/lib/prisma"
+export default function Page(){
 
-export default async function Page(){
+const logs=[
 
-const users=
-await prisma.user.findMany({
+"Job Updated",
 
-take:20
+"Invoice Created",
 
-})
+"Payment Received"
+
+]
 
 return(
 
-<div>
+<div className="space-y-4">
 
-<h1>
-
-Audit Logs
-
-</h1>
-
-{
-
-users.map(u=>(
+{logs.map(i=>(
 
 <div
-key={u.id}
+key={i}
+className="
+bg-white
+border
+p-5
+rounded-xl
+"
 >
 
-{u.email}
+{i}
 
 </div>
 
-))
-
-}
+))}
 
 </div>
 

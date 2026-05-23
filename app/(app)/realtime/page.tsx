@@ -1,27 +1,37 @@
-"use client"
-
-import { io }
-
-from "socket.io-client"
-
 export default function Page(){
 
-const socket=
-io()
+const streams=[
 
-socket.emit(
+"Dispatch",
+"GPS",
+"Chat",
+"Notifications"
 
-"crm",
-
-"hello"
-
-)
+]
 
 return(
 
-<div>
+<div className="grid grid-cols-4 gap-6">
 
-Realtime CRM
+{streams.map(i=>(
+
+<div
+key={i}
+className="
+bg-white
+border
+rounded-3xl
+p-8
+"
+>
+
+{i}
+
+LIVE
+
+</div>
+
+))}
 
 </div>
 

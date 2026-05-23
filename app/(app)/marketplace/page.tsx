@@ -1,44 +1,34 @@
-export default function Marketplace(){
+export default function Page(){
+
+const apps=[
+"QuickBooks",
+"Twilio",
+"OpenAI",
+"PayPal",
+"Maps"
+]
 
 return(
 
-<div className="
-grid
-grid-cols-4
-gap-6
-">
+<div className="grid grid-cols-5 gap-6">
 
-<Card
-name="QuickBooks"
-/>
+{apps.map(a=>(
 
-<Card
-name="Stripe"
-/>
+<div
+key={a}
+className="
+bg-white
+border
+rounded-3xl
+p-8
+"
+>
 
-<Card
-name="Twilio"
-/>
+{a}
 
 </div>
 
-)
-
-}
-
-function Card(
-p:any
-){
-
-return(
-
-<div className="
-bg-white
-rounded-xl
-p-8
-">
-
-{p.name}
+))}
 
 </div>
 

@@ -5,17 +5,19 @@ return(
 <div className="space-y-8">
 
 <h1 className="text-5xl">
-
-GPS Streams
-
+Tracing
 </h1>
 
 <div className="
-h-[600px]
 bg-white
-rounded-3xl
 border
-"/>
+rounded-3xl
+p-8
+">
+
+OpenTelemetry
+
+</div>
 
 </div>
 

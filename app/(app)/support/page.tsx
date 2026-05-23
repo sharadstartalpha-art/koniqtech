@@ -1,37 +1,34 @@
 export default function Page(){
 
-const alerts=[
-"API down",
-"Payment failed",
-"Queue stuck",
-"SMS failed"
-]
-
 return(
 
 <div className="space-y-6">
 
 <h1 className="text-5xl">
-Alerts
+Support
 </h1>
 
-{alerts.map(a=>(
-
-<div
-key={a}
+<textarea
 className="
-bg-red-50
+w-full
+h-40
 border
 rounded-xl
-p-6
+p-4
 "
->
+/>
 
-{a}
+<button className="
+px-6
+py-3
+bg-black
+text-white
+rounded-xl
+">
 
-</div>
+Send
 
-))}
+</button>
 
 </div>
 

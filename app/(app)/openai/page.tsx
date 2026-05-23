@@ -1,70 +1,35 @@
 export default function Page(){
 
+const agents=[
+
+"Estimator",
+"Dispatcher",
+"Call Center",
+"RAG"
+
+]
+
 return(
 
-<div className="
-space-y-8
-">
+<div className="grid grid-cols-4 gap-6">
 
-<h1 className="
-text-5xl
-font-bold
-">
+{agents.map(a=>(
 
-OpenAI
-
-</h1>
-
-<div className="
-grid
-grid-cols-4
-gap-6
-">
-
-<Card title="Quotes"/>
-
-<Card title="Voice"/>
-
-<Card title="RAG"/>
-
-<Card title="Automation"/>
-
-</div>
-
-<textarea
-
+<div
+key={a}
 className="
-w-full
-h-[300px]
-border
-rounded-3xl
-p-6
-"
-
-placeholder="
-Ask AI
-"
-
-/>
-
-</div>
-
-)
-
-}
-
-function Card({title}:any){
-
-return(
-
-<div className="
 bg-white
 border
 rounded-3xl
 p-8
-">
+"
+>
 
-{title}
+{a}
+
+</div>
+
+))}
 
 </div>
 

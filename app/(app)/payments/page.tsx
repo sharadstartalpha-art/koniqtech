@@ -1,104 +1,33 @@
-"use client"
-
-import {
-
-PayPalScriptProvider,
-PayPalButtons
-
-}
-
-from "@paypal/react-paypal-js"
-
 export default function Page(){
 
 return(
 
-<div className="space-y-8">
+<div className="grid grid-cols-3 gap-6">
 
-<h1 className="text-5xl font-bold">
+<Card t="Revenue" v="$28k"/>
+<Card t="Transactions" v="123"/>
+<Card t="Refunds" v="2"/>
 
-Payments
+</div>
 
-</h1>
-
-<div className="
-bg-white
-rounded-3xl
-p-8
-border
-">
-
-<PayPalScriptProvider
-
-options={{
-
-clientId:
-
-process.env
-.NEXT_PUBLIC_PAYPAL!
-
-}}
-
->
-
-<PayPalButtons
-
-createOrder={(data,actions)=>{
-
-return actions.order.create({
-
-intent:"CAPTURE",
-
-purchase_units:[
-
-{
-
-amount:{
-
-currency_code:
-
-"USD",
-
-value:
-
-"100.00"
-
-}
-
-}
-
-]
-
-})
-
-}}
-
-onApprove={
-
-async(
-
-data,
-actions
-
-)=>{
-
-await actions
-?.order
-?.capture()
-
-alert(
-"Payment success"
 )
 
 }
 
-}
+function Card({t,v}:any){
 
-/>
+return(
 
-</PayPalScriptProvider>
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+">
 
-</div>
+<h2>{t}</h2>
+
+<h1>{v}</h1>
 
 </div>
 

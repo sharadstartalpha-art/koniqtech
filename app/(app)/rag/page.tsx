@@ -2,34 +2,32 @@ export default function Page(){
 
 return(
 
-<div className="space-y-8">
+<div className="grid grid-cols-3 gap-6">
 
-<h1 className="text-5xl font-bold">
+<Card t="Chunks" v="12k"/>
+<Card t="Vectors" v="45k"/>
+<Card t="Embeddings" v="READY"/>
 
-RAG Search
+</div>
 
-</h1>
+)
+
+}
+
+function Card({t,v}:any){
+
+return(
 
 <div className="
 bg-white
-rounded-3xl
 border
+rounded-3xl
 p-8
 ">
 
-<input
-placeholder="
-Search docs...
-"
-className="
-w-full
-border
-rounded-xl
-p-5
-"
-/>
+{t}
 
-</div>
+{v}
 
 </div>
 

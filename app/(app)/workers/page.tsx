@@ -1,26 +1,20 @@
 export default function Page(){
 
 const q=[
-
 "Email",
-
 "SMS",
-
+"Dispatch",
 "AI",
-
-"PDF",
-
-"Dispatch"
-
+"PDF"
 ]
 
 return(
 
-<div className="
-grid
-grid-cols-5
-gap-6
-">
+<div className="space-y-8">
+
+<h1 className="text-5xl">
+Workers
+</h1>
 
 {q.map(i=>(
 
@@ -29,12 +23,14 @@ key={i}
 className="
 bg-white
 border
-rounded-3xl
-p-8
+p-5
+rounded-xl
 "
 >
 
 {i}
+
+RUNNING
 
 </div>
 

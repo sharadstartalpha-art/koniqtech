@@ -9,11 +9,7 @@ border
 p-8
 ">
 
-Plan
-
-Pro
-
-$99
+Admin User Impersonation
 
 </div>
 

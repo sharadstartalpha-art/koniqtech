@@ -1,10 +1,11 @@
 export default function Page(){
 
-const alerts=[
-"API down",
-"Payment failed",
-"Queue stuck",
-"SMS failed"
+const steps=[
+"Create Org",
+"Invite Team",
+"Branding",
+"Integrations",
+"Billing"
 ]
 
 return(
@@ -12,22 +13,22 @@ return(
 <div className="space-y-6">
 
 <h1 className="text-5xl">
-Alerts
+Onboarding
 </h1>
 
-{alerts.map(a=>(
+{steps.map(s=>(
 
 <div
-key={a}
+key={s}
 className="
-bg-red-50
+bg-white
 border
 rounded-xl
 p-6
 "
 >
 
-{a}
+{s}
 
 </div>
 

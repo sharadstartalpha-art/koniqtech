@@ -2,81 +2,28 @@ export default function Page(){
 
 return(
 
-<div className="
-space-y-8
-">
+<div className="space-y-5">
 
-<h1 className="
-text-5xl
-font-bold
-">
+<h1 className="text-5xl">
 
-Twilio Center
+Twilio Runtime
 
 </h1>
 
 <div className="
-grid
-grid-cols-3
-gap-6
-">
-
-<Card
-title="SMS"
-/>
-
-<Card
-title="Voice"
-/>
-
-<Card
-title="Campaigns"
-/>
-
-</div>
-
-<div className="
 bg-white
 border
 rounded-3xl
 p-8
 ">
 
-<input
+SMS
 
-placeholder="
-Send SMS
-"
+VOICE
 
-className="
-w-full
-border
-rounded-xl
-p-5
-"
-
-/>
+WEBHOOKS
 
 </div>
-
-</div>
-
-)
-
-}
-
-function Card({title}:any){
-
-return(
-
-<div className="
-bg-white
-border
-rounded-3xl
-p-8
-">
-
-{title}
 
 </div>
 

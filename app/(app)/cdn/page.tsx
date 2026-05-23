@@ -9,11 +9,9 @@ border
 p-8
 ">
 
-Plan
+Cloudflare CDN
 
-Pro
-
-$99
+Enabled
 
 </div>
 

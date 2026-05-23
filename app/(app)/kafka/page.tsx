@@ -4,16 +4,14 @@ return(
 
 <div className="
 bg-white
-rounded-3xl
 border
+rounded-3xl
 p-8
 ">
 
-Plan
+Kafka Stream
 
-Pro
-
-$99
+Idle
 
 </div>
 

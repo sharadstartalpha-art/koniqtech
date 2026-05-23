@@ -6,16 +6,26 @@ return(
 
 <h1 className="text-5xl">
 
-GPS Streams
+Storage
 
 </h1>
 
 <div className="
-h-[600px]
 bg-white
-rounded-3xl
 border
-"/>
+rounded-3xl
+p-8
+">
+
+Photos
+
+PDFs
+
+Documents
+
+Backups
+
+</div>
 
 </div>
 

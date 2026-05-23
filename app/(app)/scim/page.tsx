@@ -4,16 +4,12 @@ return(
 
 <div className="
 bg-white
+p-8
 rounded-3xl
 border
-p-8
 ">
 
-Plan
-
-Pro
-
-$99
+SCIM Provisioning
 
 </div>
 

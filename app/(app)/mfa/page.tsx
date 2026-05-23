@@ -4,16 +4,16 @@ return(
 
 <div className="
 bg-white
-rounded-3xl
 border
+rounded-3xl
 p-8
 ">
 
-Plan
+2FA
 
-Pro
+SMS
 
-$99
+Authenticator
 
 </div>
 

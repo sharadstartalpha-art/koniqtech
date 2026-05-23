@@ -4,16 +4,16 @@ return(
 
 <div className="
 bg-white
-rounded-3xl
-border
 p-8
+border
+rounded-3xl
 ">
 
-Plan
+Google SSO
 
-Pro
+Azure AD
 
-$99
+Okta
 
 </div>
 

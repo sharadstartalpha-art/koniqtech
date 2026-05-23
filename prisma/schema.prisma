@@ -8,37 +8,37 @@ datasource db {
 }
 
 model Organization {
-  id            String                @id @default(uuid())
-  name          String
-  slug          String                @unique
-  industry      Industry?
-  plan          String                @default("starter")
-  logo          String?
-  phone         String?
-  email         String?
-  active Boolean @default(true)
-  address       String?
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  aiLogs        AiLog[]
+  id                 String                @id @default(uuid())
+  name               String
+  slug               String                @unique
+  industry           Industry?
+  plan               String                @default("starter")
+  logo               String?
+  phone              String?
+  email              String?
+  address            String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  crmType            CRMType
+  active             Boolean               @default(true)
   subscriptionEndsAt DateTime?
-  trialEndsAt DateTime?
-  automations   Automation[]
-  conversations Conversation[]
-  usersLimit Int @default(5)
-  customers     Customer[]
-  deals         Deal[]
-  events        Event[]
-  invoices      Invoice[]
-  jobs          Job[]
-  crmType CRMType
-  leads         Lead[]
-  settings      OrganizationSettings?
-  pipelines     Pipeline[]
-  platformLogs  PlatformLog[]
-  quotes        Quote[]
-  subscriptions Subscription[]
-  users         User[]
+  trialEndsAt        DateTime?
+  usersLimit         Int                   @default(5)
+  aiLogs             AiLog[]
+  automations        Automation[]
+  conversations      Conversation[]
+  customers          Customer[]
+  deals              Deal[]
+  events             Event[]
+  invoices           Invoice[]
+  jobs               Job[]
+  leads              Lead[]
+  settings           OrganizationSettings?
+  pipelines          Pipeline[]
+  platformLogs       PlatformLog[]
+  quotes             Quote[]
+  subscriptions      Subscription[]
+  users              User[]
 }
 
 model User {
@@ -58,6 +58,7 @@ model User {
   assignedLeads Lead[]
   messages      Message[]
   sessions      Session[]
+  crewAssignments CrewAssignment[]
   organization  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
@@ -175,25 +176,6 @@ model QuoteItem {
   quote    Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
-model Job {
-  id                 String              @id @default(uuid())
-  orgId              String
-  customerId         String
-  quoteId            String?
-  title              String
-  status             JobStatus           @default(scheduled)
-  technicianId       String?
-  scheduledDate      DateTime?
-  completedDate      DateTime?
-  notes              String?
-  events             Event[]
-  customer           Customer            @relation(fields: [customerId], references: [id])
-  organization       Organization        @relation(fields: [orgId], references: [id])
-  quote              Quote?              @relation(fields: [quoteId], references: [id])
-  technician         User?               @relation(fields: [technicianId], references: [id])
-  landscapingProject LandscapingProject?
-  roofingProject     RoofingProject?
-}
 
 model Event {
   id           String       @id @default(uuid())
@@ -252,13 +234,13 @@ model Subscription {
   id           String             @id @default(uuid())
   orgId        String
   provider     String
-  externalId String @unique
+  externalId   String             @unique
   plan         String
   status       SubscriptionStatus
-  amount Float @default(199)
-  currency String @default("USD")
-  interval String @default("month")
   renewAt      DateTime?
+  amount       Float              @default(199)
+  currency     String             @default("USD")
+  interval     String             @default("month")
   organization Organization       @relation(fields: [orgId], references: [id])
 }
 
@@ -354,6 +336,15 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 enum Industry {
   roofing
   hvac
@@ -362,7 +353,6 @@ enum Industry {
 }
 
 enum UserRole {
-  super_admin
   owner
   admin
   manager
@@ -370,20 +360,15 @@ enum UserRole {
   technician
   support
   accountant
+  super_admin
 }
 
 enum CRMType {
-
-roofing
-
-hvac
-
-plumbing
-
-landscaping
-
-cleaning
-
+  roofing
+  hvac
+  plumbing
+  landscaping
+  cleaning
 }
 
 enum LeadStatus {
@@ -423,18 +408,188 @@ enum MessageChannel {
   whatsapp
   internal
 }
-model OtpCode{
 
-id String @id @default(cuid())
 
-email String
+model PurchaseOrder {
 
-code String
+id String @id @default(uuid())
 
-expiresAt DateTime
+jobId String
 
-verified Boolean @default(false)
+vendor String
 
-createdAt DateTime @default(now())
+amount Float
+
+status String @default("draft")
+
+job Job @relation(fields:[jobId],references:[id])
+
+}
+
+
+model ChangeOrder {
+
+id String @id @default(uuid())
+
+jobId String
+
+title String
+
+amount Float
+
+status String @default("pending")
+
+job Job @relation(fields:[jobId],references:[id])
+
+}
+
+
+model PunchItem {
+
+id String @id @default(uuid())
+
+jobId String
+
+title String
+
+completed Boolean @default(false)
+
+job Job @relation(fields:[jobId],references:[id])
+
+}
+
+
+
+model CloseoutPackage {
+
+id String @id @default(uuid())
+
+jobId String
+
+notes String?
+
+completed Boolean @default(false)
+
+job Job @relation(fields:[jobId],references:[id])
+
+}
+
+model CrewAssignment {
+
+  id String @id @default(uuid())
+
+  jobId String
+
+  userId String
+
+  role String
+
+  assignedAt DateTime @default(now())
+
+  job Job @relation(fields:[jobId],references:[id])
+
+  user User @relation(fields:[userId],references:[id])
+
+}
+
+
+model JobTask {
+
+  id String @id @default(uuid())
+
+  jobId String
+
+  title String
+
+  status String @default("todo")
+
+  dependsOnId String?
+
+  job Job @relation(fields:[jobId],references:[id])
+
+}
+
+model JobMilestone {
+
+  id String @id @default(uuid())
+
+  jobId String
+
+  title String
+
+  status String @default("pending")
+
+  dueDate DateTime?
+
+  job Job @relation(fields:[jobId],references:[id])
+
+}
+
+model MaterialRequest {
+
+  id String @id @default(uuid())
+
+  jobId String
+
+  name String
+
+  qty Int
+
+  status String @default("requested")
+
+  job Job @relation(fields:[jobId],references:[id])
+
+}
+
+
+model Job {
+
+  id String @id @default(uuid())
+
+  orgId String
+  customerId String
+  quoteId String?
+
+  title String
+
+  status JobStatus @default(scheduled)
+
+  technicianId String?
+
+  scheduledDate DateTime?
+
+  completedDate DateTime?
+
+  notes String?
+
+  events Event[]
+
+  customer Customer @relation(fields:[customerId],references:[id])
+
+  organization Organization @relation(fields:[orgId],references:[id])
+
+  quote Quote? @relation(fields:[quoteId],references:[id])
+
+  technician User? @relation(fields:[technicianId],references:[id])
+
+  landscapingProject LandscapingProject?
+
+  roofingProject RoofingProject?
+
+  crewAssignments CrewAssignment[]
+
+  tasks JobTask[]
+
+  milestones JobMilestone[]
+
+  materials MaterialRequest[]
+
+  purchaseOrders PurchaseOrder[]
+
+  changeOrders ChangeOrder[]
+
+  punchItems PunchItem[]
+
+  closeout CloseoutPackage[]
 
 }

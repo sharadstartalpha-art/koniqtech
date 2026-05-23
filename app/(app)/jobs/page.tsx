@@ -1,32 +1,261 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+
+import { auth } from "@/auth"
+
+import Link from "next/link"
+
+export const dynamic="force-dynamic"
+
+export default async function Page(){
+
+const session=
+await auth()
+
+const orgId=
+
+(session?.user as any)
+?.orgId
+
+const jobs=
+
+await prisma.job.findMany({
+
+where:{
+orgId
+},
+
+include:{
+
+customer:true,
+
+technician:true
+
+},
+
+orderBy:{
+
+scheduledDate:"desc"
+
+}
+
+})
 
 return(
 
-<div className="space-y-8">
+<div className="space-y-6">
 
-<h1 className="text-5xl font-bold">
+<div className="
+flex
+justify-between
+items-center
+">
+
+<h1 className="
+text-4xl
+font-semibold
+">
 
 Jobs
 
 </h1>
 
-<div className="bg-white rounded-3xl p-8">
+<Link
 
-<div className="space-y-5">
+href="/jobs/create"
 
-<Job
-name="Roof Replacement"
-tech="Mike"
-status="Assigned"
+className="
+bg-green-600
+
+text-white
+
+px-5
+py-3
+
+rounded-xl
+"
+
+>
+
+New Job
+
+</Link>
+
+</div>
+
+<div className="
+grid
+
+md:grid-cols-3
+
+gap-4
+">
+
+<LinkCard
+title="Job Board"
+href="/jobs/board"
 />
 
-<Job
-name="Inspection"
-tech="John"
-status="Completed"
+<LinkCard
+title="Milestones"
+href="/jobs/milestones"
+/>
+
+<LinkCard
+title="Crew"
+href="/jobs/crew"
+/>
+
+<LinkCard
+title="Tasks"
+href="/jobs/tasks"
+/>
+
+<LinkCard
+title="Dependencies"
+href="/jobs/dependencies"
+/>
+
+<LinkCard
+title="Materials"
+href="/jobs/materials"
+/>
+
+<LinkCard
+title="Purchase Orders"
+href="/jobs/purchase-orders"
+/>
+
+<LinkCard
+title="Change Orders"
+href="/jobs/change-orders"
+/>
+
+<LinkCard
+title="Punch List"
+href="/jobs/punch-list"
+/>
+
+<LinkCard
+title="Closeout"
+href="/jobs/closeout"
 />
 
 </div>
+
+<div className="
+bg-white
+
+border
+
+rounded-3xl
+
+overflow-hidden
+">
+
+<table className="w-full">
+
+<thead className="
+bg-slate-50
+">
+
+<tr>
+
+<th className="p-4">
+
+Job
+
+</th>
+
+<th>
+
+Customer
+
+</th>
+
+<th>
+
+Tech
+
+</th>
+
+<th>
+
+Status
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{
+
+jobs.map(
+
+j=>(
+
+<tr
+key={j.id}
+className="
+border-t
+"
+>
+
+<td className="p-4">
+
+<Link
+href={`/jobs/${j.id}`}
+>
+
+{j.title}
+
+</Link>
+
+</td>
+
+<td>
+
+{
+
+j.customer.firstName
+
+}
+
+</td>
+
+<td>
+
+{
+
+j.technician?.name
+
+||
+
+"Unassigned"
+
+}
+
+</td>
+
+<td>
+
+{j.status}
+
+</td>
+
+</tr>
+
+)
+
+)
+
+}
+
+</tbody>
+
+</table>
 
 </div>
 
@@ -36,41 +265,34 @@ status="Completed"
 
 }
 
-function Job({
+function LinkCard({
 
-name,
-tech,
-status
+title,
+href
 
 }:any){
 
 return(
 
-<div className="border rounded-xl p-5">
+<Link
 
-<h2 className="font-bold">
+href={href}
 
-{name}
+className="
+bg-white
 
-</h2>
+border
 
-<p>
+rounded-2xl
 
-Technician:
+p-6
+"
 
-{tech}
+>
 
-</p>
+{title}
 
-<p>
-
-Status:
-
-{status}
-
-</p>
-
-</div>
+</Link>
 
 )
 

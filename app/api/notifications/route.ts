@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
 
-let locations:any[]=[]
+let notifications:any[]=[]
 
 export async function GET(){
 
 return NextResponse.json(
-locations
+notifications
 )
 
 }
@@ -15,20 +15,20 @@ export async function POST(req:Request){
 const body=
 await req.json()
 
-const item={
+const n={
 
 id:crypto.randomUUID(),
 
-name:body.name,
+title:body.title,
 
-city:body.city
+message:body.message,
+
+channel:body.channel
 
 }
 
-locations.push(item)
+notifications.push(n)
 
-return NextResponse.json(
-item
-)
+return NextResponse.json(n)
 
 }

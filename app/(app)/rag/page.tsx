@@ -6,33 +6,9 @@ return(
 
 <h1 className="text-5xl font-bold">
 
-Fleet GPS
+RAG Search
 
 </h1>
-
-<div className="
-grid
-grid-cols-4
-gap-6
-">
-
-<Car/>
-
-<Car/>
-
-<Car/>
-
-</div>
-
-</div>
-
-)
-
-}
-
-function Car(){
-
-return(
 
 <div className="
 bg-white
@@ -41,7 +17,19 @@ border
 p-8
 ">
 
-Truck 01
+<input
+placeholder="
+Search docs...
+"
+className="
+w-full
+border
+rounded-xl
+p-5
+"
+/>
+
+</div>
 
 </div>
 

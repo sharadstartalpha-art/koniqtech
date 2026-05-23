@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
 
-let locations:any[]=[]
+let campaigns:any[]=[]
 
 export async function GET(){
 
 return NextResponse.json(
-locations
+campaigns
 )
 
 }
@@ -21,11 +21,15 @@ id:crypto.randomUUID(),
 
 name:body.name,
 
-city:body.city
+type:body.type,
+
+audience:body.audience,
+
+status:"draft"
 
 }
 
-locations.push(item)
+campaigns.push(item)
 
 return NextResponse.json(
 item

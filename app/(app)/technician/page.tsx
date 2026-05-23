@@ -2,64 +2,58 @@ import prisma from "@/shared/lib/prisma"
 
 export default async function Page(){
 
-const items=
-await prisma.inventoryItem.findMany()
+const techs=
+await prisma.user.findMany({
+
+where:{
+role:"technician"
+}
+
+})
 
 return(
 
 <div className="space-y-8">
 
-<h1 className="
-text-5xl
-font-bold
-">
+<h1 className="text-5xl font-bold">
 
-Warehouse
+Technician Tracking
 
 </h1>
 
 <div className="
-bg-white
-rounded-3xl
-border
-p-8
+grid
+grid-cols-3
+gap-6
 ">
 
-{
-
-items.map(
-
-(i:any)=>(
+{techs.map(t=>(
 
 <div
-key={i.id}
+key={t.id}
 className="
-py-4
-border-b
+bg-white
+border
+rounded-3xl
+p-8
 "
 >
 
 <h2 className="font-bold">
 
-{i.name}
+{t.name}
 
 </h2>
 
 <p>
 
-Qty:
-
-{i.qty}
+Live Tracking
 
 </p>
 
 </div>
 
-)
-
-)
-
-}
+))}
 
 </div>
 

@@ -1,11 +1,12 @@
+import prisma from "@/shared/lib/prisma"
 import { NextResponse } from "next/server"
 
-let locations:any[]=[]
+let messages:any[]=[]
 
 export async function GET(){
 
 return NextResponse.json(
-locations
+messages
 )
 
 }
@@ -15,20 +16,22 @@ export async function POST(req:Request){
 const body=
 await req.json()
 
-const item={
+const msg={
 
 id:crypto.randomUUID(),
 
-name:body.name,
+phone:body.phone,
 
-city:body.city
+message:body.message,
+
+status:"queued",
+
+createdAt:new Date()
 
 }
 
-locations.push(item)
+messages.push(msg)
 
-return NextResponse.json(
-item
-)
+return NextResponse.json(msg)
 
 }

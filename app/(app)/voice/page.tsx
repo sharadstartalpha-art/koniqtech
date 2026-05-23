@@ -6,23 +6,27 @@ return(
 
 <h1 className="text-5xl font-bold">
 
-Customer Notifications
+Voice Agents
 
 </h1>
 
 <div className="
 grid
-grid-cols-4
+grid-cols-3
 gap-6
 ">
 
-<Card title="SMS"/>
+<Card
+title="Inbound AI"
+/>
 
-<Card title="Email"/>
+<Card
+title="Outbound AI"
+/>
 
-<Card title="Push"/>
-
-<Card title="Voice"/>
+<Card
+title="Appointment Bot"
+/>
 
 </div>
 
@@ -43,7 +47,11 @@ rounded-3xl
 p-8
 ">
 
+<h2 className="font-bold">
+
 {title}
+
+</h2>
 
 </div>
 

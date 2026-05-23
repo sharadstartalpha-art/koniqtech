@@ -11,19 +11,19 @@ text-5xl
 font-bold
 ">
 
-GPS Tracking
+Route AI
 
 </h1>
 
 <div className="
 bg-white
-border
+h-[600px]
 rounded-3xl
-h-[650px]
+border
 p-8
 ">
 
-Live Technician Map
+AI Route Optimization Map
 
 </div>
 

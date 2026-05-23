@@ -6,40 +6,44 @@ return(
 
 <h1 className="text-5xl font-bold mb-8">
 
-Equipment
+Photos
 
 </h1>
 
 <div className="
 grid
-grid-cols-3
+grid-cols-4
 gap-6
 ">
 
-<Card text="Ladder"/>
-<Card text="Generator"/>
-<Card text="Drone"/>
+{
 
-</div>
+Array.from({
 
-</div>
+length:8
 
-)
+}).map((_,i)=>(
 
-}
+<div
 
-function Card({text}:any){
+key={i}
 
-return(
-
-<div className="
+className="
+aspect-square
 bg-white
 border
 rounded-3xl
-p-8
-">
+"
 
-{text}
+>
+
+</div>
+
+))
+
+}
+
+</div>
 
 </div>
 

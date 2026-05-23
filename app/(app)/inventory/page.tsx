@@ -1,19 +1,5 @@
 export default function Page(){
 
-const items=[
-
-{
-name:"Roof Shingles",
-qty:120
-},
-
-{
-name:"Sealant",
-qty:40
-}
-
-]
-
 return(
 
 <div className="space-y-8">
@@ -24,7 +10,12 @@ Inventory
 
 </h1>
 
-<div className="bg-white rounded-3xl border overflow-hidden">
+<div className="
+bg-white
+border
+rounded-3xl
+overflow-hidden
+">
 
 <table className="w-full">
 
@@ -40,7 +31,7 @@ Item
 
 <th>
 
-Quantity
+Qty
 
 </th>
 
@@ -50,32 +41,21 @@ Quantity
 
 <tbody>
 
-{
-
-items.map((item,i)=>(
-
-<tr
-key={i}
-className="border-t"
->
+<tr>
 
 <td className="p-5">
 
-{item.name}
+Shingles
 
 </td>
 
 <td>
 
-{item.qty}
+120
 
 </td>
 
 </tr>
-
-))
-
-}
 
 </tbody>
 

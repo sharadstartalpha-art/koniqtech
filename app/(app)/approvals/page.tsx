@@ -3,12 +3,12 @@ export default function Page(){
 return(
 
 <div className="
-space-y-8
+space-y-6
 ">
 
 <h1 className="text-5xl font-bold">
 
-Payments
+Purchase Approvals
 
 </h1>
 
@@ -19,7 +19,7 @@ rounded-3xl
 p-8
 ">
 
-Stripe / PayPal history
+Awaiting approvals
 
 </div>
 

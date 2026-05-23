@@ -2,13 +2,15 @@ export default function Page(){
 
 return(
 
-<div className="
-space-y-8
+<div>
+
+<h1 className="
+text-5xl
+font-bold
+mb-8
 ">
 
-<h1 className="text-5xl font-bold">
-
-Payments
+SMS Center
 
 </h1>
 
@@ -16,10 +18,11 @@ Payments
 bg-white
 border
 rounded-3xl
+h-[700px]
 p-8
 ">
 
-Stripe / PayPal history
+SMS inbox
 
 </div>
 

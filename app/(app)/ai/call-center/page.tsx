@@ -6,7 +6,7 @@ return(
 
 <h1 className="text-5xl font-bold">
 
-Fleet
+AI Call Center
 
 </h1>
 
@@ -16,11 +16,22 @@ grid-cols-4
 gap-6
 ">
 
-<Car name="Truck 1"/>
+<Card title="Inbound"/>
+<Card title="Outbound"/>
+<Card title="AI Agents"/>
+<Card title="Voice Queue"/>
 
-<Car name="Truck 2"/>
+</div>
 
-<Car name="Van 3"/>
+<div className="
+bg-white
+border
+rounded-3xl
+p-10
+h-[500px]
+">
+
+AI voice workflow
 
 </div>
 
@@ -30,7 +41,7 @@ gap-6
 
 }
 
-function Car({name}:any){
+function Card({title}:any){
 
 return(
 
@@ -41,7 +52,7 @@ rounded-3xl
 p-8
 ">
 
-{name}
+{title}
 
 </div>
 

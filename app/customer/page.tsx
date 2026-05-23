@@ -3,15 +3,18 @@ export default function Page(){
 return(
 
 <div className="
-space-y-8
+min-h-screen
+bg-slate-100
+p-10
 ">
 
 <h1 className="
 text-5xl
 font-bold
+mb-8
 ">
 
-Analytics
+Customer App
 
 </h1>
 
@@ -21,13 +24,10 @@ grid-cols-4
 gap-6
 ">
 
-<Card title="Revenue"/>
-
-<Card title="Jobs"/>
-
-<Card title="Leads"/>
-
-<Card title="Conversion"/>
+<Card text="Jobs"/>
+<Card text="Invoices"/>
+<Card text="Payments"/>
+<Card text="Documents"/>
 
 </div>
 
@@ -37,18 +37,17 @@ gap-6
 
 }
 
-function Card({title}:any){
+function Card({text}:any){
 
 return(
 
 <div className="
 bg-white
-border
 rounded-3xl
 p-10
 ">
 
-{title}
+{text}
 
 </div>
 

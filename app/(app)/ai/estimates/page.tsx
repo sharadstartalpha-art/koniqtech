@@ -8,20 +8,25 @@ space-y-8
 
 <h1 className="text-5xl font-bold">
 
-Payments
+AI Estimates
 
 </h1>
 
-<div className="
-bg-white
+<textarea
+
+className="
+w-full
+h-[400px]
 border
 rounded-3xl
-p-8
-">
+p-6
+"
 
-Stripe / PayPal history
+placeholder="
+Describe project
+"
 
-</div>
+/>
 
 </div>
 

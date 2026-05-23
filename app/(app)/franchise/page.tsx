@@ -1,14 +1,29 @@
-export default function Franchise(){
+export default function Page(){
 
 return(
 
-<div className="
-bg-white
-rounded-xl
-p-8
+<div>
+
+<h1 className="
+text-5xl
+font-bold
+mb-8
 ">
 
-Franchise Control
+Franchise Management
+
+</h1>
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-10
+">
+
+Franchise network
+
+</div>
 
 </div>
 

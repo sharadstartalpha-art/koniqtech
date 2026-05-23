@@ -2,24 +2,22 @@ export default function Page(){
 
 return(
 
-<div className="
-space-y-8
-">
+<div className="space-y-8">
 
 <h1 className="text-5xl font-bold">
 
-Payments
+Documents
 
 </h1>
 
 <div className="
 bg-white
-border
 rounded-3xl
-p-8
+border
+p-10
 ">
 
-Stripe / PayPal history
+Upload contracts, permits, PDFs
 
 </div>
 

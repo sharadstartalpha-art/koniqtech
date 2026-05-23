@@ -2,13 +2,11 @@ export default function Page(){
 
 return(
 
-<div className="
-space-y-8
-">
+<div className="space-y-8">
 
 <h1 className="text-5xl font-bold">
 
-Payments
+Invoice
 
 </h1>
 
@@ -16,10 +14,10 @@ Payments
 bg-white
 border
 rounded-3xl
-p-8
+p-10
 ">
 
-Stripe / PayPal history
+Invoice module
 
 </div>
 

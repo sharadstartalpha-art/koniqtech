@@ -2,16 +2,15 @@ export default function Page(){
 
 return(
 
-<div className="
-space-y-8
-">
+<div>
 
 <h1 className="
 text-5xl
 font-bold
+mb-8
 ">
 
-Analytics
+Reports
 
 </h1>
 
@@ -22,11 +21,8 @@ gap-6
 ">
 
 <Card title="Revenue"/>
-
-<Card title="Jobs"/>
-
 <Card title="Leads"/>
-
+<Card title="Jobs"/>
 <Card title="Conversion"/>
 
 </div>

@@ -1,58 +1,62 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+
+export const dynamic="force-dynamic"
+
+export default async function Page(){
+
+const jobs=
+await prisma.job.findMany({
+
+include:{
+customer:true
+}
+
+})
 
 return(
 
-<div>
+<div className="space-y-8">
 
-<h1 className="text-5xl font-bold mb-8">
+<h1 className="text-5xl font-bold">
 
-Route Planner
+Route Optimization
 
 </h1>
 
-<div className="grid grid-cols-2 gap-8">
+<div className="
+bg-white
+border
+rounded-3xl
+p-8
+space-y-4
+">
 
-<div className="bg-white rounded-3xl p-8">
+{
 
-<h2 className="font-bold mb-6">
+jobs.map(job=>(
 
-Stops
+<div
+key={job.id}
+className="
+border
+rounded-2xl
+p-5
+"
+>
 
-</h2>
+<h2>{job.title}</h2>
 
-<div className="space-y-4">
+<p>
 
-<div className="bg-slate-100 p-4 rounded-xl">
+{job.customer.companyName}
 
-Stop 1
-
-</div>
-
-<div className="bg-slate-100 p-4 rounded-xl">
-
-Stop 2
-
-</div>
-
-<div className="bg-slate-100 p-4 rounded-xl">
-
-Stop 3
-
-</div>
-
-</div>
+</p>
 
 </div>
 
-<div className="bg-white rounded-3xl p-8">
+))
 
-<div className="h-[500px] bg-slate-100 rounded-3xl flex items-center justify-center">
-
-MAP
-
-</div>
-
-</div>
+}
 
 </div>
 

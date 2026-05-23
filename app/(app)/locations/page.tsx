@@ -4,9 +4,13 @@ return(
 
 <div>
 
-<h1 className="text-5xl font-bold mb-8">
+<h1 className="
+text-5xl
+font-bold
+mb-8
+">
 
-Equipment
+Locations
 
 </h1>
 
@@ -16,9 +20,9 @@ grid-cols-3
 gap-6
 ">
 
-<Card text="Ladder"/>
-<Card text="Generator"/>
-<Card text="Drone"/>
+<Card title="Dallas"/>
+<Card title="Houston"/>
+<Card title="Austin"/>
 
 </div>
 
@@ -28,7 +32,7 @@ gap-6
 
 }
 
-function Card({text}:any){
+function Card({title}:any){
 
 return(
 
@@ -36,10 +40,10 @@ return(
 bg-white
 border
 rounded-3xl
-p-8
+p-10
 ">
 
-{text}
+{title}
 
 </div>
 

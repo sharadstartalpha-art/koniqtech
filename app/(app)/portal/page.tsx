@@ -1,32 +1,54 @@
-export default function Portal(){
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div className="
+min-h-screen
+bg-slate-100
+p-10
+">
 
-<h1 className="text-2xl">
+<h1 className="
+text-5xl
+font-bold
+mb-8
+">
 
 Customer Portal
 
 </h1>
 
-<div className="bg-white rounded-xl p-6">
+<div className="
+grid
+grid-cols-3
+gap-6
+">
 
-Invoices
+<Card text="Jobs"/>
+
+<Card text="Invoices"/>
+
+<Card text="Documents"/>
+
+</div>
 
 </div>
 
-<div className="bg-white rounded-xl p-6">
+)
 
-Quotes
+}
 
-</div>
+function Card({text}:any){
 
-<div className="bg-white rounded-xl p-6">
+return(
 
-Appointments
+<div className="
+bg-white
+rounded-3xl
+p-10
+">
 
-</div>
+{text}
 
 </div>
 

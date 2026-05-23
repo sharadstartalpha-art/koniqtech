@@ -1,18 +1,28 @@
-export default function Documents(){
+export default function Page(){
 
 return(
 
-<div className="space-y-6">
+<div>
 
-<h1 className="text-2xl">
+<h1 className="
+text-5xl
+font-bold
+mb-8
+">
 
 Documents
 
 </h1>
 
-<div className="bg-white p-8 rounded-xl">
+<div className="
+bg-white
+border
+rounded-3xl
+p-10
+h-[500px]
+">
 
-<input type="file"/>
+PDF + signatures
 
 </div>
 

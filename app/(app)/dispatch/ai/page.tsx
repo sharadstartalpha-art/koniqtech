@@ -6,21 +6,31 @@ return(
 
 <h1 className="text-5xl font-bold">
 
-Fleet
+Dispatch AI
 
 </h1>
 
 <div className="
 grid
-grid-cols-4
+grid-cols-3
 gap-6
 ">
 
-<Car name="Truck 1"/>
+<Card title="Optimize Routes"/>
+<Card title="Assign Tech"/>
+<Card title="Load Balance"/>
 
-<Car name="Truck 2"/>
+</div>
 
-<Car name="Van 3"/>
+<div className="
+bg-white
+border
+rounded-3xl
+p-10
+h-[500px]
+">
+
+AI dispatch recommendations
 
 </div>
 
@@ -30,7 +40,7 @@ gap-6
 
 }
 
-function Car({name}:any){
+function Card({title}:any){
 
 return(
 
@@ -41,7 +51,7 @@ rounded-3xl
 p-8
 ">
 
-{name}
+{title}
 
 </div>
 

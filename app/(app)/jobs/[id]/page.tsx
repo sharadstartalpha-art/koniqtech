@@ -40,8 +40,8 @@ const modules=[
 ["Purchase Orders",`/jobs/${id}/purchase-orders`],
 ["Change Orders",`/jobs/${id}/change-orders`],
 ["Punch List",`/jobs/${id}/punch`],
-["Closeout",`/jobs/${id}/closeout`]
-
+["Closeout",`/jobs/${id}/closeout`],
+["Schedule",`/jobs/${id}/schedule`]
 ]
 
 return(

@@ -44,7 +44,7 @@ const MENU=[
 ["Calendar","/calendar",Calendar],
 ["Messages","/messages",MessageSquare],
 ["Billing","/billing",CreditCard],
-["Dispatch","/dispatch",Truck],
+["Dispatch","/jobs/dispatch",Truck],
 ["Analytics","/analytics",BarChart3],
 ["AI","/ai",Brain],
 ["Notifications","/notifications",Bell],

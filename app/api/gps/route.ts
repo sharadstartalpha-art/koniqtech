@@ -1,19 +1,11 @@
-import prisma from "@/shared/lib/prisma"
 import { NextResponse } from "next/server"
+
+let points:any[]=[]
 
 export async function GET(){
 
-const locations=
-await prisma.technicianLocation.findMany({
-
-include:{
-technician:true
-}
-
-})
-
 return NextResponse.json(
-locations
+points
 )
 
 }
@@ -23,30 +15,8 @@ export async function POST(req:Request){
 const body=
 await req.json()
 
-const location=
-await prisma.technicianLocation.create({
+points.push(body)
 
-data:{
-
-techId:
-body.techId,
-
-lat:
-Number(
-body.lat
-),
-
-lng:
-Number(
-body.lng
-)
-
-}
-
-})
-
-return NextResponse.json(
-location
-)
+return NextResponse.json(body)
 
 }

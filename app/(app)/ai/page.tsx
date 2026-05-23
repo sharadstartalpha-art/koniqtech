@@ -1,40 +1,64 @@
 "use client"
 
-import {useState} from "react"
+import { useState } from "react"
 
-export default function AI(){
+export default function Page(){
 
-const[q,setQ]=useState("")
+const [prompt,setPrompt]=useState("")
+const [answer,setAnswer]=useState("")
+
+async function ask(){
+
+const r=
+await fetch("/api/openai",{
+
+method:"POST",
+
+body:JSON.stringify({
+
+prompt
+
+})
+
+})
+
+const data=
+await r.json()
+
+setAnswer(
+data.message.content
+)
+
+}
 
 return(
 
-<div className="bg-white rounded-xl p-6">
+<div className="space-y-5">
 
-<h1 className="text-2xl mb-6">
+<h1 className="text-5xl">
 
 AI Assistant
 
 </h1>
 
 <textarea
-
-value={q}
-
-onChange={(e)=>
-
-setQ(e.target.value)
-
-}
-
-className="border p-4 rounded w-full h-40"
-
+className="border w-full p-5"
+onChange={e=>setPrompt(e.target.value)}
 />
 
-<button className="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+<button
+onClick={ask}
+>
 
-Run
+Ask
 
 </button>
+
+<p>
+
+{answer}
+
+</p>
 
 </div>
 

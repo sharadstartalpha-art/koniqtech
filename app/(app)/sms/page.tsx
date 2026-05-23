@@ -1,30 +1,62 @@
+"use client"
+
+import { useState } from "react"
+
 export default function Page(){
+
+const [phone,setPhone]=useState("")
+const [message,setMessage]=useState("")
+
+async function send(){
+
+await fetch("/api/twilio",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+phone,
+message
+
+})
+
+})
+
+}
 
 return(
 
-<div>
+<div className="space-y-6">
 
-<h1 className="
-text-5xl
-font-bold
-mb-8
-">
+<h1 className="text-5xl font-bold">
 
-SMS Center
+Twilio SMS
 
 </h1>
 
-<div className="
-bg-white
-border
-rounded-3xl
-h-[700px]
-p-8
-">
+<input
+className="border p-4 w-full"
+placeholder="Phone"
+onChange={e=>setPhone(e.target.value)}
+/>
 
-SMS inbox
+<textarea
+className="border p-4 w-full"
+onChange={e=>setMessage(e.target.value)}
+/>
 
-</div>
+<button
+onClick={send}
+className="bg-black text-white px-6 py-3 rounded-xl"
+>
+
+Send
+
+</button>
 
 </div>
 

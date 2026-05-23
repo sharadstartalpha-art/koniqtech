@@ -1,72 +1,45 @@
+"use client"
+
+import {
+
+GoogleMap,
+LoadScript
+
+}
+
+from "@react-google-maps/api"
+
 export default function Page(){
 
 return(
 
-<div className="
-space-y-8
-">
-
-<h1 className="
-text-5xl
-font-bold
-">
-
-Maps
-
-</h1>
-
-<div className="
-grid
-grid-cols-3
-gap-6
-">
-
-<Card
-title="Routes"
-/>
-
-<Card
-title="Jobs"
-/>
-
-<Card
-title="Technicians"
-/>
-
-</div>
-
-<div className="
-bg-white
-border
-rounded-3xl
-h-[700px]
-p-8
-">
-
-Google Maps Area
-
-</div>
-
-</div>
-
-)
-
+<LoadScript
+googleMapsApiKey={
+process.env.NEXT_PUBLIC_MAPS!
 }
+>
 
-function Card({title}:any){
+<GoogleMap
 
-return(
+mapContainerStyle={{
 
-<div className="
-bg-white
-border
-rounded-3xl
-p-8
-">
+height:"700px",
+width:"100%"
 
-{title}
+}}
 
-</div>
+center={{
+
+lat:40,
+lng:-74
+
+}}
+
+zoom={10}
+
+/>
+
+</LoadScript>
 
 )
 

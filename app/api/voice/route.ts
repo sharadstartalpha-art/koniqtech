@@ -1,64 +1,29 @@
-import { NextResponse } from "next/server"
+import OpenAI from "openai"
 
-const agents=[
+const openai=
+new OpenAI({
 
-{
-
-id:"1",
-
-name:
-"Inbound AI",
-
-status:
-"online"
-
-},
-
-{
-
-id:"2",
-
-name:
-"Outbound AI",
-
-status:
-"idle"
-
-},
-
-{
-
-id:"3",
-
-name:
-"Booking AI",
-
-status:
-"online"
-
-}
-
-]
-
-export async function GET(){
-
-return NextResponse.json(
-agents
-)
-
-}
-
-export async function POST(req:Request){
-
-const body=
-await req.json()
-
-return NextResponse.json({
-
-success:true,
-
-agent:body
+apiKey:
+process.env.OPENAI_API_KEY
 
 })
+
+export async function POST(){
+
+const speech=
+await openai.audio.speech.create({
+
+model:"tts-1",
+
+voice:"nova",
+
+input:
+"Technician dispatched"
+
+})
+
+return new Response(
+speech.body
+)
 
 }

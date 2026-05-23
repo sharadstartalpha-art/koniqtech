@@ -55,6 +55,7 @@ model User {
   deals         Deal[]
   events        Event[]
   jobs          Job[]
+  
   assignedLeads Lead[]
   messages      Message[]
   sessions      Session[]

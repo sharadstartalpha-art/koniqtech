@@ -1,163 +1,80 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(
+export function middleware(req: NextRequest) {
+const authToken =
+req.cookies.get("authjs.session-token")?.value ||
+req.cookies.get("__Secure-authjs.session-token")?.value;
 
-req:NextRequest
+const path = req.nextUrl.pathname;
 
-){
-
-const authToken=
-
-req.cookies.get(
-"authjs.session-token"
-)?.value
-
-||
-
-req.cookies.get(
-"__Secure-authjs.session-token"
-)?.value
-
-const path=
-req.nextUrl.pathname
-
-const publicRoutes=[
-
+const publicRoutes = [
 "/",
-
 "/login",
-
 "/register",
-
 "/verify-email",
-
 "/forgot-password",
+];
 
-"/api/auth",
-
+const publicApiRoutes = [
 "/api/auth/login",
-
 "/api/auth/register",
-
 "/api/auth/send-otp",
-
 "/api/auth/verify-otp",
+"/api/auth/logout",
+];
 
-"/api/auth/logout"
+const isPublicPage = publicRoutes.includes(path);
 
-]
+const isPublicApi = publicApiRoutes.some((route) =>
+path.startsWith(route)
+);
 
-const isPublic=
-
-publicRoutes.some(
-
-route=>
-
-path.startsWith(
-route
-)
-
-)
-
-if(
-
-!authToken &&
-
-!isPublic
-
-){
-
+if (!authToken && !isPublicPage && !isPublicApi) {
 return NextResponse.redirect(
-
-new URL(
-
-"/login",
-
-req.url
-
-)
-
-)
-
+new URL("/login", req.url)
+);
 }
 
-if(
-
+if (
 authToken &&
-
-(
-
-path==="/login" ||
-
-path==="/register"
-
-)
-
-){
-
+(path === "/login" || path === "/register")
+) {
 return NextResponse.redirect(
-
-new URL(
-
-"/dashboard",
-
-req.url
-
-)
-
-)
-
+new URL("/dashboard", req.url)
+);
 }
 
-const res=
-NextResponse.next()
+const response = NextResponse.next();
 
-res.headers.set(
-
+response.headers.set(
 "Cache-Control",
+"no-store, no-cache, must-revalidate, proxy-revalidate"
+);
 
-"no-store, no-cache, must-revalidate"
+response.headers.set("Pragma", "no-cache");
+response.headers.set("Expires", "0");
 
-)
-
-return res
-
+return response;
 }
 
-export const config={
-
-matcher:[
-
+export const config = {
+matcher: [
 "/dashboard/:path*",
-
 "/admin/:path*",
-
 "/leads/:path*",
-
 "/customers/:path*",
-
 "/jobs/:path*",
-
 "/pipeline/:path*",
-
 "/calendar/:path*",
-
 "/billing/:path*",
-
 "/messages/:path*",
-
 "/settings/:path*",
-
 "/dispatch/:path*",
-
 "/notifications/:path*",
-
 "/analytics/:path*",
-
 "/monitoring/:path*",
-
-"/ai/:path*"
-
-]
-
-}
+"/ai/:path*",
+"/quotes/:path*",
+"/subscriptions/:path*",
+],
+};

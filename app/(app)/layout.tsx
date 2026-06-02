@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
 useEffect,
 useRef,
@@ -65,6 +65,8 @@ children:React.ReactNode
 const pathname=
 usePathname()
 
+const router = useRouter()
+
 const [email,setEmail]=
 useState("")
 
@@ -117,33 +119,23 @@ setOpen(false)
 
 }
 
-async function load(){
+async function load() {
+  const session = await getSession()
 
-const session=
-await getSession()
+  if (!session) {
+    router.replace("/login")
+    return
+  }
 
-setEmail(
+  setEmail(
+    session?.user?.email || ""
+  )
 
-session?.user?.email ||
-
-""
-
-)
-
-setName(
-
-(session?.user as any)
-?.name ||
-
-session?.user?.email
-?.split("@")[0]
-
-||
-
-"User"
-
-)
-
+  setName(
+    (session?.user as any)?.name ||
+    session?.user?.email?.split("@")[0] ||
+    "User"
+  )
 }
 
 return(
@@ -491,15 +483,12 @@ Settings
 
 <button
 
-onClick={()=>{
+onClick={async () => {
+  await signOut({
+    redirect: false,
+  })
 
-signOut({
-
-callbackUrl:
-"/login"
-
-})
-
+  window.location.replace("/login")
 }}
 
 className="
@@ -790,15 +779,12 @@ Settings
 
 <button
 
-onClick={()=>{
+onClick={async () => {
+  await signOut({
+    redirect: false,
+  })
 
-signOut({
-
-callbackUrl:
-"/login"
-
-})
-
+  window.location.replace("/login")
 }}
 
 className="

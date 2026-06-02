@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-
+import { signOut } from "next-auth/react"
 import {
 useEffect,
 useRef,
@@ -466,11 +466,12 @@ Settings
 
 <button
 
-onClick={()=>{
+onClick={async () => {
+  await signOut({
+    redirect: false,
+  })
 
-window.location.href=
-"/login"
-
+  window.location.replace("/login")
 }}
 
 className="
@@ -656,11 +657,12 @@ Settings
 
 <button
 
-onClick={()=>{
+onClick={async () => {
+  await signOut({
+    redirect: false,
+  })
 
-window.location.href=
-"/login"
-
+  window.location.replace("/login")
 }}
 
 className="

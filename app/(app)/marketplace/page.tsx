@@ -2,7 +2,7 @@ export default function Page(){
 
 const apps=[
 "QuickBooks",
-"Twilio",
+"Twilio ",
 "OpenAI",
 "PayPal",
 "Maps"

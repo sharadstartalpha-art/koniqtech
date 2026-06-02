@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import prisma from "@/shared/lib/prisma"
 
 export default async function Page(){

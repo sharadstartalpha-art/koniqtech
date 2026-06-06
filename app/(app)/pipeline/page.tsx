@@ -1,69 +1,163 @@
-const cols=[
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
 
-"New",
-
-"Contacted",
-
-"Estimate",
-
-"Won",
-
-"Lost"
-
+const stages = [
+  "new",
+  "contacted",
+  "estimate",
+  "won",
+  "lost"
 ]
 
-export default function Pipeline(){
+export default async function PipelinePage() {
 
-return(
+  const leads = await prisma.lead.findMany({
+    orderBy: {
+      createdAt: "desc"
+    }
+  })
 
-<div>
+  return (
+    <div className="space-y-8">
 
-<h1 className="text-3xl font-bold mb-8">
+      <div className="flex items-center justify-between">
 
-Sales Pipeline
+        <div>
 
-</h1>
+          <h1 className="text-5xl font-bold">
+            Sales Pipeline
+          </h1>
 
-<div className="grid grid-cols-5 gap-6">
+          <p className="text-slate-500 mt-2">
+            Track opportunities through your sales process
+          </p>
 
-{
+        </div>
 
-cols.map(
+        <Link
+          href="/leads/create"
+          className="
+          px-5
+          py-3
+          rounded-xl
+          bg-blue-600
+          text-white
+          "
+        >
+          New Lead
+        </Link>
 
-c=>(
+      </div>
 
-<div
+      <div className="grid grid-cols-5 gap-6">
 
-key={c}
+        {stages.map(stage => {
 
-className="bg-white rounded-3xl border p-6"
+          const items = leads.filter(
+            lead =>
+              (lead.status || "new")
+                .toLowerCase() === stage
+          )
 
->
+          return (
 
-<h2 className="font-semibold mb-6">
+            <div
+              key={stage}
+              className="
+              bg-white
+              border
+              rounded-3xl
+              p-5
+              min-h-[650px]
+              "
+            >
 
-{c}
+              <div className="flex items-center justify-between mb-5">
 
-</h2>
+                <h2 className="font-bold capitalize">
+                  {stage}
+                </h2>
 
-<div className="bg-slate-50 rounded-xl p-4">
+                <span
+                  className="
+                  bg-slate-100
+                  px-3
+                  py-1
+                  rounded-full
+                  text-sm
+                  "
+                >
+                  {items.length}
+                </span>
 
-Lead Card
+              </div>
 
-</div>
+              <div className="space-y-4">
 
-</div>
+                {items.map(lead => (
 
-)
+                  <Link
+                    key={lead.id}
+                    href={`/leads/${lead.id}`}
+                    className="
+                    block
+                    border
+                    rounded-2xl
+                    p-4
+                    hover:shadow-md
+                    transition
+                    "
+                  >
 
-)
+                    <div className="font-semibold">
 
-}
+                      {lead.firstName} {lead.lastName}
 
-</div>
+                    </div>
 
-</div>
+                    <div className="text-sm text-slate-500 mt-1">
 
-)
+                      {lead.email}
 
+                    </div>
+
+                    <div className="text-sm text-slate-500">
+
+                      {lead.phone}
+
+                    </div>
+
+                    <div className="mt-3">
+
+                      <span
+                        className="
+                        text-xs
+                        px-2
+                        py-1
+                        rounded-full
+                        bg-blue-100
+                        text-blue-700
+                        "
+                      >
+                        {lead.status}
+                      </span>
+
+                    </div>
+
+                  </Link>
+
+                ))}
+
+              </div>
+
+            </div>
+
+          )
+
+        })}
+
+      </div>
+
+    </div>
+  )
 }

@@ -1,87 +1,105 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
 
-return(
+export default async function Page({
+  params
+}:{
+  params:Promise<{id:string}>
+}){
 
-<div className="space-y-8">
+  const {id}=await params
 
-<h1 className="text-5xl font-bold">
+  const lead=await prisma.lead.findUnique({
+    where:{id}
+  })
 
-Lead Details
+  if(!lead){
+    return <div>Lead not found</div>
+  }
 
-</h1>
+  return(
+    <div className="space-y-8">
 
-<div className="grid grid-cols-3 gap-8">
+      <div className="flex items-center justify-between">
 
-<div className="bg-white rounded-3xl p-8">
+        <div>
+          <h1 className="text-5xl font-bold">
+            {lead.firstName} {lead.lastName}
+          </h1>
 
-<h2 className="font-bold">
+          <p className="text-slate-500 mt-2">
+            {lead.email}
+          </p>
+        </div>
 
-Lead Profile
+        <div className="flex gap-3">
 
-</h2>
+          <Link
+            href={`/leads/edit/${lead.id}`}
+            className="px-5 py-3 rounded-xl border"
+          >
+            Edit
+          </Link>
 
-<p className="mt-5">
+          <Link
+            href={`/leads/${lead.id}/convert`}
+            className="px-5 py-3 rounded-xl bg-green-600 text-white"
+          >
+            Convert Customer
+          </Link>
 
-John Roofing
+        </div>
 
-</p>
+      </div>
 
-<p>
+      <div className="grid md:grid-cols-3 gap-6">
 
-AI Score:92
+        <div className="bg-white rounded-3xl border p-6">
 
-</p>
+          <h2 className="font-bold mb-4">
+            Lead Profile
+          </h2>
 
-<p>
+          <div className="space-y-2">
 
-Stage:Estimate
+            <p>{lead.phone}</p>
+            <p>{lead.email}</p>
+            <p>{lead.status}</p>
 
-</p>
+          </div>
 
-</div>
+        </div>
 
-<div className="bg-white rounded-3xl p-8 col-span-2">
+        <div className="md:col-span-2 bg-white rounded-3xl border p-6">
 
-<h2 className="font-bold">
+          <h2 className="font-bold mb-4">
+            Quick Actions
+          </h2>
 
-Timeline
+          <div className="grid grid-cols-4 gap-4">
 
-</h2>
+            <Link href={`/quotes/create?lead=${lead.id}`}>
+              Create Quote
+            </Link>
 
-<div className="space-y-3 mt-5">
+            <Link href={`/jobs/create?lead=${lead.id}`}>
+              Create Job
+            </Link>
 
-<Item text="Lead created"/>
+            <Link href={`/calendar`}>
+              Schedule
+            </Link>
 
-<Item text="Call completed"/>
+            <Link href={`/messages`}>
+              Message
+            </Link>
 
-<Item text="Estimate sent"/>
+          </div>
 
-</div>
+        </div>
 
-</div>
+      </div>
 
-</div>
-
-</div>
-
-)
-
-}
-
-function Item({
-
-text
-
-}:any){
-
-return(
-
-<div className="bg-slate-100 p-4 rounded">
-
-{text}
-
-</div>
-
-)
-
+    </div>
+  )
 }

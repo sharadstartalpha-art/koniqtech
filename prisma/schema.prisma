@@ -41,33 +41,33 @@ model Organization {
   users              User[]
 
   inventoryItems InventoryItem[]
-  fleetVehicles FleetVehicle[]
-  payrolls Payroll[]
+  fleetVehicles  FleetVehicle[]
+  payrolls       Payroll[]
 }
 
 model User {
-  id            String       @id @default(uuid())
-  orgId         String
-  name          String
-  email         String       @unique
-  passwordHash  String
-  role          UserRole
-  avatar        String?
-  status        String       @default("active")
-  createdAt     DateTime     @default(now())
-  aiLogs        AiLog[]
-  deals         Deal[]
-  events        Event[]
-  jobs          Job[]
+  id           String   @id @default(uuid())
+  orgId        String
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  avatar       String?
+  status       String   @default("active")
+  createdAt    DateTime @default(now())
+  aiLogs       AiLog[]
+  deals        Deal[]
+  events       Event[]
+  jobs         Job[]
 
   technicianLocations TechnicianLocation[]
-  payrolls Payroll[]
-  
-  assignedLeads Lead[]
-  messages      Message[]
-  sessions      Session[]
+  payrolls            Payroll[]
+
+  assignedLeads   Lead[]
+  messages        Message[]
+  sessions        Session[]
   crewAssignments CrewAssignment[]
-  organization  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  organization    Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -80,7 +80,7 @@ model Session {
 }
 
 model Lead {
-  id           String       @id @default(uuid())
+  id           String         @id @default(uuid())
   orgId        String
   source       String?
   firstName    String
@@ -89,13 +89,14 @@ model Lead {
   email        String?
   address      String?
   industry     Industry?
-  status       LeadStatus   @default(new)
+  status       LeadStatus     @default(new)
   assignedTo   String?
   notes        String?
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime       @default(now())
   customer     Customer?
-  assignee     User?        @relation(fields: [assignedTo], references: [id])
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  activities   LeadActivity[]
+  assignee     User?          @relation(fields: [assignedTo], references: [id])
+  organization Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
 model Customer {
@@ -183,7 +184,6 @@ model QuoteItem {
   total    Decimal @db.Decimal(12, 2)
   quote    Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
-
 
 model Event {
   id           String       @id @default(uuid())
@@ -379,14 +379,7 @@ enum CRMType {
   cleaning
 }
 
-enum LeadStatus {
-  new
-  contacted
-  qualified
-  proposal
-  won
-  lost
-}
+
 
 enum JobStatus {
   scheduled
@@ -417,73 +410,59 @@ enum MessageChannel {
   internal
 }
 
-
 model PurchaseOrder {
+  id String @id @default(uuid())
 
-id String @id @default(uuid())
+  jobId String
 
-jobId String
+  vendor String
 
-vendor String
+  amount Float
 
-amount Float
+  status String @default("draft")
 
-status String @default("draft")
-
-job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
-
 
 model ChangeOrder {
+  id String @id @default(uuid())
 
-id String @id @default(uuid())
+  jobId String
 
-jobId String
+  title String
 
-title String
+  amount Float
 
-amount Float
+  status String @default("pending")
 
-status String @default("pending")
-
-job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
-
 
 model PunchItem {
+  id String @id @default(uuid())
 
-id String @id @default(uuid())
+  jobId String
 
-jobId String
+  title String
 
-title String
+  completed Boolean @default(false)
 
-completed Boolean @default(false)
-
-job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
 
-
-
 model CloseoutPackage {
+  id String @id @default(uuid())
 
-id String @id @default(uuid())
+  jobId String
 
-jobId String
+  notes String?
 
-notes String?
+  completed Boolean @default(false)
 
-completed Boolean @default(false)
-
-job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
 
 model CrewAssignment {
-
   id String @id @default(uuid())
 
   jobId String
@@ -494,15 +473,12 @@ model CrewAssignment {
 
   assignedAt DateTime @default(now())
 
-  job Job @relation(fields:[jobId],references:[id])
+  job Job @relation(fields: [jobId], references: [id])
 
-  user User @relation(fields:[userId],references:[id])
-
+  user User @relation(fields: [userId], references: [id])
 }
 
-
 model JobTask {
-
   id String @id @default(uuid())
 
   jobId String
@@ -513,12 +489,10 @@ model JobTask {
 
   dependsOnId String?
 
-  job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
 
 model JobMilestone {
-
   id String @id @default(uuid())
 
   jobId String
@@ -529,12 +503,10 @@ model JobMilestone {
 
   dueDate DateTime?
 
-  job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
 
 model MaterialRequest {
-
   id String @id @default(uuid())
 
   jobId String
@@ -545,18 +517,15 @@ model MaterialRequest {
 
   status String @default("requested")
 
-  job Job @relation(fields:[jobId],references:[id])
-
+  job Job @relation(fields: [jobId], references: [id])
 }
 
-
 model Job {
-
   id String @id @default(uuid())
 
-  orgId String
+  orgId      String
   customerId String
-  quoteId String?
+  quoteId    String?
 
   title String
 
@@ -572,13 +541,13 @@ model Job {
 
   events Event[]
 
-  customer Customer @relation(fields:[customerId],references:[id])
+  customer Customer @relation(fields: [customerId], references: [id])
 
-  organization Organization @relation(fields:[orgId],references:[id])
+  organization Organization @relation(fields: [orgId], references: [id])
 
-  quote Quote? @relation(fields:[quoteId],references:[id])
+  quote Quote? @relation(fields: [quoteId], references: [id])
 
-  technician User? @relation(fields:[technicianId],references:[id])
+  technician User? @relation(fields: [technicianId], references: [id])
 
   landscapingProject LandscapingProject?
 
@@ -601,16 +570,15 @@ model Job {
   closeout CloseoutPackage[]
 
   routePlans RoutePlan[]
-
 }
 
 model InventoryItem {
   id String @id @default(uuid())
 
   orgId String
-  name String
-  sku String?
-  qty Int @default(0)
+  name  String
+  sku   String?
+  qty   Int     @default(0)
 
   unitCost Decimal?
 
@@ -625,9 +593,9 @@ model FleetVehicle {
   id String @id @default(uuid())
 
   orgId String
-  name String
+  name  String
 
-  vin String?
+  vin   String?
   gpsId String?
 
   status String
@@ -651,10 +619,10 @@ model TechnicianLocation {
 model Payroll {
   id String @id @default(uuid())
 
-  orgId String
+  orgId  String
   userId String
 
-  hours Float
+  hours  Float
   amount Decimal
 
   status String
@@ -669,7 +637,7 @@ model WarehouseTransaction {
 
   itemId String
 
-  qty Int
+  qty  Int
   type String
 
   createdAt DateTime @default(now())
@@ -680,7 +648,7 @@ model WarehouseTransaction {
 model RoutePlan {
   id String @id @default(uuid())
 
-  jobId String
+  jobId        String
   technicianId String?
 
   distance Float?
@@ -689,4 +657,26 @@ model RoutePlan {
   createdAt DateTime @default(now())
 
   job Job @relation(fields: [jobId], references: [id])
+}
+
+model LeadActivity {
+  id String @id @default(uuid())
+
+  leadId String
+
+  type  String
+  title String
+
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id])
+}
+
+enum LeadStatus {
+  new
+  contacted
+  estimate
+  won
+  lost
+  converted
 }

@@ -12,12 +12,21 @@ const stages = [
 export default async function PipelinePage() {
 
   const leads = await prisma.lead.findMany({
+
+    where: {
+      status: {
+        not: "converted"
+      }
+    },
+
     orderBy: {
       createdAt: "desc"
     }
+
   })
 
   return (
+
     <div className="space-y-8">
 
       <div className="flex items-center justify-between">
@@ -42,6 +51,7 @@ export default async function PipelinePage() {
           rounded-xl
           bg-blue-600
           text-white
+          hover:bg-blue-700
           "
         >
           New Lead
@@ -49,15 +59,20 @@ export default async function PipelinePage() {
 
       </div>
 
-      <div className="grid grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
         {stages.map(stage => {
 
-          const items = leads.filter(
-            lead =>
+          const items = leads.filter(lead => {
+
+            const status =
               (lead.status || "new")
-                .toLowerCase() === stage
-          )
+                .toString()
+                .toLowerCase()
+
+            return status === stage
+
+          })
 
           return (
 
@@ -93,6 +108,24 @@ export default async function PipelinePage() {
               </div>
 
               <div className="space-y-4">
+
+                {items.length === 0 && (
+
+                  <div
+                    className="
+                    text-sm
+                    text-slate-400
+                    border
+                    border-dashed
+                    rounded-xl
+                    p-4
+                    text-center
+                    "
+                  >
+                    No leads
+                  </div>
+
+                )}
 
                 {items.map(lead => (
 
@@ -139,7 +172,7 @@ export default async function PipelinePage() {
                         text-blue-700
                         "
                       >
-                        {lead.status}
+                        {lead.status || "new"}
                       </span>
 
                     </div>
@@ -159,5 +192,7 @@ export default async function PipelinePage() {
       </div>
 
     </div>
+
   )
+
 }

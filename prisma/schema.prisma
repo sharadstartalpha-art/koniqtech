@@ -91,7 +91,7 @@ model Lead {
   industry     Industry?
   status       LeadStatus     @default(new)
   assignedTo   String?
-  notes        String?
+  notes LeadNote[]
   createdAt    DateTime       @default(now())
   customer     Customer?
   activities   LeadActivity[]
@@ -679,4 +679,18 @@ enum LeadStatus {
   won
   lost
   converted
+}
+
+
+model LeadNote {
+
+  id        String   @id @default(cuid())
+
+  leadId    String
+
+  content   String
+
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields:[leadId],references:[id],onDelete:Cascade)
 }

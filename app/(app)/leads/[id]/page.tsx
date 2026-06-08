@@ -47,7 +47,17 @@ export default async function Page({
           >
             Convert Customer
           </Link>
-
+<Link
+  href={`/leads/${lead.id}/notes`}
+  className="
+  px-4
+  py-2
+  border
+  rounded-xl
+  "
+>
+  Notes
+</Link>
         </div>
 
       </div>

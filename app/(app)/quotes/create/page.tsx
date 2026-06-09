@@ -1,104 +1,218 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
-export default function Page(){
+export default function Page() {
 
-const [items,setItems]=useState([
+  const router = useRouter()
 
-{
-name:"",
-price:""
-}
+  const [customerId,setCustomerId]=useState("")
 
-])
+  const [items,setItems]=useState([
+    {
+      name:"",
+      price:""
+    }
+  ])
 
-return(
+  async function createQuote(){
 
-<div className="space-y-8">
+    const subtotal =
+      items.reduce(
+        (a,b)=>
+          a + Number(b.price || 0),
+        0
+      )
 
-<h1 className="text-5xl font-bold">
+    const tax =
+      subtotal * 0.18
 
-Create Quote
+    const total =
+      subtotal + tax
 
-</h1>
+    const res =
+      await fetch(
+        "/api/quotes",
+        {
+          method:"POST",
 
-<div className="bg-white rounded-3xl p-10 space-y-5">
+          headers:{
+            "Content-Type":
+            "application/json"
+          },
 
-<input
-placeholder="Customer"
-className="w-full border p-5 rounded-xl"
-/>
+          body:JSON.stringify({
 
-<input
-placeholder="Property Address"
-className="w-full border p-5 rounded-xl"
-/>
+            customerId,
 
-{
+            subtotal,
 
-items.map((x,i)=>(
+            tax,
 
-<div
-key={i}
-className="grid grid-cols-2 gap-4"
->
+            total,
 
-<input
-placeholder="Item"
-className="border p-4 rounded-xl"
-/>
+            items
 
-<input
-placeholder="Price"
-className="border p-4 rounded-xl"
-/>
+          })
+        }
+      )
 
-</div>
+    const quote =
+      await res.json()
 
-))
+    router.push(
+      `/quotes/${quote.id}`
+    )
 
-}
+  }
 
-<button
+  return(
 
-onClick={()=>
+    <div className="space-y-8">
 
-setItems([
+      <h1 className="text-5xl font-bold">
+        Create Quote
+      </h1>
 
-...items,
+      <div className="bg-white rounded-3xl p-10 space-y-5">
 
-{
-name:"",
-price:""
-}
+        <input
+          value={customerId}
+          onChange={e=>
+            setCustomerId(
+              e.target.value
+            )
+          }
+          placeholder="Customer Id"
+          className="
+          w-full
+          border
+          p-5
+          rounded-xl
+          "
+        />
 
-])
+        {
 
-}
+          items.map((item,index)=>(
 
-className="bg-slate-100 px-6 py-3 rounded-xl"
+            <div
+              key={index}
+              className="
+              grid
+              grid-cols-2
+              gap-4
+              "
+            >
 
->
+              <input
 
-Add Item
+                value={item.name}
 
-</button>
+                onChange={e=>{
 
-<div className="pt-5">
+                  const copy=[...items]
 
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
+                  copy[index].name =
+                    e.target.value
 
-Create Quote
+                  setItems(copy)
 
-</button>
+                }}
 
-</div>
+                placeholder="Item"
 
-</div>
+                className="
+                border
+                p-4
+                rounded-xl
+                "
+              />
 
-</div>
+              <input
 
-)
+                value={item.price}
+
+                onChange={e=>{
+
+                  const copy=[...items]
+
+                  copy[index].price =
+                    e.target.value
+
+                  setItems(copy)
+
+                }}
+
+                placeholder="Price"
+
+                className="
+                border
+                p-4
+                rounded-xl
+                "
+              />
+
+            </div>
+
+          ))
+
+        }
+
+        <button
+
+          onClick={()=>
+
+            setItems([
+              ...items,
+              {
+                name:"",
+                price:""
+              }
+            ])
+
+          }
+
+          className="
+          bg-slate-100
+          px-6
+          py-3
+          rounded-xl
+          "
+
+        >
+
+          Add Item
+
+        </button>
+
+        <div>
+
+          <button
+
+            onClick={createQuote}
+
+            className="
+            bg-blue-600
+            text-white
+            px-8
+            py-4
+            rounded-xl
+            "
+
+          >
+
+            Create Quote
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 
 }

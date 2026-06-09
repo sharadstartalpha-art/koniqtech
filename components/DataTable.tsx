@@ -5,7 +5,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 
 
-const router = useRouter()
 
 export default function DataTable({
 
@@ -19,11 +18,13 @@ editPath,
 rowHref
 }:any){
 
+const router = useRouter()
+
 const [search,setSearch]=useState("")
 
 const filtered=
 
-rows.filter(
+(rows || []).filter(
 
 (r:any)=>
 
@@ -95,36 +96,27 @@ text-black
 
 </h1>
 
+{buttonHref && (
+
 <Link
-
 href={buttonHref}
-
 className="
 h-11
-
 px-5
-
 bg-green-600
-
 hover:bg-green-700
-
 text-white
-
 rounded-2xl
-
 text-sm
-
 font-medium
-
 flex
 items-center
 "
-
 >
-
 {buttonLabel}
-
 </Link>
+
+)}
 
 </div>
 
@@ -217,7 +209,7 @@ SL
 
 {
 
-columns.map(
+(columns || []).map(
 
 (c:any)=>(
 
@@ -295,7 +287,7 @@ h-14
 
 {
 
-columns.map(
+(columns || []).map(
 
 (c:any)=>(
 
@@ -327,7 +319,7 @@ px-6
 flex
 gap-2
 ">
-
+{editPath && (
 <Link
 
 href={`${editPath}/${row.id}`}
@@ -353,7 +345,9 @@ items-center
 Edit
 
 </Link>
+)}
 
+{onDeletePath && (
 <button
 
 onClick={(e)=>{
@@ -380,7 +374,7 @@ text-xs
 Delete
 
 </button>
-
+)}
 </div>
 
 </td>

@@ -2,6 +2,10 @@
 
 import Link from "next/link"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+
+
+const router = useRouter()
 
 export default function DataTable({
 
@@ -11,8 +15,8 @@ buttonHref,
 columns,
 rows,
 onDeletePath,
-editPath
-
+editPath,
+rowHref
 }:any){
 
 const [search,setSearch]=useState("")
@@ -264,17 +268,20 @@ filtered.map(
 (row:any,index:number)=>(
 
 <tr
-
-key={row.id}
-
-className="
-border-b
-
-hover:bg-[#fafafa]
-
-text-sm
-"
-
+  key={row.id}
+  onClick={()=>{
+    if(rowHref){
+      router.push(
+        `${rowHref}/${row.id}`
+      )
+    }
+  }}
+  className={`
+    border-b
+    hover:bg-[#fafafa]
+    text-sm
+    ${rowHref ? "cursor-pointer" : ""}
+  `}
 >
 
 <td className="
@@ -324,6 +331,7 @@ gap-2
 <Link
 
 href={`${editPath}/${row.id}`}
+onClick={(e)=>e.stopPropagation()}
 
 className="
 px-3
@@ -348,15 +356,10 @@ Edit
 
 <button
 
-onClick={()=>
-
-remove(
-
-row.id
-
-)
-
-}
+onClick={(e)=>{
+    e.stopPropagation()
+    remove(row.id)
+  }}
 
 className="
 px-3

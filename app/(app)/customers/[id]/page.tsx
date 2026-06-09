@@ -1,61 +1,273 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
+import { notFound } from "next/navigation"
 
-return(
+export const dynamic = "force-dynamic"
 
-<div className="space-y-8">
+export default async function Page({
+  params
+}: any) {
 
-<h1 className="text-5xl font-bold">
+  const customer =
+    await prisma.customer.findUnique({
 
-Customer
+      where:{
+        id:params.id
+      },
 
-</h1>
+      include:{
 
-<div className="grid grid-cols-2 gap-8">
+        quotes:{
+          orderBy:{
+            createdAt:"desc"
+          },
+          take:5
+        },
 
-<div className="bg-white p-8 rounded-3xl">
+        jobs:{
+          take:5
+        },
 
-<h2>
+        invoices:{
+          take:5
+        }
 
-Customer Profile
+      }
 
-</h2>
+    })
 
-<p>
+  if(!customer){
+    notFound()
+  }
 
-John Smith
+  return(
 
-</p>
+    <div className="space-y-8">
 
-<p>
+      <div className="flex items-start justify-between">
 
-Miami
+        <div>
 
-</p>
+          <h1 className="text-5xl font-bold">
 
-</div>
+            {customer.firstName} {customer.lastName}
 
-<div className="bg-white p-8 rounded-3xl">
+          </h1>
 
-<h2>
+          <p className="text-slate-500 mt-2">
 
-Properties
+            {customer.email}
 
-</h2>
+          </p>
 
-<div className="mt-5">
+        </div>
 
-Roof Type:
+        <div className="flex gap-3">
 
-Shingle
+          <Link
+            href={`/quotes/create?customer=${customer.id}`}
+            className="
+            bg-blue-600
+            text-white
+            px-5
+            py-3
+            rounded-xl
+            "
+          >
+            Create Quote
+          </Link>
 
-</div>
+          <Link
+            href={`/customers/${customer.id}/timeline`}
+            className="
+            border
+            px-5
+            py-3
+            rounded-xl
+            "
+          >
+            Timeline
+          </Link>
 
-</div>
+          <Link
+            href={`/customers/${customer.id}/notes`}
+            className="
+            border
+            px-5
+            py-3
+            rounded-xl
+            "
+          >
+            Notes
+          </Link>
 
-</div>
+        </div>
 
-</div>
+      </div>
 
-)
+      <div className="grid grid-cols-4 gap-6">
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <p className="text-slate-500 text-sm">
+            Quotes
+          </p>
+
+          <h2 className="text-4xl font-bold mt-2">
+            {customer.quotes.length}
+          </h2>
+
+        </div>
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <p className="text-slate-500 text-sm">
+            Jobs
+          </p>
+
+          <h2 className="text-4xl font-bold mt-2">
+            {customer.jobs.length}
+          </h2>
+
+        </div>
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <p className="text-slate-500 text-sm">
+            Invoices
+          </p>
+
+          <h2 className="text-4xl font-bold mt-2">
+            {customer.invoices.length}
+          </h2>
+
+        </div>
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <p className="text-slate-500 text-sm">
+            Phone
+          </p>
+
+          <h2 className="text-xl font-bold mt-2">
+            {customer.phone || "-"}
+          </h2>
+
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <h2 className="font-bold mb-5">
+
+            Customer Information
+
+          </h2>
+
+          <div className="space-y-3">
+
+            <p>
+              <strong>Name:</strong>{" "}
+              {customer.firstName} {customer.lastName}
+            </p>
+
+            <p>
+              <strong>Email:</strong>{" "}
+              {customer.email}
+            </p>
+
+            <p>
+              <strong>Phone:</strong>{" "}
+              {customer.phone}
+            </p>
+
+            <p>
+              <strong>Company:</strong>{" "}
+              {customer.companyName}
+            </p>
+
+            <p>
+              <strong>Address:</strong>{" "}
+              {customer.address}
+            </p>
+
+          </div>
+
+        </div>
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <h2 className="font-bold mb-5">
+
+            Recent Quotes
+
+          </h2>
+
+          <div className="space-y-3">
+
+            {customer.quotes.map(q=>(
+
+              <Link
+                key={q.id}
+                href={`/quotes/${q.id}`}
+                className="
+                block
+                border
+                rounded-xl
+                p-3
+                "
+              >
+
+                {q.quoteNumber}
+
+              </Link>
+
+            ))}
+
+          </div>
+
+        </div>
+
+        <div className="bg-white border rounded-3xl p-6">
+
+          <h2 className="font-bold mb-5">
+
+            Recent Jobs
+
+          </h2>
+
+          <div className="space-y-3">
+
+            {customer.jobs.map(job=>(
+
+              <Link
+                key={job.id}
+                href={`/jobs/${job.id}`}
+                className="
+                block
+                border
+                rounded-xl
+                p-3
+                "
+              >
+
+                {job.title}
+
+              </Link>
+
+            ))}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 
 }

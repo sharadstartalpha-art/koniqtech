@@ -65,7 +65,7 @@ export default async function Page({
         <div className="flex gap-3">
 
           <Link
-            href={`/quotes/create?customer=${customer.id}`}
+            href={`/quotes/create?customerId=${customer.id}`}
             className="
             bg-blue-600
             text-white

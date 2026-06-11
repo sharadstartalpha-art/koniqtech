@@ -82,29 +82,67 @@ export default async function Page({
 
         <div className="md:col-span-2 bg-white rounded-3xl border p-6">
 
-          <h2 className="font-bold mb-4">
-            Quick Actions
-          </h2>
+  <h2 className="font-bold mb-4">
+    Quick Actions
+  </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-  <Link
-    href={`/calendar`}
-    className="border rounded-xl p-4 text-center"
-  >
-    Schedule
-  </Link>
+    <Link
+      href={`/quotes/create?leadId=${lead.id}`}
+      className="
+      border
+      rounded-xl
+      p-4
+      text-center
+      hover:bg-slate-50
+      "
+    >
+      Create Quote
+    </Link>
 
-  <Link
-    href={`/messages`}
-    className="border rounded-xl p-4 text-center"
-  >
-    Message
-  </Link>
+    <Link
+      href={`/jobs/create?leadId=${lead.id}`}
+      className="
+      border
+      rounded-xl
+      p-4
+      text-center
+      hover:bg-slate-50
+      "
+    >
+      Create Job
+    </Link>
+
+    <Link
+      href="/calendar"
+      className="
+      border
+      rounded-xl
+      p-4
+      text-center
+      hover:bg-slate-50
+      "
+    >
+      Schedule
+    </Link>
+
+    <Link
+      href="/messages"
+      className="
+      border
+      rounded-xl
+      p-4
+      text-center
+      hover:bg-slate-50
+      "
+    >
+      Message
+    </Link>
+
+  </div>
 
 </div>
-
-        </div>
 
       </div>
 

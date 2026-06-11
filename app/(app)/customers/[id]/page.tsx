@@ -215,7 +215,7 @@ export default async function Page({
 
           <div className="space-y-3">
 
-            {customer.quotes.map(q=>(
+            {customer.quotes?.map(q => (
 
               <Link
                 key={q.id}
@@ -248,7 +248,7 @@ export default async function Page({
 
           <div className="space-y-3">
 
-            {customer.jobs.map(job=>(
+            {customer.jobs?.map(job => (
 
               <Link
                 key={job.id}

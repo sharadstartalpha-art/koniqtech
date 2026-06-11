@@ -6,37 +6,44 @@ export const dynamic = "force-dynamic"
 
 export default async function Page({
   params
-}: any) {
+}: {
+  params: Promise<{ id: string }>
+}) {
+
+  const { id } = await params
 
   const customer =
     await prisma.customer.findUnique({
 
-      where:{
-        id:params.id
+      where: {
+        id
       },
 
-      include:{
+      include: {
 
-        quotes:{
-          orderBy:{
-            createdAt:"desc"
+        quotes: {
+          orderBy: {
+            createdAt: "desc"
           },
-          take:5
+          take: 5
         },
 
-        jobs:{
-          take:5
+        jobs: {
+          orderBy: {
+            createdAt: "desc"
+          },
+          take: 5
         },
 
-        invoices:{
-          take:5
+        invoices: {
+          take: 5
         }
 
       }
 
     })
 
-  if(!customer){
+  if (!customer) {
     notFound()
   }
 

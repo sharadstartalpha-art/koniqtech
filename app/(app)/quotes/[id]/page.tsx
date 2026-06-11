@@ -66,6 +66,20 @@ export default async function Page({
           Convert To Job
         </Link>
 
+
+<Link
+  href={`/quotes/${quote.id}/edit`}
+  className="
+  bg-blue-600
+  text-white
+  px-5
+  py-3
+  rounded-xl
+  "
+>
+  Add Items
+</Link>
+
       </div>
 
       <div className="bg-white rounded-3xl p-10 border">

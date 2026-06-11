@@ -86,25 +86,23 @@ export default async function Page({
             Quick Actions
           </h2>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
 
-            <Link href={`/quotes/create?lead=${lead.id}`}>
-              Create Quote
-            </Link>
+  <Link
+    href={`/calendar`}
+    className="border rounded-xl p-4 text-center"
+  >
+    Schedule
+  </Link>
 
-            <Link href={`/jobs/create?lead=${lead.id}`}>
-              Create Job
-            </Link>
+  <Link
+    href={`/messages`}
+    className="border rounded-xl p-4 text-center"
+  >
+    Message
+  </Link>
 
-            <Link href={`/calendar`}>
-              Schedule
-            </Link>
-
-            <Link href={`/messages`}>
-              Message
-            </Link>
-
-          </div>
+</div>
 
         </div>
 

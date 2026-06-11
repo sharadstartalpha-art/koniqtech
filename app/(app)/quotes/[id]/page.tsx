@@ -1,85 +1,194 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
+import { notFound } from "next/navigation"
 
-return(
+export const dynamic = "force-dynamic"
 
-<div className="space-y-8">
+export default async function Page({
+  params
+}: {
+  params: Promise<{ id: string }>
+}) {
 
-<h1 className="text-5xl font-bold">
+  const { id } = await params
 
-Quote
+  const quote =
+    await prisma.quote.findUnique({
 
-</h1>
+      where: {
+        id
+      },
 
-<div className="bg-white rounded-3xl p-10">
+      include: {
 
-<h2 className="text-2xl font-bold">
+        customer: true,
 
-Roof Replacement
+        items: true
 
-</h2>
+      }
 
-<div className="space-y-3 mt-6">
+    })
 
-<Row
-label="Materials"
-value="$8000"
-/>
+  if (!quote) {
+    notFound()
+  }
 
-<Row
-label="Labor"
-value="$3000"
-/>
+  return (
 
-<Row
-label="Permit"
-value="$1000"
-/>
+    <div className="space-y-8">
 
-</div>
+      <div className="flex items-center justify-between">
 
-<div className="mt-8 border-t pt-6">
+        <div>
 
-<h2 className="text-3xl font-bold">
+          <h1 className="text-5xl font-bold">
+            Quote
+          </h1>
 
-Total: $12000
+          <p className="text-slate-500 mt-2">
 
-</h2>
+            {quote.quoteNumber}
 
-</div>
+          </p>
 
-</div>
+        </div>
 
-</div>
+        <Link
+          href={`/jobs/create?quoteId=${quote.id}`}
+          className="
+          bg-green-600
+          text-white
+          px-5
+          py-3
+          rounded-xl
+          "
+        >
+          Convert To Job
+        </Link>
 
-)
+      </div>
 
-}
+      <div className="bg-white rounded-3xl p-10 border">
 
-function Row({
+        <div className="mb-8">
 
-label,
-value
+          <h2 className="text-2xl font-bold">
 
-}:any){
+            {quote.customer.firstName}
+            {" "}
+            {quote.customer.lastName}
 
-return(
+          </h2>
 
-<div className="flex justify-between bg-slate-100 rounded-xl p-4">
+          <p className="text-slate-500">
 
-<span>
+            {quote.customer.email}
 
-{label}
+          </p>
 
-</span>
+        </div>
 
-<span>
+        <div className="space-y-3">
 
-{value}
+          {quote.items.map(item => (
 
-</span>
+            <div
+              key={item.id}
+              className="
+              flex
+              justify-between
+              bg-slate-100
+              rounded-xl
+              p-4
+              "
+            >
 
-</div>
+              <div>
 
-)
+                <div className="font-medium">
+
+                  {item.itemName}
+
+                </div>
+
+                <div className="text-sm text-slate-500">
+
+                  Qty: {item.qty}
+
+                </div>
+
+              </div>
+
+              <div>
+
+                $
+                {Number(item.total).toFixed(2)}
+
+              </div>
+
+            </div>
+
+          ))}
+
+          {quote.items.length === 0 && (
+
+            <div className="text-slate-500">
+
+              No quote items
+
+            </div>
+
+          )}
+
+        </div>
+
+        <div className="mt-10 border-t pt-6">
+
+          <div className="flex justify-between mb-2">
+
+            <span>Subtotal</span>
+
+            <span>
+
+              $
+              {Number(quote.subtotal).toFixed(2)}
+
+            </span>
+
+          </div>
+
+          <div className="flex justify-between mb-4">
+
+            <span>Tax</span>
+
+            <span>
+
+              $
+              {Number(quote.tax).toFixed(2)}
+
+            </span>
+
+          </div>
+
+          <div className="flex justify-between text-3xl font-bold">
+
+            <span>Total</span>
+
+            <span>
+
+              $
+              {Number(quote.total).toFixed(2)}
+
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  )
 
 }

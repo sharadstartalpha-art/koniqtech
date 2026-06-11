@@ -92,25 +92,27 @@ await prisma.quote.update({
 
   return(
 
-<div className="flex items-center justify-between mb-8">
+<div className="space-y-8">
 
-  <h1 className="text-4xl font-bold">
-    Add Quote Item
-  </h1>
+  <div className="flex items-center justify-between">
 
-  <Link
-    href={`/quotes/${quote.id}`}
-    className="
-    border
-    px-4
-    py-2
-    rounded-xl
-    "
-  >
-    Back To Quote
-  </Link>
+    <h1 className="text-4xl font-bold">
+      Add Quote Item
+    </h1>
 
+    <Link
+      href={`/quotes/${quote.id}`}
+      className="
+      border
+      px-4
+      py-2
+      rounded-xl
+      "
+    >
+      Back To Quote
+    </Link>
 
+  </div>
 
 
     <form

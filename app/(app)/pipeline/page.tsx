@@ -1,6 +1,6 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
-
+import { auth } from "@/auth"
 const stages = [
   "new",
   "contacted",
@@ -11,19 +11,26 @@ const stages = [
 
 export default async function PipelinePage() {
 
-  const leads = await prisma.lead.findMany({
+  const session = await auth()
 
-    where: {
-      status: {
-        not: "converted"
-      }
-    },
+  const orgId =
+(session?.user as any)?.orgId
 
-    orderBy: {
-      createdAt: "desc"
+ const leads =
+await prisma.lead.findMany({
+
+  where:{
+    orgId,
+    status:{
+      not:"converted"
     }
+  },
 
-  })
+  orderBy:{
+    createdAt:"desc"
+  }
+
+})
 
   return (
 

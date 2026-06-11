@@ -49,11 +49,54 @@ export default async function Page({
 
     })
 
+
+    const items =
+  await prisma.quoteItem.findMany({
+    where:{
+      quoteId:id
+    }
+  })
+
+const subtotal =
+  items.reduce(
+    (sum,item)=>
+      sum + Number(item.total),
+    0
+  )
+
+const tax =
+  subtotal * 0.1
+
+const total =
+  subtotal + tax
+
+await prisma.quote.update({
+
+  where:{
+    id
+  },
+
+  data:{
+
+    subtotal,
+
+    tax,
+
+    total
+
+  }
+
+})
+
   }
 
   return(
 
-<div className="flex items-center gap-4 mb-8">
+<div className="flex items-center justify-between mb-8">
+
+  <h1 className="text-4xl font-bold">
+    Add Quote Item
+  </h1>
 
   <Link
     href={`/quotes/${quote.id}`}
@@ -64,12 +107,9 @@ export default async function Page({
     rounded-xl
     "
   >
-    ← Back
+    Back To Quote
   </Link>
 
-  <h1 className="text-4xl font-bold">
-    Add Quote Item
-  </h1>
 
 
 

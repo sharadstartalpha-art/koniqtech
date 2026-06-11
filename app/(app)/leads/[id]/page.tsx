@@ -9,6 +9,8 @@ export default async function Page({
 
   const {id}=await params
 
+  
+
   const lead=await prisma.lead.findUnique({
     where:{id}
   })
@@ -17,6 +19,11 @@ export default async function Page({
     return <div>Lead not found</div>
   }
 
+  const customer = await prisma.customer.findFirst({
+  where: {
+    leadId: lead.id
+  }
+})
   return(
     <div className="space-y-8">
 
@@ -41,12 +48,37 @@ export default async function Page({
             Edit
           </Link>
 
-          <Link
-            href={`/leads/${lead.id}/convert`}
-            className="px-5 py-3 rounded-xl bg-green-600 text-white"
-          >
-            Convert Customer
-          </Link>
+          {customer ? (
+
+  <Link
+    href={`/customers/${customer.id}`}
+    className="
+    px-5
+    py-3
+    rounded-xl
+    bg-blue-600
+    text-white
+    "
+  >
+    View Customer
+  </Link>
+
+) : (
+
+  <Link
+    href={`/leads/${lead.id}/convert`}
+    className="
+    px-5
+    py-3
+    rounded-xl
+    bg-green-600
+    text-white
+    "
+  >
+    Convert Customer
+  </Link>
+
+)}
 <Link
   href={`/leads/${lead.id}/notes`}
   className="
@@ -74,7 +106,19 @@ export default async function Page({
 
             <p>{lead.phone}</p>
             <p>{lead.email}</p>
-            <p>{lead.status}</p>
+           <p
+  className="
+  inline-flex
+  px-3
+  py-1
+  rounded-full
+  bg-green-100
+  text-green-700
+  text-sm
+  "
+>
+  Converted To Customer
+</p>
 
           </div>
 

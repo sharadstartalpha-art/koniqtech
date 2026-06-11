@@ -21,6 +21,25 @@ export async function POST(
 
   }
 
+
+const existingCustomer =
+  await prisma.customer.findFirst({
+
+    where:{
+      leadId:id
+    }
+
+  })
+
+if(existingCustomer){
+
+  return NextResponse.json({
+    customerId: existingCustomer.id
+  })
+
+}
+
+
   const customer = await prisma.customer.create({
 
     data: {

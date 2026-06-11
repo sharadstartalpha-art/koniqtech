@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
 
 export default async function Page({
   params
@@ -52,6 +53,26 @@ export default async function Page({
 
   return(
 
+<div className="flex items-center gap-4 mb-8">
+
+  <Link
+    href={`/quotes/${quote.id}`}
+    className="
+    border
+    px-4
+    py-2
+    rounded-xl
+    "
+  >
+    ← Back
+  </Link>
+
+  <h1 className="text-4xl font-bold">
+    Add Quote Item
+  </h1>
+
+
+
     <form
       action={addItem}
       className="
@@ -95,7 +116,7 @@ export default async function Page({
       </button>
 
     </form>
-
+</div>
   )
 
 }

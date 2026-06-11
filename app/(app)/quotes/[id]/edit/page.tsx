@@ -1,24 +1,26 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { Prisma } from "@prisma/client"
 
 export default async function Page({
   params
-}:{
-  params:Promise<{id:string}>
-}){
+}: {
+  params: Promise<{ id: string }>
+}) {
 
   const { id } = await params
 
   const quote =
     await prisma.quote.findUnique({
-      where:{ id }
+      where: { id }
     })
 
-  if(!quote){
+  if (!quote) {
     return <div>Quote not found</div>
   }
 
-  async function addItem(formData:FormData){
+  async function addItem(formData: FormData) {
 
     "use server"
 
@@ -31,11 +33,14 @@ export default async function Page({
     const price =
       Number(formData.get("price"))
 
+    const itemTotal =
+      qty * price
+
     await prisma.quoteItem.create({
 
-      data:{
+      data: {
 
-        quoteId:id,
+        quoteId: id,
 
         itemName,
 
@@ -43,122 +48,149 @@ export default async function Page({
 
         price,
 
-        total:qty * price
+        total: itemTotal
 
       }
 
     })
 
-
     const items =
-  await prisma.quoteItem.findMany({
-    where:{
-      quoteId:id
-    }
-  })
+      await prisma.quoteItem.findMany({
 
-const subtotal =
-  items.reduce(
-    (sum,item)=>
-      sum + Number(item.total),
-    0
-  )
+        where: {
+          quoteId: id
+        }
 
-const tax =
-  subtotal * 0.1
+      })
 
-const total =
-  subtotal + tax
+    const subtotal =
+      items.reduce(
+        (sum, item) =>
+          sum + Number(item.total),
+        0
+      )
 
-await prisma.quote.update({
+    const tax =
+      subtotal * 0.1
 
-  where:{
-    id
-  },
+    const total =
+      subtotal + tax
 
-  data:{
+    await prisma.quote.update({
 
-    subtotal,
+      where: {
+        id
+      },
 
-    tax,
+      data: {
 
-    total
+        subtotal: new Prisma.Decimal(subtotal),
 
+        tax: new Prisma.Decimal(tax),
+
+        total: new Prisma.Decimal(total)
+
+      }
+
+    })
+
+    redirect(`/quotes/${id}`)
   }
 
-})
+  return (
 
-  }
+    <div className="max-w-4xl mx-auto space-y-8">
 
-  return(
+      <div className="flex items-center justify-between">
 
-<div className="space-y-8">
+        <h1 className="text-4xl font-bold">
+          Add Quote Item
+        </h1>
 
-  <div className="flex items-center justify-between">
+        <Link
+          href={`/quotes/${quote.id}`}
+          className="
+          border
+          px-4
+          py-2
+          rounded-xl
+          hover:bg-slate-50
+          "
+        >
+          ← Back To Quote
+        </Link>
 
-    <h1 className="text-4xl font-bold">
-      Add Quote Item
-    </h1>
+      </div>
 
-    <Link
-      href={`/quotes/${quote.id}`}
-      className="
-      border
-      px-4
-      py-2
-      rounded-xl
-      "
-    >
-      Back To Quote
-    </Link>
-
-  </div>
-
-
-    <form
-      action={addItem}
-      className="
-      bg-white
-      p-8
-      rounded-3xl
-      space-y-4
-      "
-    >
-
-      <input
-        name="itemName"
-        placeholder="Item Name"
-        className="w-full border p-4 rounded-xl"
-      />
-
-      <input
-        name="qty"
-        type="number"
-        placeholder="Quantity"
-        className="w-full border p-4 rounded-xl"
-      />
-
-      <input
-        name="price"
-        type="number"
-        placeholder="Price"
-        className="w-full border p-4 rounded-xl"
-      />
-
-      <button
+      <form
+        action={addItem}
         className="
-        bg-blue-600
-        text-white
-        px-6
-        py-3
-        rounded-xl
+        bg-white
+        p-8
+        rounded-3xl
+        border
+        space-y-4
         "
       >
-        Add Item
-      </button>
 
-    </form>
-</div>
+        <input
+          name="itemName"
+          placeholder="Item Name"
+          required
+          className="
+          w-full
+          border
+          p-4
+          rounded-xl
+          "
+        />
+
+        <input
+          name="qty"
+          type="number"
+          min="1"
+          required
+          placeholder="Quantity"
+          className="
+          w-full
+          border
+          p-4
+          rounded-xl
+          "
+        />
+
+        <input
+          name="price"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          placeholder="Price"
+          className="
+          w-full
+          border
+          p-4
+          rounded-xl
+          "
+        />
+
+        <button
+          type="submit"
+          className="
+          bg-blue-600
+          text-white
+          px-6
+          py-3
+          rounded-xl
+          "
+        >
+          Add Item
+        </button>
+
+      </form>
+
+    </div>
+
   )
 
 }

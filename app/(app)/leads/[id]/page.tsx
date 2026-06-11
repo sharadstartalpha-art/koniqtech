@@ -88,6 +88,21 @@ export default async function Page({
 
           <div className="grid grid-cols-2 gap-4">
 
+
+<Link
+      href={`/jobs/create?leadId=${lead.id}`}
+      className="
+      border
+      rounded-xl
+      p-4
+      text-center
+      hover:bg-slate-50
+      "
+    >
+      Create Job
+    </Link>
+
+
   <Link
     href={`/calendar`}
     className="border rounded-xl p-4 text-center"

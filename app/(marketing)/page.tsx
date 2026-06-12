@@ -6,31 +6,7 @@ import Testimonials from "@/components/Marketing/Testimonials"
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" className="w-10 h-10" alt="logo" />
-            <div>
-              <div className="text-2xl font-bold">Koniqtech</div>
-              <div className="text-slate-400 text-sm">AI CRM Platform</div>
-            </div>
-          </div>
-
-          <nav className="hidden lg:flex items-center gap-8">
-            <Link href="/features">Features</Link>
-            <Link href="/pricing">Pricing</Link>
-            <Link href="/contact">Contact</Link>
-            <Link href="/login">Login</Link>
-            <Link href="/register" className="bg-orange-500 hover:bg-orange-600 px-5 py-3 rounded-xl">
-              Start Free
-            </Link>
-          </nav>
-
-          <button className="lg:hidden">
-            <Menu />
-          </button>
-        </div>
-      </header>
+      
 
       <section className="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
         <div>

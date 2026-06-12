@@ -1,12 +1,12 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 
 export default async function Page({
   params
 }:{
-  params:Promise<{id:string}>
+  params: Promise<{id:string}>
 }){
 
   const { id } = await params
@@ -57,8 +57,8 @@ export default async function Page({
     })
 
     revalidatePath("/crew")
-    revalidatePath(`/crew/${id}`)
 
+    redirect("/crew")
   }
 
   return(
@@ -176,7 +176,6 @@ export default async function Page({
             px-4
             "
           >
-
             <option value="technician">
               Technician
             </option>
@@ -198,6 +197,7 @@ export default async function Page({
         </div>
 
         <button
+          type="submit"
           className="
           px-8
           py-4

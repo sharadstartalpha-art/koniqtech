@@ -1,123 +1,204 @@
 import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import Link from "next/link"
 
-export default async function Page(){
+export const dynamic = "force-dynamic"
 
-const jobs=
+export default async function Page() {
 
-await prisma.job.findMany()
+  const session = await auth()
 
-const cols=[
+  const orgId =
+    (session?.user as any)?.orgId
 
-"scheduled",
-"in_progress",
-"completed",
-"cancelled"
+  const jobs =
+    await prisma.job.findMany({
 
-]
+      where: {
+        orgId
+      },
 
-return(
+      include: {
+        customer: true
+      },
 
-<div>
+      orderBy: {
+        createdAt: "desc"
+      }
 
-<h1 className="
-text-4xl
-font-semibold
-mb-8
-">
+    })
 
-Job Board
+  const columns = [
 
-</h1>
+    {
+      key: "scheduled",
+      label: "Scheduled"
+    },
 
-<div className="
-grid
-grid-cols-4
-gap-5
-">
+    {
+      key: "in_progress",
+      label: "In Progress"
+    },
 
-{
+    {
+      key: "completed",
+      label: "Completed"
+    },
 
-cols.map(
+    {
+      key: "cancelled",
+      label: "Cancelled"
+    }
 
-c=>(
+  ]
 
-<div
-key={c}
-className="
-bg-white
+  return (
 
-border
+    <div className="space-y-8">
 
-rounded-3xl
+      <div className="flex items-center justify-between">
 
-p-5
-"
->
+        <h1 className="text-5xl font-bold">
+          Job Board
+        </h1>
 
-<h2 className="
-font-semibold
-mb-5
-">
+        <Link
+          href="/jobs/create"
+          className="
+          bg-green-600
+          text-white
+          px-5
+          py-3
+          rounded-xl
+          "
+        >
+          New Job
+        </Link>
 
-{c}
+      </div>
 
-</h2>
+      <div className="grid grid-cols-4 gap-6">
 
-<div className="
-space-y-3
-">
+        {columns.map(column => {
 
-{
+          const columnJobs =
+            jobs.filter(
+              job => job.status === column.key
+            )
 
-jobs
+          return (
 
-.filter(
-x=>
-x.status===c
-)
+            <div
+              key={column.key}
+              className="
+              bg-white
+              border
+              rounded-3xl
+              p-5
+              "
+            >
 
-.map(
+              <div className="flex items-center justify-between mb-5">
 
-x=>(
+                <h2 className="font-bold text-lg">
+                  {column.label}
+                </h2>
 
-<div
+                <span
+                  className="
+                  bg-slate-100
+                  px-3
+                  py-1
+                  rounded-full
+                  text-sm
+                  "
+                >
+                  {columnJobs.length}
+                </span>
 
-key={x.id}
+              </div>
 
-className="
-p-4
+              <div className="space-y-3">
 
-rounded-xl
+                {columnJobs.length === 0 && (
 
-bg-slate-50
-"
+                  <div
+                    className="
+                    border
+                    border-dashed
+                    rounded-xl
+                    p-4
+                    text-center
+                    text-slate-400
+                    "
+                  >
+                    No jobs
+                  </div>
 
->
+                )}
 
-{x.title}
+                {columnJobs.map(job => (
 
-</div>
+                  <Link
+                    key={job.id}
+                    href={`/jobs/${job.id}`}
+                    className="
+                    block
+                    border
+                    rounded-xl
+                    p-4
+                    hover:bg-slate-50
+                    "
+                  >
 
-)
+                    <div className="font-medium">
+                      {job.title}
+                    </div>
 
-)
+                    <div
+                      className="
+                      text-sm
+                      text-slate-500
+                      mt-1
+                      "
+                    >
+                      {job.customer.firstName}
+                      {" "}
+                      {job.customer.lastName}
+                    </div>
 
-}
+                    {job.scheduledDate && (
 
-</div>
+                      <div
+                        className="
+                        text-xs
+                        text-slate-400
+                        mt-2
+                        "
+                      >
+                        {new Date(
+                          job.scheduledDate
+                        ).toLocaleDateString()}
+                      </div>
 
-</div>
+                    )}
 
-)
+                  </Link>
 
-)
+                ))}
 
-}
+              </div>
 
-</div>
+            </div>
 
-</div>
+          )
 
-)
+        })}
+
+      </div>
+
+    </div>
+
+  )
 
 }

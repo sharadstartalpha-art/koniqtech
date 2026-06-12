@@ -18,11 +18,13 @@ export default async function Page(){
 
     "use server"
 
+     const user =
+  await prisma.user.findFirst()
     await prisma.crewMember.create({
 
       data:{
 
-        orgId:"YOUR_ORG_ID",
+       orgId:user!.orgId,
 
         name:String(
           formData.get("name")

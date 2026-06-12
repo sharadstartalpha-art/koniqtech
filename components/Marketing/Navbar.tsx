@@ -108,117 +108,137 @@ Features
 </Link>
 
 <div
-className="relative"
-onMouseEnter={()=>
-setIndustryOpen(true)
-}
-onMouseLeave={()=>
-setIndustryOpen(false)
-}
+  className="relative"
+  onMouseEnter={() => setIndustryOpen(true)}
+  onMouseLeave={() => setIndustryOpen(false)}
 >
 
-<button
-className="
-flex
-items-center
-gap-2
+  <button
+    className="
+    flex
+    items-center
+    gap-2
 
-text-slate-300
-hover:text-white
-"
->
+    text-slate-300
+    hover:text-white
 
-Industries
+    transition-colors
+    "
+  >
+    Industries
 
-<ChevronDown size={16}/>
+    <ChevronDown
+      size={16}
+      className={`
+      transition-transform
+      duration-200
+      ${industryOpen ? "rotate-180" : ""}
+      `}
+    />
+  </button>
 
-</button>
+  <div
+    className={`
+    absolute
+    top-full
+    left-0
+    pt-3
+    z-50
 
-{
+    transition-all
+    duration-200
 
-industryOpen && (
+    ${
+      industryOpen
+        ? "opacity-100 visible translate-y-0"
+        : "opacity-0 invisible -translate-y-2"
+    }
+    `}
+  >
 
-<div
-className="
-absolute
-top-full
-left-0
+    <div
+      className="
+      w-64
 
-mt-3
+      bg-slate-900/95
+      backdrop-blur-xl
 
-w-64
+      border
+      border-slate-800
 
-bg-slate-900
+      rounded-2xl
 
-border
-border-slate-800
+      overflow-hidden
 
-rounded-2xl
+      shadow-2xl
+      "
+    >
 
-overflow-hidden
-"
->
+      <Link
+        href="/industries/roofing"
+        className="
+        block
+        px-5
+        py-4
 
-<Link
-href="/industries/roofing"
-className="
-block
-px-5
-py-4
+        hover:bg-slate-800
 
-hover:bg-slate-800
-"
->
-Roofing CRM
-</Link>
+        transition-colors
+        "
+      >
+        Roofing CRM
+      </Link>
 
-<Link
-href="/industries/hvac"
-className="
-block
-px-5
-py-4
+      <Link
+        href="/industries/hvac"
+        className="
+        block
+        px-5
+        py-4
 
-hover:bg-slate-800
-"
->
-HVAC CRM
-</Link>
+        hover:bg-slate-800
 
-<Link
-href="/industries/plumbing"
-className="
-block
-px-5
-py-4
+        transition-colors
+        "
+      >
+        HVAC CRM
+      </Link>
 
-hover:bg-slate-800
-"
->
-Plumbing CRM
-</Link>
+      <Link
+        href="/industries/plumbing"
+        className="
+        block
+        px-5
+        py-4
 
-<Link
-href="/industries/landscaping"
-className="
-block
-px-5
-py-4
+        hover:bg-slate-800
 
-hover:bg-slate-800
-"
->
-Landscaping CRM
-</Link>
+        transition-colors
+        "
+      >
+        Plumbing CRM
+      </Link>
+
+      <Link
+        href="/industries/landscaping"
+        className="
+        block
+        px-5
+        py-4
+
+        hover:bg-slate-800
+
+        transition-colors
+        "
+      >
+        Landscaping CRM
+      </Link>
+
+    </div>
+
+  </div>
 
 </div>
-
-)
-
-}
-
-</div>
-
 <Link
 href="/pricing"
 className="

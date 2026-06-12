@@ -23,7 +23,8 @@ export default async function Page({
 
         customer: true,
 
-        items: true
+        items: true,
+        jobs:true
 
       }
 
@@ -53,19 +54,37 @@ export default async function Page({
 
         </div>
 
-        <Link
-          href={`/jobs/create?quoteId=${quote.id}`}
-          className="
-          bg-green-600
-          text-white
-          px-5
-          py-3
-          rounded-xl
-          "
-        >
-          Convert To Job
-        </Link>
+        {quote.jobs.length === 0 ? (
 
+  <Link
+    href={`/jobs/create?quoteId=${quote.id}`}
+    className="
+    bg-green-600
+    text-white
+    px-5
+    py-3
+    rounded-xl
+    "
+  >
+    Convert To Job
+  </Link>
+
+) : (
+
+  <Link
+    href={`/jobs/${quote.jobs[0].id}`}
+    className="
+    bg-slate-600
+    text-white
+    px-5
+    py-3
+    rounded-xl
+    "
+  >
+    View Job
+  </Link>
+
+)}
 
 <Link
   href={`/quotes/${quote.id}/edit`}

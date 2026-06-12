@@ -1,59 +1,159 @@
 import prisma from "@/shared/lib/prisma"
+import { revalidatePath } from "next/cache"
 
 export default async function Page({
-params
-}:any){
+  params
+}:{
+  params:Promise<{id:string}>
+}){
 
-const { id }=
-await params
+  const { id } = await params
 
-const crew=
-await prisma.crewAssignment.findMany({
+  const technicians =
+    await prisma.user.findMany({
+      where:{
+        role:"technician"
+      }
+    })
 
-where:{
-jobId:id
-},
+  const crew =
+    await prisma.crewAssignment.findMany({
+      where:{
+        jobId:id
+      },
+      include:{
+        user:true
+      }
+    })
 
-include:{
-user:true
-}
+  async function assignTechnician(
+    formData:FormData
+  ){
 
-})
+    "use server"
 
-return(
+    const userId =
+      String(
+        formData.get("userId")
+      )
 
-<div className="space-y-8">
+    await prisma.crewAssignment.create({
 
-<h1 className="text-5xl font-bold">
+      data:{
 
-Crew
+        jobId:id,
 
-</h1>
+        userId,
 
-{
+        role:"technician"
 
-crew.map(x=>(
+      }
 
-<div
-key={x.id}
-className="
-bg-white
-border
-rounded-3xl
-p-6
-"
->
+    })
 
-{x.user.name}
+    revalidatePath(
+      `/jobs/${id}/crew`
+    )
 
-</div>
+  }
 
-))
+  return(
 
-}
+    <div className="space-y-8">
 
-</div>
+      <h1 className="text-5xl font-bold">
+        Crew
+      </h1>
 
-)
+      <form
+        action={assignTechnician}
+        className="flex gap-4"
+      >
+
+        <select
+          name="userId"
+          className="
+          flex-1
+          h-14
+          border
+          rounded-2xl
+          px-4
+          "
+        >
+
+          <option value="">
+            Select Technician
+          </option>
+
+          {
+            technicians.map(t=>(
+              <option
+                key={t.id}
+                value={t.id}
+              >
+                {t.name}
+              </option>
+            ))
+          }
+
+        </select>
+
+        <button
+          className="
+          px-8
+          bg-blue-600
+          text-white
+          rounded-2xl
+          "
+        >
+          Assign
+        </button>
+
+      </form>
+
+      {
+        crew.length===0 && (
+
+          <div className="
+          bg-white
+          border
+          rounded-3xl
+          p-6
+          ">
+            No crew assigned
+          </div>
+
+        )
+      }
+
+      {
+        crew.map(x=>(
+
+          <div
+            key={x.id}
+            className="
+            bg-white
+            border
+            rounded-3xl
+            p-6
+            "
+          >
+
+            <div className="font-semibold">
+              {x.user.name}
+            </div>
+
+            <div className="text-slate-500">
+              {x.role}
+            </div>
+
+          </div>
+
+        ))
+      }
+
+    </div>
+
+  )
 
 }

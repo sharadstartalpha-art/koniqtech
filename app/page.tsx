@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { Menu, ArrowRight, CheckCircle, Brain, Users, Calendar, FileText, Wrench } from "lucide-react"
+import FAQAccordion from "@/components/Marketing/FAQAccordion"
+import Testimonials from "@/components/Marketing/Testimonials"
 
 export default function HomePage() {
   return (
@@ -101,6 +103,47 @@ export default function HomePage() {
           <button className="bg-orange-500 px-8 py-4 rounded-xl">Send Message</button>
         </div>
       </section>
+
+<section
+className="
+max-w-7xl
+mx-auto
+px-6
+py-24
+"
+>
+
+<Testimonials/>
+
+</section>
+
+
+<section
+className="
+max-w-4xl
+mx-auto
+px-6
+pb-24
+"
+>
+
+<h2 className="
+text-5xl
+font-bold
+text-center
+text-white
+mb-12
+">
+
+Frequently Asked Questions
+
+</h2>
+
+<FAQAccordion/>
+
+</section>
+
+
 
       <footer className="border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-8">

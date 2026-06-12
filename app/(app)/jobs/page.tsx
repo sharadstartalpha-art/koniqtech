@@ -1,299 +1,210 @@
 import prisma from "@/shared/lib/prisma"
-
 import { auth } from "@/auth"
-
 import Link from "next/link"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
-export default async function Page(){
+export default async function Page() {
 
-const session=
-await auth()
+  const session = await auth()
 
-const orgId=
+  const orgId =
+    (session?.user as any)?.orgId
 
-(session?.user as any)
-?.orgId
+  const jobs =
+    await prisma.job.findMany({
 
-const jobs=
+      where: {
+        orgId
+      },
 
-await prisma.job.findMany({
+      include: {
+        customer: true,
+        technician: true
+      },
 
-where:{
-orgId
-},
+      orderBy: {
+        createdAt: "desc"
+      }
 
-include:{
+    })
 
-customer:true,
+  return (
 
-technician:true
+    <div className="space-y-6">
 
-},
+      <div className="flex justify-between items-center">
 
-orderBy:{
+        <div>
 
-scheduledDate:"desc"
+          <h1 className="text-4xl font-semibold">
+            Jobs
+          </h1>
 
-}
+          <p className="text-slate-500 mt-1">
+            Manage all jobs
+          </p>
 
-})
+        </div>
 
-return(
+        <div className="flex gap-3">
 
-<div className="space-y-6">
+          <Link
+            href="/jobs/board"
+            className="
+            border
+            px-5
+            py-3
+            rounded-xl
+            "
+          >
+            Job Board
+          </Link>
 
-<div className="
-flex
-justify-between
-items-center
-">
+          <Link
+            href="/jobs/create"
+            className="
+            bg-green-600
+            text-white
+            px-5
+            py-3
+            rounded-xl
+            "
+          >
+            New Job
+          </Link>
 
-<h1 className="
-text-4xl
-font-semibold
-">
+        </div>
 
-Jobs
+      </div>
 
-</h1>
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        overflow-hidden
+        "
+      >
 
-<Link
+        <table className="w-full">
 
-href="/jobs/create"
+          <thead className="bg-slate-50">
 
-className="
-bg-green-600
+            <tr>
 
-text-white
+              <th className="p-4 text-left">
+                Job
+              </th>
 
-px-5
-py-3
+              <th className="text-left">
+                Customer
+              </th>
 
-rounded-xl
-"
+              <th className="text-left">
+                Technician
+              </th>
 
->
+              <th className="text-left">
+                Status
+              </th>
 
-New Job
+              <th className="text-left">
+                Created
+              </th>
 
-</Link>
+            </tr>
 
-</div>
+          </thead>
 
-<div className="
-grid
+          <tbody>
 
-md:grid-cols-3
+            {jobs.map(job => (
 
-gap-4
-">
+              <tr
+                key={job.id}
+                className="border-t"
+              >
 
-<LinkCard
-title="Job Board"
-href="/jobs/board"
-/>
+                <td className="p-4">
 
-<LinkCard
-title="Milestones"
-href="/jobs/milestones"
-/>
+                  <Link
+                    href={`/jobs/${job.id}`}
+                    className="
+                    text-blue-600
+                    hover:underline
+                    "
+                  >
+                    {job.title}
+                  </Link>
 
-<LinkCard
-title="Crew"
-href="/jobs/crew"
-/>
+                </td>
 
-<LinkCard
-title="Tasks"
-href="/jobs/tasks"
-/>
+                <td>
+                  {job.customer.firstName}
+                </td>
 
-<LinkCard
-title="Dependencies"
-href="/jobs/dependencies"
-/>
+                <td>
+                  {job.technician?.name ||
+                    "Unassigned"}
+                </td>
 
-<LinkCard
-title="Materials"
-href="/jobs/materials"
-/>
+                <td>
 
-<LinkCard
-title="Purchase Orders"
-href="/jobs/purchase-orders"
-/>
+                  <span
+                    className="
+                    px-3
+                    py-1
+                    rounded-full
+                    text-sm
+                    bg-slate-100
+                    "
+                  >
+                    {job.status}
+                  </span>
 
-<LinkCard
-title="Change Orders"
-href="/jobs/change-orders"
-/>
+                </td>
 
-<LinkCard
-title="Punch List"
-href="/jobs/punch-list"
-/>
+                <td>
 
-<LinkCard
-title="Closeout"
-href="/jobs/closeout"
-/>
+                  {
+                    new Date(
+                      job.createdAt
+                    ).toLocaleDateString()
+                  }
 
-</div>
+                </td>
 
-<div className="
-bg-white
+              </tr>
 
-border
+            ))}
 
-rounded-3xl
+            {jobs.length === 0 && (
 
-overflow-hidden
-">
+              <tr>
 
-<table className="w-full">
+                <td
+                  colSpan={5}
+                  className="
+                  p-10
+                  text-center
+                  text-slate-500
+                  "
+                >
+                  No jobs found
+                </td>
 
-<thead className="
-bg-slate-50
-">
+              </tr>
 
-<tr>
+            )}
 
-<th className="p-4">
+          </tbody>
 
-Job
+        </table>
 
-</th>
+      </div>
 
-<th>
+    </div>
 
-Customer
-
-</th>
-
-<th>
-
-Tech
-
-</th>
-
-<th>
-
-Status
-
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{
-
-jobs.map(
-
-j=>(
-
-<tr
-key={j.id}
-className="
-border-t
-"
->
-
-<td className="p-4">
-
-<Link
-href={`/jobs/${j.id}`}
->
-
-{j.title}
-
-</Link>
-
-</td>
-
-<td>
-
-{
-
-j.customer.firstName
-
-}
-
-</td>
-
-<td>
-
-{
-
-j.technician?.name
-
-||
-
-"Unassigned"
-
-}
-
-</td>
-
-<td>
-
-{j.status}
-
-</td>
-
-</tr>
-
-)
-
-)
-
-}
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-)
-
-}
-
-function LinkCard({
-
-title,
-href
-
-}:any){
-
-return(
-
-<Link
-
-href={href}
-
-className="
-bg-white
-
-border
-
-rounded-2xl
-
-p-6
-"
-
->
-
-{title}
-
-</Link>
-
-)
-
+  )
 }

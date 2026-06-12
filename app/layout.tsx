@@ -1,34 +1,32 @@
 import "./globals.css"
+import Providers from "./providers"
 
-import Providers
-from "./providers"
+export const metadata = {
+  title: "Koniqtech CRM",
+  description: "Field Service CRM Platform"
+}
 
 export default function RootLayout({
-
-children
-
+  children
 }:{
+  children: React.ReactNode
+}) {
 
-children:React.ReactNode
+  return (
 
-}){
+    <html lang="en">
 
-return(
+      <body>
 
-<html>
+        <Providers>
 
-<body>
+          {children}
 
-<Providers>
+        </Providers>
 
-{children}
+      </body>
 
-</Providers>
+    </html>
 
-</body>
-
-</html>
-
-)
-
+  )
 }

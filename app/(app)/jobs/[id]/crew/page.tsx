@@ -9,53 +9,15 @@ export default async function Page({
 
   const { id } = await params
 
-  const technicians =
-    await prisma.user.findMany({
-      where:{
-        role:"technician"
-      }
-    })
-
   const crew =
     await prisma.crewAssignment.findMany({
       where:{
         jobId:id
       },
-      include:{
-        user:true
-      },
       orderBy:{
         assignedAt:"desc"
       }
     })
-
-  async function assignTechnician(
-    formData:FormData
-  ){
-
-    "use server"
-
-    const userId =
-      String(
-        formData.get("userId")
-      )
-
-    if(!userId) return
-
-    await prisma.crewAssignment.create({
-
-      data:{
-        jobId:id,
-        userId,
-        role:"technician"
-      }
-
-    })
-
-    revalidatePath(
-      `/jobs/${id}/crew`
-    )
-  }
 
   async function createCrew(
     formData:FormData
@@ -87,141 +49,100 @@ export default async function Page({
         Crew
       </h1>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <form
+        action={createCrew}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        space-y-4
+        "
+      >
 
-        <form
-          action={assignTechnician}
+        <h2 className="text-xl font-semibold">
+          Create Crew Member
+        </h2>
+
+        <input
+          name="name"
+          required
+          placeholder="Name"
           className="
-          bg-white
+          w-full
+          h-14
           border
-          rounded-3xl
-          p-6
-          space-y-4
+          rounded-2xl
+          px-4
+          "
+        />
+
+        <input
+          name="phone"
+          placeholder="Phone"
+          className="
+          w-full
+          h-14
+          border
+          rounded-2xl
+          px-4
+          "
+        />
+
+        <select
+          name="role"
+          className="
+          w-full
+          h-14
+          border
+          rounded-2xl
+          px-4
           "
         >
+          <option value="technician">
+            Technician
+          </option>
 
-          <h2 className="text-xl font-semibold">
-            Assign Technician
-          </h2>
+          <option value="helper">
+            Helper
+          </option>
 
-          <select
-            name="userId"
-            className="
-            w-full
-            h-14
-            border
-            rounded-2xl
-            px-4
-            "
-          >
-            <option value="">
-              Select Technician
-            </option>
+          <option value="supervisor">
+            Supervisor
+          </option>
 
-            {
-              technicians.map(t=>(
-                <option
-                  key={t.id}
-                  value={t.id}
-                >
-                  {t.name}
-                </option>
-              ))
-            }
-          </select>
+          <option value="subcontractor">
+            Subcontractor
+          </option>
+        </select>
 
-          <button
-            className="
-            bg-blue-600
-            text-white
-            px-6
-            py-3
-            rounded-2xl
-            "
-          >
-            Assign
-          </button>
-
-        </form>
-
-        <form
-          action={createCrew}
+        <button
           className="
-          bg-white
-          border
-          rounded-3xl
-          p-6
-          space-y-4
+          bg-blue-600
+          text-white
+          px-6
+          py-3
+          rounded-2xl
           "
         >
+          Save Crew Member
+        </button>
 
-          <h2 className="text-xl font-semibold">
-            Create Crew Member
-          </h2>
-
-          <input
-            name="name"
-            placeholder="Name"
-            className="
-            w-full
-            h-14
-            border
-            rounded-2xl
-            px-4
-            "
-          />
-
-          <input
-            name="phone"
-            placeholder="Phone"
-            className="
-            w-full
-            h-14
-            border
-            rounded-2xl
-            px-4
-            "
-          />
-
-          <input
-            name="role"
-            placeholder="Role"
-            className="
-            w-full
-            h-14
-            border
-            rounded-2xl
-            px-4
-            "
-          />
-
-          <button
-            className="
-            bg-green-600
-            text-white
-            px-6
-            py-3
-            rounded-2xl
-            "
-          >
-            Save
-          </button>
-
-        </form>
-
-      </div>
+      </form>
 
       <div className="space-y-4">
 
         {
           crew.length === 0 && (
 
-            <div className="
-            bg-white
-            border
-            rounded-3xl
-            p-6
-            ">
+            <div
+              className="
+              bg-white
+              border
+              rounded-3xl
+              p-6
+              "
+            >
               No crew assigned
             </div>
 
@@ -229,7 +150,7 @@ export default async function Page({
         }
 
         {
-          crew.map(member=>(
+          crew.map(member => (
 
             <div
               key={member.id}
@@ -242,10 +163,7 @@ export default async function Page({
             >
 
               <div className="font-semibold text-lg">
-                {
-                  member.user?.name ||
-                  member.name
-                }
+                {member.name}
               </div>
 
               <div className="text-slate-500">

@@ -706,3 +706,5 @@ model LeadNote {
 
   lead Lead @relation(fields:[leadId],references:[id],onDelete:Cascade)
 }
+
+

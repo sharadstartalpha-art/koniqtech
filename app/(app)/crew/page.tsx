@@ -12,6 +12,21 @@ export default async function Page(){
 
     })
 
+async function deleteCrew(
+  id:string
+){
+
+  "use server"
+
+  await prisma.crewMember.delete({
+    where:{ id }
+  })
+
+  revalidatePath("/crew")
+}
+
+
+
   async function createCrew(
     formData:FormData
   ){
@@ -149,29 +164,127 @@ export default async function Page(){
 
         {crew.map(member=>(
 
-          <div
-            key={member.id}
-            className="
-            bg-white
-            border
-            rounded-3xl
-            p-6
-            "
-          >
+          <div className="
+bg-white
+border
+rounded-3xl
+overflow-hidden
+">
 
-            <div className="font-semibold text-lg">
-              {member.name}
-            </div>
+<table className="w-full">
 
-            <div className="text-slate-500">
-              {member.role}
-            </div>
+  <thead>
 
-            <div className="text-sm mt-1">
-              {member.phone}
-            </div>
+    <tr className="border-b bg-slate-50">
+
+      <th className="text-left p-4">
+        Name
+      </th>
+
+      <th className="text-left p-4">
+        Role
+      </th>
+
+      <th className="text-left p-4">
+        Phone
+      </th>
+
+      <th className="text-left p-4">
+        Email
+      </th>
+
+      <th className="text-left p-4">
+        Actions
+      </th>
+
+    </tr>
+
+  </thead>
+
+  <tbody>
+
+    {crew.map(member=>(
+
+      <tr
+        key={member.id}
+        className="border-b"
+      >
+
+        <td className="p-4">
+          {member.name}
+        </td>
+
+        <td className="p-4 capitalize">
+          {member.role}
+        </td>
+
+        <td className="p-4">
+          {member.phone}
+        </td>
+
+        <td className="p-4">
+          {member.email}
+        </td>
+
+        <td className="p-4">
+
+          <div className="flex gap-2">
+
+            <a
+              href={`/crew/${member.id}`}
+              className="
+              px-3
+              py-2
+              bg-slate-100
+              rounded-xl
+              "
+            >
+              Edit
+            </a>
+
+            <form
+              action={async()=>{
+
+                "use server"
+
+                await prisma.crewMember.delete({
+                  where:{
+                    id:member.id
+                  }
+                })
+
+                revalidatePath("/crew")
+
+              }}
+            >
+
+              <button
+                className="
+                px-3
+                py-2
+                bg-red-600
+                text-white
+                rounded-xl
+                "
+              >
+                Delete
+              </button>
+
+            </form>
 
           </div>
+
+        </td>
+
+      </tr>
+
+    ))}
+
+  </tbody>
+
+</table>
+
+</div>
 
         ))}
 

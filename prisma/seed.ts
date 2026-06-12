@@ -150,38 +150,7 @@ async function main() {
     }
   })
 
-  /*
-   TECHNICIAN
-  */
-
-  await prisma.user.upsert({
-    where: {
-      email:
-        "tech@eliteroofingusa.com"
-    },
-
-    update: {},
-
-    create: {
-      name:
-        "David Wilson",
-
-      email:
-        "tech@eliteroofingusa.com",
-
-      passwordHash,
-
-      role:
-        UserRole.technician,
-
-      organization: {
-        connect: {
-          id: org.id
-        }
-      }
-    }
-  })
-
+  
   /*
    ORGANIZATION SETTINGS
   */

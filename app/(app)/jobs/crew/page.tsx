@@ -1,61 +1,62 @@
 import prisma from "@/shared/lib/prisma"
 
-export default async function Page(){
+export default async function Page() {
 
-const crew=
+  const crew = await prisma.crewMember.findMany({
+    include: {
+      assignments: {
+        include: {
+          job: true
+        }
+      }
+    }
+  })
 
-await prisma.crewAssignment.findMany({
+  return (
+    <div>
 
-include:{
+      <h1 className="text-4xl font-semibold mb-6">
+        Crew Assignment
+      </h1>
 
-job:true,
-user:true
+      <div className="space-y-4">
 
-}
+        {crew.map(member => (
 
-})
+          <div
+            key={member.id}
+            className="bg-white border rounded-3xl p-6"
+          >
 
-return(
+            <div className="font-semibold">
+              {member.name}
+            </div>
 
-<div>
+            <div className="text-sm text-slate-500">
+              {member.role}
+            </div>
 
-<h1 className="text-4xl font-semibold mb-6">
+            <div className="mt-4 space-y-2">
 
-Crew Assignment
+              {member.assignments.map(a => (
 
-</h1>
+                <div
+                  key={a.id}
+                  className="rounded-xl bg-slate-50 p-3"
+                >
+                  {a.job.title}
+                </div>
 
-<div className="space-y-4">
+              ))}
 
-{
+            </div>
 
-crew.map(x=>(
+          </div>
 
-<div
-key={x.id}
-className="bg-white border rounded-3xl p-6"
->
+        ))}
 
-{x.user?.name || x.name}
+      </div>
 
-<br/>
-
-{x.job.title}
-
-<br/>
-
-{x.role}
-
-</div>
-
-))
-
-}
-
-</div>
-
-</div>
-
-)
-
+    </div>
+  )
 }

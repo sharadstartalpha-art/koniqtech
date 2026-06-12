@@ -40,6 +40,7 @@ model Organization {
   subscriptions      Subscription[]
   users              User[]
 
+  crewMembers    CrewMember[]
   inventoryItems InventoryItem[]
   fleetVehicles  FleetVehicle[]
   payrolls       Payroll[]
@@ -63,11 +64,10 @@ model User {
   technicianLocations TechnicianLocation[]
   payrolls            Payroll[]
 
-  assignedLeads   Lead[]
-  messages        Message[]
-  sessions        Session[]
-  crewAssignments CrewAssignment[]
-  organization    Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  assignedLeads Lead[]
+  messages      Message[]
+  sessions      Session[]
+  organization  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
 model Session {
@@ -91,7 +91,7 @@ model Lead {
   industry     Industry?
   status       LeadStatus     @default(new)
   assignedTo   String?
-  notes LeadNote[]
+  notes        LeadNote[]
   createdAt    DateTime       @default(now())
   customer     Customer?
   activities   LeadActivity[]
@@ -380,8 +380,6 @@ enum CRMType {
   cleaning
 }
 
-
-
 enum JobStatus {
   scheduled
   in_progress
@@ -463,26 +461,6 @@ model CloseoutPackage {
   job Job @relation(fields: [jobId], references: [id])
 }
 
-model CrewAssignment {
-  id String @id @default(uuid())
-
-  jobId String
-
-  userId String?
-
-  name String?
-
-  phone String?
-
-  role String
-
-  assignedAt DateTime @default(now())
-
-  job Job @relation(fields: [jobId], references: [id])
-
-  user User? @relation(fields: [userId], references: [id])
-}
-
 model JobTask {
   id String @id @default(uuid())
 
@@ -498,20 +476,19 @@ model JobTask {
 }
 
 model JobMilestone {
+  id String @id @default(uuid())
 
-  id          String   @id @default(uuid())
+  jobId String
 
-  jobId       String
+  title String
 
-  title       String
+  completed Boolean @default(false)
 
-  completed   Boolean  @default(false)
+  dueDate   DateTime?
+  status    String    @default("pending")
+  createdAt DateTime  @default(now())
 
-  dueDate     DateTime?
-  status    String   @default("pending")
-  createdAt   DateTime @default(now())
-
-  job         Job      @relation(fields:[jobId], references:[id])
+  job Job @relation(fields: [jobId], references: [id])
 }
 
 model MaterialRequest {
@@ -527,7 +504,6 @@ model MaterialRequest {
 
   job Job @relation(fields: [jobId], references: [id])
 }
-
 
 model Job {
   id String @id @default(uuid())
@@ -546,8 +522,8 @@ model Job {
 
   completedDate DateTime?
 
-  notes String?
-  createdAt DateTime @default(now())
+  notes     String?
+  createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
 
   events Event[]
@@ -582,7 +558,6 @@ model Job {
 
   routePlans RoutePlan[]
 }
-
 
 model InventoryItem {
   id String @id @default(uuid())
@@ -693,18 +668,46 @@ enum LeadStatus {
   converted
 }
 
-
 model LeadNote {
+  id String @id @default(cuid())
 
-  id        String   @id @default(cuid())
+  leadId String
 
-  leadId    String
-
-  content   String
+  content String
 
   createdAt DateTime @default(now())
 
-  lead Lead @relation(fields:[leadId],references:[id],onDelete:Cascade)
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
+model CrewAssignment {
+  id String @id @default(uuid())
 
+  jobId String
+
+  crewMemberId String
+
+  assignedAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id])
+
+  crewMember CrewMember @relation(fields: [crewMemberId], references: [id])
+}
+
+model CrewMember {
+  id String @id @default(uuid())
+
+  orgId String
+
+  name String
+
+  phone String?
+
+  role String
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  assignments CrewAssignment[]
+}

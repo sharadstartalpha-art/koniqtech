@@ -9,39 +9,49 @@ export default async function Page({
 
   const { id } = await params
 
-  const crew =
-    await prisma.crewAssignment.findMany({
-      where:{
-        jobId:id
-      },
-      orderBy:{
-        assignedAt:"desc"
-      }
-    })
+  const crew = await prisma.crewAssignment.findMany({
+    where:{
+      jobId:id
+    },
+    include:{
+      crewMember:true
+    },
+    orderBy:{
+      assignedAt:"desc"
+    }
+  })
 
   async function createCrew(
-    formData:FormData
+    formData: FormData
   ){
 
     "use server"
+
+    const member =
+      await prisma.crewMember.create({
+
+        data:{
+          orgId:"TEMP_ORG_ID", // replace later
+          name:String(formData.get("name")),
+          phone:String(formData.get("phone") || ""),
+          role:String(formData.get("role"))
+        }
+
+      })
 
     await prisma.crewAssignment.create({
 
       data:{
         jobId:id,
-        name:String(formData.get("name")),
-        phone:String(formData.get("phone")),
-        role:String(formData.get("role"))
+        crewMemberId:member.id
       }
 
     })
 
-    revalidatePath(
-      `/jobs/${id}/crew`
-    )
+    revalidatePath(`/jobs/${id}/crew`)
   }
 
-  return(
+  return (
 
     <div className="space-y-8">
 
@@ -132,61 +142,56 @@ export default async function Page({
 
       <div className="space-y-4">
 
-        {
-          crew.length === 0 && (
+        {crew.length === 0 && (
 
-            <div
-              className="
-              bg-white
-              border
-              rounded-3xl
-              p-6
-              "
-            >
-              No crew assigned
+          <div
+            className="
+            bg-white
+            border
+            rounded-3xl
+            p-6
+            "
+          >
+            No crew assigned
+          </div>
+
+        )}
+
+        {crew.map(member => (
+
+          <div
+            key={member.id}
+            className="
+            bg-white
+            border
+            rounded-3xl
+            p-6
+            "
+          >
+
+            <div className="font-semibold text-lg">
+              {member.crewMember.name}
             </div>
 
-          )
-        }
-
-        {
-          crew.map(member => (
-
-            <div
-              key={member.id}
-              className="
-              bg-white
-              border
-              rounded-3xl
-              p-6
-              "
-            >
-
-              <div className="font-semibold text-lg">
-                {member.name}
-              </div>
-
-              <div className="text-slate-500">
-                {member.role}
-              </div>
-
-              {
-                member.phone && (
-                  <div className="text-sm mt-1">
-                    {member.phone}
-                  </div>
-                )
-              }
-
+            <div className="text-slate-500">
+              {member.crewMember.role}
             </div>
 
-          ))
-        }
+            {member.crewMember.phone && (
+
+              <div className="text-sm mt-1">
+                {member.crewMember.phone}
+              </div>
+
+            )}
+
+          </div>
+
+        ))}
 
       </div>
 
     </div>
 
   )
-
 }

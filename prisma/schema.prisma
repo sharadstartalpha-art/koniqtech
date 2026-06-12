@@ -685,15 +685,14 @@ model CrewAssignment {
 
   jobId String
 
-  crewMemberId String
+  crewId String
 
   assignedAt DateTime @default(now())
 
-  job Job @relation(fields: [jobId], references: [id])
+  job Job @relation(fields:[jobId], references:[id])
 
-  crewMember CrewMember @relation(fields: [crewMemberId], references: [id])
+  crew CrewMember @relation(fields:[crewId], references:[id])
 }
-
 model CrewMember {
   id String @id @default(uuid())
 
@@ -703,11 +702,15 @@ model CrewMember {
 
   phone String?
 
+  email String?
+
   role String
+
+  active Boolean @default(true)
 
   createdAt DateTime @default(now())
 
-  organization Organization @relation(fields: [orgId], references: [id])
+  organization Organization @relation(fields:[orgId], references:[id])
 
   assignments CrewAssignment[]
 }

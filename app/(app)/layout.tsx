@@ -41,6 +41,7 @@ const MENU=[
 ["Customers","/customers",Users],
 ["Pipeline","/pipeline",GitBranch],
 ["Jobs","/jobs",Briefcase],
+["Crew","/crew",Briefcase],
 ["Calendar","/calendar",Calendar],
 ["Messages","/messages",MessageSquare],
 ["Billing","/billing",CreditCard],

@@ -31,17 +31,20 @@ export default async function Page({
 
     "use server"
 
-    const member =
-      await prisma.crewMember.create({
+    const user =
+  await prisma.user.findFirst()
 
-        data:{
-          orgId:"TEMP_ORG_ID", // replace later
-          name:String(formData.get("name")),
-          phone:String(formData.get("phone") || ""),
-          role:String(formData.get("role"))
-        }
+const member =
+  await prisma.crewMember.create({
 
-      })
+    data:{
+      orgId:user!.orgId,
+      name:String(formData.get("name")),
+      phone:String(formData.get("phone") || ""),
+      role:String(formData.get("role"))
+    }
+
+  })
 
     await prisma.crewAssignment.create({
 

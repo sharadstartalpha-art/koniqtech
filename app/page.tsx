@@ -1,915 +1,166 @@
 import Link from "next/link"
+import { Menu, ArrowRight, CheckCircle, Brain, Users, Calendar, FileText, Wrench } from "lucide-react"
 
-import {
+export default function HomePage() {
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" className="w-10 h-10" alt="logo" />
+            <div>
+              <div className="text-2xl font-bold">Koniqtech</div>
+              <div className="text-slate-400 text-sm">AI CRM Platform</div>
+            </div>
+          </div>
 
-ArrowRight,
-Check,
-Building2,
-Brain,
-Wrench,
-Calendar,
-FileText,
-Users,
-ChevronRight
+          <nav className="hidden lg:flex items-center gap-8">
+            <Link href="/features">Features</Link>
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/contact">Contact</Link>
+            <Link href="/login">Login</Link>
+            <Link href="/register" className="bg-orange-500 hover:bg-orange-600 px-5 py-3 rounded-xl">
+              Start Free
+            </Link>
+          </nav>
 
+          <button className="lg:hidden">
+            <Menu />
+          </button>
+        </div>
+      </header>
+
+      <section className="max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+          <span className="inline-block px-4 py-2 rounded-full bg-slate-800 text-orange-400">
+            AI CRM For Home Service Businesses
+          </span>
+
+          <h1 className="text-6xl lg:text-8xl font-bold mt-8 leading-tight">
+            Grow Your
+            <span className="block text-orange-500">Service Business</span>
+          </h1>
+
+          <p className="text-slate-300 text-xl mt-8 max-w-2xl">
+            Manage leads, customers, dispatch, jobs, invoices, technicians and AI automation from one platform.
+          </p>
+
+          <div className="flex flex-wrap gap-4 mt-10">
+            <Link href="/register" className="bg-orange-500 hover:bg-orange-600 px-8 py-4 rounded-xl flex items-center gap-2">
+              Start Free Trial <ArrowRight size={18} />
+            </Link>
+
+            <Link href="/contact" className="border border-slate-700 px-8 py-4 rounded-xl">
+              Book Demo
+            </Link>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
+          <div className="grid grid-cols-2 gap-4">
+            <Stat title="Leads" value="241" />
+            <Stat title="Revenue" value="$82K" />
+            <Stat title="Jobs" value="43" />
+            <Stat title="Customers" value="112" />
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <h2 className="text-5xl font-bold text-center mb-16">Everything Included</h2>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Feature icon={<Users />} title="Lead Management" />
+          <Feature icon={<Calendar />} title="Dispatch Board" />
+          <Feature icon={<Brain />} title="AI Automation" />
+          <Feature icon={<FileText />} title="Quotes & Invoices" />
+          <Feature icon={<Wrench />} title="Field Service" />
+          <Feature icon={<CheckCircle />} title="Multi Tenant SaaS" />
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <div className="bg-slate-900 rounded-3xl p-10">
+          <h2 className="text-5xl font-bold text-center">Pricing</h2>
+
+          <div className="grid md:grid-cols-3 gap-6 mt-12">
+            <Pricing title="Starter" price="$199" />
+            <Pricing title="Growth AI" price="$299" />
+            <Pricing title="Enterprise" price="Custom" />
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <h2 className="text-5xl font-bold text-center mb-12">Contact Us</h2>
+
+        <div className="bg-slate-900 rounded-3xl p-8 space-y-4">
+          <input className="w-full h-14 rounded-xl bg-slate-800 px-4" placeholder="Name" />
+          <input className="w-full h-14 rounded-xl bg-slate-800 px-4" placeholder="Email" />
+          <textarea className="w-full rounded-xl bg-slate-800 p-4 h-40" placeholder="Message" />
+          <button className="bg-orange-500 px-8 py-4 rounded-xl">Send Message</button>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-bold text-xl">Koniqtech</h3>
+            <p className="text-slate-400 mt-3">AI CRM Platform</p>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-3">Product</h4>
+            <div className="space-y-2 text-slate-400">
+              <Link href="/features">Features</Link><br />
+              <Link href="/pricing">Pricing</Link>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-3">Company</h4>
+            <div className="space-y-2 text-slate-400">
+              <Link href="/about">About</Link><br />
+              <Link href="/contact">Contact</Link>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold mb-3">Legal</h4>
+            <div className="space-y-2 text-slate-400">
+              <Link href="/privacy-policy">Privacy Policy</Link><br />
+              <Link href="/terms-and-conditions">Terms & Conditions</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  )
 }
 
-from "lucide-react"
-
-const industries=[
-
-"Roofing CRM",
-"HVAC CRM",
-"Plumbing CRM",
-"Landscaping CRM"
-
-]
-
-const features=[
-
-{
-title:"Lead Management",
-icon:Users,
-desc:"Capture, qualify and manage leads"
-},
-
-{
-title:"Dispatch Board",
-icon:Calendar,
-desc:"Schedule technicians and jobs"
-},
-
-{
-title:"AI Automation",
-icon:Brain,
-desc:"Lead scoring and workflows"
-},
-
-{
-title:"Quotes & Docs",
-icon:FileText,
-desc:"Invoices, estimates and PDFs"
-},
-
-{
-title:"Field Service",
-icon:Wrench,
-desc:"Jobs, service calls and teams"
-},
-
-{
-title:"Multi Tenant SaaS",
-icon:Building2,
-desc:"Industry CRM platform"
+function Stat({ title, value }: any) {
+  return (
+    <div className="bg-slate-800 rounded-2xl p-6">
+      <div className="text-4xl font-bold">{value}</div>
+      <div className="text-slate-400 mt-2">{title}</div>
+    </div>
+  )
 }
 
-]
-
-const faqs=[
-
-{
-q:"Which industries are supported?",
-a:"Roofing, HVAC, Plumbing and Landscaping with dedicated CRM workflows."
-},
-
-{
-q:"Is billing included?",
-a:"Yes. Quotes, invoices, subscriptions and customer billing."
-},
-
-{
-q:"Can I use AI?",
-a:"Yes. AI assistant, workflows, lead scoring and automations."
-},
-
-{
-q:"Is this multi tenant?",
-a:"Yes. Each company operates in isolated organizations."
+function Feature({ icon, title }: any) {
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8">
+      {icon}
+      <h3 className="text-2xl font-semibold mt-4">{title}</h3>
+    </div>
+  )
 }
 
-]
-
-export default function Home(){
-
-return(
-
-<div className="
-min-h-screen
-
-bg-slate-950
-
-text-white
-">
-
-<nav className="
-sticky
-top-0
-
-z-50
-
-backdrop-blur
-
-border-b
-
-border-slate-800/50
-
-bg-slate-950/80
-">
-
-<div className="
-max-w-7xl
-
-mx-auto
-
-px-8
-py-6
-
-flex
-justify-between
-items-center
-">
-
-<div className="
-flex
-items-center
-gap-4
-">
-
-<img
-
-src="/logo.png"
-
-className="
-w-10
-h-10
-"
-
-/>
-
-<div>
-
-<h1 className="
-text-2xl
-font-semibold
-">
-
-koniqtech
-
-</h1>
-
-<p className="
-text-xs
-text-slate-400
-">
-
-Multi CRM Platform
-
-</p>
-
-</div>
-
-</div>
-
-<div className="
-flex
-gap-4
-items-center
-">
-
-<Link
-
-href="/login"
-
-className="
-text-slate-300
-"
-
->
-
-Login
-
-</Link>
-
-<Link
-
-href="/register"
-
-className="
-bg-blue-600
-
-px-5
-py-3
-
-rounded-xl
-"
-
->
-
-Start Free
-
-</Link>
-
-</div>
-
-</div>
-
-</nav>
-
-<section className="
-max-w-7xl
-
-mx-auto
-
-px-8
-py-28
-
-grid
-
-lg:grid-cols-2
-
-gap-20
-
-items-center
-">
-
-<div>
-
-<div className="
-inline-flex
-
-px-4
-py-2
-
-rounded-full
-
-bg-slate-800
-
-mb-8
-">
-
-AI Multi Industry CRM
-
-</div>
-
-<h1 className="
-text-7xl
-
-font-bold
-
-leading-tight
-">
-
-CRM platform
-
-for home
-
-service
-
-businesses
-
-</h1>
-
-<p className="
-text-xl
-
-text-slate-300
-
-mt-8
-
-max-w-2xl
-">
-
-Lead management,
-dispatch,
-quotes,
-billing,
-AI,
-field service,
-automation and SaaS management.
-
-</p>
-
-<div className="
-flex
-gap-4
-
-mt-10
-">
-
-<Link
-
-href="/register"
-
-className="
-bg-blue-600
-
-px-8
-py-4
-
-rounded-xl
-
-flex
-items-center
-gap-2
-"
-
->
-
-Start Free
-
-<ArrowRight size={18}/>
-
-</Link>
-
-<Link
-
-href="/login"
-
-className="
-border
-
-border-slate-700
-
-px-8
-py-4
-
-rounded-xl
-"
-
->
-
-View Demo
-
-</Link>
-
-</div>
-
-<div className="
-grid
-
-grid-cols-2
-
-gap-4
-
-mt-12
-">
-
-{
-
-industries.map(
-
-x=>(
-
-<div
-
-key={x}
-
-className="
-bg-slate-900
-
-border
-
-border-slate-800
-
-rounded-2xl
-
-p-5
-"
-
->
-
-{x}
-
-</div>
-
-)
-
-)
-
-}
-
-</div>
-
-</div>
-
-<div className="
-bg-slate-900
-
-border
-
-border-slate-800
-
-rounded-[32px]
-
-p-10
-">
-
-<div className="
-grid
-
-grid-cols-2
-
-gap-6
-">
-
-<Stat
-v="241"
-t="Leads"
-/>
-
-<Stat
-v="$82K"
-t="Revenue"
-/>
-
-<Stat
-v="43"
-t="Jobs"
-/>
-
-<Stat
-v="112"
-t="Customers"
-/>
-
-</div>
-
-</div>
-
-</section>
-
-<section className="
-max-w-7xl
-
-mx-auto
-
-px-8
-pb-24
-">
-
-<div className="
-text-center
-
-mb-16
-">
-
-<h2 className="
-text-5xl
-
-font-bold
-">
-
-Everything included
-
-</h2>
-
-</div>
-
-<div className="
-grid
-
-md:grid-cols-3
-
-gap-6
-">
-
-{
-
-features.map(
-
-x=>(
-
-<div
-
-key={x.title}
-
-className="
-bg-slate-900
-
-border
-
-border-slate-800
-
-rounded-3xl
-
-p-8
-"
-
->
-
-<x.icon
-size={24}
-/>
-
-<h3 className="
-text-2xl
-
-font-semibold
-
-mt-6
-">
-
-{x.title}
-
-</h3>
-
-<p className="
-text-slate-400
-
-mt-4
-">
-
-{x.desc}
-
-</p>
-
-</div>
-
-)
-
-)
-
-}
-
-</div>
-
-</section>
-
-<section className="
-max-w-7xl
-
-mx-auto
-
-px-8
-pb-24
-">
-
-<div className="
-bg-slate-900
-
-border
-
-border-slate-800
-
-rounded-[32px]
-
-p-12
-">
-
-<h2 className="
-text-5xl
-
-font-bold
-
-text-center
-">
-
-Pricing
-
-</h2>
-
-<div className="
-grid
-
-md:grid-cols-2
-
-gap-8
-
-mt-12
-">
-
-<PricingCard
-
-title="Starter"
-
-price="$199"
-
-features={[
-
-"Industry CRM",
-"Leads",
-"Customers",
-"Jobs",
-"Billing"
-
-]}
-
-/>
-
-<PricingCard
-
-title="Pro AI"
-
-price="$299"
-
-features={[
-
-"AI",
-"Voice",
-"Automation",
-"Scoring",
-"Workflows"
-
-]}
-
-/>
-
-</div>
-
-</div>
-
-</section>
-
-<section className="
-max-w-5xl
-
-mx-auto
-
-px-8
-pb-24
-">
-
-<h2 className="
-text-5xl
-
-font-bold
-
-text-center
-
-mb-16
-">
-
-FAQ
-
-</h2>
-
-<div className="
-space-y-5
-">
-
-{
-
-faqs.map(
-
-x=>(
-
-<div
-
-key={x.q}
-
-className="
-bg-slate-900
-
-border
-
-border-slate-800
-
-rounded-3xl
-
-p-8
-"
-
->
-
-<h3 className="
-text-xl
-
-font-semibold
-">
-
-{x.q}
-
-</h3>
-
-<p className="
-text-slate-400
-
-mt-4
-">
-
-{x.a}
-
-</p>
-
-</div>
-
-)
-
-)
-
-}
-
-</div>
-
-</section>
-
-<section className="
-border-t
-
-border-slate-800
-">
-
-<div className="
-max-w-7xl
-
-mx-auto
-
-px-8
-py-20
-
-text-center
-">
-
-<h2 className="
-text-5xl
-
-font-bold
-">
-
-Start growing today
-
-</h2>
-
-<p className="
-text-slate-400
-
-mt-5
-">
-
-Launch your CRM workspace
-
-</p>
-
-<Link
-
-href="/register"
-
-className="
-inline-flex
-
-items-center
-gap-2
-
-bg-blue-600
-
-px-8
-py-4
-
-rounded-xl
-
-mt-8
-"
-
->
-
-Get Started
-
-<ChevronRight size={18}/>
-
-</Link>
-
-</div>
-
-</section>
-
-</div>
-
-)
-
-}
-
-function Stat({
-
-v,
-t
-
-}:any){
-
-return(
-
-<div className="
-bg-slate-800
-
-rounded-2xl
-
-p-8
-">
-
-<h2 className="
-text-5xl
-
-font-bold
-">
-
-{v}
-
-</h2>
-
-<p className="
-text-slate-400
-
-mt-3
-">
-
-{t}
-
-</p>
-
-</div>
-
-)
-
-}
-
-function PricingCard({
-
-title,
-price,
-features
-
-}:any){
-
-return(
-
-<div className="
-bg-slate-800
-
-rounded-3xl
-
-p-10
-">
-
-<h3 className="
-text-3xl
-
-font-bold
-">
-
-{title}
-
-</h3>
-
-<p className="
-text-6xl
-
-font-bold
-
-mt-6
-">
-
-{price}
-
-<span className="
-text-xl
-
-text-slate-400
-">
-
-/mo
-
-</span>
-
-</p>
-
-<div className="
-space-y-4
-
-mt-8
-">
-
-{
-
-features.map(
-
-(x:string)=>(
-
-<div
-
-key={x}
-
-className="
-flex
-gap-3
-"
-
->
-
-<Check size={18}/>
-
-{x}
-
-</div>
-
-)
-
-)
-
-}
-
-</div>
-
-</div>
-
-)
-
+function Pricing({ title, price }: any) {
+  return (
+    <div className="bg-slate-800 rounded-3xl p-8">
+      <h3 className="text-3xl font-bold">{title}</h3>
+      <div className="text-5xl font-bold mt-4">{price}</div>
+    </div>
+  )
 }

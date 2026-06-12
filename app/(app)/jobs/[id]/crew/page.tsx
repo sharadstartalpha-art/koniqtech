@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache"
 export default async function Page({
   params
 }:{
-  params:Promise<{id:string}>
-}){
+  params: Promise<{id:string}>
+}) {
 
   const { id } = await params
 
@@ -23,6 +23,9 @@ export default async function Page({
       },
       include:{
         user:true
+      },
+      orderBy:{
+        assignedAt:"desc"
       }
     })
 
@@ -37,16 +40,14 @@ export default async function Page({
         formData.get("userId")
       )
 
+    if(!userId) return
+
     await prisma.crewAssignment.create({
 
       data:{
-
         jobId:id,
-
         userId,
-
         role:"technician"
-
       }
 
     })
@@ -54,7 +55,28 @@ export default async function Page({
     revalidatePath(
       `/jobs/${id}/crew`
     )
+  }
 
+  async function createCrew(
+    formData:FormData
+  ){
+
+    "use server"
+
+    await prisma.crewAssignment.create({
+
+      data:{
+        jobId:id,
+        name:String(formData.get("name")),
+        phone:String(formData.get("phone")),
+        role:String(formData.get("role"))
+      }
+
+    })
+
+    revalidatePath(
+      `/jobs/${id}/crew`
+    )
   }
 
   return(
@@ -65,92 +87,185 @@ export default async function Page({
         Crew
       </h1>
 
-      <form
-        action={assignTechnician}
-        className="flex gap-4"
-      >
+      <div className="grid lg:grid-cols-2 gap-8">
 
-        <select
-          name="userId"
+        <form
+          action={assignTechnician}
           className="
-          flex-1
-          h-14
-          border
-          rounded-2xl
-          px-4
-          "
-        >
-
-          <option value="">
-            Select Technician
-          </option>
-
-          {
-            technicians.map(t=>(
-              <option
-                key={t.id}
-                value={t.id}
-              >
-                {t.name}
-              </option>
-            ))
-          }
-
-        </select>
-
-        <button
-          className="
-          px-8
-          bg-blue-600
-          text-white
-          rounded-2xl
-          "
-        >
-          Assign
-        </button>
-
-      </form>
-
-      {
-        crew.length===0 && (
-
-          <div className="
           bg-white
           border
           rounded-3xl
           p-6
-          ">
-            No crew assigned
-          </div>
+          space-y-4
+          "
+        >
 
-        )
-      }
+          <h2 className="text-xl font-semibold">
+            Assign Technician
+          </h2>
 
-      {
-        crew.map(x=>(
-
-          <div
-            key={x.id}
+          <select
+            name="userId"
             className="
+            w-full
+            h-14
+            border
+            rounded-2xl
+            px-4
+            "
+          >
+            <option value="">
+              Select Technician
+            </option>
+
+            {
+              technicians.map(t=>(
+                <option
+                  key={t.id}
+                  value={t.id}
+                >
+                  {t.name}
+                </option>
+              ))
+            }
+          </select>
+
+          <button
+            className="
+            bg-blue-600
+            text-white
+            px-6
+            py-3
+            rounded-2xl
+            "
+          >
+            Assign
+          </button>
+
+        </form>
+
+        <form
+          action={createCrew}
+          className="
+          bg-white
+          border
+          rounded-3xl
+          p-6
+          space-y-4
+          "
+        >
+
+          <h2 className="text-xl font-semibold">
+            Create Crew Member
+          </h2>
+
+          <input
+            name="name"
+            placeholder="Name"
+            className="
+            w-full
+            h-14
+            border
+            rounded-2xl
+            px-4
+            "
+          />
+
+          <input
+            name="phone"
+            placeholder="Phone"
+            className="
+            w-full
+            h-14
+            border
+            rounded-2xl
+            px-4
+            "
+          />
+
+          <input
+            name="role"
+            placeholder="Role"
+            className="
+            w-full
+            h-14
+            border
+            rounded-2xl
+            px-4
+            "
+          />
+
+          <button
+            className="
+            bg-green-600
+            text-white
+            px-6
+            py-3
+            rounded-2xl
+            "
+          >
+            Save
+          </button>
+
+        </form>
+
+      </div>
+
+      <div className="space-y-4">
+
+        {
+          crew.length === 0 && (
+
+            <div className="
             bg-white
             border
             rounded-3xl
             p-6
-            "
-          >
-
-            <div className="font-semibold">
-              {x.user.name}
+            ">
+              No crew assigned
             </div>
 
-            <div className="text-slate-500">
-              {x.role}
+          )
+        }
+
+        {
+          crew.map(member=>(
+
+            <div
+              key={member.id}
+              className="
+              bg-white
+              border
+              rounded-3xl
+              p-6
+              "
+            >
+
+              <div className="font-semibold text-lg">
+                {
+                  member.user?.name ||
+                  member.name
+                }
+              </div>
+
+              <div className="text-slate-500">
+                {member.role}
+              </div>
+
+              {
+                member.phone && (
+                  <div className="text-sm mt-1">
+                    {member.phone}
+                  </div>
+                )
+              }
+
             </div>
 
-          </div>
+          ))
+        }
 
-        ))
-      }
+      </div>
 
     </div>
 

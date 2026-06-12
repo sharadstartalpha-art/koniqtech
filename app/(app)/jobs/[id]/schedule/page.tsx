@@ -1,171 +1,156 @@
 import prisma from "@/shared/lib/prisma"
-
-import {
-revalidatePath
-}
-
-from "next/cache"
+import { revalidatePath } from "next/cache"
 
 export default async function Page({
+  params
+}:{
+  params: Promise<{ id:string }>
+}) {
 
-params
+  const { id } = await params
 
-}:any){
+  const job = await prisma.job.findUnique({
+    where:{ id },
+    include:{
+      technician:true,
+      customer:true
+    }
+  })
 
-const { id }=
-await params
+  async function save(formData:FormData){
 
-const job=
+    "use server"
 
-await prisma.job.findUnique({
+    const value =
+      String(
+        formData.get("date")
+      )
 
-where:{
-id
-}
+    if(!value) return
 
-})
+    await prisma.job.update({
+      where:{ id },
+      data:{
+        scheduledDate:new Date(value)
+      }
+    })
 
-async function save(
+    revalidatePath(`/jobs/${id}/schedule`)
+  }
 
-formData:FormData
+  return(
 
-){
+    <div className="space-y-8">
 
-"use server"
+      <h1 className="text-5xl font-bold">
+        Schedule Job
+      </h1>
 
-await prisma.job.update({
+      <form
+        action={save}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-8
+        space-y-6
+        "
+      >
 
-where:{
-id
-},
+        <input
+          type="datetime-local"
+          name="date"
+          defaultValue={
+            job?.scheduledDate
+              ? new Date(job.scheduledDate)
+                  .toISOString()
+                  .slice(0,16)
+              : ""
+          }
+          className="
+          w-full
+          h-14
+          border
+          rounded-2xl
+          px-5
+          "
+        />
 
-data:{
+        <button
+          className="
+          px-8
+          py-4
+          bg-blue-600
+          text-white
+          rounded-2xl
+          "
+        >
+          Save Schedule
+        </button>
 
-scheduledDate:
+      </form>
 
-new Date(
+      <div className="grid md:grid-cols-3 gap-6">
 
-String(
+        <div className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        ">
+          <p className="text-slate-500">
+            Current Schedule
+          </p>
 
-formData.get(
-"date"
-)
+          <h2 className="text-xl font-bold mt-3">
+            {
+              job?.scheduledDate
+              ? job.scheduledDate.toLocaleString()
+              : "Not Scheduled"
+            }
+          </h2>
+        </div>
 
-)
+        <div className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        ">
+          <p className="text-slate-500">
+            Technician
+          </p>
 
-)
+          <h2 className="text-xl font-bold mt-3">
+            {
+              job?.technician?.name ||
+              "Not Assigned"
+            }
+          </h2>
+        </div>
 
-}
+        <div className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        ">
+          <p className="text-slate-500">
+            Customer
+          </p>
 
-})
+          <h2 className="text-xl font-bold mt-3">
+            {
+              job?.customer?.firstName ||
+              "-"
+            }
+          </h2>
+        </div>
 
-revalidatePath(
+      </div>
 
-`/jobs/${id}/schedule`
+    </div>
 
-)
-
-}
-
-return(
-
-<div className="space-y-8">
-
-<h1 className="text-5xl font-bold">
-
-Schedule Job
-
-</h1>
-
-<form
-
-action={save}
-
-className="
-bg-white
-border
-rounded-3xl
-p-8
-space-y-6
-"
-
->
-
-<input
-
-type="datetime-local"
-
-name="date"
-
-className="
-w-full
-h-14
-border
-rounded-2xl
-px-5
-"
-
-/>
-
-<button
-
-className="
-px-8
-py-4
-bg-blue-600
-text-white
-rounded-2xl
-"
-
->
-
-Save Schedule
-
-</button>
-
-</form>
-
-<div className="
-bg-white
-border
-rounded-3xl
-p-8
-">
-
-<p className="text-slate-500">
-
-Current Schedule
-
-</p>
-
-<h2 className="
-text-3xl
-font-bold
-mt-4
-">
-
-{
-
-job?.scheduledDate
-
-?
-
-job
-.scheduledDate
-.toLocaleString()
-
-:
-
-"Not scheduled"
-
-}
-
-</h2>
-
-</div>
-
-</div>
-
-)
+  )
 
 }

@@ -36,7 +36,7 @@ key={x.id}
 className="bg-white border rounded-3xl p-6"
 >
 
-{x.user.name}
+{x.user?.name || x.name}
 
 <br/>
 

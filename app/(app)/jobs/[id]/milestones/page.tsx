@@ -57,20 +57,32 @@ Milestones
 </h1>
 
 <form
-action={create}
+  action={create}
+  className="flex gap-4"
 >
+  <input
+    name="title"
+    placeholder="Milestone title"
+    className="
+    flex-1
+    h-14
+    border
+    rounded-2xl
+    px-5
+    "
+  />
 
-<input
-name="title"
-className="
-w-full
-h-14
-border
-rounded-2xl
-px-5
-"
-/>
-
+  <button
+    type="submit"
+    className="
+    px-8
+    bg-blue-600
+    text-white
+    rounded-2xl
+    "
+  >
+    Add
+  </button>
 </form>
 
 {

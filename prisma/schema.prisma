@@ -494,17 +494,20 @@ model JobTask {
 }
 
 model JobMilestone {
-  id String @id @default(uuid())
 
-  jobId String
+  id          String   @id @default(uuid())
 
-  title String
+  jobId       String
 
-  status String @default("pending")
+  title       String
 
-  dueDate DateTime?
+  completed   Boolean  @default(false)
 
-  job Job @relation(fields: [jobId], references: [id])
+  dueDate     DateTime?
+
+  createdAt   DateTime @default(now())
+
+  job         Job      @relation(fields:[jobId], references:[id])
 }
 
 model MaterialRequest {

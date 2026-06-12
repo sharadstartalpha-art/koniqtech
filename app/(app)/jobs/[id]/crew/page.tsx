@@ -171,7 +171,7 @@ export default async function Page({
     rounded-3xl
     p-6
     "
-  >
+>
 
     <div className="font-semibold text-lg">
       {member.crew.name}

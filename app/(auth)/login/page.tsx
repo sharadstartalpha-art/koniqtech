@@ -262,14 +262,13 @@ export default function LoginPage() {
       {/* RIGHT */}
 
       <div className="
-      bg-slate-50
-
-      flex
-      items-center
-      justify-center
-
-      p-10
-      ">
+bg-slate-50
+flex
+items-start
+justify-center
+pt-24
+px-10
+">
 
         <form
 
@@ -450,78 +449,70 @@ export default function LoginPage() {
             text-sm
             ">
 
-              <Link
-                href="/register"
-                className="
-                text-slate-500
-                hover:text-black
-                "
-              >
-                Create account
-              </Link>
-
-              <Link
-                href="/forgot-password"
-                className="
-                text-slate-500
-                hover:text-black
-                "
-              >
-                Forgot password?
-              </Link>
+             
 
             </div>
 
             <button
 
-              disabled={loading}
+disabled={loading}
 
-              className="
-              w-full
+className="
+w-full
+h-14
 
-              h-14
+rounded-2xl
 
-              rounded-2xl
+bg-gradient-to-r
+from-orange-500
+to-orange-600
 
-              bg-gradient-to-r
+text-white
+font-semibold
 
-              from-orange-500
-              to-orange-600
+flex
+items-center
+justify-center
+gap-2
+"
+>
 
-              hover:opacity-95
+{loading ? "Signing in..." : "Continue"}
 
-              text-white
+</button>
 
-              font-semibold
 
-              shadow-lg
+<div className="
+mt-5
 
-              flex
-              items-center
-              justify-center
-              gap-2
-              "
-            >
+flex
+justify-between
 
-              {
-                loading
+text-sm
+text-slate-500
+">
 
-                ?
+<Link
+href="/register"
+className="
+hover:text-orange-600
+transition
+"
+>
+Create account
+</Link>
 
-                "Signing in..."
+<Link
+href="/forgot-password"
+className="
+hover:text-orange-600
+transition
+"
+>
+Forgot password?
+</Link>
 
-                :
-
-                <>
-
-                  Continue
-
-                  <ArrowRight size={16}/>
-
-                </>
-              }
-
-            </button>
+</div>
 
             <div className="
             flex

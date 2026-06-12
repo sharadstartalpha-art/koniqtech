@@ -504,7 +504,7 @@ model JobMilestone {
   completed   Boolean  @default(false)
 
   dueDate     DateTime?
-
+  status    String   @default("pending")
   createdAt   DateTime @default(now())
 
   job         Job      @relation(fields:[jobId], references:[id])

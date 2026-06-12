@@ -1,59 +1,46 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
+import Link from "next/link"
 
-export default async function Page(){
+export default async function Page() {
 
   const crew =
     await prisma.crewMember.findMany({
-
-      orderBy:{
-        createdAt:"desc"
+      orderBy: {
+        createdAt: "desc"
       }
-
     })
 
-async function deleteCrew(
-  id:string
-){
-
-  "use server"
-
-  await prisma.crewMember.delete({
-    where:{ id }
-  })
-
-  revalidatePath("/crew")
-}
-
-
-
   async function createCrew(
-    formData:FormData
-  ){
+    formData: FormData
+  ) {
 
     "use server"
 
-     const user =
-  await prisma.user.findFirst()
+    const user =
+      await prisma.user.findFirst()
+
+    if (!user) return
+
     await prisma.crewMember.create({
 
-      data:{
+      data: {
 
-       orgId:user!.orgId,
+        orgId: user.orgId,
 
-        name:String(
+        name: String(
           formData.get("name")
         ),
 
-        phone:String(
-          formData.get("phone")
+        phone: String(
+          formData.get("phone") || ""
         ),
 
-        email:String(
-          formData.get("email")
+        email: String(
+          formData.get("email") || ""
         ),
 
-        role:String(
+        role: String(
           formData.get("role")
         )
 
@@ -62,9 +49,31 @@ async function deleteCrew(
     })
 
     revalidatePath("/crew")
+
   }
 
-  return(
+  async function deleteCrew(
+    formData: FormData
+  ) {
+
+    "use server"
+
+    const id =
+      String(
+        formData.get("id")
+      )
+
+    await prisma.crewMember.delete({
+      where: {
+        id
+      }
+    })
+
+    revalidatePath("/crew")
+
+  }
+
+  return (
 
     <div className="space-y-8">
 
@@ -89,6 +98,7 @@ async function deleteCrew(
 
         <input
           name="name"
+          required
           placeholder="Name"
           className="
           w-full
@@ -133,6 +143,7 @@ async function deleteCrew(
           px-4
           "
         >
+
           <option value="technician">
             Technician
           </option>
@@ -144,6 +155,7 @@ async function deleteCrew(
           <option value="supervisor">
             Supervisor
           </option>
+
         </select>
 
         <button
@@ -160,133 +172,138 @@ async function deleteCrew(
 
       </form>
 
-      <div className="space-y-4">
-
-        {crew.map(member=>(
-
-          <div className="
-bg-white
-border
-rounded-3xl
-overflow-hidden
-">
-
-<table className="w-full">
-
-  <thead>
-
-    <tr className="border-b bg-slate-50">
-
-      <th className="text-left p-4">
-        Name
-      </th>
-
-      <th className="text-left p-4">
-        Role
-      </th>
-
-      <th className="text-left p-4">
-        Phone
-      </th>
-
-      <th className="text-left p-4">
-        Email
-      </th>
-
-      <th className="text-left p-4">
-        Actions
-      </th>
-
-    </tr>
-
-  </thead>
-
-  <tbody>
-
-    {crew.map(member=>(
-
-      <tr
-        key={member.id}
-        className="border-b"
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        overflow-hidden
+        "
       >
 
-        <td className="p-4">
-          {member.name}
-        </td>
+        <table className="w-full">
 
-        <td className="p-4 capitalize">
-          {member.role}
-        </td>
+          <thead>
 
-        <td className="p-4">
-          {member.phone}
-        </td>
+            <tr className="bg-slate-50 border-b">
 
-        <td className="p-4">
-          {member.email}
-        </td>
+              <th className="p-4 text-left">
+                Name
+              </th>
 
-        <td className="p-4">
+              <th className="p-4 text-left">
+                Role
+              </th>
 
-          <div className="flex gap-2">
+              <th className="p-4 text-left">
+                Phone
+              </th>
 
-            <a
-              href={`/crew/${member.id}`}
-              className="
-              px-3
-              py-2
-              bg-slate-100
-              rounded-xl
-              "
-            >
-              Edit
-            </a>
+              <th className="p-4 text-left">
+                Email
+              </th>
 
-            <form
-              action={async()=>{
+              <th className="p-4 text-left">
+                Actions
+              </th>
 
-                "use server"
+            </tr>
 
-                await prisma.crewMember.delete({
-                  where:{
-                    id:member.id
-                  }
-                })
+          </thead>
 
-                revalidatePath("/crew")
+          <tbody>
 
-              }}
-            >
+            {crew.map(member => (
 
-              <button
-                className="
-                px-3
-                py-2
-                bg-red-600
-                text-white
-                rounded-xl
-                "
+              <tr
+                key={member.id}
+                className="border-b"
               >
-                Delete
-              </button>
 
-            </form>
+                <td className="p-4">
+                  {member.name}
+                </td>
 
-          </div>
+                <td className="p-4 capitalize">
+                  {member.role}
+                </td>
 
-        </td>
+                <td className="p-4">
+                  {member.phone}
+                </td>
 
-      </tr>
+                <td className="p-4">
+                  {member.email}
+                </td>
 
-    ))}
+                <td className="p-4">
 
-  </tbody>
+                  <div className="flex gap-2">
 
-</table>
+                    <Link
+                      href={`/crew/${member.id}`}
+                      className="
+                      px-3
+                      py-2
+                      bg-slate-100
+                      rounded-xl
+                      "
+                    >
+                      Edit
+                    </Link>
 
-</div>
+                    <form action={deleteCrew}>
 
-        ))}
+                      <input
+                        type="hidden"
+                        name="id"
+                        value={member.id}
+                      />
+
+                      <button
+                        className="
+                        px-3
+                        py-2
+                        bg-red-600
+                        text-white
+                        rounded-xl
+                        "
+                      >
+                        Delete
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+            {crew.length === 0 && (
+
+              <tr>
+
+                <td
+                  colSpan={5}
+                  className="
+                  p-8
+                  text-center
+                  text-slate-500
+                  "
+                >
+                  No crew members found
+                </td>
+
+              </tr>
+
+            )}
+
+          </tbody>
+
+        </table>
 
       </div>
 

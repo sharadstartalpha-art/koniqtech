@@ -10,16 +10,20 @@ export default async function Page({
   const { id } = await params
 
   const crew = await prisma.crewAssignment.findMany({
-    where:{
-      jobId:id
-    },
-    include:{
-      crewMember:true
-    },
-    orderBy:{
-      assignedAt:"desc"
-    }
-  })
+
+  where:{
+    jobId:id
+  },
+
+  include:{
+    crew:true
+  },
+
+  orderBy:{
+    assignedAt:"desc"
+  }
+
+})
 
   async function createCrew(
     formData: FormData
@@ -43,7 +47,7 @@ export default async function Page({
 
       data:{
         jobId:id,
-        crewMemberId:member.id
+        crewId:member.id
       }
 
     })
@@ -157,37 +161,37 @@ export default async function Page({
 
         )}
 
-        {crew.map(member => (
+       {crew.map(member => (
 
-          <div
-            key={member.id}
-            className="
-            bg-white
-            border
-            rounded-3xl
-            p-6
-            "
-          >
+  <div
+    key={member.id}
+    className="
+    bg-white
+    border
+    rounded-3xl
+    p-6
+    "
+  >
 
-            <div className="font-semibold text-lg">
-              {member.crewMember.name}
-            </div>
+    <div className="font-semibold text-lg">
+      {member.crew.name}
+    </div>
 
-            <div className="text-slate-500">
-              {member.crewMember.role}
-            </div>
+    <div className="text-slate-500">
+      {member.crew.role}
+    </div>
 
-            {member.crewMember.phone && (
+    {member.crew.phone && (
 
-              <div className="text-sm mt-1">
-                {member.crewMember.phone}
-              </div>
+      <div className="text-sm mt-1">
+        {member.crew.phone}
+      </div>
 
-            )}
+    )}
 
-          </div>
+  </div>
 
-        ))}
+))}
 
       </div>
 

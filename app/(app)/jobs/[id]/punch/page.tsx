@@ -29,7 +29,7 @@ export default async function Page({
     })
 
     revalidatePath(
-      `/jobs/${id}/punch-list`
+      `/jobs/${id}/punch`
     )
   }
 
@@ -106,7 +106,7 @@ export default async function Page({
                   <div className="flex gap-2">
 
                     <Link
-                      href={`/jobs/${id}/punch-list/${item.id}`}
+                      href={`/jobs/${id}/punch/${item.id}`}
                       className="px-3 py-2 bg-slate-100 rounded-xl"
                     >
                       Edit
@@ -122,7 +122,7 @@ export default async function Page({
                         })
 
                         revalidatePath(
-                          `/jobs/${id}/punch-list`
+                          `/jobs/${id}/punch`
                         )
 
                       }}

@@ -4,35 +4,32 @@ import Link from "next/link"
 
 export default async function Page({
   params
-}:{
-  params:Promise<{id:string}>
-}){
+}:any){
 
   const { id } = await params
 
-  const orders =
-    await prisma.purchaseOrder.findMany({
+  const items =
+    await prisma.punchItem.findMany({
       where:{ jobId:id }
     })
 
-  async function createOrder(
+  async function create(
     formData:FormData
   ){
 
     "use server"
 
-    await prisma.purchaseOrder.create({
+    await prisma.punchItem.create({
 
       data:{
         jobId:id,
-        vendor:String(formData.get("vendor")),
-        amount:Number(formData.get("amount"))
+        title:String(formData.get("title"))
       }
 
     })
 
     revalidatePath(
-      `/jobs/${id}/purchase-orders`
+      `/jobs/${id}/punch-list`
     )
   }
 
@@ -41,25 +38,18 @@ export default async function Page({
     <div className="space-y-8">
 
       <h1 className="text-5xl font-bold">
-        Purchase Orders
+        Punch List
       </h1>
 
       <form
-        action={createOrder}
+        action={create}
         className="bg-white border rounded-3xl p-6 flex gap-4"
       >
 
         <input
-          name="vendor"
-          placeholder="Vendor"
+          name="title"
+          placeholder="Punch Item"
           className="flex-1 h-14 border rounded-2xl px-4"
-        />
-
-        <input
-          name="amount"
-          type="number"
-          placeholder="Amount"
-          className="w-48 h-14 border rounded-2xl px-4"
         />
 
         <button
@@ -75,33 +65,48 @@ export default async function Page({
         <table className="w-full">
 
           <thead>
+
             <tr className="bg-slate-50 border-b">
-              <th className="p-4 text-left">Vendor</th>
-              <th className="p-4 text-left">Amount</th>
-              <th className="p-4 text-left">Status</th>
-              <th className="p-4 text-left">Actions</th>
+
+              <th className="p-4 text-left">
+                Item
+              </th>
+
+              <th className="p-4 text-left">
+                Completed
+              </th>
+
+              <th className="p-4 text-left">
+                Actions
+              </th>
+
             </tr>
+
           </thead>
 
           <tbody>
 
-            {orders.map(order=>(
+            {items.map(item=>(
 
               <tr
-                key={order.id}
+                key={item.id}
                 className="border-b"
               >
 
-                <td className="p-4">{order.vendor}</td>
-                <td className="p-4">${order.amount}</td>
-                <td className="p-4">{order.status}</td>
+                <td className="p-4">
+                  {item.title}
+                </td>
+
+                <td className="p-4">
+                  {item.completed ? "Yes" : "No"}
+                </td>
 
                 <td className="p-4">
 
                   <div className="flex gap-2">
 
                     <Link
-                      href={`/jobs/${id}/purchase-orders/${order.id}`}
+                      href={`/jobs/${id}/punch-list/${item.id}`}
                       className="px-3 py-2 bg-slate-100 rounded-xl"
                     >
                       Edit
@@ -112,12 +117,12 @@ export default async function Page({
 
                         "use server"
 
-                        await prisma.purchaseOrder.delete({
-                          where:{ id:order.id }
+                        await prisma.punchItem.delete({
+                          where:{ id:item.id }
                         })
 
                         revalidatePath(
-                          `/jobs/${id}/purchase-orders`
+                          `/jobs/${id}/punch-list`
                         )
 
                       }}

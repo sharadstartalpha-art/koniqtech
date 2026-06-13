@@ -1,56 +1,73 @@
 import prisma from "@/shared/lib/prisma"
+import { revalidatePath } from "next/cache"
+import Link from "next/link"
 
-export default async function Page({
-params
-}:any){
+export default async function Page({ params }:any){
 
-const { id }=
-await params
+  const { id } = await params
 
-const rows=
-await prisma.changeOrder.findMany({
+  const orders =
+    await prisma.changeOrder.findMany({
+      where:{ jobId:id }
+    })
 
-where:{
-jobId:id
-}
+  async function create(
+    formData:FormData
+  ){
 
-})
+    "use server"
 
-return(
+    await prisma.changeOrder.create({
 
-<div>
+      data:{
+        jobId:id,
+        title:String(formData.get("title")),
+        amount:Number(formData.get("amount"))
+      }
 
-<h1 className="text-5xl font-bold mb-8">
+    })
 
-Change Orders
+    revalidatePath(
+      `/jobs/${id}/change-orders`
+    )
+  }
 
-</h1>
+  return(
 
-{
+    <div className="space-y-8">
 
-rows.map(x=>(
+      <h1 className="text-5xl font-bold">
+        Change Orders
+      </h1>
 
-<div
-key={x.id}
-className="
-bg-white
-border
-rounded-3xl
-p-5
-mb-4
-"
->
+      <form
+        action={create}
+        className="bg-white border rounded-3xl p-6 flex gap-4"
+      >
 
-{x.title}
+        <input
+          name="title"
+          placeholder="Title"
+          className="flex-1 h-14 border rounded-2xl px-4"
+        />
 
-</div>
+        <input
+          name="amount"
+          type="number"
+          placeholder="Amount"
+          className="w-48 h-14 border rounded-2xl px-4"
+        />
 
-))
+        <button
+          className="px-8 bg-blue-600 text-white rounded-2xl"
+        >
+          Add
+        </button>
 
-}
+      </form>
 
-</div>
+    </div>
 
-)
+  )
 
 }

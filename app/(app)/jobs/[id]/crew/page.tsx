@@ -4,61 +4,104 @@ import { revalidatePath } from "next/cache"
 export default async function Page({
   params
 }:{
-  params: Promise<{id:string}>
-}) {
+  params:Promise<{id:string}>
+}){
 
   const { id } = await params
 
-  const crew = await prisma.crewAssignment.findMany({
+  const crewMembers =
+    await prisma.crewMember.findMany({
 
-  where:{
-    jobId:id
-  },
+      where:{
+        active:true
+      },
 
-  include:{
-    crew:true
-  },
+      orderBy:{
+        name:"asc"
+      }
 
-  orderBy:{
-    assignedAt:"desc"
-  }
+    })
 
-})
+  const assignedCrew =
+    await prisma.crewAssignment.findMany({
 
-  async function createCrew(
-    formData: FormData
+      where:{
+        jobId:id
+      },
+
+      include:{
+        crew:true
+      },
+
+      orderBy:{
+        assignedAt:"desc"
+      }
+
+    })
+
+  async function assignCrew(
+    formData:FormData
   ){
 
     "use server"
 
-    const user =
-  await prisma.user.findFirst()
+    const crewId =
+      String(
+        formData.get("crewId")
+      )
 
-const member =
-  await prisma.crewMember.create({
-
-    data:{
-      orgId:user!.orgId,
-      name:String(formData.get("name")),
-      phone:String(formData.get("phone") || ""),
-      role:String(formData.get("role"))
+    if(!crewId){
+      return
     }
 
-  })
+    const exists =
+      await prisma.crewAssignment.findFirst({
+
+        where:{
+          jobId:id,
+          crewId
+        }
+
+      })
+
+    if(exists){
+      return
+    }
 
     await prisma.crewAssignment.create({
 
       data:{
         jobId:id,
-        crewId:member.id
+        crewId
       }
 
     })
 
-    revalidatePath(`/jobs/${id}/crew`)
+    revalidatePath(
+      `/jobs/${id}/crew`
+    )
   }
 
-  return (
+  async function removeCrew(
+    assignmentId:string
+  ){
+
+    "use server"
+
+    await prisma.crewAssignment.delete({
+
+      where:{
+        id:assignmentId
+      }
+
+    })
+
+    revalidatePath(
+      `/jobs/${id}/crew`
+    )
+  }
+
+  return(
 
     <div className="space-y-8">
 
@@ -67,47 +110,23 @@ const member =
       </h1>
 
       <form
-        action={createCrew}
+        action={assignCrew}
         className="
         bg-white
         border
         rounded-3xl
-        p-6
+        p-8
         space-y-4
         "
       >
 
         <h2 className="text-xl font-semibold">
-          Create Crew Member
+          Assign Crew Member
         </h2>
 
-        <input
-          name="name"
-          required
-          placeholder="Name"
-          className="
-          w-full
-          h-14
-          border
-          rounded-2xl
-          px-4
-          "
-        />
-
-        <input
-          name="phone"
-          placeholder="Phone"
-          className="
-          w-full
-          h-14
-          border
-          rounded-2xl
-          px-4
-          "
-        />
-
         <select
-          name="role"
+          name="crewId"
+          required
           className="
           w-full
           h-14
@@ -116,40 +135,41 @@ const member =
           px-4
           "
         >
-          <option value="technician">
-            Technician
+
+          <option value="">
+            Select Crew Member
           </option>
 
-          <option value="helper">
-            Helper
-          </option>
+          {crewMembers.map(member=>(
 
-          <option value="supervisor">
-            Supervisor
-          </option>
+            <option
+              key={member.id}
+              value={member.id}
+            >
+              {member.name} ({member.role})
+            </option>
 
-          <option value="subcontractor">
-            Subcontractor
-          </option>
+          ))}
+
         </select>
 
         <button
           className="
           bg-blue-600
           text-white
-          px-6
-          py-3
+          px-8
+          py-4
           rounded-2xl
           "
         >
-          Save Crew Member
+          Assign To Job
         </button>
 
       </form>
 
       <div className="space-y-4">
 
-        {crew.length === 0 && (
+        {assignedCrew.length === 0 && (
 
           <div
             className="
@@ -164,41 +184,75 @@ const member =
 
         )}
 
-       {crew.map(member => (
+        {assignedCrew.map(item=>(
 
-  <div
-    key={member.id}
-    className="
-    bg-white
-    border
-    rounded-3xl
-    p-6
-    "
->
+          <div
+            key={item.id}
+            className="
+            bg-white
+            border
+            rounded-3xl
+            p-6
+            flex
+            items-center
+            justify-between
+            "
+          >
 
-    <div className="font-semibold text-lg">
-      {member.crew.name}
-    </div>
+            <div>
 
-    <div className="text-slate-500">
-      {member.crew.role}
-    </div>
+              <div className="font-semibold text-lg">
+                {item.crew.name}
+              </div>
 
-    {member.crew.phone && (
+              <div className="text-slate-500">
+                {item.crew.role}
+              </div>
 
-      <div className="text-sm mt-1">
-        {member.crew.phone}
-      </div>
+              {item.crew.phone && (
 
-    )}
+                <div className="text-sm mt-1">
+                  {item.crew.phone}
+                </div>
 
-  </div>
+              )}
 
-))}
+            </div>
+
+            <form
+              action={async()=>{
+
+                "use server"
+
+                await removeCrew(
+                  item.id
+                )
+
+              }}
+            >
+
+              <button
+                className="
+                px-4
+                py-2
+                bg-red-600
+                text-white
+                rounded-xl
+                "
+              >
+                Remove
+              </button>
+
+            </form>
+
+          </div>
+
+        ))}
 
       </div>
 
     </div>
 
   )
+
 }

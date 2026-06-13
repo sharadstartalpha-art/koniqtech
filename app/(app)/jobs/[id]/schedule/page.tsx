@@ -9,12 +9,24 @@ export default async function Page({
 
   const { id } = await params
 
-  const job = await prisma.job.findUnique({
-    where:{ id },
+const job = await prisma.job.findUnique({
+  where:{ id },
+  include:{
+    customer:true
+  }
+})
+
+const crew =
+  await prisma.crewAssignment.findMany({
+
+    where:{
+      jobId:id
+    },
+
     include:{
-      technician:true,
-      customer:true
+      crew:true
     }
+
   })
 
   async function save(formData:FormData){
@@ -92,62 +104,95 @@ export default async function Page({
 
       <div className="grid md:grid-cols-3 gap-6">
 
-        <div className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        ">
-          <p className="text-slate-500">
-            Current Schedule
-          </p>
+  {/* Schedule */}
 
-          <h2 className="text-xl font-bold mt-3">
-            {
-              job?.scheduledDate
-              ? job.scheduledDate.toLocaleString()
-              : "Not Scheduled"
-            }
-          </h2>
+  <div className="
+  bg-white
+  border
+  rounded-3xl
+  p-6
+  ">
+    <p className="text-slate-500">
+      Current Schedule
+    </p>
+
+    <h2 className="text-xl font-bold mt-3">
+      {
+        job?.scheduledDate
+        ? job.scheduledDate.toLocaleString()
+        : "Not Scheduled"
+      }
+    </h2>
+  </div>
+
+  {/* Assigned Crew */}
+
+  <div className="
+  bg-white
+  border
+  rounded-3xl
+  p-6
+  ">
+
+    <p className="text-slate-500">
+      Assigned Crew
+    </p>
+
+    {
+      crew.length === 0 ? (
+
+        <h2 className="text-xl font-bold mt-3">
+          Not Assigned
+        </h2>
+
+      ) : (
+
+        <div className="mt-3 space-y-2">
+
+          {crew.map(item=>(
+
+            <div key={item.id}>
+
+              <div className="font-semibold">
+                {item.crew.name}
+              </div>
+
+              <div className="text-sm text-slate-500">
+                {item.crew.role}
+              </div>
+
+            </div>
+
+          ))}
+
         </div>
 
-        <div className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        ">
-          <p className="text-slate-500">
-            Technician
-          </p>
+      )
+    }
 
-          <h2 className="text-xl font-bold mt-3">
-            {
-              job?.technician?.name ||
-              "Not Assigned"
-            }
-          </h2>
-        </div>
+  </div>
 
-        <div className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        ">
-          <p className="text-slate-500">
-            Customer
-          </p>
+  {/* Customer */}
 
-          <h2 className="text-xl font-bold mt-3">
-            {
-              job?.customer?.firstName ||
-              "-"
-            }
-          </h2>
-        </div>
+  <div className="
+  bg-white
+  border
+  rounded-3xl
+  p-6
+  ">
+    <p className="text-slate-500">
+      Customer
+    </p>
 
-      </div>
+    <h2 className="text-xl font-bold mt-3">
+      {
+        job?.customer?.firstName ||
+        "-"
+      }
+    </h2>
+  </div>
+
+</div>
 
     </div>
 

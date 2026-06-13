@@ -43,9 +43,9 @@ export default async function Page({
 
     })
 
-    revalidatePath(`/jobs/${id}/punch-list`)
+    revalidatePath(`/jobs/${id}/punch`)
 
-    redirect(`/jobs/${id}/punch-list`)
+    redirect(`/jobs/${id}/punch`)
   }
 
   return(

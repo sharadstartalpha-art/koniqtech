@@ -471,7 +471,7 @@ model JobTask {
   status String @default("todo")
 
   dependsOnId String?
-
+createdAt DateTime @default(now())
   job Job @relation(fields: [jobId], references: [id])
 }
 

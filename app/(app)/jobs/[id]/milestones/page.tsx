@@ -1,114 +1,254 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
+import Link from "next/link"
 
 export default async function Page({
-params
-}:any){
+  params
+}:{
+  params:Promise<{id:string}>
+}){
 
-const { id }=
-await params
+  const { id } = await params
 
-const rows=
-await prisma.jobMilestone.findMany({
+  const milestones =
+    await prisma.jobMilestone.findMany({
 
-where:{
-jobId:id
-}
+      where:{
+        jobId:id
+      },
 
-})
+      orderBy:{
+        createdAt:"desc"
+      }
 
-async function create(
-formData:FormData
-){
+    })
 
-"use server"
+  async function createMilestone(
+    formData:FormData
+  ){
 
-await prisma.jobMilestone.create({
+    "use server"
 
-data:{
+    await prisma.jobMilestone.create({
 
-jobId:id,
+      data:{
+        jobId:id,
+        title:String(
+          formData.get("title")
+        )
+      }
 
-title:
-String(
-formData.get(
-"title"
-)
-)
+    })
 
-}
+    revalidatePath(
+      `/jobs/${id}/milestones`
+    )
+  }
 
-})
+  async function deleteMilestone(
+    milestoneId:string
+  ){
 
-revalidatePath(
-`/jobs/${id}/milestones`
-)
+    "use server"
 
-}
+    await prisma.jobMilestone.delete({
 
-return(
+      where:{
+        id:milestoneId
+      }
 
-<div className="space-y-8">
+    })
 
-<h1 className="text-5xl font-bold">
+    revalidatePath(
+      `/jobs/${id}/milestones`
+    )
+  }
 
-Milestones
+  return(
 
-</h1>
+    <div className="space-y-8">
 
-<form
-  action={create}
-  className="flex gap-4"
->
-  <input
-    name="title"
-    placeholder="Milestone title"
-    className="
-    flex-1
-    h-14
-    border
-    rounded-2xl
-    px-5
-    "
-  />
+      <h1 className="text-5xl font-bold">
+        Milestones
+      </h1>
 
-  <button
-    type="submit"
-    className="
-    px-8
-    bg-blue-600
-    text-white
-    rounded-2xl
-    "
-  >
-    Add
-  </button>
-</form>
+      <form
+        action={createMilestone}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        flex
+        gap-4
+        "
+      >
 
-{
+        <input
+          name="title"
+          required
+          placeholder="Milestone title"
+          className="
+          flex-1
+          h-14
+          border
+          rounded-2xl
+          px-5
+          "
+        />
 
-rows.map(x=>(
+        <button
+          className="
+          px-8
+          bg-blue-600
+          text-white
+          rounded-2xl
+          "
+        >
+          Add
+        </button>
 
-<div
-key={x.id}
-className="
-bg-white
-border
-rounded-2xl
-p-5
-"
->
+      </form>
 
-{x.title}
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        overflow-hidden
+        "
+      >
 
-</div>
+        <table className="w-full">
 
-))
+          <thead>
 
-}
+            <tr className="bg-slate-50 border-b">
 
-</div>
+              <th className="text-left p-4">
+                Title
+              </th>
 
-)
+              <th className="text-left p-4">
+                Status
+              </th>
+
+              <th className="text-left p-4">
+                Due Date
+              </th>
+
+              <th className="text-left p-4">
+                Actions
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {milestones.map(milestone=>(
+
+              <tr
+                key={milestone.id}
+                className="border-b"
+              >
+
+                <td className="p-4">
+                  {milestone.title}
+                </td>
+
+                <td className="p-4 capitalize">
+                  {milestone.status}
+                </td>
+
+                <td className="p-4">
+
+                  {
+                    milestone.dueDate
+                    ? milestone.dueDate.toLocaleDateString()
+                    : "-"
+                  }
+
+                </td>
+
+                <td className="p-4">
+
+                  <div className="flex gap-2">
+
+                    <Link
+                      href={`/jobs/${id}/milestones/${milestone.id}`}
+                      className="
+                      px-3
+                      py-2
+                      bg-slate-100
+                      rounded-xl
+                      "
+                    >
+                      Edit
+                    </Link>
+
+                    <form
+                      action={async()=>{
+
+                        "use server"
+
+                        await deleteMilestone(
+                          milestone.id
+                        )
+
+                      }}
+                    >
+
+                      <button
+                        className="
+                        px-3
+                        py-2
+                        bg-red-600
+                        text-white
+                        rounded-xl
+                        "
+                      >
+                        Delete
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+            {milestones.length === 0 && (
+
+              <tr>
+
+                <td
+                  colSpan={4}
+                  className="
+                  p-8
+                  text-center
+                  text-slate-500
+                  "
+                >
+                  No milestones found
+                </td>
+
+              </tr>
+
+            )}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  )
 
 }

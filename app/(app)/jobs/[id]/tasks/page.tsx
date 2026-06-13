@@ -1,129 +1,212 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
+import Link from "next/link"
 
 export default async function Page({
-params
+  params
 }:{
-params:Promise<{id:string}>
+  params:Promise<{id:string}>
 }){
 
-const { id }=await params
+  const { id } = await params
 
-const tasks=
-await prisma.jobTask.findMany({
+  const tasks =
+    await prisma.jobTask.findMany({
 
-where:{
-jobId:id
-}
+      where:{
+        jobId:id
+      },
 
-})
+      orderBy:{
+        createdAt:"desc"
+      }
 
-async function createTask(
-formData:FormData
-){
+    })
 
-"use server"
+  async function createTask(
+    formData:FormData
+  ){
 
-await prisma.jobTask.create({
+    "use server"
 
-data:{
+    await prisma.jobTask.create({
 
-jobId:id,
+      data:{
+        jobId:id,
+        title:String(formData.get("title")),
+        status:"pending"
+      }
 
-title:
-String(
-formData.get(
-"title"
-)
-),
+    })
 
-status:"pending"
+    revalidatePath(`/jobs/${id}/tasks`)
+  }
 
-}
+  async function deleteTask(
+    taskId:string
+  ){
 
-})
+    "use server"
 
-revalidatePath(
-`/jobs/${id}/tasks`
-)
+    await prisma.jobTask.delete({
 
-}
+      where:{
+        id:taskId
+      }
 
-return(
+    })
 
-<div className="space-y-8">
+    revalidatePath(`/jobs/${id}/tasks`)
+  }
 
-<h1 className="text-5xl font-bold">
+  return(
 
-Tasks
+    <div className="space-y-8">
 
-</h1>
+      <h1 className="text-5xl font-bold">
+        Tasks
+      </h1>
 
-<form
-action={createTask}
-className="flex gap-4"
->
+      <form
+        action={createTask}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-6
+        flex
+        gap-4
+        "
+      >
 
-<input
+        <input
+          name="title"
+          required
+          placeholder="Task"
+          className="
+          flex-1
+          h-14
+          border
+          rounded-2xl
+          px-5
+          "
+        />
 
-name="title"
+        <button
+          className="
+          px-8
+          bg-blue-600
+          text-white
+          rounded-2xl
+          "
+        >
+          Add
+        </button>
 
-placeholder="Task"
+      </form>
 
-className="
-flex-1
-h-14
-border
-rounded-2xl
-px-5
-"
+      <div className="
+      bg-white
+      border
+      rounded-3xl
+      overflow-hidden
+      ">
 
-/>
+        <table className="w-full">
 
-<button className="
-px-8
-bg-blue-600
-text-white
-rounded-2xl
-">
+          <thead>
 
-Add
+            <tr className="bg-slate-50 border-b">
 
-</button>
+              <th className="text-left p-4">
+                Task
+              </th>
 
-</form>
+              <th className="text-left p-4">
+                Status
+              </th>
 
-<div className="space-y-4">
+              <th className="text-left p-4">
+                Actions
+              </th>
 
-{
+            </tr>
 
-tasks.map(x=>(
+          </thead>
 
-<div
+          <tbody>
 
-key={x.id}
+            {tasks.map(task=>(
 
-className="
-bg-white
-border
-rounded-3xl
-p-6
-"
+              <tr
+                key={task.id}
+                className="border-b"
+              >
 
->
+                <td className="p-4">
+                  {task.title}
+                </td>
 
-{x.title}
+                <td className="p-4 capitalize">
+                  {task.status}
+                </td>
 
-</div>
+                <td className="p-4">
 
-))
+                  <div className="flex gap-2">
 
-}
+                    <Link
+                      href={`/jobs/${id}/tasks/${task.id}`}
+                      className="
+                      px-3
+                      py-2
+                      bg-slate-100
+                      rounded-xl
+                      "
+                    >
+                      Edit
+                    </Link>
 
-</div>
+                    <form
+                      action={async()=>{
 
-</div>
+                        "use server"
 
-)
+                        await deleteTask(task.id)
+
+                      }}
+                    >
+
+                      <button
+                        className="
+                        px-3
+                        py-2
+                        bg-red-600
+                        text-white
+                        rounded-xl
+                        "
+                      >
+                        Delete
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  )
 
 }

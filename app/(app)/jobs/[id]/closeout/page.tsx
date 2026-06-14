@@ -9,13 +9,9 @@ export default async function Page({
 
   const { id } = await params
 
-  let closeout =
+  const closeout =
     await prisma.closeoutPackage.findFirst({
-
-      where:{
-        jobId:id
-      }
-
+      where:{ jobId:id }
     })
 
   async function save(
@@ -24,23 +20,65 @@ export default async function Page({
 
     "use server"
 
-    const notes =
-      String(
-        formData.get("notes") || ""
-      )
+    const data = {
 
-    const completed =
-      formData.get("completed")
-      === "on"
+      notes:String(
+        formData.get("notes") || ""
+      ),
+
+      finalInspectionPassed:
+        formData.get("finalInspectionPassed")
+        === "on",
+
+      customerSignOff:
+        formData.get("customerSignOff")
+        === "on",
+
+      warrantyUploaded:
+        formData.get("warrantyUploaded")
+        === "on",
+
+      photosUploaded:
+        formData.get("photosUploaded")
+        === "on",
+
+      invoicePaid:
+        formData.get("invoicePaid")
+        === "on",
+
+      completionCertificate:
+        formData.get("completionCertificate")
+        === "on",
+
+      crewSignOff:
+        formData.get("crewSignOff")
+        === "on",
+
+      completionDate:
+        formData.get("completionDate")
+        ? new Date(
+            String(
+              formData.get(
+                "completionDate"
+              )
+            )
+          )
+        : null
+    }
 
     const existing =
       await prisma.closeoutPackage.findFirst({
-
-        where:{
-          jobId:id
-        }
-
+        where:{ jobId:id }
       })
+
+    const completed =
+      data.finalInspectionPassed &&
+      data.customerSignOff &&
+      data.warrantyUploaded &&
+      data.photosUploaded &&
+      data.invoicePaid &&
+      data.completionCertificate &&
+      data.crewSignOff
 
     if(existing){
 
@@ -51,7 +89,7 @@ export default async function Page({
         },
 
         data:{
-          notes,
+          ...data,
           completed
         }
 
@@ -63,7 +101,7 @@ export default async function Page({
 
         data:{
           jobId:id,
-          notes,
+          ...data,
           completed
         }
 
@@ -81,7 +119,7 @@ export default async function Page({
     <div className="space-y-8">
 
       <h1 className="text-5xl font-bold">
-        Closeout Package
+        Job Closeout
       </h1>
 
       <form
@@ -95,41 +133,127 @@ export default async function Page({
         "
       >
 
-        <div>
+        <textarea
+          name="notes"
+          rows={5}
+          defaultValue={
+            closeout?.notes || ""
+          }
+          placeholder="Closeout Notes"
+          className="
+          w-full
+          border
+          rounded-2xl
+          p-4
+          "
+        />
 
-          <label className="block mb-2 font-medium">
-            Closeout Notes
+        <div className="grid md:grid-cols-2 gap-4">
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="finalInspectionPassed"
+              defaultChecked={
+                closeout?.finalInspectionPassed
+              }
+            />
+            Final Inspection Passed
           </label>
 
-          <textarea
-            name="notes"
-            rows={10}
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="customerSignOff"
+              defaultChecked={
+                closeout?.customerSignOff
+              }
+            />
+            Customer Sign-Off
+          </label>
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="warrantyUploaded"
+              defaultChecked={
+                closeout?.warrantyUploaded
+              }
+            />
+            Warranty Uploaded
+          </label>
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="photosUploaded"
+              defaultChecked={
+                closeout?.photosUploaded
+              }
+            />
+            Photos Uploaded
+          </label>
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="invoicePaid"
+              defaultChecked={
+                closeout?.invoicePaid
+              }
+            />
+            Invoice Paid
+          </label>
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="completionCertificate"
+              defaultChecked={
+                closeout?.completionCertificate
+              }
+            />
+            Completion Certificate
+          </label>
+
+          <label className="flex gap-3">
+            <input
+              type="checkbox"
+              name="crewSignOff"
+              defaultChecked={
+                closeout?.crewSignOff
+              }
+            />
+            Crew Sign-Off
+          </label>
+
+        </div>
+
+        <div>
+
+          <label className="block mb-2">
+            Completion Date
+          </label>
+
+          <input
+            type="date"
+            name="completionDate"
             defaultValue={
-              closeout?.notes || ""
+              closeout?.completionDate
+              ? closeout.completionDate
+                  .toISOString()
+                  .split("T")[0]
+              : ""
             }
             className="
-            w-full
+            h-14
             border
             rounded-2xl
-            p-4
+            px-4
             "
           />
 
         </div>
-
-        <label className="flex items-center gap-3">
-
-          <input
-            type="checkbox"
-            name="completed"
-            defaultChecked={
-              closeout?.completed || false
-            }
-          />
-
-          Job Closeout Completed
-
-        </label>
 
         <button
           className="
@@ -145,53 +269,26 @@ export default async function Page({
 
       </form>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="
+      bg-white
+      border
+      rounded-3xl
+      p-6
+      ">
 
-        <div className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        ">
+        <p className="text-slate-500">
+          Closeout Status
+        </p>
 
-          <p className="text-slate-500">
-            Status
-          </p>
+        <h2 className="text-3xl font-bold mt-3">
 
-          <h2 className="text-2xl font-bold mt-3">
+          {
+            closeout?.completed
+            ? "Completed ✅"
+            : "Pending ⏳"
+          }
 
-            {
-              closeout?.completed
-              ? "Completed"
-              : "Pending"
-            }
-
-          </h2>
-
-        </div>
-
-        <div className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        ">
-
-          <p className="text-slate-500">
-            Notes Length
-          </p>
-
-          <h2 className="text-2xl font-bold mt-3">
-
-            {
-              closeout?.notes?.length || 0
-            }
-
-            {" "}characters
-
-          </h2>
-
-        </div>
+        </h2>
 
       </div>
 

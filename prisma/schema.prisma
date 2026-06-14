@@ -449,17 +449,7 @@ model PunchItem {
   job Job @relation(fields: [jobId], references: [id])
 }
 
-model CloseoutPackage {
-  id String @id @default(uuid())
 
-  jobId String
-
-  notes String?
-
-  completed Boolean @default(false)
-
-  job Job @relation(fields: [jobId], references: [id])
-}
 
 model JobTask {
   id String @id @default(uuid())
@@ -713,4 +703,33 @@ model CrewMember {
   organization Organization @relation(fields:[orgId], references:[id])
 
   assignments CrewAssignment[]
+}
+
+
+model CloseoutPackage {
+  id String @id @default(uuid())
+
+  jobId String @unique
+
+  notes String?
+
+  finalInspectionPassed Boolean @default(false)
+
+  customerSignOff Boolean @default(false)
+
+  warrantyUploaded Boolean @default(false)
+
+  photosUploaded Boolean @default(false)
+
+  invoicePaid Boolean @default(false)
+
+  completionCertificate Boolean @default(false)
+
+  crewSignOff Boolean @default(false)
+
+  completionDate DateTime?
+
+  completed Boolean @default(false)
+
+  job Job @relation(fields:[jobId], references:[id])
 }

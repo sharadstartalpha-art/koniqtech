@@ -1,5 +1,6 @@
 "use client"
 
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
@@ -8,9 +9,11 @@ import {
   Plus
 } from "lucide-react"
 
-export default function LeadNotesPage({
-  params
-}: any) {
+export default function LeadNotesPage() {
+
+  const params = useParams()
+
+  const leadId = params.id as string
 
   const [notes,setNotes] =
     useState<any[]>([])
@@ -21,53 +24,58 @@ export default function LeadNotesPage({
   const [loading,setLoading] =
     useState(false)
 
-  async function loadNotes(){
+ async function loadNotes(){
 
-    const res =
-      await fetch(
-        `/api/leads/${params.id}/notes`
-      )
+  if(!leadId) return
 
-    const data =
-      await res.json()
+  const res =
+    await fetch(
+      `/api/leads/${leadId}/notes`
+    )
 
-    setNotes(data)
+  const data =
+    await res.json()
 
-  }
+  setNotes(data)
+
+}
 
   async function saveNote(){
 
-    if(!content.trim()) return
+  if(!leadId) return
 
-    setLoading(true)
+  if(!content.trim()) return
 
-    await fetch(
-      `/api/leads/${params.id}/notes`,
-      {
-        method:"POST",
+  setLoading(true)
 
-        headers:{
-          "Content-Type":
-          "application/json"
-        },
+  await fetch(
+    `/api/leads/${leadId}/notes`,
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        content
+      })
+    }
+  )
 
-        body:JSON.stringify({
-          content
-        })
-      }
-    )
+  setContent("")
 
-    setContent("")
+  await loadNotes()
 
-    await loadNotes()
+  setLoading(false)
 
-    setLoading(false)
+}
 
-  }
+useEffect(() => {
 
-  useEffect(()=>{
-    loadNotes()
-  },[])
+  if(!leadId) return
+
+  loadNotes()
+
+}, [leadId])
 
   return(
 
@@ -82,7 +90,7 @@ export default function LeadNotesPage({
       <div>
 
         <Link
-          href={`/leads/${params.id}`}
+          href={`/leads/${leadId}`}
           className="
           inline-flex
           items-center

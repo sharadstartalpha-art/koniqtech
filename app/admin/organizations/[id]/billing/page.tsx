@@ -54,7 +54,7 @@ Customer:
 
 Amount:
 
-${Number(i.amount)}
+${Number(i.total)}
 
 </p>
 

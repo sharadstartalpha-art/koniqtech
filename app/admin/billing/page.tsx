@@ -16,7 +16,7 @@ invoices.reduce(
 
 a+
 
-Number(b.amount),
+Number(b.total),
 
 0
 
@@ -82,7 +82,7 @@ Customer:
 
 <div>
 
-${Number(i.amount)}
+${Number(i.total)}
 
 </div>
 

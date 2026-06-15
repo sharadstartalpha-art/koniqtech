@@ -16,7 +16,7 @@ invoices.reduce(
 
 a+
 
-Number(b.amount),
+Number(b.total),
 
 0
 

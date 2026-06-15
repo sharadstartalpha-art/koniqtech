@@ -63,9 +63,7 @@ export default async function Page({
       quote?.total ?? 0
     ),
 
-    amount:Number(
-      quote?.total ?? 0
-    ),
+    
 
     status:"draft"
   }

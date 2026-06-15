@@ -737,8 +737,6 @@ model Invoice {
 
   total Float
 
-  amount Float
-
   dueDate DateTime?
   status String @default("draft")
 

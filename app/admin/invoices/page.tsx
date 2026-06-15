@@ -93,7 +93,7 @@ className="border-t"
 
 <td>
 
-${Number(i.amount)}
+${Number(i.total)}
 
 </td>
 

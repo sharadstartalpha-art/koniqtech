@@ -1,17 +1,27 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
+import {
+  ArrowLeft,
+  MessageSquare,
+  Plus
+} from "lucide-react"
 
-export default function LeadNotesPage(
-  { params }: any
-) {
+export default function LeadNotesPage({
+  params
+}: any) {
 
-  const [notes, setNotes] = useState<any[]>([])
+  const [notes,setNotes] =
+    useState<any[]>([])
 
-  const [content, setContent] =
+  const [content,setContent] =
     useState("")
 
-  async function loadNotes() {
+  const [loading,setLoading] =
+    useState(false)
+
+  async function loadNotes(){
 
     const res =
       await fetch(
@@ -25,21 +35,23 @@ export default function LeadNotesPage(
 
   }
 
-  async function saveNote() {
+  async function saveNote(){
 
-    if (!content.trim()) return
+    if(!content.trim()) return
+
+    setLoading(true)
 
     await fetch(
       `/api/leads/${params.id}/notes`,
       {
-        method: "POST",
+        method:"POST",
 
-        headers: {
+        headers:{
           "Content-Type":
-            "application/json"
+          "application/json"
         },
 
-        body: JSON.stringify({
+        body:JSON.stringify({
           content
         })
       }
@@ -47,105 +59,276 @@ export default function LeadNotesPage(
 
     setContent("")
 
-    loadNotes()
+    await loadNotes()
+
+    setLoading(false)
 
   }
 
-  useEffect(() => {
+  useEffect(()=>{
     loadNotes()
-  }, [])
+  },[])
 
-  return (
+  return(
 
-    <div className="space-y-8">
+    <div className="
+    max-w-5xl
+    mx-auto
+    space-y-6
+    ">
+
+      {/* Header */}
 
       <div>
 
-        <h1 className="text-5xl font-bold">
-          Lead Notes
-        </h1>
-
-        <p className="text-slate-500 mt-2">
-          Internal notes and conversations
-        </p>
-
-      </div>
-
-      <div
-        className="
-        bg-white
-        border
-        rounded-3xl
-        p-6
-        "
-      >
-
-        <textarea
-          value={content}
-          onChange={e =>
-            setContent(e.target.value)
-          }
-          placeholder="Write note..."
+        <Link
+          href={`/leads/${params.id}`}
           className="
-          w-full
-          border
-          rounded-xl
-          p-4
-          h-32
-          "
-        />
-
-        <button
-          onClick={saveNote}
-          className="
-          mt-4
-          px-5
-          py-3
-          bg-blue-600
-          text-white
-          rounded-xl
+          inline-flex
+          items-center
+          gap-2
+          text-slate-500
+          hover:text-orange-600
+          mb-4
           "
         >
-          Add Note
-        </button>
+          <ArrowLeft size={16}/>
+          Back to Lead
+        </Link>
 
-      </div>
+        <div className="
+        flex
+        items-center
+        gap-4
+        ">
+          <div className="
+          w-12
+          h-12
+          rounded-2xl
+          bg-orange-100
+          text-orange-600
+          flex
+          items-center
+          justify-center
+          ">
+            <MessageSquare size={22}/>
+          </div>
 
-      <div className="space-y-4">
+          <div>
 
-        {notes.map(note => (
+            <h1 className="
+            text-3xl
+            font-bold
+            text-slate-900
+            ">
+              Lead Notes
+            </h1>
 
-          <div
-            key={note.id}
-            className="
-            bg-white
-            border
-            rounded-2xl
-            p-5
-            "
-          >
-
-            <div
-              className="
-              text-sm
-              text-slate-500
-              mb-3
-              "
-            >
-              {
-                new Date(
-                  note.createdAt
-                ).toLocaleString()
-              }
-            </div>
-
-            <div>
-              {note.content}
-            </div>
+            <p className="
+            text-slate-500
+            mt-1
+            ">
+              Internal notes, updates and conversations
+            </p>
 
           </div>
 
-        ))}
+        </div>
+
+      </div>
+
+      {/* Composer */}
+
+      <div className="
+      bg-white
+      border
+      rounded-3xl
+      shadow-sm
+      p-6
+      ">
+
+        <h2 className="
+        font-semibold
+        text-lg
+        mb-4
+        ">
+          Add Note
+        </h2>
+
+        <textarea
+          value={content}
+          onChange={e=>
+            setContent(e.target.value)
+          }
+          placeholder="
+          Add internal notes, call summaries,
+          customer updates or reminders...
+          "
+          className="
+          w-full
+          h-36
+          border
+          rounded-2xl
+          p-4
+          resize-none
+          bg-slate-50
+          focus:bg-white
+          focus:border-orange-500
+          "
+        />
+
+        <div className="
+        flex
+        justify-end
+        mt-4
+        ">
+
+          <button
+            onClick={saveNote}
+            disabled={loading}
+            className="
+            inline-flex
+            items-center
+            gap-2
+            px-6
+            py-3
+            rounded-2xl
+            bg-orange-600
+            hover:bg-orange-700
+            text-white
+            font-medium
+            transition
+            disabled:opacity-50
+            "
+          >
+            <Plus size={18}/>
+
+            {
+              loading
+              ? "Saving..."
+              : "Add Note"
+            }
+
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* Notes Timeline */}
+
+      <div className="space-y-4">
+
+        {
+          notes.length === 0 && (
+
+            <div className="
+            bg-white
+            border
+            rounded-3xl
+            p-12
+            text-center
+            ">
+
+              <div className="
+              w-16
+              h-16
+              mx-auto
+              rounded-full
+              bg-orange-100
+              flex
+              items-center
+              justify-center
+              text-orange-600
+              mb-4
+              ">
+                <MessageSquare size={24}/>
+              </div>
+
+              <h3 className="
+              text-xl
+              font-semibold
+              ">
+                No notes yet
+              </h3>
+
+              <p className="
+              text-slate-500
+              mt-2
+              ">
+                Start tracking customer conversations
+                and internal updates.
+              </p>
+
+            </div>
+
+          )
+        }
+
+        {
+          notes.map(note => (
+
+            <div
+              key={note.id}
+              className="
+              bg-white
+              border
+              rounded-3xl
+              shadow-sm
+              p-6
+              "
+            >
+
+              <div className="
+              flex
+              items-start
+              gap-4
+              ">
+
+                <div className="
+                w-10
+                h-10
+                rounded-full
+                bg-orange-100
+                flex
+                items-center
+                justify-center
+                text-orange-600
+                flex-shrink-0
+                ">
+                  <MessageSquare size={16}/>
+                </div>
+
+                <div className="flex-1">
+
+                  <div className="
+                  text-sm
+                  text-slate-500
+                  mb-3
+                  ">
+                    {
+                      new Date(
+                        note.createdAt
+                      ).toLocaleString()
+                    }
+                  </div>
+
+                  <div className="
+                  text-slate-800
+                  leading-relaxed
+                  whitespace-pre-wrap
+                  ">
+                    {note.content}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          ))
+        }
 
       </div>
 

@@ -1,141 +1,355 @@
 import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
-export default async function Page(
-{
-params
+export default async function Page({
+  params
 }:{
-params:Promise<{id:string}>
-}
-){
+  params:Promise<{id:string}>
+}) {
 
-const { id } = await params
+  const { id } = await params
 
-const lead = await prisma.lead.findUnique({
+  const lead = await prisma.lead.findUnique({
+    where:{ id }
+  })
 
-where:{
-id
-}
+  if(!lead){
+    return(
+      <div className="p-10">
+        Lead not found
+      </div>
+    )
+  }
 
-})
+  return(
 
-if(!lead){
+    <div className="max-w-4xl mx-auto space-y-6">
 
-return(
+      {/* Header */}
 
-<div className="p-10">
+      <div className="flex items-center justify-between">
 
-Lead not found
+        <div>
 
-</div>
+          <Link
+            href={`/leads/${lead.id}`}
+            className="
+            inline-flex
+            items-center
+            gap-2
+            text-slate-500
+            hover:text-orange-600
+            mb-4
+            "
+          >
+            ← Back to Lead
+          </Link>
 
-)
+          <h1 className="
+          text-3xl
+          font-bold
+          text-slate-900
+          ">
+            Edit Lead
+          </h1>
 
-}
+          <p className="
+          text-slate-500
+          mt-2
+          ">
+            Update customer information and lead details
+          </p>
 
-return(
+        </div>
 
-<div className="max-w-3xl mx-auto">
+        <div
+          className="
+          hidden
+          md:flex
+          items-center
+          px-4
+          py-2
+          rounded-full
+          bg-orange-100
+          text-orange-700
+          text-sm
+          font-medium
+          "
+        >
+          Lead ID: {lead.id.slice(0,8)}
+        </div>
 
-<div className="bg-white p-8 rounded-3xl border">
+      </div>
 
-<h1 className="text-3xl font-bold mb-8">
+      {/* Form Card */}
 
-Edit Lead
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        shadow-sm
+        overflow-hidden
+        "
+      >
 
-</h1>
+        <div className="p-8 border-b">
 
-<form
+          <h2 className="
+          text-xl
+          font-semibold
+          ">
+            Lead Information
+          </h2>
 
-action={`/api/leads/${lead.id}`}
+        </div>
 
-method="POST"
+        <form
+          action={`/api/leads/${lead.id}`}
+          method="POST"
+          className="p-8 space-y-6"
+        >
 
-className="space-y-4"
+          <div className="grid md:grid-cols-2 gap-6">
 
->
+            <div>
 
-<input
-name="firstName"
-defaultValue={lead.firstName ?? ""}
-placeholder="First Name"
-className="w-full border rounded-xl p-4"
-/>
+              <label
+                className="
+                block
+                text-sm
+                font-medium
+                text-slate-600
+                mb-2
+                "
+              >
+                First Name
+              </label>
 
-<input
-name="lastName"
-defaultValue={lead.lastName ?? ""}
-placeholder="Last Name"
-className="w-full border rounded-xl p-4"
-/>
+              <input
+                name="firstName"
+                defaultValue={lead.firstName ?? ""}
+                placeholder="John"
+                className="
+                w-full
+                h-14
+                px-4
+                border
+                rounded-2xl
+                bg-slate-50
+                focus:bg-white
+                focus:border-orange-500
+                "
+              />
 
-<input
-name="email"
-defaultValue={lead.email ?? ""}
-placeholder="Email"
-className="w-full border rounded-xl p-4"
-/>
+            </div>
 
-<input
-name="phone"
-defaultValue={lead.phone ?? ""}
-placeholder="Phone"
-className="w-full border rounded-xl p-4"
-/>
+            <div>
 
-<select
+              <label
+                className="
+                block
+                text-sm
+                font-medium
+                text-slate-600
+                mb-2
+                "
+              >
+                Last Name
+              </label>
 
-name="status"
+              <input
+                name="lastName"
+                defaultValue={lead.lastName ?? ""}
+                placeholder="Smith"
+                className="
+                w-full
+                h-14
+                px-4
+                border
+                rounded-2xl
+                bg-slate-50
+                focus:bg-white
+                focus:border-orange-500
+                "
+              />
 
-defaultValue={String(lead.status)}
+            </div>
 
-className="w-full border rounded-xl p-4"
+          </div>
 
->
+          <div className="grid md:grid-cols-2 gap-6">
 
-<option value="new">
+            <div>
 
-New
+              <label
+                className="
+                block
+                text-sm
+                font-medium
+                text-slate-600
+                mb-2
+                "
+              >
+                Email Address
+              </label>
 
-</option>
+              <input
+                name="email"
+                type="email"
+                defaultValue={lead.email ?? ""}
+                placeholder="john@email.com"
+                className="
+                w-full
+                h-14
+                px-4
+                border
+                rounded-2xl
+                bg-slate-50
+                focus:bg-white
+                focus:border-orange-500
+                "
+              />
 
-<option value="contacted">
+            </div>
 
-Contacted
+            <div>
 
-</option>
+              <label
+                className="
+                block
+                text-sm
+                font-medium
+                text-slate-600
+                mb-2
+                "
+              >
+                Phone Number
+              </label>
 
-<option value="won">
+              <input
+                name="phone"
+                defaultValue={lead.phone ?? ""}
+                placeholder="+1 (555) 000-0000"
+                className="
+                w-full
+                h-14
+                px-4
+                border
+                rounded-2xl
+                bg-slate-50
+                focus:bg-white
+                focus:border-orange-500
+                "
+              />
 
-Won
+            </div>
 
-</option>
+          </div>
 
-<option value="lost">
+          <div>
 
-Lost
+            <label
+              className="
+              block
+              text-sm
+              font-medium
+              text-slate-600
+              mb-2
+              "
+            >
+              Lead Status
+            </label>
 
-</option>
+            <select
+              name="status"
+              defaultValue={String(lead.status)}
+              className="
+              w-full
+              h-14
+              px-4
+              border
+              rounded-2xl
+              bg-slate-50
+              focus:bg-white
+              focus:border-orange-500
+              "
+            >
+              <option value="new">
+                New Lead
+              </option>
 
-</select>
+              <option value="contacted">
+                Contacted
+              </option>
 
-<button
+              <option value="won">
+                Won
+              </option>
 
-className="bg-green-600 text-white px-6 py-3 rounded-xl"
+              <option value="lost">
+                Lost
+              </option>
 
->
+            </select>
 
-Save Lead
+          </div>
 
-</button>
+          {/* Actions */}
 
-</form>
+          <div
+            className="
+            flex
+            flex-col
+            md:flex-row
+            gap-4
+            pt-6
+            border-t
+            "
+          >
 
-</div>
+            <button
+              type="submit"
+              className="
+              h-14
+              px-8
+              rounded-2xl
+              bg-orange-600
+              hover:bg-orange-700
+              text-white
+              font-medium
+              transition
+              "
+            >
+              Save Changes
+            </button>
 
-</div>
+            <Link
+              href={`/leads/${lead.id}`}
+              className="
+              h-14
+              px-8
+              rounded-2xl
+              border
+              flex
+              items-center
+              justify-center
+              hover:bg-slate-50
+              transition
+              "
+            >
+              Cancel
+            </Link>
 
-)
+          </div>
 
+        </form>
+
+      </div>
+
+    </div>
+
+  )
 }

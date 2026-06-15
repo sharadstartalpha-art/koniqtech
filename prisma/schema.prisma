@@ -731,9 +731,15 @@ model Invoice {
 
   invoiceNumber String
 
+  subtotal Float
+
+  tax Float
+
+  total Float
+
   amount Float
 
-dueDate DateTime?
+  dueDate DateTime?
   status String @default("draft")
 
   sentAt DateTime?

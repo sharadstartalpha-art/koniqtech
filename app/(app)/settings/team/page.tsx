@@ -1,35 +1,36 @@
 export default function Page(){
 
-return(
+  return(
 
-<div>
+    <div className="space-y-6">
 
-<h1 className="text-5xl font-bold mb-8">
+      <h1 className="text-4xl font-bold">
+        Team Members
+      </h1>
 
-Team Settings
+      <div className="
+      bg-white
+      border
+      rounded-3xl
+      p-8
+      ">
 
-</h1>
+        Create:
 
-<div className="bg-white rounded-3xl p-10">
+        <ul className="mt-4 space-y-2">
 
-<input
+          <li>Sales Reps</li>
+          <li>Dispatchers</li>
+          <li>Managers</li>
+          <li>Support Users</li>
+          <li>Accountants</li>
 
-placeholder="Invite user"
+        </ul>
 
-className="w-full border p-5 rounded-xl mb-6"
+      </div>
 
-/>
+    </div>
 
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
-
-Invite
-
-</button>
-
-</div>
-
-</div>
-
-)
+  )
 
 }

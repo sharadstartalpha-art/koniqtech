@@ -34,62 +34,9 @@ MoreHorizontal
 
 } from "lucide-react"
 
-const MENU = [
+import { MENU } from "@/config/sidebar"
 
-  {
-    title:"Sales",
-    items:[
-      ["Dashboard","/dashboard",LayoutDashboard],
-      ["Leads","/leads",Users],
-      ["Customers","/customers",Users],
-      ["Pipeline","/pipeline",GitBranch],
-      ["Quotes","/quotes",CreditCard]
-    ]
-  },
 
-  {
-    title:"Operations",
-    items:[
-      ["Jobs","/jobs",Briefcase],
-      ["Crew","/crew",Users],
-      ["Dispatch","/jobs/dispatch",Truck],
-      ["Calendar","/calendar",Calendar],
-      ["Inventory","/inventory",Briefcase],
-      ["Documents","/documents",MessageSquare]
-    ]
-  },
-
-  {
-    title:"Finance",
-    items:[
-      ["Billing","/billing",CreditCard],
-      ["Reports","/reports",BarChart3]
-    ]
-  },
-
-  {
-    title:"Communication",
-    items:[
-      ["Messages","/messages",MessageSquare],
-      ["Notifications","/notifications",Bell]
-    ]
-  },
-
-  {
-    title:"Intelligence",
-    items:[
-      ["AI","/ai",Brain]
-    ]
-  },
-
-  {
-    title:"Administration",
-    items:[
-      ["Settings","/settings",Settings]
-    ]
-  }
-
-]
 
 export default function Layout({
 
@@ -101,8 +48,14 @@ children:React.ReactNode
 
 }){
 
+
+const [role,setRole] =
+useState("sales")
+
 const pathname=
 usePathname()
+
+
 
 const router = useRouter()
 
@@ -175,6 +128,15 @@ async function load() {
     session?.user?.email?.split("@")[0] ||
     "User"
   )
+
+
+setRole(
+  (session?.user as any)?.role ||
+  "sales"
+)
+
+
+
 }
 
 return(
@@ -252,39 +214,47 @@ Koniqtech
 
       <div className="space-y-1">
 
-        {section.items.map(
-          ([label,href,Icon]:any)=>(
+        {section.items
 
-            <Link
-              key={href}
-              href={href}
-              className={`
-              h-11
-              px-4
-              rounded-xl
-              flex
-              items-center
-              gap-4
-              transition
+.filter(item =>
+  item.roles.includes(role)
+)
 
-              ${
-                pathname === href
-                ?
-                "bg-orange-50 text-orange-600 font-medium"
-                :
-                "hover:bg-orange-50 text-slate-700"
-              }
-              `}
-            >
+.map(item => {
 
-              <Icon size={18}/>
+  const Icon = item.icon
 
-              {label}
+  return(
 
-            </Link>
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`
+      h-11
+      px-4
+      rounded-xl
+      flex
+      items-center
+      gap-4
+      transition
 
-          )
-        )}
+      ${
+        pathname===item.href
+        ? "bg-orange-50 text-orange-600 font-medium"
+        : "hover:bg-orange-50 text-slate-700"
+      }
+      `}
+    >
+
+      <Icon size={18}/>
+
+      {item.label}
+
+    </Link>
+
+  )
+
+})}
 
       </div>
 
@@ -360,6 +330,64 @@ bg-slate-50
 "
 
 />
+
+
+
+<div className="flex gap-2">
+
+  <Link
+    href="/leads/create"
+    className="
+    px-4
+    py-2
+    bg-orange-600
+    text-white
+    rounded-xl
+    "
+  >
+    + Lead
+  </Link>
+
+  <Link
+    href="/customers/create"
+    className="
+    px-4
+    py-2
+    border
+    rounded-xl
+    "
+  >
+    + Customer
+  </Link>
+
+  <Link
+    href="/jobs/create"
+    className="
+    px-4
+    py-2
+    border
+    rounded-xl
+    "
+  >
+    + Job
+  </Link>
+
+  <Link
+    href="/quotes/create"
+    className="
+    px-4
+    py-2
+    border
+    rounded-xl
+    "
+  >
+    + Quote
+  </Link>
+
+</div>
+
+
+
 
 </div>
 

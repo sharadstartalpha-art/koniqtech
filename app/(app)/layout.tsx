@@ -614,7 +614,7 @@ justify-between
         "
       >
         <Bell size={16}/>
-        Notifications
+        Notifications 
       </Link>
 
       <Link

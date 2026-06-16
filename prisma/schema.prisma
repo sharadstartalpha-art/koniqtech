@@ -81,23 +81,51 @@ model Session {
 
 model Lead {
   id           String         @id @default(uuid())
+
   orgId        String
+
   source       String?
+
   firstName    String
+
   lastName     String?
+
   phone        String?
+
   email        String?
+
+  companyName  String?
+
   address      String?
+
+  budget       Float?
+
+  priority     String? @default("Medium")
+
+  tags         String?
+
+  attachment   String?
+
   industry     Industry?
-  status       LeadStatus     @default(new)
+
+  status       LeadStatus @default(new)
+
   assignedTo   String?
+
   notes        LeadNote[]
-  createdAt    DateTime       @default(now())
+
+  createdAt    DateTime @default(now())
+
   customer     Customer?
+
   activities   LeadActivity[]
-  assignee     User?          @relation(fields: [assignedTo], references: [id])
-  organization Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  assignee     User? @relation(fields:[assignedTo],references:[id])
+
+  organization Organization @relation(fields:[orgId],references:[id],onDelete:Cascade)
 }
+
+
 
 model Customer {
   id             String          @id @default(uuid())

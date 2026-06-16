@@ -182,7 +182,7 @@ return(
 <div className="h-screen flex bg-[#f8f8f8]">
 
 <aside className="
-w-[248px]
+w-[270px]
 bg-white
 border-r
 flex
@@ -220,70 +220,77 @@ Koniqtech
 
 </div>
 
-<div className="
-flex-1
-overflow-auto
-
-px-3
-py-4
-
-space-y-1
-">
-
-{
-
-MENU.map(
-
-([label,href,Icon]:any)=>(
-
-<Link
-
-key={href}
-
-href={href}
-
-className={`
-
-h-11
-px-4
-
-rounded-xl
-
-flex
-items-center
-gap-4
-
-transition
-
-${
-
-pathname===href
-
-?
-
-"bg-slate-100"
-
-:
-
-"hover:bg-slate-100"
-
-}
-
-`}
-
+<div
+  className="
+  flex-1
+  overflow-y-auto
+  px-3
+  py-5
+  "
 >
 
-<Icon size={18}/>
+  {MENU.map(section=>(
 
-{label}
+    <div
+      key={section.title}
+      className="mb-6"
+    >
 
-</Link>
+      <div
+        className="
+        px-4
+        mb-2
+        text-xs
+        uppercase
+        tracking-wider
+        font-semibold
+        text-slate-400
+        "
+      >
+        {section.title}
+      </div>
 
-)
+      <div className="space-y-1">
 
-)
+        {section.items.map(
+          ([label,href,Icon]:any)=>(
 
-}
+            <Link
+              key={href}
+              href={href}
+              className={`
+              h-11
+              px-4
+              rounded-xl
+              flex
+              items-center
+              gap-4
+              transition
+
+              ${
+                pathname === href
+                ?
+                "bg-orange-50 text-orange-600 font-medium"
+                :
+                "hover:bg-orange-50 text-slate-700"
+              }
+              `}
+            >
+
+              <Icon size={18}/>
+
+              {label}
+
+            </Link>
+
+          )
+        )}
+
+      </div>
+
+    </div>
+
+  ))}
 
 </div>
 
@@ -384,7 +391,7 @@ py-2
 
 rounded-2xl
 
-hover:bg-slate-100
+hover:bg-orange-50
 "
 
 >

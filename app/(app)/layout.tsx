@@ -70,8 +70,11 @@ useState("User")
 const [open,setOpen]=
 useState(false)
 
+const [notifications,setNotifications] =
+  useState<any[]>([])
+
 const [notificationsOpen,setNotificationsOpen] =
-useState(false)
+  useState(false)
 
 const [userOpen,setUserOpen] =
   useState(false)
@@ -79,23 +82,45 @@ const [userOpen,setUserOpen] =
 const ref=
 useRef<HTMLDivElement>(null)
 
-useEffect(()=>{
+async function loadNotifications() {
 
-load()
+  try {
 
-document.addEventListener(
-"mousedown",
-outside
-)
+    const res =
+      await fetch("/api/notifications")
 
-return()=>{
+    const data =
+      await res.json()
 
-document.removeEventListener(
-"mousedown",
-outside
-)
+    setNotifications(data)
+
+  } catch (error) {
+
+    console.error(error)
+
+  }
 
 }
+
+useEffect(()=>{
+
+  load()
+
+  loadNotifications()
+
+  document.addEventListener(
+    "mousedown",
+    outside
+  )
+
+  return()=>{
+
+    document.removeEventListener(
+      "mousedown",
+      outside
+    )
+
+  }
 
 },[])
 
@@ -144,6 +169,26 @@ setRole(
 )
 
 
+async function loadNotifications(){
+
+  try{
+
+    const res =
+      await fetch("/api/notifications")
+
+    const data =
+      await res.json()
+
+    setNotifications(data)
+
+  }catch(error){
+
+    console.error(error)
+
+  }
+
+}
+loadNotifications()
 
 }
 
@@ -384,24 +429,29 @@ justify-between
 
     <Bell size={18}/>
 
-    <span
-      className="
-      absolute
-      -top-1
-      -right-1
-      w-5
-      h-5
-      rounded-full
-      bg-red-500
-      text-white
-      text-[10px]
-      flex
-      items-center
-      justify-center
-      "
-    >
-      12
-    </span>
+    {notifications.length > 0 && (
+
+      <span
+        className="
+        absolute
+        -top-1
+        -right-1
+        min-w-[20px]
+        h-5
+        px-1
+        rounded-full
+        bg-red-500
+        text-white
+        text-[10px]
+        flex
+        items-center
+        justify-center
+        "
+      >
+        {notifications.length}
+      </span>
+
+    )}
 
   </button>
 
@@ -412,7 +462,7 @@ justify-between
       absolute
       right-0
       top-14
-      w-[340px]
+      w-[360px]
       bg-white
       border
       rounded-3xl
@@ -422,61 +472,104 @@ justify-between
       "
     >
 
-      <div className="p-5 border-b">
+      <div
+        className="
+        flex
+        items-center
+        justify-between
+        p-5
+        border-b
+        "
+      >
 
         <h3 className="font-semibold">
+
           Notifications
+
         </h3>
 
+        <span
+          className="
+          text-xs
+          px-2
+          py-1
+          rounded-full
+          bg-orange-100
+          text-orange-600
+          "
+        >
+          {notifications.length}
+        </span>
+
       </div>
 
-      <div className="divide-y">
+      {notifications.length === 0 ? (
 
-        <Link
-          href="/notifications"
+        <div
           className="
-          block
-          p-4
-          hover:bg-slate-50
+          p-8
+          text-center
+          text-slate-500
           "
         >
-          New Lead Assigned
-        </Link>
+          No notifications
+        </div>
 
-        <Link
-          href="/notifications"
-          className="
-          block
-          p-4
-          hover:bg-slate-50
-          "
-        >
-          Quote Approved
-        </Link>
+      ) : (
 
-        <Link
-          href="/notifications"
-          className="
-          block
-          p-4
-          hover:bg-slate-50
-          "
-        >
-          Invoice Paid
-        </Link>
+        <div className="max-h-[420px] overflow-y-auto">
 
-        <Link
-          href="/notifications"
-          className="
-          block
-          p-4
-          hover:bg-slate-50
-          "
-        >
-          Crew Checked In
-        </Link>
+          {notifications.map((n:any)=>(
 
-      </div>
+            <Link
+              key={n.id}
+              href="/notifications"
+              className="
+              block
+              p-4
+              border-b
+              hover:bg-slate-50
+              "
+            >
+
+              <div
+                className="
+                font-medium
+                text-slate-900
+                "
+              >
+                {n.title}
+              </div>
+
+              <div
+                className="
+                text-sm
+                text-slate-500
+                mt-1
+                "
+              >
+                {n.message}
+              </div>
+
+              <div
+                className="
+                text-xs
+                text-slate-400
+                mt-2
+                "
+              >
+                {new Date(
+                  n.createdAt
+                ).toLocaleString()}
+              </div>
+
+            </Link>
+
+          ))}
+
+        </div>
+
+      )}
 
       <Link
         href="/notifications"
@@ -485,10 +578,12 @@ justify-between
         p-4
         text-center
         text-orange-600
+        font-medium
         border-t
+        hover:bg-orange-50
         "
       >
-        View All
+        View All Notifications
       </Link>
 
     </div>

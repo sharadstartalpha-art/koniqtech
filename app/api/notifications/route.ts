@@ -1,34 +1,53 @@
+import prisma from "@/shared/lib/prisma"
 import { NextResponse } from "next/server"
 
-let notifications:any[]=[]
+export async function GET() {
 
-export async function GET(){
+  const notifications =
+    await prisma.notification.findMany({
 
-return NextResponse.json(
-notifications
-)
+      orderBy:{
+        createdAt:"desc"
+      },
 
-}
+      take:20
 
-export async function POST(req:Request){
+    })
 
-const body=
-await req.json()
-
-const n={
-
-id:crypto.randomUUID(),
-
-title:body.title,
-
-message:body.message,
-
-channel:body.channel
+  return NextResponse.json(
+    notifications
+  )
 
 }
 
-notifications.push(n)
+export async function POST(
+  req:Request
+){
 
-return NextResponse.json(n)
+  const body =
+    await req.json()
+
+  const notification =
+    await prisma.notification.create({
+
+      data:{
+
+        orgId:body.orgId,
+
+        userId:body.userId,
+
+        title:body.title,
+
+        message:body.message,
+
+        type:body.type || "general"
+
+      }
+
+    })
+
+  return NextResponse.json(
+    notification
+  )
 
 }

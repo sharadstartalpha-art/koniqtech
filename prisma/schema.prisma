@@ -40,6 +40,7 @@ model Organization {
   subscriptions      Subscription[]
  
   users User[]
+  notifications Notification[]
 
   crewMembers    CrewMember[]
   inventoryItems InventoryItem[]
@@ -76,6 +77,8 @@ model User {
   assignedLeads Lead[]
   messages Message[]
   sessions Session[]
+
+  notifications Notification[]
 
   organization Organization @relation(fields:[orgId],references:[id],onDelete:Cascade)
 }
@@ -790,4 +793,22 @@ model Invoice {
   job Job @relation(fields: [jobId], references: [id])
 }
 
+model Notification {
+  id String @id @default(uuid())
 
+  orgId String
+  userId String?
+
+  title String
+  message String
+
+  type String
+
+  read Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields:[orgId],references:[id])
+
+  user User? @relation(fields:[userId],references:[id])
+}

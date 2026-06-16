@@ -34,22 +34,60 @@ MoreHorizontal
 
 } from "lucide-react"
 
-const MENU=[
+const MENU = [
 
-["Dashboard","/dashboard",LayoutDashboard],
-["Leads","/leads",Users],
-["Customers","/customers",Users],
-["Pipeline","/pipeline",GitBranch],
-["Jobs","/jobs",Briefcase],
-["Crew","/crew",Briefcase],
-["Calendar","/calendar",Calendar],
-["Messages","/messages",MessageSquare],
-["Billing","/billing",CreditCard],
-["Dispatch","/jobs/dispatch",Truck],
-["Analytics","/analytics",BarChart3],
-["AI","/ai",Brain],
-["Notifications","/notifications",Bell],
-["Settings","/settings",Settings]
+  {
+    title:"Sales",
+    items:[
+      ["Dashboard","/dashboard",LayoutDashboard],
+      ["Leads","/leads",Users],
+      ["Customers","/customers",Users],
+      ["Pipeline","/pipeline",GitBranch],
+      ["Quotes","/quotes",CreditCard]
+    ]
+  },
+
+  {
+    title:"Operations",
+    items:[
+      ["Jobs","/jobs",Briefcase],
+      ["Crew","/crew",Users],
+      ["Dispatch","/jobs/dispatch",Truck],
+      ["Calendar","/calendar",Calendar],
+      ["Inventory","/inventory",Briefcase],
+      ["Documents","/documents",MessageSquare]
+    ]
+  },
+
+  {
+    title:"Finance",
+    items:[
+      ["Billing","/billing",CreditCard],
+      ["Reports","/reports",BarChart3]
+    ]
+  },
+
+  {
+    title:"Communication",
+    items:[
+      ["Messages","/messages",MessageSquare],
+      ["Notifications","/notifications",Bell]
+    ]
+  },
+
+  {
+    title:"Intelligence",
+    items:[
+      ["AI","/ai",Brain]
+    ]
+  },
+
+  {
+    title:"Administration",
+    items:[
+      ["Settings","/settings",Settings]
+    ]
+  }
 
 ]
 
@@ -170,14 +208,12 @@ className="w-10 h-10"
 
 <h1 className="text-2xl font-semibold">
 
-koniqtech
+Koniqtech
 
 </h1>
 
-<p className="text-slate-500">
-
-CRM
-
+<p className="text-xs text-slate-500">
+  Field Service Platform
 </p>
 
 </div>

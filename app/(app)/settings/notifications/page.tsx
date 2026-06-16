@@ -1,68 +1,74 @@
-export default function Page(){
+export default function NotificationSettingsPage() {
 
-const settings=[
+  return (
 
-"Email Notifications",
+    <div className="max-w-5xl space-y-8">
 
-"SMS Alerts",
+      <div>
 
-"Invoice Alerts",
+        <h1 className="text-4xl font-bold">
+          Notifications
+        </h1>
 
-"Job Updates",
+        <p className="text-slate-500 mt-2">
+          Control how notifications are delivered.
+        </p>
 
-"AI Notifications"
+      </div>
 
-]
+      <div className="bg-white border rounded-3xl p-8">
 
-return(
+        <div className="space-y-6">
 
-<div>
+          <label className="flex justify-between">
 
-<h1 className="text-5xl font-bold mb-8">
+            <span>Email Notifications</span>
 
-Notification Settings
+            <input
+              type="checkbox"
+              defaultChecked
+            />
 
-</h1>
+          </label>
 
-<div className="bg-white rounded-3xl p-10 space-y-5">
+          <label className="flex justify-between">
 
-{
+            <span>SMS Notifications</span>
 
-settings.map(
+            <input
+              type="checkbox"
+            />
 
-s=>(
+          </label>
 
-<label
+          <label className="flex justify-between">
 
-key={s}
+            <span>Lead Alerts</span>
 
-className="flex justify-between border rounded-xl p-5"
+            <input
+              type="checkbox"
+              defaultChecked
+            />
 
->
+          </label>
 
-<span>
+          <label className="flex justify-between">
 
-{s}
+            <span>Invoice Alerts</span>
 
-</span>
+            <input
+              type="checkbox"
+              defaultChecked
+            />
 
-<input
-type="checkbox"
-defaultChecked
-/>
+          </label>
 
-</label>
+        </div>
 
-)
+      </div>
 
-)
+    </div>
 
-}
-
-</div>
-
-</div>
-
-)
+  )
 
 }

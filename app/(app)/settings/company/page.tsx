@@ -1,55 +1,125 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
 
-return(
+export default async function CompanyPage() {
 
-<div className="max-w-5xl">
+  const organization =
+    await prisma.organization.findFirst()
 
-<h1 className="text-5xl font-bold mb-8">
+  return (
 
-Company Settings
+    <div className="max-w-6xl space-y-8">
 
-</h1>
+      <div>
 
-<div className="bg-white rounded-3xl p-10 grid grid-cols-2 gap-6">
+        <h1 className="text-4xl font-bold">
+          Company Information
+        </h1>
 
-<input
-placeholder="Company Name"
-className="border p-5 rounded-xl"
-/>
+        <p className="text-slate-500 mt-2">
+          Manage business profile and company details.
+        </p>
 
-<input
-placeholder="Phone"
-className="border p-5 rounded-xl"
-/>
+      </div>
 
-<input
-placeholder="Email"
-className="border p-5 rounded-xl"
-/>
+      <div className="bg-white border rounded-3xl p-8">
 
-<input
-placeholder="Timezone"
-className="border p-5 rounded-xl"
-/>
+        <div className="grid md:grid-cols-2 gap-6">
 
-<textarea
+          <div>
 
-placeholder="Address"
+            <label className="text-sm text-slate-500">
+              Company Name
+            </label>
 
-className="border p-5 rounded-xl col-span-2"
+            <input
+              defaultValue={organization?.name || ""}
+              className="
+              w-full
+              border
+              rounded-2xl
+              p-4
+              mt-2
+              "
+            />
 
-/>
+          </div>
 
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl col-span-2">
+          <div>
 
-Save Company
+            <label className="text-sm text-slate-500">
+              Email
+            </label>
 
-</button>
+            <input
+              defaultValue={organization?.email || ""}
+              className="
+              w-full
+              border
+              rounded-2xl
+              p-4
+              mt-2
+              "
+            />
 
-</div>
+          </div>
 
-</div>
+          <div>
 
-)
+            <label className="text-sm text-slate-500">
+              Phone
+            </label>
+
+            <input
+              defaultValue={organization?.phone || ""}
+              className="
+              w-full
+              border
+              rounded-2xl
+              p-4
+              mt-2
+              "
+            />
+
+          </div>
+
+          <div>
+
+            <label className="text-sm text-slate-500">
+              Address
+            </label>
+
+            <input
+              defaultValue={organization?.address || ""}
+              className="
+              w-full
+              border
+              rounded-2xl
+              p-4
+              mt-2
+              "
+            />
+
+          </div>
+
+        </div>
+
+        <button
+          className="
+          mt-8
+          px-6
+          py-3
+          bg-orange-600
+          text-white
+          rounded-2xl
+          "
+        >
+          Save Changes
+        </button>
+
+      </div>
+
+    </div>
+
+  )
 
 }

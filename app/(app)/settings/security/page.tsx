@@ -1,65 +1,88 @@
-export default function Page(){
+export default function SecurityPage() {
 
-return(
+  return (
 
-<div className="max-w-4xl">
+    <div className="max-w-5xl space-y-8">
 
-<h1 className="text-5xl font-bold mb-8">
+      <div>
 
-Security
+        <h1 className="text-4xl font-bold">
+          Security
+        </h1>
 
-</h1>
+        <p className="text-slate-500 mt-2">
+          Manage passwords, authentication and account protection.
+        </p>
 
-<div className="bg-white rounded-3xl p-10 space-y-6">
+      </div>
 
-<input
+      <div className="bg-white border rounded-3xl p-8">
 
-type="password"
+        <h2 className="text-xl font-semibold mb-6">
+          Change Password
+        </h2>
 
-placeholder="Current Password"
+        <div className="space-y-4">
 
-className="w-full border p-5 rounded-xl"
+          <input
+            type="password"
+            placeholder="Current Password"
+            className="w-full border rounded-2xl p-4"
+          />
 
-/>
+          <input
+            type="password"
+            placeholder="New Password"
+            className="w-full border rounded-2xl p-4"
+          />
 
-<input
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            className="w-full border rounded-2xl p-4"
+          />
 
-type="password"
+          <button
+            className="
+            px-6
+            py-3
+            bg-orange-600
+            text-white
+            rounded-2xl
+            "
+          >
+            Update Password
+          </button>
 
-placeholder="New Password"
+        </div>
 
-className="w-full border p-5 rounded-xl"
+      </div>
 
-/>
+      <div className="bg-white border rounded-3xl p-8">
 
-<input
+        <h2 className="text-xl font-semibold mb-4">
+          Two Factor Authentication
+        </h2>
 
-type="password"
+        <p className="text-slate-500 mb-5">
+          Protect your account with 2FA.
+        </p>
 
-placeholder="Confirm Password"
+        <button
+          className="
+          px-5
+          py-3
+          border
+          rounded-2xl
+          "
+        >
+          Enable 2FA
+        </button>
 
-className="w-full border p-5 rounded-xl"
+      </div>
 
-/>
+    </div>
 
-<label className="flex gap-4">
-
-<input type="checkbox"/>
-
-Enable 2FA
-
-</label>
-
-<button className="bg-red-600 text-white px-8 py-4 rounded-xl">
-
-Update Security
-
-</button>
-
-</div>
-
-</div>
-
-)
+  )
 
 }

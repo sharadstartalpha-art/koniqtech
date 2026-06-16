@@ -1,31 +1,111 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
 
-  return(
+export default async function TeamPage() {
 
-    <div className="space-y-6">
+  const orgId = "CURRENT_ORG_ID"
 
-      <h1 className="text-4xl font-bold">
-        Team Members
-      </h1>
+  const users =
+    await prisma.user.findMany({
 
-      <div className="
-      bg-white
-      border
-      rounded-3xl
-      p-8
-      ">
+      where:{
+        orgId
+      },
 
-        Create:
+      orderBy:{
+        createdAt:"desc"
+      }
 
-        <ul className="mt-4 space-y-2">
+    })
 
-          <li>Sales Reps</li>
-          <li>Dispatchers</li>
-          <li>Managers</li>
-          <li>Support Users</li>
-          <li>Accountants</li>
+  return (
 
-        </ul>
+    <div className="space-y-8">
+
+      <div>
+
+        <h1 className="text-4xl font-bold">
+          Team Members
+        </h1>
+
+        <p className="text-slate-500">
+          Manage organization users
+        </p>
+
+      </div>
+
+      <div className="bg-white rounded-3xl border overflow-hidden">
+
+        <table className="w-full">
+
+          <thead>
+
+            <tr className="bg-slate-50">
+
+              <th className="p-4 text-left">
+                Name
+              </th>
+
+              <th className="p-4 text-left">
+                Email
+              </th>
+
+              <th className="p-4 text-left">
+                Role
+              </th>
+
+              <th className="p-4 text-left">
+                Status
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {users.map(user=>(
+
+              <tr
+                key={user.id}
+                className="border-t"
+              >
+
+                <td className="p-4">
+                  {user.name}
+                </td>
+
+                <td className="p-4">
+                  {user.email}
+                </td>
+
+                <td className="p-4 capitalize">
+                  {user.role}
+                </td>
+
+                <td className="p-4">
+
+                  <span
+                    className="
+                    px-3
+                    py-1
+                    rounded-full
+                    bg-green-100
+                    text-green-700
+                    text-sm
+                    "
+                  >
+                    {user.status}
+                  </span>
+
+                </td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
 
       </div>
 

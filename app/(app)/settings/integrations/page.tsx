@@ -1,69 +1,114 @@
-export default function Page(){
+export default function IntegrationsPage() {
 
-const integrations=[
+  const integrations = [
 
-"Stripe",
+    {
+      name:"Stripe",
+      description:"Payments and subscriptions"
+    },
 
-"PayPal",
+    {
+      name:"Twilio",
+      description:"SMS and phone calls"
+    },
 
-"Twilio",
+    {
+      name:"OpenAI",
+      description:"AI assistant and automations"
+    },
 
-"Resend",
+    {
+      name:"Google Calendar",
+      description:"Scheduling and events"
+    },
 
-"OpenAI"
+    {
+      name:"QuickBooks",
+      description:"Accounting integration"
+    }
 
-]
+  ]
 
-return(
+  return (
 
-<div>
+    <div className="max-w-6xl space-y-8">
 
-<h1 className="text-5xl font-bold mb-8">
+      <div>
 
-Integrations
+        <h1 className="text-4xl font-bold">
+          Integrations
+        </h1>
 
-</h1>
+        <p className="text-slate-500 mt-2">
+          Connect third-party services.
+        </p>
 
-<div className="grid grid-cols-2 gap-6">
+      </div>
 
-{
+      <div className="
+      grid
+      md:grid-cols-2
+      gap-6
+      ">
 
-integrations.map(
+        {integrations.map(item => (
 
-i=>(
+          <div
+            key={item.name}
+            className="
+            bg-white
+            border
+            rounded-3xl
+            p-6
+            "
+          >
 
-<div
+            <div className="
+            flex
+            items-center
+            justify-between
+            ">
 
-key={i}
+              <div>
 
-className="bg-white rounded-3xl p-8 flex justify-between"
+                <h2 className="
+                text-lg
+                font-semibold
+                ">
+                  {item.name}
+                </h2>
 
->
+                <p className="
+                text-slate-500
+                mt-1
+                ">
+                  {item.description}
+                </p>
 
-<span>
+              </div>
 
-{i}
+              <button
+                className="
+                px-4
+                py-2
+                rounded-xl
+                border
+                hover:bg-slate-50
+                "
+              >
+                Configure
+              </button>
 
-</span>
+            </div>
 
-<button className="bg-green-600 text-white px-5 py-2 rounded-xl">
+          </div>
 
-Connect
+        ))}
 
-</button>
+      </div>
 
-</div>
+    </div>
 
-)
-
-)
-
-}
-
-</div>
-
-</div>
-
-)
+  )
 
 }

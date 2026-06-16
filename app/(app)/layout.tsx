@@ -311,7 +311,7 @@ justify-between
     </Link>
 
     <Link
-      href="/customers/new"
+      href="/customers/create"
       className="
       px-4
       py-2

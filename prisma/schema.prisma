@@ -38,7 +38,8 @@ model Organization {
   platformLogs       PlatformLog[]
   quotes             Quote[]
   subscriptions      Subscription[]
-  users              User[]
+ 
+  users User[]
 
   crewMembers    CrewMember[]
   inventoryItems InventoryItem[]
@@ -47,27 +48,36 @@ model Organization {
 }
 
 model User {
+
   id           String   @id @default(uuid())
+
   orgId        String
+
   name         String
   email        String   @unique
   passwordHash String
+
   role         UserRole
+
   avatar       String?
-  status       String   @default("active")
+
+  status       String @default("active")
+
   createdAt    DateTime @default(now())
+
   aiLogs       AiLog[]
   deals        Deal[]
   events       Event[]
   jobs         Job[]
 
   technicianLocations TechnicianLocation[]
-  payrolls            Payroll[]
+  payrolls Payroll[]
 
   assignedLeads Lead[]
-  messages      Message[]
-  sessions      Session[]
-  organization  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  messages Message[]
+  sessions Session[]
+
+  organization Organization @relation(fields:[orgId],references:[id],onDelete:Cascade)
 }
 
 model Session {
@@ -779,3 +789,5 @@ model Invoice {
 
   job Job @relation(fields: [jobId], references: [id])
 }
+
+

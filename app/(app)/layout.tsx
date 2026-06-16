@@ -29,8 +29,10 @@ Bell,
 Settings,
 Search,
 ChevronDown,
+CheckSquare,
 LogOut,
-MoreHorizontal
+MoreHorizontal,
+User
 
 } from "lucide-react"
 
@@ -70,6 +72,9 @@ useState(false)
 
 const [notificationsOpen,setNotificationsOpen] =
 useState(false)
+
+const [userOpen,setUserOpen] =
+  useState(false)
 
 const ref=
 useRef<HTMLDivElement>(null)
@@ -353,10 +358,12 @@ justify-between
     {/* Notification Bell */}
 
 
-    <div className="relative">
+    {/* Notifications */}
+
+<div className="relative">
 
   <button
-    onClick={()=>
+    onClick={() =>
       setNotificationsOpen(
         !notificationsOpen
       )
@@ -367,6 +374,7 @@ justify-between
     h-11
     rounded-2xl
     border
+    bg-white
     hover:bg-orange-50
     flex
     items-center
@@ -409,6 +417,7 @@ justify-between
       border
       rounded-3xl
       shadow-xl
+      overflow-hidden
       z-50
       "
     >
@@ -416,34 +425,236 @@ justify-between
       <div className="p-5 border-b">
 
         <h3 className="font-semibold">
-          Notifications (12)
+          Notifications
         </h3>
 
       </div>
 
       <div className="divide-y">
 
-        <div className="p-4">
+        <Link
+          href="/notifications"
+          className="
+          block
+          p-4
+          hover:bg-slate-50
+          "
+        >
           New Lead Assigned
-        </div>
+        </Link>
 
-        <div className="p-4">
+        <Link
+          href="/notifications"
+          className="
+          block
+          p-4
+          hover:bg-slate-50
+          "
+        >
           Quote Approved
-        </div>
+        </Link>
 
-        <div className="p-4">
+        <Link
+          href="/notifications"
+          className="
+          block
+          p-4
+          hover:bg-slate-50
+          "
+        >
           Invoice Paid
-        </div>
+        </Link>
 
-        <div className="p-4">
+        <Link
+          href="/notifications"
+          className="
+          block
+          p-4
+          hover:bg-slate-50
+          "
+        >
           Crew Checked In
-        </div>
-
-        <div className="p-4">
-          Customer Message
-        </div>
+        </Link>
 
       </div>
+
+      <Link
+        href="/notifications"
+        className="
+        block
+        p-4
+        text-center
+        text-orange-600
+        border-t
+        "
+      >
+        View All
+      </Link>
+
+    </div>
+
+  )}
+
+</div>
+    {/* User */}
+
+<div className="relative">
+
+  <button
+    onClick={() =>
+      setUserOpen(!userOpen)
+    }
+    className="
+    flex
+    items-center
+    gap-3
+    px-3
+    py-2
+    rounded-2xl
+    hover:bg-orange-50
+    "
+  >
+
+    <div
+      className="
+      w-10
+      h-10
+      rounded-full
+      bg-green-600
+      text-white
+      flex
+      items-center
+      justify-center
+      "
+    >
+      {name.charAt(0).toUpperCase()}
+    </div>
+
+    <div className="text-left">
+
+      <div className="text-sm font-medium">
+        {name}
+      </div>
+
+      <div className="text-xs text-slate-500">
+        {email}
+      </div>
+
+    </div>
+
+    <ChevronDown size={16}/>
+
+  </button>
+
+  {userOpen && (
+
+    <div
+      className="
+      absolute
+      right-0
+      top-14
+      w-[260px]
+      bg-white
+      border
+      rounded-3xl
+      shadow-xl
+      overflow-hidden
+      z-50
+      "
+    >
+
+      <div className="p-5 border-b">
+
+        <p className="font-semibold">
+          {name}
+        </p>
+
+        <p className="text-sm text-slate-500">
+          {email}
+        </p>
+
+      </div>
+
+      <Link
+        href="/profile"
+        className="
+        flex
+        items-center
+        gap-3
+        p-4
+        hover:bg-slate-50
+        "
+      >
+        <User size={16}/>
+        Profile
+      </Link>
+
+      <Link
+        href="/tasks"
+        className="
+        flex
+        items-center
+        gap-3
+        p-4
+        hover:bg-slate-50
+        "
+      >
+        <CheckSquare size={16}/>
+        My Tasks
+      </Link>
+
+      <Link
+        href="/notifications"
+        className="
+        flex
+        items-center
+        gap-3
+        p-4
+        hover:bg-slate-50
+        "
+      >
+        <Bell size={16}/>
+        Notifications
+      </Link>
+
+      <Link
+        href="/settings"
+        className="
+        flex
+        items-center
+        gap-3
+        p-4
+        hover:bg-slate-50
+        "
+      >
+        <Settings size={16}/>
+        Settings
+      </Link>
+
+      <button
+        onClick={async () => {
+
+          await signOut({
+            redirect:false
+          })
+
+          window.location.href =
+            "/login"
+
+        }}
+        className="
+        w-full
+        flex
+        items-center
+        gap-3
+        p-4
+        text-red-600
+        hover:bg-red-50
+        "
+      >
+        <LogOut size={16}/>
+        Logout
+      </button>
 
     </div>
 
@@ -451,7 +662,7 @@ justify-between
 
 </div>
 
-    {/* User */}
+
 
   </div>
 

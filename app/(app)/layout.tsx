@@ -52,7 +52,7 @@ children:React.ReactNode
 
 
 const [role,setRole] =
-useState("sales")
+useState("")
 
 const pathname=
 usePathname()
@@ -84,6 +84,10 @@ const [userOpen,setUserOpen] =
 const ref=
 useRef<HTMLDivElement>(null)
 
+
+const sidebarRef = useRef<HTMLDivElement>(null)
+const headerRef = useRef<HTMLDivElement>(null)
+
 async function loadNotifications() {
 
   try {
@@ -104,18 +108,49 @@ async function loadNotifications() {
 
 }
 
-useEffect(()=>{
+useEffect(() => {
+
+  function outside(e:any){
+
+  if(
+    headerRef.current &&
+    !headerRef.current.contains(e.target)
+  ){
+
+    setNotificationsOpen(false)
+    setUserOpen(false)
+
+  }
+
+  if(
+    sidebarRef.current &&
+    !sidebarRef.current.contains(e.target)
+  ){
+
+    setSettingsOpen(false)
+
+  }
+
+}
 
   load()
 
   loadNotifications()
+
+  const interval =
+    setInterval(
+      loadNotifications,
+      30000
+    )
 
   document.addEventListener(
     "mousedown",
     outside
   )
 
-  return()=>{
+  return () => {
+
+    clearInterval(interval)
 
     document.removeEventListener(
       "mousedown",
@@ -124,7 +159,7 @@ useEffect(()=>{
 
   }
 
-},[])
+}, [])
 
 function outside(
 e:any
@@ -145,6 +180,11 @@ setOpen(false)
 }
 
 }
+
+
+
+
+
 
 async function load() {
   const session = await getSession()
@@ -171,26 +211,7 @@ setRole(
 )
 
 
-async function loadNotifications(){
 
-  try{
-
-    const res =
-      await fetch("/api/notifications")
-
-    const data =
-      await res.json()
-
-    setNotifications(data)
-
-  }catch(error){
-
-    console.error(error)
-
-  }
-
-}
-loadNotifications()
 
 }
 
@@ -308,8 +329,10 @@ Koniqtech
               `}
             >
 
-              <div className="flex items-center gap-4">
-
+              <div
+  key={item.href}
+  ref={sidebarRef}
+>
                 <Icon size={18} />
 
                 {item.label}
@@ -404,13 +427,7 @@ Koniqtech
 
 </div>
 
-<SidebarFooter
 
-name={name}
-
-email={email}
-
-/>
 
 </aside>
 
@@ -485,7 +502,10 @@ justify-between
 
   </div>
 
-  <div className="flex items-center gap-4">
+  <div
+  ref={headerRef}
+  className="flex items-center gap-4"
+>
 
     {/* Notification Bell */}
 
@@ -888,26 +908,18 @@ useRef<HTMLDivElement>(null)
 
 useEffect(()=>{
 
-function outside(
-e:any
-){
+function outside(e:any){
 
-if(
+  if(
+    ref.current &&
+    !ref.current.contains(e.target)
+  ){
 
-ref.current &&
+    setOpen(false)
 
-!ref.current.contains(
-e.target
-)
-
-){
-
-setOpen(false)
+  }
 
 }
-
-}
-
 document.addEventListener(
 "mousedown",
 outside

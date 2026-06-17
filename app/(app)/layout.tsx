@@ -110,29 +110,6 @@ async function loadNotifications() {
 
 useEffect(() => {
 
-  function outside(e:any){
-
-  if(
-    headerRef.current &&
-    !headerRef.current.contains(e.target)
-  ){
-
-    setNotificationsOpen(false)
-    setUserOpen(false)
-
-  }
-
-  if(
-    sidebarRef.current &&
-    !sidebarRef.current.contains(e.target)
-  ){
-
-    setSettingsOpen(false)
-
-  }
-
-}
-
   load()
 
   loadNotifications()
@@ -180,11 +157,6 @@ setOpen(false)
 }
 
 }
-
-
-
-
-
 
 async function load() {
   const session = await getSession()
@@ -330,9 +302,10 @@ Koniqtech
             >
 
               <div
-  key={item.href}
   ref={sidebarRef}
+  className="flex items-center gap-4"
 >
+
                 <Icon size={18} />
 
                 {item.label}

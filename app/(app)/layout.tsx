@@ -58,6 +58,8 @@ const pathname=
 usePathname()
 
 
+const [settingsOpen,setSettingsOpen] =
+useState(false)
 
 const router = useRouter()
 
@@ -270,12 +272,15 @@ Koniqtech
         {section.items
 
 .filter(item =>
+  !item.roles ||
   item.roles.includes(role)
 )
 
 .map(item => {
 
   const Icon = item.icon
+
+  
 
   return(
 

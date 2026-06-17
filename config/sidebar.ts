@@ -13,8 +13,28 @@ import {
   Settings,
   FileText,
   Package,
-  UserCog
+  UserCog,
+  LucideIcon 
 } from "lucide-react"
+
+
+export type MenuItem = {
+  label: string
+  href: string
+  icon: LucideIcon
+  roles?: string[]
+  children?: {
+    label: string
+    href: string
+  }[]
+}
+
+export type MenuSection = {
+  title: string
+  items: MenuItem[]
+}
+
+
 
 export const MENU = [
 
@@ -254,15 +274,66 @@ export const MENU = [
         ]
       },
 
-      {
-        label:"Settings",
-        href:"/settings",
-        icon:Settings,
-        roles:[
-          "owner",
-          "admin"
-        ]
-      }
+      
+{
+  label:"Settings",
+  href:"/settings",
+  icon:Settings,
+
+  roles:[
+    "owner",
+    "admin"
+  ],
+
+  children:[
+    {
+      label:"Company",
+      href:"/settings/company"
+    },
+    {
+      label:"Organization",
+      href:"/settings/organization"
+    },
+    {
+      label:"Branding",
+      href:"/settings/branding"
+    },
+    {
+      label:"Team Members",
+      href:"/settings/team"
+    },
+    {
+      label:"Roles & Permissions",
+      href:"/settings/roles"
+    },
+    {
+      label:"Billing",
+      href:"/settings/billing"
+    },
+    {
+      label:"Integrations",
+      href:"/settings/integrations"
+    },
+    {
+      label:"AI Settings",
+      href:"/settings/ai"
+    },
+    {
+      label:"Email Templates",
+      href:"/settings/email-templates"
+    },
+    {
+      label:"Notifications",
+      href:"/settings/notifications"
+    },
+    {
+      label:"Security",
+      href:"/settings/security"
+    }
+  ]
+}
+
+
     ]
   }
 

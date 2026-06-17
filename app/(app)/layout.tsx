@@ -267,54 +267,136 @@ Koniqtech
         {section.title}
       </div>
 
-      <div className="space-y-1">
+    <div className="space-y-1">
 
-        {section.items
+  {section.items
+    .filter(
+      item =>
+        !item.roles ||
+        item.roles.includes(role)
+    )
+    .map(item => {
 
-.filter(item =>
-  !item.roles ||
-  item.roles.includes(role)
-)
+      const Icon = item.icon
 
-.map(item => {
+      if (item.children) {
 
-  const Icon = item.icon
+        return (
 
-  
+          <div key={item.href}>
 
-  return(
+            <button
+              onClick={() =>
+                setSettingsOpen(
+                  !settingsOpen
+                )
+              }
+              className={`
+              w-full
+              h-11
+              px-4
+              rounded-xl
+              flex
+              items-center
+              justify-between
 
-    <Link
-      key={item.href}
-      href={item.href}
-      className={`
-      h-11
-      px-4
-      rounded-xl
-      flex
-      items-center
-      gap-4
-      transition
+              ${
+                pathname.startsWith("/settings")
+                  ? "bg-orange-50 text-orange-600 font-medium"
+                  : "hover:bg-orange-50 text-slate-700"
+              }
+              `}
+            >
 
-      ${
-        pathname===item.href
-        ? "bg-orange-50 text-orange-600 font-medium"
-        : "hover:bg-orange-50 text-slate-700"
+              <div className="flex items-center gap-4">
+
+                <Icon size={18} />
+
+                {item.label}
+
+              </div>
+
+              <ChevronDown
+                size={16}
+                className={`transition ${
+                  settingsOpen
+                    ? "rotate-180"
+                    : ""
+                }`}
+              />
+
+            </button>
+
+            {settingsOpen && (
+
+              <div className="ml-8 mt-2 space-y-1">
+
+                {item.children.map(child => (
+
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className={`
+                    block
+                    px-4
+                    py-2
+                    rounded-lg
+                    text-sm
+
+                    ${
+                      pathname === child.href
+                        ? "bg-orange-100 text-orange-600"
+                        : "hover:bg-slate-100"
+                    }
+                    `}
+                  >
+                    {child.label}
+                  </Link>
+
+                ))}
+
+              </div>
+
+            )}
+
+          </div>
+
+        )
+
       }
-      `}
-    >
 
-      <Icon size={18}/>
+      return (
 
-      {item.label}
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`
+          h-11
+          px-4
+          rounded-xl
+          flex
+          items-center
+          gap-4
 
-    </Link>
+          ${
+            pathname === item.href
+              ? "bg-orange-50 text-orange-600 font-medium"
+              : "hover:bg-orange-50 text-slate-700"
+          }
+          `}
+        >
 
-  )
+          <Icon size={18} />
 
-})}
+          {item.label}
 
-      </div>
+        </Link>
+
+      )
+
+    })}
+
+</div>
 
     </div>
 

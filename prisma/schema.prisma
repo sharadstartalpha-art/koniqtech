@@ -829,4 +829,5 @@ model RolePermission {
   canDelete Boolean @default(false)
 
   createdAt DateTime @default(now())
+   @@unique([role, module])
 }

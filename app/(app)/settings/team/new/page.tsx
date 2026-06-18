@@ -76,7 +76,15 @@ await prisma.user.create({
   }
 })
 
-
+const users =
+    await prisma.user.findMany({
+      where:{
+        orgId
+      },
+      orderBy:{
+        createdAt:"desc"
+      }
+    })
  
 
   redirect("/settings/team")

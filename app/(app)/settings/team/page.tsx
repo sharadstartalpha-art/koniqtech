@@ -2,6 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
 export default async function TeamPage() {
 
@@ -21,6 +22,71 @@ export default async function TeamPage() {
       createdAt: "desc"
     }
   })
+
+async function toggleUserStatus(
+  formData: FormData
+){
+  "use server"
+
+  const id =
+    formData.get("id") as string
+
+  const status =
+    formData.get("status") as string
+
+  await prisma.user.update({
+
+    where:{
+      id
+    },
+
+    data:{
+      status
+    }
+
+  })
+
+  revalidatePath(
+    "/settings/team"
+  )
+}
+
+async function deleteUser(
+  formData: FormData
+){
+  "use server"
+
+  const id =
+    formData.get("id") as string
+
+  const user =
+    await prisma.user.findUnique({
+
+      where:{ id }
+
+    })
+
+  if(
+    user?.role === "owner"
+  ){
+    throw new Error(
+      "Owner cannot be deleted"
+    )
+  }
+
+  await prisma.user.delete({
+
+    where:{
+      id
+    }
+
+  })
+
+  revalidatePath(
+    "/settings/team"
+  )
+}
+
 
   const totalUsers = users.length
 
@@ -158,6 +224,10 @@ export default async function TeamPage() {
                 Joined
               </th>
 
+              <th className="p-4 text-left">
+                Actions
+             </th>
+
             </tr>
 
           </thead>
@@ -225,6 +295,113 @@ export default async function TeamPage() {
                   ).toLocaleDateString()}
 
                 </td>
+                
+                <td className="p-4">
+
+  <div className="flex gap-2">
+
+    <Link
+      href={`/settings/team/${user.id}/edit`}
+      className="
+      px-3
+      py-1
+      text-sm
+      rounded-lg
+      bg-blue-100
+      text-blue-700
+      "
+    >
+      Edit
+    </Link>
+
+    <form
+      action={toggleUserStatus}
+    >
+      <input
+        type="hidden"
+        name="id"
+        value={user.id}
+      />
+
+      <input
+        type="hidden"
+        name="status"
+        value={
+          user.status === "active"
+            ? "inactive"
+            : "active"
+        }
+      />
+
+      <button
+        className={`
+        px-3
+        py-1
+        text-sm
+        rounded-lg
+
+        ${
+          user.status === "active"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-green-100 text-green-700"
+        }
+        `}
+      >
+        {
+          user.status === "active"
+            ? "Deactivate"
+            : "Activate"
+        }
+      </button>
+
+    </form>
+
+    {user.role !== "owner" && (
+
+      <form
+        action={deleteUser}
+      >
+        <input
+          type="hidden"
+          name="id"
+          value={user.id}
+        />
+
+        <button
+          type="submit"
+          onClick={(e)=>{
+            if(
+              !confirm(
+                "Delete this user?"
+              )
+            ){
+              e.preventDefault()
+            }
+          }}
+          className="
+          px-3
+          py-1
+          text-sm
+          rounded-lg
+          bg-red-100
+          text-red-700
+          "
+        >
+          Delete
+        </button>
+
+      </form>
+
+    )}
+
+  </div>
+
+</td>
+
+
+
+
+
 
               </tr>
 

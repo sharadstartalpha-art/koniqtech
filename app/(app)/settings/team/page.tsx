@@ -1,9 +1,17 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
 export default async function TeamPage() {
 
-  const orgId = "CURRENT_ORG_ID"
+  const session = await auth()
+
+  if (!session?.user?.orgId) {
+    redirect("/login")
+  }
+
+  const orgId = session.user.orgId
 
   const users = await prisma.user.findMany({
     where: {

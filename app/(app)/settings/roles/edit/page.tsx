@@ -1,5 +1,6 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 
 const MODULES = [
   "Leads",
@@ -34,75 +35,64 @@ async function savePermissions(
     await prisma.rolePermission.upsert({
 
       where: {
-    role_module: {
-      role,
-      module
-    }
-  },
+        role_module: {
+          role,
+          module
+        }
+      },
 
       update: {
 
         canView:
-          formData.get(
-            `${module}-view`
-          ) === "on",
+          formData.get(`${module}-view`) === "on",
 
         canCreate:
-          formData.get(
-            `${module}-create`
-          ) === "on",
+          formData.get(`${module}-create`) === "on",
 
         canEdit:
-          formData.get(
-            `${module}-edit`
-          ) === "on",
+          formData.get(`${module}-edit`) === "on",
 
         canDelete:
-          formData.get(
-            `${module}-delete`
-          ) === "on"
+          formData.get(`${module}-delete`) === "on"
       },
 
       create: {
 
-        id: `${role}-${module}`,
-
         role,
-
         module,
 
         canView:
-          formData.get(
-            `${module}-view`
-          ) === "on",
+          formData.get(`${module}-view`) === "on",
 
         canCreate:
-          formData.get(
-            `${module}-create`
-          ) === "on",
+          formData.get(`${module}-create`) === "on",
 
         canEdit:
-          formData.get(
-            `${module}-edit`
-          ) === "on",
+          formData.get(`${module}-edit`) === "on",
 
         canDelete:
-          formData.get(
-            `${module}-delete`
-          ) === "on"
+          formData.get(`${module}-delete`) === "on"
       }
-
     })
-
   }
 
   revalidatePath("/settings/roles")
-  revalidatePath("/settings/roles/edit")
+
+  redirect(
+    `/settings/roles/edit?role=${role}`
+  )
 }
 
-export default async function EditRolePage() {
+export default async function EditRolePage({
+  searchParams
+}:{
+  searchParams:{
+    role?:string
+  }
+}) {
 
-  const role = "sales"
+  const role =
+    searchParams.role || "sales"
 
   const permissions =
     await prisma.rolePermission.findMany({

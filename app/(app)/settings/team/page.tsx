@@ -3,6 +3,7 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import DeleteUserButton from "./DeleteUserButton"
 
 export default async function TeamPage() {
 
@@ -358,39 +359,20 @@ async function deleteUser(
 
     {user.role !== "owner" && (
 
-      <form
-        action={deleteUser}
-      >
-        <input
-          type="hidden"
-          name="id"
-          value={user.id}
-        />
+      <form action={deleteUser}>
 
-        <button
-          type="submit"
-          onClick={(e)=>{
-            if(
-              !confirm(
-                "Delete this user?"
-              )
-            ){
-              e.preventDefault()
-            }
-          }}
-          className="
-          px-3
-          py-1
-          text-sm
-          rounded-lg
-          bg-red-100
-          text-red-700
-          "
-        >
-          Delete
-        </button>
+  <input
+    type="hidden"
+    name="id"
+    value={user.id}
+  />
 
-      </form>
+  <DeleteUserButton
+    id={user.id}
+    action={deleteUser}
+  />
+
+</form>
 
     )}
 

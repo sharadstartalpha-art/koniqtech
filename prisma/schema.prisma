@@ -812,3 +812,21 @@ model Notification {
 
   user User? @relation(fields:[userId],references:[id])
 }
+
+model RolePermission {
+  id String @id @default(uuid())
+
+  role String
+
+  module String
+
+  canView Boolean @default(false)
+
+  canCreate Boolean @default(false)
+
+  canEdit Boolean @default(false)
+
+  canDelete Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}

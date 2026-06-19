@@ -2,6 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import Link from "next/link"
+import RoleSelector from "./RoleSelector"
 
 const MODULES = [
   "Leads",
@@ -133,17 +134,7 @@ export default async function EditRolePage({
     ← Back
   </Link>
 
-  <div>
-
-    <h1 className="text-4xl font-bold">
-      Edit Role Permissions
-    </h1>
-
-    <p className="text-slate-500 mt-2">
-      Configure access control
-    </p>
-
-  </div>
+  
 
 </div>
 
@@ -180,20 +171,7 @@ export default async function EditRolePage({
             Role
           </label>
 
-          <select
-  value={role}
-  onChange={(e)=>{
-    window.location.href =
-      `/settings/roles/edit?role=${e.target.value}`
-  }}
-  className="
-  h-12
-  px-4
-  rounded-xl
-  border
-  w-80
-  "
->
+      <RoleSelector role={role} />
 
             {ROLES.map(r => (
 

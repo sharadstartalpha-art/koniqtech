@@ -73,7 +73,7 @@ export default async function Page() {
 await resend.emails.send({
 
   from:
-    "KoniqTech <noreply@koniqtech.com>",
+    "KoniqTech <otp@koniqtech.com>",
 
   to:[email],
 

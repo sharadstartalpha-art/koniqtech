@@ -39,6 +39,7 @@ model Organization {
   quotes             Quote[]
   subscriptions      Subscription[]
  
+ teamInvitations TeamInvitation[]
   users User[]
   notifications Notification[]
 
@@ -830,4 +831,26 @@ model RolePermission {
 
   createdAt DateTime @default(now())
    @@unique([role, module])
+}
+
+model TeamInvitation {
+  id String @id @default(uuid())
+
+  orgId String
+
+  email String
+
+  role UserRole
+
+  token String @unique
+
+  status String @default("pending")
+
+  expiresAt DateTime
+
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  organization Organization @relation(fields:[orgId],references:[id])
 }

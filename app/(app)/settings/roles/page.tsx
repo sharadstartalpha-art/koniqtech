@@ -18,6 +18,13 @@ export default async function RolesPage({
   const permissionCount =
   await prisma.rolePermission.count()
 
+  const PROTECTED_ROLES = [
+  "owner",
+  "admin"
+]
+
+
+
   const users =
   await prisma.user.findMany({
 
@@ -73,6 +80,14 @@ const permissions =
 
   const activePermissions =
     permissions.length
+
+    const protectedRoles =
+  roles.filter(
+    r =>
+      PROTECTED_ROLES.includes(
+        r.key
+      )
+  ).length
 
   return (
 
@@ -142,7 +157,7 @@ const permissions =
         <div className="bg-white border rounded-3xl p-6">
           <p>Protected Roles</p>
           <h2 className="text-4xl font-bold">
-            2
+           {protectedRoles}
           </h2>
         </div>
 

@@ -2,6 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import { randomUUID } from "crypto"
 import { revalidatePath } from "next/cache"
+import { resend } from "@/shared/lib/resend"
 
 export default async function Page() {
 
@@ -58,10 +59,9 @@ export default async function Page() {
 
         token,
 
-        expiresAt:new Date(
-          Date.now() +
-          1000 * 60 * 60 * 24 * 7
-        )
+         expiresAt:new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    )
 
       }
 
@@ -69,6 +69,55 @@ export default async function Page() {
 
     // TODO:
     // Send Resend email
+
+await resend.emails.send({
+
+  from:
+    "KoniqTech <noreply@koniqtech.com>",
+
+  to:[email],
+
+  subject:
+    "Join KoniqTech CRM",
+
+  html:`
+
+    <div style="font-family:Arial">
+
+      <h2>
+        You have been invited
+        to join KoniqTech CRM
+      </h2>
+
+      <p>
+        Role:
+        <strong>${role}</strong>
+      </p>
+
+      <p>
+        Click below to accept:
+      </p>
+
+      <a
+        href="https://koniqtech.com/invite/${token}"
+        style="
+          display:inline-block;
+          padding:12px 20px;
+          background:#f97316;
+          color:white;
+          text-decoration:none;
+          border-radius:8px;
+        "
+      >
+        Accept Invitation
+      </a>
+
+    </div>
+
+  `
+})
+
+
 
     revalidatePath(
       "/settings/invitations"

@@ -12,36 +12,25 @@ export default function RoleSelector({
 
   return (
 
-    <select
-      key={role}
-      defaultValue={role}
-      onChange={(e)=>{
+ <form action="/settings/roles/edit">
 
-        router.push(
-          `/settings/roles/edit?role=${e.target.value}`
-        )
+  <select
+    name="role"
+    defaultValue={role}
+    onChange={(e)=>{
+      e.currentTarget.form?.submit()
+    }}
+  >
+    <option value="owner">Owner</option>
+    <option value="admin">Admin</option>
+    <option value="manager">Manager</option>
+    <option value="sales">Sales</option>
+    <option value="technician">Technician</option>
+    <option value="support">Support</option>
+    <option value="accountant">Accountant</option>
+  </select>
 
-        router.refresh()
-
-      }}
-      className="
-      h-12
-      px-4
-      rounded-xl
-      border
-      w-80
-      "
-    >
-
-      <option value="owner">owner</option>
-      <option value="admin">admin</option>
-      <option value="manager">manager</option>
-      <option value="sales">sales</option>
-      <option value="technician">technician</option>
-      <option value="support">support</option>
-      <option value="accountant">accountant</option>
-
-    </select>
+</form>
 
   )
 }

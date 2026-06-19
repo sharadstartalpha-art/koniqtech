@@ -1,5 +1,6 @@
 import Link from "next/link"
 import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
 
 export default async function RolesPage({
   searchParams
@@ -9,11 +10,25 @@ export default async function RolesPage({
   }
 }) {
 
-  const permissions =
-    await prisma.rolePermission.findMany()
+  const session = await auth()
+  const orgId =
+  (session?.user as any)?.orgId
+
+
+  const permissionCount =
+  await prisma.rolePermission.count()
 
   const users =
-    await prisma.user.findMany()
+  await prisma.user.findMany({
+
+    where:{
+      orgId
+    }
+
+  })
+
+const permissions =
+  await prisma.rolePermission.findMany()
 
   const roles = [
     {

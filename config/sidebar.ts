@@ -303,8 +303,8 @@ export const MENU = [
       href:"/settings/team"
     },
     {
-      label:"Integrations",
-      href:"/settings/integrations"
+      label:"Invitations",
+      href:"/settings/invitations"
     },
 
     {

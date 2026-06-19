@@ -1,7 +1,13 @@
 import Link from "next/link"
 import prisma from "@/shared/lib/prisma"
 
-export default async function RolesPage() {
+export default async function RolesPage({
+  searchParams
+}:{
+  searchParams:{
+    saved?:string
+  }
+}) {
 
   const permissions =
     await prisma.rolePermission.findMany()
@@ -75,7 +81,25 @@ export default async function RolesPage() {
 
       </div>
 
+
+
       {/* KPIs */}
+
+{searchParams.saved && (
+
+  <div
+    className="
+    p-4
+    rounded-xl
+    bg-green-100
+    text-green-700
+    border
+    "
+  >
+    Permissions updated successfully
+  </div>
+
+)}
 
       <div className="grid grid-cols-4 gap-6">
 

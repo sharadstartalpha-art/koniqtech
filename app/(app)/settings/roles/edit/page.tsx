@@ -1,6 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import Link from "next/link"
 
 const MODULES = [
   "Leads",
@@ -79,8 +80,8 @@ async function savePermissions(
   revalidatePath("/settings/roles")
 
   redirect(
-    `/settings/roles/edit?role=${role}`
-  )
+  `/settings/roles?saved=1`
+)
 }
 
 export default async function EditRolePage({
@@ -117,6 +118,35 @@ export default async function EditRolePage({
 
     <div className="space-y-8">
 
+      <div className="flex items-center gap-4">
+
+  <Link
+    href="/settings/roles"
+    className="
+    px-4
+    py-2
+    border
+    rounded-xl
+    hover:bg-slate-50
+    "
+  >
+    ← Back
+  </Link>
+
+  <div>
+
+    <h1 className="text-4xl font-bold">
+      Edit Role Permissions
+    </h1>
+
+    <p className="text-slate-500 mt-2">
+      Configure access control
+    </p>
+
+  </div>
+
+</div>
+
       <div>
 
         <h1 className="text-4xl font-bold">
@@ -139,6 +169,11 @@ export default async function EditRolePage({
         "
       >
 
+<input
+  type="hidden"
+  name="role"
+  value={role}
+/>
         <div className="p-6 border-b">
 
           <label className="block mb-2 font-medium">
@@ -146,16 +181,19 @@ export default async function EditRolePage({
           </label>
 
           <select
-            name="role"
-            defaultValue={role}
-            className="
-            h-12
-            px-4
-            rounded-xl
-            border
-            w-80
-            "
-          >
+  value={role}
+  onChange={(e)=>{
+    window.location.href =
+      `/settings/roles/edit?role=${e.target.value}`
+  }}
+  className="
+  h-12
+  px-4
+  rounded-xl
+  border
+  w-80
+  "
+>
 
             {ROLES.map(r => (
 

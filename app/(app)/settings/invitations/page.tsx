@@ -47,6 +47,40 @@ export default async function Page() {
     const token =
       randomUUID()
 
+      const existingUser =
+  await prisma.user.findUnique({
+
+    where:{
+      email
+    }
+
+  })
+
+if(existingUser){
+
+  throw new Error(
+    "User already exists"
+  )
+}
+
+const existingInvite =
+  await prisma.teamInvitation.findFirst({
+
+    where:{
+      email,
+      status:"pending"
+    }
+
+  })
+
+if(existingInvite){
+
+  throw new Error(
+    "Invitation already sent"
+  )
+
+}
+
     await prisma.teamInvitation.create({
 
       data:{

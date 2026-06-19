@@ -88,13 +88,18 @@ async function savePermissions(
 export default async function EditRolePage({
   searchParams
 }:{
-  searchParams:{
-    role?:string
-  }
+  searchParams: Promise<{
+    role?: string
+  }>
 }) {
 
+  const params =
+    await searchParams
+
   const role =
-    searchParams.role || "sales"
+    params.role || "sales"
+
+console.log("ROLE:", role)
 
   const permissions =
     await prisma.rolePermission.findMany({

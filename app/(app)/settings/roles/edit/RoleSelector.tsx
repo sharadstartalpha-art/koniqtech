@@ -13,12 +13,15 @@ export default function RoleSelector({
   return (
 
     <select
-      value={role}
+      key={role}
+      defaultValue={role}
       onChange={(e)=>{
 
         router.push(
           `/settings/roles/edit?role=${e.target.value}`
         )
+
+        router.refresh()
 
       }}
       className="

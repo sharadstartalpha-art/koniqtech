@@ -173,19 +173,6 @@ export default async function EditRolePage({
 
       <RoleSelector role={role} />
 
-            {ROLES.map(r => (
-
-              <option
-                key={r}
-                value={r}
-              >
-                {r}
-              </option>
-
-            ))}
-
-          </select>
-
         </div>
 
         <table className="w-full">

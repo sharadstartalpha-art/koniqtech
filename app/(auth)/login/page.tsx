@@ -14,7 +14,18 @@ import {
   CheckCircle2
 } from "lucide-react"
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams
+}:{
+  searchParams:Promise<{
+    registered?:string
+  }>
+}){
+
+  
+
+const params =
+  await searchParams
 
   const [email,setEmail] = useState("")
   const [password,setPassword] = useState("")
@@ -70,6 +81,24 @@ export default function LoginPage() {
 
     window.location.href=
     "/dashboard"
+  
+  {params.registered && (
+
+  <div className="
+  mb-4
+  p-4
+  rounded-xl
+  bg-green-100
+  text-green-700
+  border
+  ">
+    Account created successfully.
+    Please login.
+  </div>
+
+)}
+  
+  
   }
 
   return(

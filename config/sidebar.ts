@@ -36,7 +36,7 @@ export type MenuSection = {
 
 
 
-export const MENU = [
+export const MENU: MenuSection[] = [
 
   {
     title:"Sales",
@@ -260,86 +260,103 @@ export const MENU = [
     ]
   },
 
-  {
-    title:"Administration",
+ {
+  title: "Administration",
 
-    items:[
-      {
-        label:"Team",
-        href:"/settings/team",
-        icon:UserCog,
-        roles:[
-          "owner",
-          "admin"
-        ]
-      },
+  items: [
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: Settings,
 
-      
-{
-  label:"Settings",
-  href:"/settings",
-  icon:Settings,
+      roles: [
+        "owner",
+        "admin"
+      ],
 
-  roles:[
-    "owner",
-    "admin"
-  ],
+      children: [
+        {
+          label: "Company",
+          href: "/settings/company"
+        },
+        {
+          label: "Organization",
+          href: "/settings/organization"
+        },
+        {
+          label: "Branding",
+          href: "/settings/branding"
+        },
 
-  children:[
-    {
-      label:"Company",
-      href:"/settings/company"
-    },
-    {
-      label:"Organization",
-      href:"/settings/organization"
-    },
-    {
-      label:"Branding",
-      href:"/settings/branding"
-    },
-    {
-      label:"Team Members",
-      href:"/settings/team"
-    },
-    {
-      label:"Invitations",
-      href:"/settings/invitations"
+        {
+          label: "Team Members",
+          href: "/settings/team"
+        },
+        {
+          label: "Invitations",
+          href: "/settings/invitations"
+        },
+        {
+          label: "Roles & Permissions",
+          href: "/settings/roles"
+        },
+
+        {
+          label: "Billing",
+          href: "/settings/billing"
+        },
+        {
+          label: "Integrations",
+          href: "/settings/integrations"
+        },
+
+        {
+          label: "AI Settings",
+          href: "/settings/ai"
+        },
+        {
+          label: "Email Templates",
+          href: "/settings/email-templates"
+        },
+
+        {
+          label: "Security",
+          href: "/settings/security"
+        }
+      ]
     },
 
     {
-      label:"Roles & Permissions",
-      href:"/settings/roles"
-    },
-    {
-      label:"Billing",
-      href:"/settings/billing"
-    },
-    {
-      label:"Integrations",
-      href:"/settings/integrations"
-    },
-    {
-      label:"AI Settings",
-      href:"/settings/ai"
-    },
-    {
-      label:"Email Templates",
-      href:"/settings/email-templates"
-    },
-    {
-      label:"Notifications",
-      href:"/settings/notifications"
-    },
-    {
-      label:"Security",
-      href:"/settings/security"
+      label: "My Account",
+      href: "/account",
+      icon: UserCog,
+
+      roles: [
+        "owner",
+        "admin",
+        "manager",
+        "sales",
+        "technician",
+        "support",
+        "accountant"
+      ],
+
+      children: [
+        {
+          label: "Profile",
+          href: "/account/profile"
+        },
+        {
+          label: "Change Password",
+          href: "/account/password"
+        },
+        {
+          label: "Notifications",
+          href: "/account/notifications"
+        }
+      ]
     }
   ]
 }
-
-
-    ]
-  }
 
 ]

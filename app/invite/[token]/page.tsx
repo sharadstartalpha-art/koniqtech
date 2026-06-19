@@ -1,5 +1,5 @@
 import prisma from "@/shared/lib/prisma"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 
 export default async function Page({
@@ -91,6 +91,7 @@ export default async function Page({
 
     })
 
+    redirect("/login?registered=1")
   }
 
   return(

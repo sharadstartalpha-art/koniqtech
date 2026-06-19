@@ -3,10 +3,18 @@ import { auth } from "@/auth"
 import { randomUUID } from "crypto"
 import { revalidatePath } from "next/cache"
 import { resend } from "@/shared/lib/resend"
+import { redirect } from "next/navigation"
 
-export default async function Page() {
+export default async function Page({
+  searchParams
+}:{
+  searchParams: Promise<{
+    error?: string
+  }>
+}) {
 
   const session = await auth()
+  const params = await searchParams
 
   const orgId =
     (session?.user as any)?.orgId
@@ -58,11 +66,11 @@ export default async function Page() {
 
 if(existingUser){
 
-  throw new Error(
-    "User already exists"
+  redirect(
+    "/settings/invitations?error=user-exists"
   )
-}
 
+}
 const existingInvite =
   await prisma.teamInvitation.findFirst({
 
@@ -75,8 +83,8 @@ const existingInvite =
 
 if(existingInvite){
 
-  throw new Error(
-    "Invitation already sent"
+  redirect(
+    "/settings/invitations?error=invite-exists"
   )
 
 }
@@ -202,6 +210,34 @@ await resend.emails.send({
       </div>
 
       {/* Invite Form */}
+
+      {params.error === "user-exists" && (
+
+  <div className="
+  p-4
+  rounded-xl
+  bg-red-100
+  text-red-700
+  border
+  ">
+    User already exists
+  </div>
+
+)}
+
+{params.error === "invite-exists" && (
+
+  <div className="
+  p-4
+  rounded-xl
+  bg-yellow-100
+  text-yellow-700
+  border
+  ">
+    Invitation already sent
+  </div>
+
+)}
 
       <form
         action={sendInvite}

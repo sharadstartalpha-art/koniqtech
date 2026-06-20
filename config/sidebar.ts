@@ -14,9 +14,8 @@ import {
   FileText,
   Package,
   UserCog,
-  LucideIcon 
+  LucideIcon
 } from "lucide-react"
-
 
 export type MenuItem = {
   label: string
@@ -34,34 +33,32 @@ export type MenuSection = {
   items: MenuItem[]
 }
 
-
-
-export const MENU = [
+export const MENU: MenuSection[] = [
 
   {
-    title:"Sales",
+    title: "Sales",
 
-    items:[
+    items: [
+
       {
-        label:"Dashboard",
-        href:"/dashboard",
-        icon:LayoutDashboard,
-        roles:[
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        roles: [
           "owner",
           "admin",
           "manager",
           "sales",
           "technician",
-          "support",
           "accountant"
         ]
       },
 
       {
-        label:"Leads",
-        href:"/leads",
-        icon:Users,
-        roles:[
+        label: "Leads",
+        href: "/leads",
+        icon: Users,
+        roles: [
           "owner",
           "admin",
           "manager",
@@ -70,23 +67,10 @@ export const MENU = [
       },
 
       {
-        label:"Customers",
-        href:"/customers",
-        icon:Users,
-        roles:[
-          "owner",
-          "admin",
-          "manager",
-          "sales",
-          "support"
-        ]
-      },
-
-      {
-        label:"Pipeline",
-        href:"/pipeline",
-        icon:GitBranch,
-        roles:[
+        label: "Customers",
+        href: "/customers",
+        icon: Users,
+        roles: [
           "owner",
           "admin",
           "manager",
@@ -95,10 +79,22 @@ export const MENU = [
       },
 
       {
-        label:"Quotes",
-        href:"/quotes",
-        icon:FileText,
-        roles:[
+        label: "Pipeline",
+        href: "/pipeline",
+        icon: GitBranch,
+        roles: [
+          "owner",
+          "admin",
+          "manager",
+          "sales"
+        ]
+      },
+
+      {
+        label: "Quotes",
+        href: "/quotes",
+        icon: FileText,
+        roles: [
           "owner",
           "admin",
           "manager",
@@ -109,14 +105,15 @@ export const MENU = [
   },
 
   {
-    title:"Operations",
+    title: "Operations",
 
-    items:[
+    items: [
+
       {
-        label:"Jobs",
-        href:"/jobs",
-        icon:Briefcase,
-        roles:[
+        label: "Jobs",
+        href: "/jobs",
+        icon: Briefcase,
+        roles: [
           "owner",
           "admin",
           "manager",
@@ -125,10 +122,10 @@ export const MENU = [
       },
 
       {
-        label:"Crew",
-        href:"/crew",
-        icon:Users,
-        roles:[
+        label: "Crew",
+        href: "/crew",
+        icon: Users,
+        roles: [
           "owner",
           "admin",
           "manager"
@@ -136,10 +133,10 @@ export const MENU = [
       },
 
       {
-        label:"Dispatch",
-        href:"/jobs/dispatch",
-        icon:Truck,
-        roles:[
+        label: "Dispatch",
+        href: "/jobs/dispatch",
+        icon: Truck,
+        roles: [
           "owner",
           "admin",
           "manager"
@@ -147,10 +144,10 @@ export const MENU = [
       },
 
       {
-        label:"Calendar",
-        href:"/calendar",
-        icon:Calendar,
-        roles:[
+        label: "Calendar",
+        href: "/calendar",
+        icon: Calendar,
+        roles: [
           "owner",
           "admin",
           "manager",
@@ -160,21 +157,10 @@ export const MENU = [
       },
 
       {
-        label:"Inventory",
-        href:"/inventory",
-        icon:Package,
-        roles:[
-          "owner",
-          "admin",
-          "manager"
-        ]
-      },
-
-      {
-        label:"Documents",
-        href:"/documents",
-        icon:FileText,
-        roles:[
+        label: "Inventory",
+        href: "/inventory",
+        icon: Package,
+        roles: [
           "owner",
           "admin",
           "manager"
@@ -184,14 +170,15 @@ export const MENU = [
   },
 
   {
-    title:"Finance",
+    title: "Finance",
 
-    items:[
+    items: [
+
       {
-        label:"Billing",
-        href:"/billing",
-        icon:CreditCard,
-        roles:[
+        label: "Billing",
+        href: "/billing",
+        icon: CreditCard,
+        roles: [
           "owner",
           "admin",
           "accountant"
@@ -199,59 +186,21 @@ export const MENU = [
       },
 
       {
-        label:"Reports",
-        href:"/reports",
-        icon:BarChart3,
-        roles:[
+        label: "Invoices",
+        href: "/invoices",
+        icon: FileText,
+        roles: [
           "owner",
           "admin",
-          "manager"
-        ]
-      }
-    ]
-  },
-
-  {
-    title:"Communication",
-
-    items:[
-      {
-        label:"Messages",
-        href:"/messages",
-        icon:MessageSquare,
-        roles:[
-          "owner",
-          "admin",
-          "manager",
-          "sales",
-          "support"
+          "accountant"
         ]
       },
 
       {
-        label:"Notifications",
-        href:"/notifications",
-        icon:Bell,
-        roles:[
-          "owner",
-          "admin",
-          "manager",
-          "sales",
-          "support"
-        ]
-      }
-    ]
-  },
-
-  {
-    title:"Intelligence",
-
-    items:[
-      {
-        label:"AI",
-        href:"/ai",
-        icon:Brain,
-        roles:[
+        label: "Reports",
+        href: "/reports",
+        icon: BarChart3,
+        roles: [
           "owner",
           "admin",
           "manager"
@@ -260,122 +209,178 @@ export const MENU = [
     ]
   },
 
-{
-  title:"My Account",
+  {
+    title: "Communication",
 
-  items:[
-    {
-      label:"Profile",
-      href:"/profile",
-      icon:UserCog,
+    items: [
 
-      roles:[
-        "owner",
-        "admin",
-        "manager",
-        "sales",
-        "technician",
-        "support",
-        "accountant"
-      ]
-    },
+      {
+        label: "Messages",
+        href: "/messages",
+        icon: MessageSquare,
+        roles: [
+          "owner",
+          "admin",
+          "manager",
+          "sales",
+          "technician"
+        ]
+      },
 
-    {
-      label:"Change Password",
-      href:"/profile/security",
-      icon:Settings,
-
-      roles:[
-        "owner",
-        "admin",
-        "manager",
-        "sales",
-        "technician",
-        "support",
-        "accountant"
-      ]
-    }
-  ]
-},
-
-
+      {
+        label: "Notifications",
+        href: "/notifications",
+        icon: Bell,
+        roles: [
+          "owner",
+          "admin",
+          "manager",
+          "sales",
+          "technician"
+        ]
+      }
+    ]
+  },
 
   {
-  title:"Administration",
+    title: "Intelligence",
 
-  items:[
+    items: [
 
-    {
-      label:"Team",
-      href:"/settings/team",
-      icon:UserCog,
+      {
+        label: "AI",
+        href: "/ai",
+        icon: Brain,
+        roles: [
+          "owner",
+          "admin"
+        ]
+      }
+    ]
+  },
 
-      roles:[
-        "owner",
-        "admin",
-        "manager"
-      ]
-    },
+  {
+    title: "My Account",
 
-    {
-      label:"Settings",
-      href:"/settings",
-      icon:Settings,
+    items: [
 
-      roles:[
-        "owner",
-        "admin",
-        "manager"
-      ],
+      {
+        label: "Profile",
+        href: "/profile",
+        icon: UserCog,
+        roles: [
+          "owner",
+          "admin",
+          "manager",
+          "sales",
+          "technician",
+          "accountant"
+        ]
+      },
 
-      children:[
-        {
-          label:"Company",
-          href:"/settings/company"
-        },
-        {
-          label:"Organization",
-          href:"/settings/organization"
-        },
-        {
-          label:"Branding",
-          href:"/settings/branding"
-        },
-        {
-          label:"Team Members",
-          href:"/settings/team"
-        },
-        {
-          label:"Invitations",
-          href:"/settings/invitations"
-        },
-        {
-          label:"Roles & Permissions",
-          href:"/settings/roles"
-        },
-        {
-          label:"Billing",
-          href:"/settings/billing"
-        },
-        {
-          label:"Integrations",
-          href:"/settings/integrations"
-        },
-        {
-          label:"AI Settings",
-          href:"/settings/ai"
-        },
-        {
-          label:"Email Templates",
-          href:"/settings/email-templates"
-        },
-        {
-          label:"Notifications",
-          href:"/settings/notifications"
-        }
-      ]
-    }
-  ]
-}
+      {
+        label: "Change Password",
+        href: "/profile/security",
+        icon: Settings,
+        roles: [
+          "owner",
+          "admin",
+          "manager",
+          "sales",
+          "technician",
+          "accountant"
+        ]
+      }
+    ]
+  },
 
+  {
+    title: "Administration",
+
+    items: [
+
+      {
+        label: "Team",
+        href: "/settings/team",
+        icon: UserCog,
+        roles: [
+          "owner",
+          "admin"
+        ]
+      },
+
+      {
+        label: "Settings",
+        href: "/settings",
+        icon: Settings,
+        roles: [
+          "owner",
+          "admin"
+        ],
+
+        children: [
+
+          {
+            label: "Company",
+            href: "/settings/company"
+          },
+
+          {
+            label: "Organization",
+            href: "/settings/organization"
+          },
+
+          {
+            label: "Branding",
+            href: "/settings/branding"
+          },
+
+          {
+            label: "Team Members",
+            href: "/settings/team"
+          },
+
+          {
+            label: "Invitations",
+            href: "/settings/invitations"
+          },
+
+          {
+            label: "Roles & Permissions",
+            href: "/settings/roles"
+          },
+
+          {
+            label: "Billing",
+            href: "/settings/billing"
+          },
+
+          {
+            label: "Integrations",
+            href: "/settings/integrations"
+          },
+
+          {
+            label: "AI Settings",
+            href: "/settings/ai"
+          },
+
+          {
+            label: "Email Templates",
+            href: "/settings/email-templates"
+          },
+
+          {
+            label: "Notifications",
+            href: "/settings/notifications"
+          },
+
+          {
+            label: "Security",
+            href: "/settings/security"
+          }
+        ]
+      }
+    ]
+  }
 ]

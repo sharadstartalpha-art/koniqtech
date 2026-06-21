@@ -16,33 +16,49 @@ async function updatePassword(
   }
 
   const currentPassword =
-    formData.get("currentPassword") as string
+    String(formData.get("currentPassword") || "")
 
   const newPassword =
-    formData.get("newPassword") as string
+    String(formData.get("newPassword") || "")
 
   const confirmPassword =
-    formData.get("confirmPassword") as string
+    String(formData.get("confirmPassword") || "")
+
+  if (
+    !currentPassword ||
+    !newPassword ||
+    !confirmPassword
+  ) {
+    redirect(
+      "/profile/security?error=All fields are required"
+    )
+  }
 
   if (newPassword !== confirmPassword) {
-    throw new Error("Passwords do not match")
+    redirect(
+      "/profile/security?error=Passwords do not match"
+    )
   }
 
   if (newPassword.length < 8) {
-    throw new Error(
-      "Password must be at least 8 characters"
+    redirect(
+      "/profile/security?error=Password must be at least 8 characters"
     )
   }
 
   const user =
     await prisma.user.findUnique({
+
       where: {
         id: session.user.id
       }
+
     })
 
   if (!user) {
-    throw new Error("User not found")
+    redirect(
+      "/profile/security?error=User not found"
+    )
   }
 
   const valid =
@@ -52,32 +68,44 @@ async function updatePassword(
     )
 
   if (!valid) {
-    throw new Error("Current password invalid")
+    redirect(
+      "/profile/security?error=Current password is incorrect"
+    )
   }
 
   const passwordHash =
     await bcrypt.hash(
       newPassword,
-      10
+      12
     )
 
   await prisma.user.update({
+
     where: {
       id: user.id
     },
+
     data: {
       passwordHash
     }
+
   })
 
   revalidatePath("/profile/security")
 
   redirect(
-    "/profile/security?saved=1"
+    "/profile/security?success=1"
   )
 }
 
-export default async function SecurityPage() {
+export default async function SecurityPage({
+  searchParams
+}:{
+  searchParams:{
+    success?:string
+    error?:string
+  }
+}) {
 
   const session = await auth()
 
@@ -87,9 +115,11 @@ export default async function SecurityPage() {
 
   const sessions =
     await prisma.session.count({
-      where: {
+
+      where:{
         userId: session.user.id
       }
+
     })
 
   return (
@@ -108,9 +138,52 @@ export default async function SecurityPage() {
 
       </div>
 
-      <div className="bg-white border rounded-3xl p-8">
+      {searchParams.success && (
 
-        <h2 className="text-xl font-semibold mb-6">
+        <div
+          className="
+          p-4
+          rounded-xl
+          bg-green-100
+          text-green-700
+          "
+        >
+          Password updated successfully
+        </div>
+
+      )}
+
+      {searchParams.error && (
+
+        <div
+          className="
+          p-4
+          rounded-xl
+          bg-red-100
+          text-red-700
+          "
+        >
+          {searchParams.error}
+        </div>
+
+      )}
+
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-8
+        "
+      >
+
+        <h2
+          className="
+          text-xl
+          font-semibold
+          mb-6
+          "
+        >
           Change Password
         </h2>
 
@@ -124,7 +197,13 @@ export default async function SecurityPage() {
             name="currentPassword"
             placeholder="Current Password"
             required
-            className="w-full h-12 px-4 border rounded-xl"
+            className="
+            w-full
+            h-12
+            px-4
+            border
+            rounded-xl
+            "
           />
 
           <input
@@ -132,7 +211,14 @@ export default async function SecurityPage() {
             name="newPassword"
             placeholder="New Password"
             required
-            className="w-full h-12 px-4 border rounded-xl"
+            minLength={8}
+            className="
+            w-full
+            h-12
+            px-4
+            border
+            rounded-xl
+            "
           />
 
           <input
@@ -140,16 +226,25 @@ export default async function SecurityPage() {
             name="confirmPassword"
             placeholder="Confirm Password"
             required
-            className="w-full h-12 px-4 border rounded-xl"
+            minLength={8}
+            className="
+            w-full
+            h-12
+            px-4
+            border
+            rounded-xl
+            "
           />
 
           <button
             type="submit"
             className="
-            px-6 py-3
+            px-6
+            py-3
             bg-orange-600
             text-white
             rounded-xl
+            hover:bg-orange-700
             "
           >
             Update Password
@@ -159,13 +254,31 @@ export default async function SecurityPage() {
 
       </div>
 
-      <div className="bg-white border rounded-3xl p-8">
+      <div
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-8
+        "
+      >
 
-        <h2 className="font-semibold text-lg">
+        <h2
+          className="
+          text-lg
+          font-semibold
+          "
+        >
           Active Sessions
         </h2>
 
-        <p className="text-4xl font-bold mt-4">
+        <p
+          className="
+          text-4xl
+          font-bold
+          mt-4
+          "
+        >
           {sessions}
         </p>
 

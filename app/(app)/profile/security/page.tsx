@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import SecurityToast from "./SecurityToast"
 
 async function updatePassword(
   formData: FormData

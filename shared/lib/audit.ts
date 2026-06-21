@@ -1,25 +1,26 @@
 import prisma from "./prisma"
 
 export async function audit(
+  action: string,
+  entity: string,
+  userId: string,
+  orgId: string,
+  entityId?: string
+) {
 
-action:string,
-userId:string,
-orgId:string
+  await prisma.auditLog.create({
 
-){
+    data: {
 
-await prisma.auditLog.create({
+      action,
+      entity,
+      entityId,
 
-data:{
+      userId,
+      orgId
 
-action,
+    }
 
-userId,
-
-orgId
-
-}
-
-})
+  })
 
 }

@@ -80,7 +80,7 @@ model User {
   sessions Session[]
 
   notifications Notification[]
-
+preference   UserPreference?
   organization Organization @relation(fields:[orgId],references:[id],onDelete:Cascade)
 }
 
@@ -368,13 +368,7 @@ model LandscapingProject {
   job        Job      @relation(fields: [jobId], references: [id])
 }
 
-model AuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  orgId     String
-  userId    String?
-  createdAt DateTime @default(now())
-}
+
 
 model OtpCode {
   id        String   @id @default(cuid())
@@ -853,4 +847,39 @@ model TeamInvitation {
   createdAt DateTime @default(now())
 
   organization Organization @relation(fields:[orgId],references:[id])
+}
+
+
+model UserPreference {
+  id String @id @default(uuid())
+
+  userId String @unique
+
+  timezone String @default("UTC")
+  language String @default("en")
+  dateFormat String @default("MM/DD/YYYY")
+
+  emailNotifications Boolean @default(true)
+  smsNotifications Boolean @default(false)
+
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+
+  orgId     String
+  userId    String
+
+  action    String
+  entity    String
+  entityId  String?
+
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([createdAt])
 }

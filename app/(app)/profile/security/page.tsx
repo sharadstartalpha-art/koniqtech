@@ -25,6 +25,8 @@ async function updatePassword(
   const confirmPassword =
     String(formData.get("confirmPassword") || "")
 
+    
+
   if (
     !currentPassword ||
     !newPassword ||
@@ -41,11 +43,18 @@ async function updatePassword(
     )
   }
 
-  if (newPassword.length < 8) {
-    redirect(
-      "/profile/security?error=Password must be at least 8 characters"
-    )
-  }
+  if (
+  newPassword.length < 8 ||
+  !/[A-Z]/.test(newPassword) ||
+  !/[a-z]/.test(newPassword) ||
+  !/[0-9]/.test(newPassword)
+) {
+
+  redirect(
+    "/profile/security?error=Password must contain uppercase, lowercase and number"
+  )
+
+}
 
   const user =
     await prisma.user.findUnique({
@@ -74,6 +83,12 @@ async function updatePassword(
     )
   }
 
+const samePassword =
+  await bcrypt.compare(
+    newPassword,
+    user.passwordHash
+  )
+
   const passwordHash =
     await bcrypt.hash(
       newPassword,
@@ -92,12 +107,25 @@ async function updatePassword(
 
   })
 
-  revalidatePath("/profile/security")
+
+  
+
+  if (samePassword) {
 
   redirect(
-    "/profile/security?success=1"
+    "/profile/security?error=New password must be different from current password"
   )
+
 }
+
+  revalidatePath("/profile/security")
+
+ redirect(
+  "/profile/security?success=Password updated successfully"
+)
+}
+
+
 
 export default async function SecurityPage({
   searchParams
@@ -108,6 +136,7 @@ export default async function SecurityPage({
   }
 }) {
 
+  const params = await searchParams
   const session = await auth()
 
   if (!session?.user?.id) {
@@ -127,6 +156,12 @@ export default async function SecurityPage({
 
     <div className="max-w-4xl mx-auto space-y-8">
 
+       <SecurityToast
+    error={searchParams.error}
+   success={searchParams.success}
+    
+  />
+
       <div>
 
         <h1 className="text-4xl font-bold">
@@ -139,35 +174,9 @@ export default async function SecurityPage({
 
       </div>
 
-      {searchParams.success && (
+     
 
-        <div
-          className="
-          p-4
-          rounded-xl
-          bg-green-100
-          text-green-700
-          "
-        >
-          Password updated successfully
-        </div>
-
-      )}
-
-      {searchParams.error && (
-
-        <div
-          className="
-          p-4
-          rounded-xl
-          bg-red-100
-          text-red-700
-          "
-        >
-          {searchParams.error}
-        </div>
-
-      )}
+     
 
       <div
         className="
@@ -196,6 +205,7 @@ export default async function SecurityPage({
           <input
             type="password"
             name="currentPassword"
+            autoComplete="current-password"
             placeholder="Current Password"
             required
             className="
@@ -210,6 +220,7 @@ export default async function SecurityPage({
           <input
             type="password"
             name="newPassword"
+            autoComplete="new-password"
             placeholder="New Password"
             required
             minLength={8}
@@ -288,4 +299,6 @@ export default async function SecurityPage({
     </div>
 
   )
+
+  
 }

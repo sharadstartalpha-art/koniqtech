@@ -7,23 +7,21 @@ export default function SecurityToast({
   error,
   success
 }:{
-  error?:string
-  success?:string
+  error?: string
+  success?: string
 }) {
 
-  useEffect(()=>{
+  useEffect(() => {
 
-    if(error){
+    if (error) {
       toast.error(error)
     }
 
-    if(success){
-      toast.success(
-        "Password updated successfully"
-      )
+    if (success) {
+      toast.success(success)
     }
 
-  },[error,success])
+  }, [error, success])
 
   return null
 }

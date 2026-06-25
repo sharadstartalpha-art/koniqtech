@@ -14,7 +14,15 @@ import {
   FileText,
   Package,
   UserCog,
-  LucideIcon
+  LucideIcon,
+  Palette,
+  Building,
+  Building2,
+  Mail,
+  MailOpen,
+  Plug,
+  ShieldCheck,
+  Lock
 } from "lucide-react"
 
 export type MenuItem = {
@@ -23,9 +31,10 @@ export type MenuItem = {
   icon: LucideIcon
   roles?: string[]
   children?: {
-    label: string
-    href: string
-  }[]
+  label: string
+  href: string
+  icon: LucideIcon
+}[]
 }
 
 export type MenuSection = {
@@ -318,68 +327,68 @@ export const MENU: MenuSection[] = [
           "admin"
         ],
 
-        children: [
-
-          {
-            label: "Company",
-            href: "/settings/company"
-          },
-
-          {
-            label: "Organization",
-            href: "/settings/organization"
-          },
-
-          {
-            label: "Branding",
-            href: "/settings/branding"
-          },
-
-          {
-            label: "Team Members",
-            href: "/settings/team"
-          },
-
-          {
-            label: "Invitations",
-            href: "/settings/invitations"
-          },
-
-          {
-            label: "Roles & Permissions",
-            href: "/settings/roles"
-          },
-
-          {
-            label: "Billing",
-            href: "/settings/billing"
-          },
-
-          {
-            label: "Integrations",
-            href: "/settings/integrations"
-          },
-
-          {
-            label: "AI Settings",
-            href: "/settings/ai"
-          },
-
-          {
-            label: "Email Templates",
-            href: "/settings/email-templates"
-          },
-
-          {
-            label: "Notifications",
-            href: "/settings/notifications"
-          },
-
-          {
-            label: "Security",
-            href: "/settings/security"
-          }
-        ]
+        children:[
+  {
+    label:"Company",
+    href:"/settings/company",
+    icon:Building2
+  },
+  {
+    label:"Organization",
+    href:"/settings/organization",
+    icon:Building
+  },
+  {
+    label:"Branding",
+    href:"/settings/branding",
+    icon:Palette
+  },
+  {
+    label:"Team Members",
+    href:"/settings/team",
+    icon:Users
+  },
+  {
+    label:"Invitations",
+    href:"/settings/invitations",
+    icon:Mail
+  },
+  {
+    label:"Roles & Permissions",
+    href:"/settings/roles",
+    icon:ShieldCheck
+  },
+  {
+    label:"Billing",
+    href:"/settings/billing",
+    icon:CreditCard
+  },
+  {
+    label:"Integrations",
+    href:"/settings/integrations",
+    icon:Plug
+  },
+  {
+    label:"AI Settings",
+    href:"/settings/ai",
+    icon:Brain
+  },
+  {
+    label:"Email Templates",
+    href:"/settings/email-templates",
+    icon:MailOpen
+  },
+  {
+    label:"Notifications",
+    href:"/settings/notifications",
+    icon:Bell
+  },
+  {
+    label:"Security",
+    href:"/settings/security",
+    icon:Lock
+  }
+]
       }
     ]
   }

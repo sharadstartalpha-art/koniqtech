@@ -57,9 +57,10 @@ useState("")
 const pathname=
 usePathname()
 
-
-const [settingsOpen,setSettingsOpen] =
-useState(false)
+const [settingsOpen,setSettingsOpen]=
+useState(
+    pathname.startsWith("/settings")
+)
 
 const router = useRouter()
 
@@ -327,29 +328,40 @@ Koniqtech
 
               <div className="ml-8 mt-2 space-y-1">
 
-                {item.children.map(child => (
+          {item.children.map((child) => {
 
-                  <Link
-                    key={child.href}
-                    href={child.href}
-                    className={`
-                    block
-                    px-4
-                    py-2
-                    rounded-lg
-                    text-sm
+  const ChildIcon = child.icon
 
-                    ${
-                      pathname === child.href
-                        ? "bg-orange-100 text-orange-600"
-                        : "hover:bg-slate-100"
-                    }
-                    `}
-                  >
-                    {child.label}
-                  </Link>
+  return (
 
-                ))}
+    <Link
+      key={child.href}
+      href={child.href}
+      className={`
+      flex
+      items-center
+      gap-3
+      px-4
+      py-2
+      rounded-lg
+      text-sm
+      ${
+        pathname === child.href
+          ? "bg-orange-100 text-orange-600"
+          : "hover:bg-slate-100 text-slate-700"
+      }
+      `}
+    >
+
+      <ChildIcon size={16} />
+
+      <span>{child.label}</span>
+
+    </Link>
+
+  )
+
+})}
 
               </div>
 
@@ -461,17 +473,7 @@ justify-between
       + Job
     </Link>
 
-    <Link
-      href="/quotes/create"
-      className="
-      px-4
-      py-2
-      border
-      rounded-xl
-      "
-    >
-      + Quote
-    </Link>
+    
 
   </div>
 

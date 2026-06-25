@@ -61,6 +61,11 @@ const [settingsOpen,setSettingsOpen]=
 useState(
     pathname.startsWith("/settings")
 )
+useEffect(() => {
+    setSettingsOpen(
+        pathname.startsWith("/settings")
+    )
+}, [pathname])
 
 const router = useRouter()
 

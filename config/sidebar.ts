@@ -343,11 +343,7 @@ export const MENU: MenuSection[] = [
     href:"/settings/branding",
     icon:Palette
   },
-  {
-    label:"Team Members",
-    href:"/settings/team",
-    icon:Users
-  },
+  
   {
     label:"Invitations",
     href:"/settings/invitations",
@@ -383,11 +379,7 @@ export const MENU: MenuSection[] = [
     href:"/settings/notifications",
     icon:Bell
   },
-  {
-    label:"Security",
-    href:"/settings/security",
-    icon:Lock
-  }
+  
 ]
       }
     ]

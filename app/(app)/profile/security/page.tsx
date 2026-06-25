@@ -71,31 +71,45 @@ async function updatePassword(
     )
   }
 
-  const valid =
-    await bcrypt.compare(
-      currentPassword,
-      user.passwordHash
-    )
+ 
 
-  if (!valid) {
-    redirect(
-      "/profile/security?error=Current password is incorrect"
-    )
-  }
+  
+const valid =
+await bcrypt.compare(
+currentPassword,
+user.passwordHash
+)
+
+if(!valid){
+
+redirect(
+"/profile/security?error=Current password is incorrect"
+)
+
+}
 
 const samePassword =
-  await bcrypt.compare(
-    newPassword,
-    user.passwordHash
-  )
+await bcrypt.compare(
+newPassword,
+user.passwordHash
+)
 
-  const passwordHash =
-    await bcrypt.hash(
-      newPassword,
-      12
-    )
+if(samePassword){
 
-  await prisma.user.update({
+redirect(
+"/profile/security?error=New password must be different from current password"
+)
+
+}
+
+const passwordHash =
+await bcrypt.hash(
+newPassword,
+12
+)
+
+
+await prisma.user.update({
 
     where: {
       id: user.id
@@ -108,6 +122,31 @@ const samePassword =
   })
 
 
+await prisma.auditLog.create({
+
+data:{
+
+orgId:user.orgId,
+
+userId:user.id,
+
+action:"PASSWORD_UPDATED",
+
+entity:"User",
+
+entityId:user.id
+
+}
+
+})
+
+await prisma.session.deleteMany({
+
+where:{
+userId:user.id
+}
+
+})
   
 
   if (samePassword) {
@@ -136,7 +175,7 @@ export default async function SecurityPage({
   }
 }) {
 
-  const params = await searchParams
+  const params = searchParams
   const session = await auth()
 
   if (!session?.user?.id) {
@@ -156,11 +195,10 @@ export default async function SecurityPage({
 
     <div className="max-w-4xl mx-auto space-y-8">
 
-       <SecurityToast
-    error={searchParams.error}
-   success={searchParams.success}
-    
-  />
+     <SecurityToast
+  error={params.error}
+  success={params.success}
+/>
 
       <div>
 

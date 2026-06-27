@@ -2,9 +2,11 @@ import prisma from "@/shared/lib/prisma"
 
 export default async function Page(){
 
-const rows=
-
-await prisma.purchaseOrder.findMany()
+const rows = await prisma.purchaseOrder.findMany({
+  include: {
+    vendor: true,
+  },
+})
 
 return(
 
@@ -25,9 +27,9 @@ key={x.id}
 className="bg-white border rounded-2xl p-5 mb-4"
 >
 
-{x.vendor}
+{x.vendor.companyName}
 
-${x.amount}
+${x.total.toFixed(2)}
 
 </div>
 

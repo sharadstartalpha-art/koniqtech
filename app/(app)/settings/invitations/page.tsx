@@ -6,54 +6,61 @@ import { resend } from "@/shared/lib/resend"
 import { redirect } from "next/navigation"
 
 export default async function Page({
-  searchParams
-}:{
+  searchParams,
+}: {
   searchParams: Promise<{
     error?: string
   }>
 }) {
 
   const session = await auth()
+
+  if (!session?.user) {
+    redirect("/signin")
+  }
+
+  const orgId = (session.user as any).orgId
+
   const params = await searchParams
 
-  const orgId =
-    (session?.user as any)?.orgId
+  const roles = await prisma.organizationRole.findMany({
+    where: {
+      orgId,
+      active: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  })
 
-  const invitations =
-    await prisma.teamInvitation.findMany({
+  const invitations = await prisma.teamInvitation.findMany({
+    where: {
+      orgId,
+    },
+    include: {
+      role: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  })
 
-      where:{
-        orgId
-      },
+async function sendInvite(formData: FormData) {
+  "use server"
 
-      orderBy:{
-        createdAt:"desc"
-      }
+  const session = await auth()
 
-    })
+  if (!session?.user) {
+    redirect("/signin")
+  }
 
-  async function sendInvite(
-    formData:FormData
-  ){
+  const orgId = (session.user as any).orgId
 
-    "use server"
+  const email = String(formData.get("email"))
+  const roleId = String(formData.get("roleId"))
 
-    const session =
-      await auth()
-
-    const orgId =
-      (session?.user as any)?.orgId
-
-    if(!orgId) return
-
-    const email =
-      String(formData.get("email"))
-
-    const role =
-      formData.get("role") as any
-
-    const token =
-      randomUUID()
+  const token = randomUUID()
+  
 
       const existingUser =
   await prisma.user.findUnique({
@@ -90,27 +97,25 @@ if(existingInvite){
 }
 
     await prisma.teamInvitation.create({
-
-      data:{
-
-        orgId,
-
-        email,
-
-        role,
-
-        token,
-
-         expiresAt:new Date(
+  data: {
+    orgId,
+    email,
+    roleId,
+    invitedById: session.user.id!,
+    token,
+    expiresAt: new Date(
       Date.now() + 7 * 24 * 60 * 60 * 1000
-    )
-
-      }
-
-    })
-
+    ),
+  },
+})
     // TODO:
     // Send Resend email
+
+    const selectedRole = await prisma.organizationRole.findUnique({
+  where: {
+    id: roleId,
+  },
+})
 
 await resend.emails.send({
 
@@ -133,7 +138,7 @@ await resend.emails.send({
 
       <p>
         Role:
-        <strong>${role}</strong>
+        <strong>${selectedRole?.name ?? "Team Member"}</strong>
       </p>
 
       <p>
@@ -166,22 +171,23 @@ await resend.emails.send({
     )
   }
 
-  async function cancelInvite(
-    id:string
-  ){
+  async function cancelInvite(id: string) {
+  "use server"
 
-    "use server"
+  const session = await auth()
 
-    await prisma.teamInvitation.delete({
-
-      where:{ id }
-
-    })
-
-    revalidatePath(
-      "/settings/invitations"
-    )
+  if (!session?.user) {
+    redirect("/signin")
   }
+
+  await prisma.teamInvitation.delete({
+    where: {
+      id,
+    },
+  })
+
+  revalidatePath("/settings/invitations")
+}
 
   const pending =
     invitations.filter(
@@ -268,45 +274,19 @@ await resend.emails.send({
             "
           />
 
-          <select
-            name="role"
-            className="
-            h-12
-            border
-            rounded-xl
-            px-4
-            "
-          >
-
-            <option value="owner">
-              Owner
-            </option>
-
-            <option value="admin">
-              Admin
-            </option>
-
-            <option value="manager">
-              Manager
-            </option>
-
-            <option value="sales">
-              Sales
-            </option>
-
-            <option value="support">
-              Support
-            </option>
-
-            <option value="accountant">
-              Accountant
-            </option>
-
-            <option value="technician">
-              Technician
-            </option>
-
-          </select>
+         <select
+  name="roleId"
+  className="h-12 border rounded-xl px-4"
+>
+  {roles.map((role) => (
+    <option
+      key={role.id}
+      value={role.id}
+    >
+      {role.name}
+    </option>
+  ))}
+</select>
 
           <button
             className="
@@ -384,7 +364,7 @@ await resend.emails.send({
                 </td>
 
                 <td className="p-4 capitalize">
-                  {inv.role}
+                 {inv.role.name}
                 </td>
 
                 <td className="p-4">
@@ -494,7 +474,7 @@ await resend.emails.send({
                 </td>
 
                 <td className="p-4 capitalize">
-                  {inv.role}
+                 {inv.role.name}
                 </td>
 
                 <td className="p-4">

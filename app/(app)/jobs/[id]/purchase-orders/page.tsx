@@ -1,3 +1,4 @@
+import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import Link from "next/link"
@@ -10,10 +11,20 @@ export default async function Page({
 
   const { id } = await params
 
-  const orders =
-    await prisma.purchaseOrder.findMany({
-      where:{ jobId:id }
-    })
+  const [orders, vendors] = await Promise.all([
+  prisma.purchaseOrder.findMany({
+    where: { jobId: id },
+    include: {
+      vendor: true,
+    },
+  }),
+
+  prisma.vendor.findMany({
+    orderBy: {
+      companyName: "asc",
+    },
+  }),
+])
 
   async function createOrder(
     formData:FormData
@@ -21,15 +32,30 @@ export default async function Page({
 
     "use server"
 
-    await prisma.purchaseOrder.create({
+    const session = await auth()
 
-      data:{
-        jobId:id,
-        vendor:String(formData.get("vendor")),
-        amount:Number(formData.get("amount"))
-      }
+if (!session?.user?.orgId) {
+  throw new Error("Organization not found")
+}
 
-    })
+   await prisma.purchaseOrder.create({
+  data: {
+    orgId: session.user.orgId,
+    jobId: id,
+
+    vendorId: String(formData.get("vendorId")),
+
+    orderNumber: `PO-${Date.now()}`,
+
+    subtotal: Number(formData.get("subtotal")),
+    tax: 0,
+    discount: 0,
+    shipping: 0,
+    total: Number(formData.get("subtotal")),
+
+    status: "draft",
+  },
+})
 
     revalidatePath(
       `/jobs/${id}/purchase-orders`
@@ -49,14 +75,26 @@ export default async function Page({
         className="bg-white border rounded-3xl p-6 flex gap-4"
       >
 
-        <input
-          name="vendor"
-          placeholder="Vendor"
-          className="flex-1 h-14 border rounded-2xl px-4"
-        />
+        <select
+    name="vendorId"
+    className="flex-1 h-14 border rounded-2xl px-4"
+>
+    <option value="">
+        Select Vendor
+    </option>
+
+    {vendors.map((vendor) => (
+        <option
+            key={vendor.id}
+            value={vendor.id}
+        >
+            {vendor.companyName}
+        </option>
+    ))}
+</select>
 
         <input
-          name="amount"
+          name="subtotal"
           type="number"
           placeholder="Amount"
           className="w-48 h-14 border rounded-2xl px-4"
@@ -92,8 +130,8 @@ export default async function Page({
                 className="border-b"
               >
 
-                <td className="p-4">{order.vendor}</td>
-                <td className="p-4">${order.amount}</td>
+                <td className="p-4">{order.vendor.companyName}</td>
+                <td className="p-4">$${order.total.toFixed(2)}</td>
                 <td className="p-4">{order.status}</td>
 
                 <td className="p-4">

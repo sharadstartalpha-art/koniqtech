@@ -40,7 +40,7 @@ export default async function Page({
 
       data:{
         name:String(formData.get("name")),
-        qty:Number(formData.get("qty")),
+        quantity: String(formData.get("qty")),
         status:String(formData.get("status"))
       }
 
@@ -81,12 +81,13 @@ export default async function Page({
           className="w-full h-14 border rounded-2xl px-4"
         />
 
-        <input
-          name="qty"
-          type="number"
-          defaultValue={material.qty}
-          className="w-full h-14 border rounded-2xl px-4"
-        />
+       <input
+  name="qty"
+  type="number"
+  step="0.01"
+  defaultValue={material.quantity.toString()}
+  className="w-full h-14 border rounded-2xl px-4"
+/>
 
         <select
           name="status"

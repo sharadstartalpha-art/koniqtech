@@ -1,9 +1,10 @@
+import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { NextResponse } from "next/server"
 
 export async function GET(){
 
-const vehicles=
+const vehicles =
 await prisma.fleetVehicle.findMany()
 
 return NextResponse.json(
@@ -12,36 +13,46 @@ vehicles
 
 }
 
-export async function POST(req:Request){
+export async function POST(req: Request) {
 
-const body=
-await req.json()
+  const session = await auth()
 
-const vehicle=
-await prisma.fleetVehicle.create({
+  if (!session?.user?.orgId) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    )
+  }
 
-data:{
+  const body = await req.json()
 
-orgId:body.orgId,
+  const vehicle = await prisma.fleetVehicle.create({
+    data: {
+      orgId: session.user.orgId,
 
-name:body.name,
+      vehicleNumber: body.vehicleNumber,
 
-vin:body.vin,
+      name: body.name,
 
-gpsId:body.gpsId,
+      make: body.make,
 
-status:
-body.status
-??
+      model: body.model,
 
-"active"
+      year: body.year,
 
-}
+      vin: body.vin,
 
-})
+      registrationNumber: body.registrationNumber,
 
-return NextResponse.json(
-vehicle
-)
+      gpsDeviceId: body.gpsDeviceId, // <-- renamed
 
+      fuelType: body.fuelType,
+
+      odometer: body.odometer,
+
+      active: body.active ?? true,
+    },
+  })
+
+  return NextResponse.json(vehicle)
 }

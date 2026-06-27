@@ -93,7 +93,7 @@ className="border-t"
 
 <td>
 
-${sub.amount}
+${sub.amount.toFixed(2)}
 
 </td>
 

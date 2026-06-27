@@ -29,7 +29,7 @@ className="bg-white border rounded-2xl p-5 mb-4"
 
 Qty:
 
-{x.qty}
+{Number(x.quantity)}
 
 </div>
 

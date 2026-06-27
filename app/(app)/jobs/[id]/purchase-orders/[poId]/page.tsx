@@ -12,14 +12,24 @@ export default async function Page({
     poId
   } = await params
 
-  const order =
-    await prisma.purchaseOrder.findUnique({
-      where:{ id:poId }
-    })
+  const [order, vendors] = await Promise.all([
+  prisma.purchaseOrder.findUnique({
+    where: { id: poId },
+    include: {
+      vendor: true,
+    },
+  }),
 
-  if(!order){
-    notFound()
-  }
+  prisma.vendor.findMany({
+    orderBy: {
+      companyName: "asc",
+    },
+  }),
+])
+
+if (!order) {
+  notFound()
+}
 
   async function save(
     formData:FormData
@@ -33,11 +43,17 @@ export default async function Page({
         id:poId
       },
 
-      data:{
-        vendor:String(formData.get("vendor")),
-        amount:Number(formData.get("amount")),
-        status:String(formData.get("status"))
-      }
+      data: {
+  vendor: {
+    connect: {
+      id: String(formData.get("vendorId")),
+    },
+  },
+
+  subtotal: Number(formData.get("subtotal")),
+
+  status: String(formData.get("status")),
+}
 
     })
 
@@ -59,18 +75,28 @@ export default async function Page({
         className="bg-white border rounded-3xl p-8 space-y-5"
       >
 
-        <input
-          name="vendor"
-          defaultValue={order.vendor}
-          className="w-full h-14 border rounded-2xl px-4"
-        />
+        <select
+  name="vendorId"
+  defaultValue={order.vendorId}
+  className="w-full h-14 border rounded-2xl px-4"
+>
+  {vendors.map((vendor) => (
+    <option
+      key={vendor.id}
+      value={vendor.id}
+    >
+      {vendor.companyName}
+    </option>
+  ))}
+</select>
 
-        <input
-          name="amount"
-          type="number"
-          defaultValue={order.amount}
-          className="w-full h-14 border rounded-2xl px-4"
-        />
+       <input
+  name="subtotal"
+  type="number"
+  step="0.01"
+  defaultValue={order.subtotal}
+  className="w-full h-14 border rounded-2xl px-4"
+/>
 
         <select
           name="status"

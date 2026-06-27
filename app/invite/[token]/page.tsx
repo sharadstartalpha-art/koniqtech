@@ -1,6 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
+import { UserRole } from "@prisma/client"
 
 export default async function Page({
   params
@@ -10,6 +11,8 @@ export default async function Page({
   }>
 }){
 
+
+  
   const { token } =
     await params
 
@@ -52,27 +55,44 @@ export default async function Page({
         10
       )
 
-    await prisma.user.create({
 
-      data:{
+      const roleMap: Record<string, UserRole> = {
+  owner: UserRole.owner,
+  admin: UserRole.admin,
+  manager: UserRole.manager,
+  sales: UserRole.sales,
+  technician: UserRole.technician,
+  support: UserRole.support,
+  accountant: UserRole.accountant,
+  super_admin: UserRole.super_admin,
+}
 
-        orgId:
-          validInvitation.orgId,
+const orgRole = await prisma.organizationRole.findUnique({
+  where: {
+    id: validInvitation.roleId,
+  },
+})
 
-        name,
+if (!orgRole) {
+  throw new Error("Role not found")
+}
 
-        email:
-          validInvitation.email,
+   await prisma.user.create({
+  data: {
+    orgId: validInvitation.orgId,
 
-        passwordHash:
-          hash,
+    name,
 
-        role:
-          validInvitation.role
+    email: validInvitation.email,
 
-      }
+    passwordHash: hash,
 
-    })
+    role: roleMap[orgRole.name] ?? UserRole.sales,
+
+    organizationRoleId: validInvitation.roleId,
+  },
+})
+
 
     await prisma.teamInvitation.update({
 

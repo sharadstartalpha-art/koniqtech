@@ -27,7 +27,7 @@ export default async function Page({
       data:{
         jobId:id,
         name:String(formData.get("name")),
-        qty:Number(formData.get("qty"))
+        quantity: String(formData.get("qty")),
       }
 
     })
@@ -93,7 +93,7 @@ export default async function Page({
 
                 <td className="p-4">{material.name}</td>
 
-                <td className="p-4">{material.qty}</td>
+                <td className="p-4">{material.quantity.toString()}</td>
 
                 <td className="p-4 capitalize">
                   {material.status}

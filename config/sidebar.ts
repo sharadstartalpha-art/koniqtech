@@ -343,7 +343,7 @@ export const MENU: MenuSection[] = [
     href:"/settings/branding",
     icon:Palette
   },
-  
+ 
   {
     label:"Invitations",
     href:"/settings/invitations",

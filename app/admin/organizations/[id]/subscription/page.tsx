@@ -64,7 +64,7 @@ Status:
 
 Amount:
 
-${s.amount}
+${s.amount.toFixed(2)}
 
 </p>
 

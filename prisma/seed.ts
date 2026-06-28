@@ -562,31 +562,41 @@ async function main() {
   ==========================================================
   */
 
-  await prisma.organizationSettings.upsert({
-    where: {
-      orgId: organization.id,
+  /*
+==========================================================
+ORGANIZATION SETTINGS
+==========================================================
+*/
+
+await prisma.organizationSettings.upsert({
+  where: {
+    orgId: organization.id,
+  },
+  update: {},
+  create: {
+    orgId: organization.id,
+
+    timezone: "Asia/Kolkata",
+
+    currency: "USD",
+
+    branding: {
+      companyName: "KoniqTech",
+      logo: "",
+      primaryColor: "#2563EB",
+      secondaryColor: "#0F172A",
     },
-    update: {},
-    create: {
-      orgId: organization.id,
 
-      companyName: organization.name,
-
-      companyEmail: organization.email,
-
-      companyPhone: organization.phone,
-
-      timezone: "Asia/Kolkata",
-
-      currency: "USD",
-
-      language: "en",
+    integrations: {
+      paypal: false,
+      twilio: false,
+      resend: false,
+      openai: false,
     },
-  }).catch(() => {
-    console.log("OrganizationSettings skipped.");
-  });
+  },
+});
 
-  console.log("✓ Organization Settings");
+console.log("✓ Organization Settings created");
 
   /*
   ==========================================================

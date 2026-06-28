@@ -716,10 +716,12 @@ enum UserRole {
   owner
   admin
   manager
+  marketing
   sales
   technician
   support
   accountant
+  data_entry
   super_admin
 }
 

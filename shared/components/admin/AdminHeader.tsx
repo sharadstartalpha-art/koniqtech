@@ -170,53 +170,12 @@ export default function AdminHeader() {
             "
           />
 
-          <div
-            className="
-              absolute
-              right-3
-              top-2.5
-              flex
-              items-center
-              gap-1
-              rounded-lg
-              border
-              bg-white
-              px-2
-              py-1
-              text-xs
-              text-slate-500
-              dark:border-slate-700
-              dark:bg-slate-800
-            "
-          >
-            <Command size={13} />
-            K
-          </div>
+         
 
         </div>
 
         <div className="flex items-center gap-2">
 
-         
-
-                    <button
-            className="
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              border
-              hover:bg-orange-50
-              dark:border-slate-700
-              dark:hover:bg-slate-800
-            "
-          >
-            <Sparkles size={18} />
-          </button>
-
-          
           <NotificationDropdown
             open={notificationOpen}
             setOpen={setNotificationOpen}

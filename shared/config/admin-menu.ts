@@ -1,927 +1,1021 @@
 import {
+  LayoutDashboard,
 
-LayoutDashboard,
+  Building2,
+  Building,
 
-Building2,
+  Users,
+  UserCog,
+  UserPlus,
 
-Users,
+  Layers,
 
-UserCog,
+  ShieldCheck,
 
-Building,
+  CreditCard,
+  Receipt,
+  CircleDollarSign,
+  BadgeDollarSign,
 
-Layers,
+  ClipboardList,
+  Briefcase,
 
-Briefcase,
+  Target,
+  Presentation,
 
-ShieldCheck,
+  Megaphone,
+  Mail,
+  MessageSquare,
 
-UserPlus,
+  LifeBuoy,
+  BookOpen,
 
-CreditCard,
+  Truck,
+  Car,
+  Package,
+  Warehouse,
+  Boxes,
+  ShoppingCart,
+  Wrench,
 
-Receipt,
+  Brain,
+  Bot,
+  Cpu,
+  FileSearch,
 
-CircleDollarSign,
+  BarChart3,
+  TrendingUp,
+  PieChart,
 
-FileText,
+  Activity,
+  History,
+  ScrollText,
 
-BadgeDollarSign,
+  FileText,
 
-Target,
+  Database,
 
-Presentation,
+  KeyRound,
+  Webhook,
 
-ClipboardList,
+  Settings,
+  Palette,
+  Shield,
+  PlugZap,
 
-LucideIcon,
+  HardDrive,
+  Server,
 
-MessageSquare,
-Mail,
-LifeBuoy,
-BookOpen,
-Megaphone,
-Truck,
-Package,
-Car,
-Warehouse,
-Boxes,
-ShoppingCart,
-Wrench,
-Brain,
-Bot,
-Cpu,
-FileSearch,
-
-BarChart3,
-TrendingUp,
-PieChart,
-
-Activity,
-History,
-ScrollText,
-KeyRound,
-Webhook,
-
-Settings,
-Palette,
-Shield,
-PlugZap,
-HardDrive,
-Server
-
+  LucideIcon,
 } from "lucide-react"
 
-export interface AdminMenuItem{
+/* ===========================================================
+   TYPES
+=========================================================== */
 
-label:string
+export interface AdminMenuItem {
+  label: string
 
-href?:string
+  href?: string
 
-icon:LucideIcon
+  icon: LucideIcon
 
-badge?:string
+  badge?: string
 
-roles?:string[]
-
-children?:AdminMenuItem[]
-
+  children?: AdminMenuItem[]
 }
 
-export interface AdminMenuSection{
+export interface AdminMenuSection {
+  title: string
 
-title:string
-
-items:AdminMenuItem[]
-
+  items: AdminMenuItem[]
 }
 
-export const ADMIN_MENU:AdminMenuSection[]=[
+/* ===========================================================
+   ROLE KEYS
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Dashboard */
-/* -------------------------------------------------- */
+export const ROLE = {
+  SUPER_ADMIN: "super_admin",
 
-{
+  PLATFORM_MANAGER: "manager",
 
-title:"Dashboard",
+  SALES: "sales",
 
-items:[
+  MARKETING: "marketing",
 
-{
+  ACCOUNTANT: "accountant",
 
-label:"Dashboard",
+  SUPPORT: "support",
 
-href:"/admin/dashboard",
+  DATA_ENTRY: "data_entry",
+} as const
 
-icon:LayoutDashboard
+export type AdminRole =
+  (typeof ROLE)[keyof typeof ROLE]
 
+/* ===========================================================
+   COMMON MENU ITEMS
+=========================================================== */
+
+const Dashboard: AdminMenuItem = {
+  label: "Dashboard",
+  href: "/admin/dashboard",
+  icon: LayoutDashboard,
 }
+
+const Organizations: AdminMenuItem = {
+  label: "Organizations",
+  href: "/admin/organizations",
+  icon: Building2,
+}
+
+const Employees: AdminMenuItem = {
+  label: "Employees",
+  href: "/admin/employees",
+  icon: Users,
+}
+
+const Departments: AdminMenuItem = {
+  label: "Departments",
+  href: "/admin/departments",
+  icon: Building,
+}
+
+const Teams: AdminMenuItem = {
+  label: "Teams",
+  href: "/admin/teams",
+  icon: Layers,
+}
+
+const Roles: AdminMenuItem = {
+  label: "Roles",
+  href: "/admin/roles",
+  icon: ShieldCheck,
+}
+
+const Attendance: AdminMenuItem = {
+  label: "Attendance",
+  href: "/admin/attendance",
+  icon: ClipboardList,
+}
+
+const Payroll: AdminMenuItem = {
+  label: "Payroll",
+  href: "/admin/payroll",
+  icon: BadgeDollarSign,
+}
+
+const Companies: AdminMenuItem = {
+  label: "Companies",
+  href: "/admin/companies",
+  icon: Building2,
+}
+
+const Leads: AdminMenuItem = {
+  label: "Leads",
+  href: "/admin/leads",
+  icon: Target,
+}
+
+const DemoRequests: AdminMenuItem = {
+  label: "Demo Requests",
+  href: "/admin/demos",
+  icon: Presentation,
+  badge: "NEW",
+}
+
+const Campaigns: AdminMenuItem = {
+  label: "Campaigns",
+  href: "/admin/campaigns",
+  icon: Megaphone,
+}
+
+const EmailCenter: AdminMenuItem = {
+  label: "Email Center",
+  href: "/admin/email-center",
+  icon: Mail,
+}
+
+const Newsletter: AdminMenuItem = {
+  label: "Newsletter",
+  href: "/admin/newsletter",
+  icon: Mail,
+}
+
+const Templates: AdminMenuItem = {
+  label: "Templates",
+  href: "/admin/email-templates",
+  icon: FileText,
+}
+
+const Subscriptions: AdminMenuItem = {
+  label: "Subscriptions",
+  href: "/admin/subscriptions",
+  icon: CreditCard,
+}
+
+const Plans: AdminMenuItem = {
+  label: "Plans",
+  href: "/admin/plans",
+  icon: BadgeDollarSign,
+}
+
+const Coupons: AdminMenuItem = {
+  label: "Coupons",
+  href: "/admin/coupons",
+  icon: Receipt,
+}
+
+const Invoices: AdminMenuItem = {
+  label: "Invoices",
+  href: "/admin/invoices",
+  icon: Receipt,
+}
+
+const Transactions: AdminMenuItem = {
+  label: "Transactions",
+  href: "/admin/transactions",
+  icon: CircleDollarSign,
+}
+
+/* ===========================================================
+   PART 2 CONTINUES HERE
+=========================================================== */
+
+/* ===========================================================
+   SUPER ADMIN MENU
+=========================================================== */
+
+export const SUPER_ADMIN_MENU: AdminMenuSection[] = [
+
+  /* ------------------------------------------------------ */
+  /* Dashboard */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Dashboard",
+
+    items: [
+      Dashboard,
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Platform */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Platform",
+
+    items: [
+
+      Organizations,
+
+      Subscriptions,
+
+      Plans,
+
+      Coupons,
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* People */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "People",
+
+    items: [
+
+      Employees,
+
+      Departments,
+
+      Teams,
+
+      Roles,
+
+      Attendance,
+
+      Payroll,
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Sales */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Sales",
+
+    items: [
+
+      Companies,
+
+      Leads,
+
+      DemoRequests,
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Operations */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Operations",
+
+    items: [
+
+      {
+        label: "Vendors",
+        href: "/admin/vendors",
+        icon: Truck,
+      },
+
+      {
+        label: "Fleet",
+        href: "/admin/fleet",
+        icon: Car,
+      },
+
+      {
+        label: "Assets",
+        href: "/admin/assets",
+        icon: Package,
+      },
+
+      {
+        label: "Warehouse",
+        href: "/admin/warehouse",
+        icon: Warehouse,
+      },
+
+      {
+        label: "Inventory",
+        href: "/admin/inventory",
+        icon: Boxes,
+      },
+
+      {
+        label: "Purchase Orders",
+        href: "/admin/purchase-orders",
+        icon: ShoppingCart,
+      },
+
+      {
+        label: "Asset Maintenance",
+        href: "/admin/asset-maintenance",
+        icon: Wrench,
+      },
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Artificial Intelligence */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Artificial Intelligence",
+
+    items: [
+
+      {
+        label: "AI Dashboard",
+        href: "/admin/ai",
+        icon: Brain,
+      },
+
+      {
+        label: "AI Agents",
+        href: "/admin/ai/agents",
+        icon: Bot,
+      },
+
+      {
+        label: "AI Usage",
+        href: "/admin/ai/usage",
+        icon: Cpu,
+      },
+
+      {
+        label: "AI Logs",
+        href: "/admin/ai/logs",
+        icon: FileSearch,
+      },
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Analytics */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Analytics",
+
+    items: [
+
+      {
+        label: "Revenue",
+        href: "/admin/analytics/revenue",
+        icon: BarChart3,
+      },
+
+      {
+        label: "Customers",
+        href: "/admin/analytics/customers",
+        icon: Users,
+      },
+
+      {
+        label: "Growth",
+        href: "/admin/analytics/growth",
+        icon: TrendingUp,
+      },
+
+      {
+        label: "Reports",
+        href: "/admin/reports",
+        icon: PieChart,
+      },
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* System */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "System",
+
+    items: [
+
+      {
+        label: "Monitoring",
+        href: "/admin/monitoring",
+        icon: Activity,
+      },
+
+      {
+        label: "Logs",
+        href: "/admin/platform-logs",
+        icon: ScrollText,
+      },
+
+      {
+        label: "Activity Timeline",
+        href: "/admin/activity",
+        icon: History,
+      },
+
+      {
+        label: "Database",
+        href: "/admin/database",
+        icon: Database,
+      },
+
+      {
+        label: "API Keys",
+        href: "/admin/api-keys",
+        icon: KeyRound,
+      },
+
+      {
+        label: "Webhooks",
+        href: "/admin/webhooks",
+        icon: Webhook,
+      },
+
+    ],
+  },
+
+  /* ------------------------------------------------------ */
+  /* Settings */
+  /* ------------------------------------------------------ */
+
+  {
+    title: "Settings",
+
+    items: [
+
+      {
+        label: "General",
+        href: "/admin/settings",
+        icon: Settings,
+      },
+
+      {
+        label: "Branding",
+        href: "/admin/settings/branding",
+        icon: Palette,
+      },
+
+      {
+        label: "Email",
+        href: "/admin/settings/email",
+        icon: Mail,
+      },
+
+      {
+        label: "Security",
+        href: "/admin/settings/security",
+        icon: Shield,
+      },
+
+      {
+        label: "Integrations",
+        href: "/admin/settings/integrations",
+        icon: PlugZap,
+      },
+
+      {
+        label: "Storage",
+        href: "/admin/settings/storage",
+        icon: HardDrive,
+      },
+
+      {
+        label: "System",
+        href: "/admin/settings/system",
+        icon: Server,
+      },
+
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   PART 3 CONTINUES HERE
+=========================================================== */
+/* ===========================================================
+   PLATFORM MANAGER MENU
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Platform */
-/* -------------------------------------------------- */
+export const PLATFORM_MANAGER_MENU: AdminMenuSection[] = [
 
-{
+  /* ------------------------------------------------------ */
+  /* Dashboard */
+  /* ------------------------------------------------------ */
 
-title:"Platform",
+  {
+    title: "Dashboard",
 
-items:[
+    items: [
+      Dashboard,
+    ],
+  },
 
-{
+  /* ------------------------------------------------------ */
+  /* Platform */
+  /* ------------------------------------------------------ */
 
-label:"Organizations",
+  {
+    title: "Platform",
 
-href:"/admin/organizations",
+    items: [
 
-icon:Building2
+      Organizations,
 
-},
+      Subscriptions,
 
-{
+      Plans,
 
-label:"Employees",
+    ],
+  },
 
-href:"/admin/employees",
+  /* ------------------------------------------------------ */
+  /* People */
+  /* ------------------------------------------------------ */
 
-icon:Users,
+  {
+    title: "People",
 
-children:[
+    items: [
 
-{
+      Employees,
 
-label:"All Employees",
+      Departments,
 
-href:"/admin/employees",
+      Teams,
 
-icon:Users
+      Roles,
 
-},
+      Attendance,
 
-{
+      Payroll,
 
-label:"Departments",
+    ],
+  },
 
-href:"/admin/employees/departments",
+  /* ------------------------------------------------------ */
+  /* Sales */
+  /* ------------------------------------------------------ */
 
-icon:Building
+  {
+    title: "Sales",
 
-},
+    items: [
 
-{
+      Companies,
 
-label:"Teams",
+      Leads,
 
-href:"/admin/employees/teams",
+      DemoRequests,
 
-icon:Layers
+    ],
+  },
 
-},
+  /* ------------------------------------------------------ */
+  /* Operations */
+  /* ------------------------------------------------------ */
 
-{
+  {
+    title: "Operations",
 
-label:"Attendance",
+    items: [
 
-href:"/admin/employees/attendance",
+      {
+        label: "Vendors",
+        href: "/admin/vendors",
+        icon: Truck,
+      },
 
-icon:ClipboardList
+      {
+        label: "Fleet",
+        href: "/admin/fleet",
+        icon: Car,
+      },
 
-},
+      {
+        label: "Assets",
+        href: "/admin/assets",
+        icon: Package,
+      },
 
-{
+      {
+        label: "Warehouse",
+        href: "/admin/warehouse",
+        icon: Warehouse,
+      },
 
-label:"Leaves",
+      {
+        label: "Inventory",
+        href: "/admin/inventory",
+        icon: Boxes,
+      },
 
-href:"/admin/employees/leaves",
+      {
+        label: "Purchase Orders",
+        href: "/admin/purchase-orders",
+        icon: ShoppingCart,
+      },
 
-icon:Briefcase
+      {
+        label: "Asset Maintenance",
+        href: "/admin/asset-maintenance",
+        icon: Wrench,
+      },
 
-},
+    ],
+  },
 
-{
+  /* ------------------------------------------------------ */
+  /* Analytics */
+  /* ------------------------------------------------------ */
 
-label:"Payroll",
+  {
+    title: "Analytics",
 
-href:"/admin/employees/payroll",
+    items: [
 
-icon:BadgeDollarSign
+      {
+        label: "Revenue",
+        href: "/admin/analytics/revenue",
+        icon: BarChart3,
+      },
 
-},
+      {
+        label: "Customers",
+        href: "/admin/analytics/customers",
+        icon: Users,
+      },
 
-{
+      {
+        label: "Growth",
+        href: "/admin/analytics/growth",
+        icon: TrendingUp,
+      },
 
-label:"Performance",
+      {
+        label: "Reports",
+        href: "/admin/reports",
+        icon: PieChart,
+      },
 
-href:"/admin/employees/performance",
-
-icon:Target
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   PART 4 CONTINUES HERE
+=========================================================== */
+/* ===========================================================
+   SALES MENU
+=========================================================== */
 
-{
+export const SALES_MENU: AdminMenuSection[] = [
 
-label:"Roles",
+  {
+    title: "Dashboard",
 
-href:"/admin/roles",
+    items: [
+      Dashboard,
+    ],
+  },
 
-icon:ShieldCheck
+  {
+    title: "Sales",
 
-},
+    items: [
 
-{
+      Companies,
 
-label:"Invitations",
+      Leads,
 
-href:"/admin/invitations",
+      DemoRequests,
 
-icon:UserPlus
+    ],
+  },
 
-}
+  {
+    title: "Marketing",
 
-]
+    items: [
 
-},
+      Campaigns,
 
-/* -------------------------------------------------- */
-/* CRM Products */
-/* -------------------------------------------------- */
+      EmailCenter,
 
-{
+      Newsletter,
 
-title:"CRM Products",
+      Templates,
 
-items:[
-
-{
-
-label:"Roofing CRM",
-
-href:"/admin/products/roofing",
-
-icon:Building2
-
-},
-
-{
-
-label:"HVAC CRM",
-
-href:"/admin/products/hvac",
-
-icon:Building
-
-},
-
-{
-
-label:"Plumbing CRM",
-
-href:"/admin/products/plumbing",
-
-icon:Layers
-
-},
-
-{
-
-label:"Landscaping CRM",
-
-href:"/admin/products/landscaping",
-
-icon:Briefcase
-
-},
-
-{
-
-label:"Construction CRM",
-
-href:"/admin/products/construction",
-
-icon:Building2
-
-},
-
-{
-
-label:"Cleaning CRM",
-
-href:"/admin/products/cleaning",
-
-icon:ClipboardList
-
-},
-
-{
-
-label:"Electrical CRM",
-
-href:"/admin/products/electrical",
-
-icon:ShieldCheck
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   MARKETING MENU
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Billing */
-/* -------------------------------------------------- */
+export const MARKETING_MENU: AdminMenuSection[] = [
 
-{
+  {
+    title: "Dashboard",
 
-title:"Billing",
+    items: [
+      Dashboard,
+    ],
+  },
 
-items:[
+  {
+    title: "Marketing",
 
-{
+    items: [
 
-label:"Plans",
+      Campaigns,
 
-href:"/admin/plans",
+      EmailCenter,
 
-icon:CreditCard
+      Newsletter,
 
-},
+      Templates,
 
-{
+    ],
+  },
 
-label:"Subscriptions",
+  {
+    title: "Communication",
 
-href:"/admin/subscriptions",
+    items: [
 
-icon:BadgeDollarSign
+      {
+        label: "SMS Queue",
+        href: "/admin/sms-queue",
+        icon: MessageSquare,
+      },
 
-},
+      {
+        label: "Email Queue",
+        href: "/admin/email-queue",
+        icon: Mail,
+      },
 
-{
-
-label:"Invoices",
-
-href:"/admin/invoices",
-
-icon:Receipt
-
-},
-
-{
-
-label:"Transactions",
-
-href:"/admin/transactions",
-
-icon:CircleDollarSign
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   PART 5 CONTINUES HERE
+=========================================================== */
+/* ===========================================================
+   ACCOUNTANT MENU
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Sales */
-/* -------------------------------------------------- */
+export const ACCOUNTANT_MENU: AdminMenuSection[] = [
 
-{
+  {
+    title: "Dashboard",
 
-title:"Sales",
+    items: [
+      Dashboard,
+    ],
+  },
 
-items:[
+  {
+    title: "Billing",
 
-{
+    items: [
 
-label:"Leads",
+      Subscriptions,
 
-href:"/admin/leads",
+      Plans,
 
-icon:Target
+      Invoices,
 
-},
+      Transactions,
 
-{
+    ],
+  },
 
-label:"Companies",
+  {
+    title: "Payroll",
 
-href:"/admin/companies",
+    items: [
 
-icon:Building2
+      Payroll,
 
-},
+    ],
+  },
 
-{
+  {
+    title: "Reports",
 
-label:"Demo Requests",
+    items: [
 
-href:"/admin/demos",
+      {
+        label: "Revenue Reports",
+        href: "/admin/reports/revenue",
+        icon: BarChart3,
+      },
 
-icon:Presentation,
+      {
+        label: "Financial Reports",
+        href: "/admin/reports/financial",
+        icon: PieChart,
+      },
 
-badge:"NEW"
+      {
+        label: "Invoices",
+        href: "/admin/reports/invoices",
+        icon: Receipt,
+      },
 
-},
-
-{
-
-label:"Opportunities",
-
-href:"/admin/opportunities",
-
-icon:BadgeDollarSign
-
-},
-
-{
-
-label:"Contracts",
-
-href:"/admin/contracts",
-
-icon:FileText
-
-}
-
-]
-
-},
-
-/* -------------------------------------------------- */
-/* Marketing */
-/* -------------------------------------------------- */
-
-{
-
-title:"Marketing",
-
-items:[
-
-{
-
-label:"Campaigns",
-
-href:"/admin/campaigns",
-
-icon:Target
-
-},
-
-{
-
-label:"Email Queue",
-
-href:"/admin/email-queue",
-
-icon:FileText
-
-},
-
-{
-
-label:"SMS Queue",
-
-href:"/admin/sms-queue",
-
-icon:MessageSquare
-
-},
-
-{
-
-label:"Newsletter",
-
-href:"/admin/newsletter",
-
-icon:Mail
-
-},
-
-{
-
-label:"Templates",
-
-href:"/admin/email-templates",
-
-icon:FileText
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   SUPPORT MENU
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Support */
-/* -------------------------------------------------- */
+export const SUPPORT_MENU: AdminMenuSection[] = [
 
-{
+  {
+    title: "Dashboard",
 
-title:"Support",
+    items: [
+      Dashboard,
+    ],
+  },
 
-items:[
+  {
+    title: "Organizations",
 
-{
+    items: [
 
-label:"Support Tickets",
+      Organizations,
 
-href:"/admin/support",
+    ],
+  },
 
-icon:LifeBuoy,
+  {
+    title: "Support",
 
-badge:"12"
+    items: [
 
-},
+      {
+        label: "Tickets",
+        href: "/admin/support",
+        icon: LifeBuoy,
+      },
 
-{
+      {
+        label: "Knowledge Base",
+        href: "/admin/knowledge",
+        icon: BookOpen,
+      },
 
-label:"Knowledge Base",
+      {
+        label: "Announcements",
+        href: "/admin/announcements",
+        icon: Megaphone,
+      },
 
-href:"/admin/knowledge",
-
-icon:BookOpen
-
-},
-
-{
-
-label:"Live Chat",
-
-href:"/admin/chat",
-
-icon:MessageSquare
-
-},
-
-{
-
-label:"Announcements",
-
-href:"/admin/announcements",
-
-icon:Megaphone
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   DATA ENTRY MENU
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* Operations */
-/* -------------------------------------------------- */
+export const DATA_ENTRY_MENU: AdminMenuSection[] = [
 
-{
+  {
+    title: "Dashboard",
 
-title:"Operations",
+    items: [
+      Dashboard,
+    ],
+  },
 
-items:[
+  {
+    title: "Platform",
 
-{
+    items: [
 
-label:"Vendors",
+      Organizations,
 
-href:"/admin/vendors",
+    ],
+  },
 
-icon:Truck
+  {
+    title: "Sales",
 
-},
+    items: [
 
-{
+      Companies,
 
-label:"Assets",
+      Leads,
 
-href:"/admin/assets",
-
-icon:Package
-
-},
-
-{
-
-label:"Fleet",
-
-href:"/admin/fleet",
-
-icon:Car
-
-},
-
-{
-
-label:"Warehouse",
-
-href:"/admin/warehouse",
-
-icon:Warehouse
-
-},
-
-{
-
-label:"Inventory",
-
-href:"/admin/inventory",
-
-icon:Boxes
-
-},
-
-{
-
-label:"Purchase Orders",
-
-href:"/admin/purchase-orders",
-
-icon:ShoppingCart
-
-},
-
-{
-
-label:"Asset Maintenance",
-
-href:"/admin/asset-maintenance",
-
-icon:Wrench
-
-}
+    ],
+  },
 
 ]
 
-},
+/* ===========================================================
+   MENU BY ROLE
+=========================================================== */
 
-/* -------------------------------------------------- */
-/* AI */
-/* -------------------------------------------------- */
+export const MENU_BY_ROLE: Record<
+  AdminRole,
+  AdminMenuSection[]
+> = {
 
-{
+  [ROLE.SUPER_ADMIN]:
+    SUPER_ADMIN_MENU,
 
-title:"Artificial Intelligence",
+  [ROLE.PLATFORM_MANAGER]:
+    PLATFORM_MANAGER_MENU,
 
-items:[
+  [ROLE.SALES]:
+    SALES_MENU,
 
-{
+  [ROLE.MARKETING]:
+    MARKETING_MENU,
 
-label:"AI Dashboard",
+  [ROLE.ACCOUNTANT]:
+    ACCOUNTANT_MENU,
 
-href:"/admin/ai",
+  [ROLE.SUPPORT]:
+    SUPPORT_MENU,
 
-icon:Brain
-
-},
-
-{
-
-label:"AI Agents",
-
-href:"/admin/ai/agents",
-
-icon:Bot
-
-},
-
-{
-
-label:"AI Usage",
-
-href:"/admin/ai/usage",
-
-icon:Cpu
-
-},
-
-{
-
-label:"AI Logs",
-
-href:"/admin/ai/logs",
-
-icon:FileSearch
+  [ROLE.DATA_ENTRY]:
+    DATA_ENTRY_MENU,
 
 }
-
-]
-
-},
-
-/* -------------------------------------------------- */
-/* Analytics */
-/* -------------------------------------------------- */
-
-{
-
-title:"Analytics",
-
-items:[
-
-{
-
-label:"Revenue",
-
-href:"/admin/analytics/revenue",
-
-icon:BarChart3
-
-},
-
-{
-
-label:"Customers",
-
-href:"/admin/analytics/customers",
-
-icon:Users
-
-},
-
-{
-
-label:"Growth",
-
-href:"/admin/analytics/growth",
-
-icon:TrendingUp
-
-},
-
-{
-
-label:"Reports",
-
-href:"/admin/reports",
-
-icon:PieChart
-
-}
-
-]
-
-},
-
-/* -------------------------------------------------- */
-/* Platform */
-/* -------------------------------------------------- */
-
-{
-
-title:"Platform",
-
-items:[
-
-{
-
-label:"Monitoring",
-
-href:"/admin/monitoring",
-
-icon:Activity
-
-},
-
-{
-
-label:"Audit Logs",
-
-href:"/admin/audit",
-
-icon:ShieldCheck
-
-},
-
-{
-
-label:"Activity Timeline",
-
-href:"/admin/activity",
-
-icon:History
-
-},
-
-{
-
-label:"Platform Logs",
-
-href:"/admin/platform-logs",
-
-icon:ScrollText
-
-},
-
-{
-
-label:"API Keys",
-
-href:"/admin/api-keys",
-
-icon:KeyRound
-
-},
-
-{
-
-label:"Webhooks",
-
-href:"/admin/webhooks",
-
-icon:Webhook
-
-}
-
-]
-
-},
-
-/* -------------------------------------------------- */
-/* Settings */
-/* -------------------------------------------------- */
-
-{
-
-title:"Settings",
-
-items:[
-
-{
-
-label:"General",
-
-href:"/admin/settings",
-
-icon:Settings
-
-},
-
-{
-
-label:"Branding",
-
-href:"/admin/settings/branding",
-
-icon:Palette
-
-},
-
-{
-
-label:"Email",
-
-href:"/admin/settings/email",
-
-icon:Mail
-
-},
-
-{
-
-label:"Security",
-
-href:"/admin/settings/security",
-
-icon:Shield
-
-},
-
-{
-
-label:"Integrations",
-
-href:"/admin/settings/integrations",
-
-icon:PlugZap
-
-},
-
-{
-
-label:"Storage",
-
-href:"/admin/settings/storage",
-
-icon:HardDrive
-
-},
-
-{
-
-label:"System",
-
-href:"/admin/settings/system",
-
-icon:Server
-
-}
-
-]
-
-}
-
-]

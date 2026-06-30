@@ -16,12 +16,10 @@ import { getSession } from "next-auth/react"
 import clsx from "clsx"
 
 import {
-  Search,
   ChevronRight,
   ChevronDown,
   Building2,
-  Command,
-} from "lucide-react"
+  } from "lucide-react"
 
 import SidebarFooter from "./SidebarFooter"
 
@@ -56,10 +54,7 @@ export default function AdminSidebar() {
   const [user, setUser] =
     useState<SidebarUser>({})
 
-  const [search, setSearch] =
-    useState("")
-
-  const [loading, setLoading] =
+    const [loading, setLoading] =
     useState(true)
 
   const [expanded, setExpanded] =
@@ -99,16 +94,7 @@ const [collapsed, setCollapsed] =
 
   }
 
-  const savedSearch =
-    localStorage.getItem(
-      "admin-sidebar-search"
-    )
-
-  if (savedSearch) {
-
-    setSearch(savedSearch)
-
-  }
+  
 
 }, [])
 
@@ -200,58 +186,7 @@ useEffect(() => {
     MENU_BY_ROLE[role] ??
     MENU_BY_ROLE[ROLE.SUPER_ADMIN]
 
-  /* ========================================================
-     PART 2 CONTINUES HERE
-  ======================================================== */
-
-    /* ==========================================================
-     SEARCH FILTER
-  ========================================================== */
-
-  const filteredSections = useMemo(() => {
-
-    if (!search.trim()) {
-      return sections
-    }
-
-    const q = search.toLowerCase()
-
-    return sections
-      .map((section) => {
-
-        const items = section.items.filter((item) => {
-
-          if (
-            item.label
-              .toLowerCase()
-              .includes(q)
-          ) {
-            return true
-          }
-
-          return (
-            item.children?.some((child) =>
-              child.label
-                .toLowerCase()
-                .includes(q)
-            ) ?? false
-          )
-
-        })
-
-        return {
-          ...section,
-          items,
-        }
-
-      })
-      .filter(
-        (section) =>
-          section.items.length > 0
-      )
-
-  }, [sections, search])
-
+ 
   /* ==========================================================
      EXPAND / COLLAPSE
   ========================================================== */
@@ -274,48 +209,7 @@ useEffect(() => {
 
   }
 
-  /* ==========================================================
-     KEYBOARD SHORTCUT
-     CTRL + K
-  ========================================================== */
-
-  useEffect(() => {
-
-    function onKeyDown(
-      e: KeyboardEvent
-    ) {
-
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.key.toLowerCase() === "k"
-      ) {
-
-        e.preventDefault()
-
-        const input =
-          document.getElementById(
-            "sidebar-search"
-          ) as HTMLInputElement | null
-
-        input?.focus()
-
-      }
-
-    }
-
-    window.addEventListener(
-      "keydown",
-      onKeyDown
-    )
-
-    return () =>
-
-      window.removeEventListener(
-        "keydown",
-        onKeyDown
-      )
-
-  }, [])
+ 
 
   /* ==========================================================
      OPEN GROUP OF ACTIVE PAGE
@@ -487,176 +381,25 @@ useEffect(() => {
 
       </div>
 
-      {/* ===============================================
-          WORKSPACE CARD
-      =============================================== */}
+      
 
-      <div className="px-5 pt-5">
-
-        <div
-          className="
-            rounded-2xl
-            bg-gradient-to-r
-            from-orange-500
-            to-orange-600
-            p-5
-            text-white
-            shadow-lg
-          "
-        >
-
-          <div
-            className="
-              text-xs
-              uppercase
-              tracking-[0.25em]
-              opacity-80
-            "
-          >
-            Workspace
-          </div>
-
-          <h2
-            className="
-              mt-2
-              text-lg
-              font-semibold
-            "
-          >
-            KoniqTech
-          </h2>
-
-          <p
-            className="
-              mt-1
-              text-sm
-              opacity-90
-            "
-          >
-            Enterprise Plan
-          </p>
-
-          <div
-            className="
-              mt-4
-              flex
-              items-center
-              justify-between
-              text-xs
-            "
-          >
-
-            <span>
-              Signed in as
-            </span>
-
-            <span
-              className="
-                rounded-full
-                bg-white/20
-                px-2
-                py-1
-                font-medium
-              "
-            >
-              {role
-                .replaceAll("_", " ")
-                .toUpperCase()}
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* ===============================================
-          SEARCH
-      =============================================== */}
-
-      <div className="px-5 py-5">
-
-        <div className="relative">
-
-          <Search
-            size={18}
-            className="
-              absolute
-              left-4
-              top-3.5
-              text-slate-400
-            "
-          />
-
-          <input
-            id="sidebar-search"
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            placeholder="Search..."
-            className="
-              h-11
-              w-full
-              rounded-xl
-              border
-              bg-slate-50
-              pl-11
-              pr-12
-              outline-none
-              transition
-              focus:ring-2
-              focus:ring-orange-500
-              dark:border-slate-700
-              dark:bg-slate-900
-            "
-          />
-
-          <div
-            className="
-              absolute
-              right-3
-              top-2.5
-              flex
-              items-center
-              gap-1
-              rounded-lg
-              border
-              bg-white
-              px-2
-              py-1
-              text-xs
-              text-slate-500
-              dark:border-slate-700
-              dark:bg-slate-800
-            "
-          >
-
-            <Command size={13} />
-
-            K
-
-          </div>
-
-        </div>
-
-      </div>
 
       {/* ===============================================
           NAVIGATION
       =============================================== */}
 
       <div
-        className="
-          flex-1
-          overflow-y-auto
-          px-3
-          pb-4
-        "
-      ></div>
+    className="
+    flex-1
+    overflow-y-auto
+    px-3
+    pb-6
+    scrollbar-thin
+    "
+>
 
 
-              {filteredSections.map((section) => {
+              {sections.map((section: AdminMenuSection) => {
 
           const sectionOpen =
             expanded.includes(section.title)
@@ -931,7 +674,7 @@ useEffect(() => {
 
         })}
 
-              
+           </div>   
 
       {/* ==========================================================
           FOOTER

@@ -153,7 +153,7 @@ export default function AdminHeader() {
             id="admin-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search organizations, users, subscriptions..."
+            placeholder="Search"
             className="
               h-11
               w-full
@@ -197,29 +197,7 @@ export default function AdminHeader() {
 
         <div className="flex items-center gap-2">
 
-          <Link
-            href="/admin/organizations/new"
-            className="flex h-11 items-center gap-2 rounded-xl bg-orange-600 px-4 text-white hover:bg-orange-700"
-          >
-            <Building2 size={18} />
-            Organization
-          </Link>
-
-          <Link
-            href="/admin/employees/new"
-            className="flex h-11 items-center gap-2 rounded-xl border px-4 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <Users size={18} />
-            Employee
-          </Link>
-
-          <Link
-            href="/admin/plans/new"
-            className="flex h-11 items-center gap-2 rounded-xl border px-4 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <CreditCard size={18} />
-            Plan
-          </Link>
+         
 
                     <button
             className="
@@ -238,29 +216,7 @@ export default function AdminHeader() {
             <Sparkles size={18} />
           </button>
 
-          <button
-            onClick={toggleTheme}
-            className="
-              flex
-              h-11
-              w-11
-              items-center
-              justify-center
-              rounded-xl
-              border
-              hover:bg-slate-100
-              dark:border-slate-700
-              dark:hover:bg-slate-800
-            "
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? (
-              <Moon size={18} />
-            ) : (
-              <Sun size={18} />
-            )}
-          </button>
-
+          
           <NotificationDropdown
             open={notificationOpen}
             setOpen={setNotificationOpen}

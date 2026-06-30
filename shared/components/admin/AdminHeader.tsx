@@ -142,37 +142,7 @@ export default function AdminHeader() {
 
       <div className="flex flex-1 items-center justify-end gap-4">
 
-        <div className="relative w-full max-w-xl">
-
-          <Search
-            size={18}
-            className="absolute left-4 top-3.5 text-slate-400"
-          />
-
-          <input
-            id="admin-search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search"
-            className="
-              h-11
-              w-full
-              rounded-xl
-              border
-              bg-slate-50
-              pl-11
-              pr-28
-              outline-none
-              focus:ring-2
-              focus:ring-orange-500
-              dark:border-slate-700
-              dark:bg-slate-900
-            "
-          />
-
-         
-
-        </div>
+       
 
         <div className="flex items-center gap-2">
 

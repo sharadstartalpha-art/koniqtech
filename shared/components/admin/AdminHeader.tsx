@@ -1,20 +1,12 @@
 "use client"
 
-import Link from "next/link"
+
 import { useEffect, useMemo, useState } from "react"
 import { getSession } from "next-auth/react"
 import { usePathname } from "next/navigation"
 
 import {
-  Search,
   ChevronRight,
-  Building2,
-  Users,
-  CreditCard,
-  Sparkles,
-  Moon,
-  Sun,
-  Command,
   Bell,
 } from "lucide-react"
 
@@ -54,24 +46,7 @@ export default function AdminHeader() {
 
  
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault()
-
-        const input = document.getElementById(
-          "admin-search"
-        ) as HTMLInputElement | null
-
-        input?.focus()
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown)
-
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [])
-
+ 
   useEffect(() => {
     setNotificationOpen(false)
     setUserOpen(false)

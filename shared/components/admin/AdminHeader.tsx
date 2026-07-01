@@ -192,11 +192,12 @@ export default function AdminHeader() {
 
     </button>
 
-    <UserDropdown
-        open={userOpen}
-        setOpen={setUserOpen}
-        user={user}
-    />
+   <UserDropdown
+    open={userOpen}
+    setOpen={setUserOpen}
+    user={user}
+    basePath="/admin"
+/>
 
 </div>
 

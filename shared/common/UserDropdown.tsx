@@ -61,14 +61,12 @@ export interface DropdownUser{
 
 }
 
-interface Props{
-
+interface Props {
     open:boolean
-
     setOpen:(open:boolean)=>void
-
     user?:DropdownUser
 
+    basePath?:string
 }
 
 const ROLE_LABELS:Record<string,string>={
@@ -137,7 +135,9 @@ export default function UserDropdown({
 
     setOpen,
 
-    user:userProp
+    user:userProp,
+
+    basePath=""
 
 }:Props){
 
@@ -581,7 +581,7 @@ export default function UserDropdown({
                         ></div>
                                                     <Link
 
-                                href="/profile"
+                                href={`${basePath}/profile`}
 
                                 onClick={()=>setOpen(false)}
 
@@ -616,7 +616,7 @@ export default function UserDropdown({
 
                             <Link
 
-                                href="/tasks"
+                                href={`${basePath}/tasks`}
 
                                 onClick={()=>setOpen(false)}
 

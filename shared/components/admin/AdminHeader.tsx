@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 
 import NotificationDropdown from "./NotificationDropdown"
-import UserDropdown from "./UserDropdown"
+import UserDropdown from "@/shared/common/UserDropdown"
 
 type HeaderUser = {
   name?: string
@@ -31,8 +31,6 @@ export default function AdminHeader() {
   const pathname = usePathname()
 
   const [user, setUser] = useState<HeaderUser>({})
-  const [theme, setTheme] = useState<"light" | "dark">("light")
-  const [search, setSearch] = useState("")
   const [notificationOpen, setNotificationOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
 
@@ -53,14 +51,7 @@ export default function AdminHeader() {
     loadUser()
   }, [])
 
-  useEffect(() => {
-    const saved = localStorage.getItem("theme")
-
-    if (saved === "dark") {
-      document.documentElement.classList.add("dark")
-      setTheme("dark")
-    }
-  }, [])
+ 
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -85,37 +76,13 @@ export default function AdminHeader() {
     setUserOpen(false)
   }, [pathname])
 
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)")
-
-    function change() {
-      if (!document.documentElement.classList.contains("dark")) {
-        setTheme(media.matches ? "dark" : "light")
-      }
-    }
-
-    media.addEventListener("change", change)
-
-    return () => media.removeEventListener("change", change)
-  }, [])
+ 
 
   const breadcrumbs = useMemo(() => {
     return pathname.split("/").filter(Boolean)
   }, [pathname])
 
-  function toggleTheme() {
-    const html = document.documentElement
-
-    if (html.classList.contains("dark")) {
-      html.classList.remove("dark")
-      localStorage.setItem("theme", "light")
-      setTheme("light")
-    } else {
-      html.classList.add("dark")
-      localStorage.setItem("theme", "dark")
-      setTheme("dark")
-    }
-  }
+  
 
   return (
     <header className="flex h-20 items-center justify-between border-b bg-white px-8 dark:border-slate-800 dark:bg-slate-950">
@@ -151,11 +118,11 @@ export default function AdminHeader() {
             setOpen={setNotificationOpen}
           />
 
-          <UserDropdown
-            open={userOpen}
-            setOpen={setUserOpen}
-            user={user}
-          />
+         <UserDropdown
+    open={userOpen}
+    setOpen={setUserOpen}
+    user={user}
+/>
 
         </div>
 

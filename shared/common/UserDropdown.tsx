@@ -651,7 +651,7 @@ export default function UserDropdown({
 
                             <Link
 
-                                href="/notifications"
+                                href={`${basePath}/notifications`}
 
                                 onClick={()=>setOpen(false)}
 
@@ -686,7 +686,7 @@ export default function UserDropdown({
 
                             <Link
 
-                                href="/settings"
+                                href={`${basePath}/settings`}
 
                                 onClick={()=>setOpen(false)}
 

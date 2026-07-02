@@ -5,68 +5,68 @@ import { redirect } from "next/navigation"
 
 import prisma from "@/shared/lib/prisma"
 
-import { setSession }
-from "../cookies/session"
+import { setSession } from "../cookies/session"
+
+/* ==========================================================
+   Internal KoniqTech Roles
+========================================================== */
+
+const INTERNAL_PLATFORM_ROLES = new Set([
+  "super_admin",
+  "platform_manager",
+  "support",
+  "finance",
+  "developer",
+  "qa",
+  "customer_success",
+  "marketing",
+  "data_entry",
+])
 
 export async function loginAction(
-    _: unknown,
-    formData: FormData
-){
+  _: unknown,
+  formData: FormData
+) {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase()
 
-const email=
-String(
-formData.get("email")
-)
+  const password = String(formData.get("password") ?? "")
 
-const password=
-String(
-formData.get("password")
-)
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  })
 
-const user=
-await prisma.user.findUnique({
+  if (!user) {
+    return {
+      error: "Invalid credentials",
+    }
+  }
 
-where:{
-email
-}
+  const passwordValid = await bcrypt.compare(
+    password,
+    user.passwordHash
+  )
 
-})
+  if (!passwordValid) {
+    return {
+      error: "Invalid credentials",
+    }
+  }
 
-if(!user){
+  await setSession({
+    id: user.id,
+    orgId: user.orgId,
+    role: user.role,
+  })
 
-return{
-error:"Invalid credentials"
-}
+  const role = String(user.role).toLowerCase()
 
-}
+  if (INTERNAL_PLATFORM_ROLES.has(role)) {
+    redirect("/admin/dashboard")
+  }
 
-const ok=
-await bcrypt.compare(
-
-password,
-
-user.passwordHash
-
-)
-
-if(!ok){
-
-return{
-error:"Invalid credentials"
-}
-
-}
-
-await setSession({
-
-id:user.id,
-
-orgId:user.orgId,
-
-role:user.role
-
-})
-
-redirect("/dashboard")
-
+  redirect("/dashboard")
 }

@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
-
+import { INTERNAL_PLATFORM_ROLES } from "@/shared/config/roles"
 import prisma from "@/shared/lib/prisma"
 
 import { setSession } from "../cookies/session"
@@ -11,17 +11,7 @@ import { setSession } from "../cookies/session"
    Internal KoniqTech Roles
 ========================================================== */
 
-const INTERNAL_PLATFORM_ROLES = new Set([
-  "super_admin",
-  "platform_manager",
-  "support",
-  "finance",
-  "developer",
-  "qa",
-  "customer_success",
-  "marketing",
-  "data_entry",
-])
+
 
 export async function loginAction(
   _: unknown,

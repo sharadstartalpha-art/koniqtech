@@ -4,7 +4,7 @@ import { ReactNode } from "react"
 import { redirect } from "next/navigation"
 
 import { auth } from "@/auth"
-
+import { INTERNAL_PLATFORM_ROLES } from "@/shared/config/roles"
 import AdminSidebar from "@/shared/components/admin/AdminSidebar"
 import AdminHeader from "@/shared/components/admin/AdminHeader"
 
@@ -13,17 +13,6 @@ import AdminHeader from "@/shared/components/admin/AdminHeader"
    Only these users can access /admin/*
 ========================================================== */
 
-const INTERNAL_PLATFORM_ROLES = new Set([
-  "super_admin",
-  "platform_manager",
-  "support",
-  "finance",
-  "developer",
-  "qa",
-  "customer_success",
-  "marketing",
-  "data_entry",
-])
 
 export default async function AdminLayout({
   children,

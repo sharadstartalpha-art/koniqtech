@@ -1,6 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 
 import { auth } from "@/auth"
+import { INTERNAL_PLATFORM_ROLES } from "@/shared/config/roles"
 
 import Link from "next/link"
 
@@ -33,17 +34,7 @@ redirect("/login")
 
 
 
-const INTERNAL_PLATFORM_ROLES = new Set([
-  "super_admin",
-  "platform_manager",
-  "support",
-  "finance",
-  "developer",
-  "qa",
-  "customer_success",
-  "marketing",
-  "data_entry",
-])
+
 
 const role = String(
   (session.user as any).role ?? ""

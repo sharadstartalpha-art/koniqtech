@@ -455,7 +455,7 @@ async function main() {
     {
       name: "Platform Manager",
       email: "manager@koniqtech.com",
-      role: UserRole.manager,
+      role: UserRole.platform_manager,
       orgRole: managerRole.id,
       department: management.id,
       team: managementTeam?.id,
@@ -471,7 +471,7 @@ async function main() {
     {
       name: "Sales",
       email: "sales@koniqtech.com",
-      role: UserRole.sales,
+      role: UserRole.platform_sales,
       orgRole: salesRole.id,
       department: sales.id,
       team: salesTeam?.id,
@@ -479,7 +479,7 @@ async function main() {
     {
       name: "Accountant",
       email: "accounts@koniqtech.com",
-      role: UserRole.accountant,
+      role: UserRole.finance,
       orgRole: accountantRole.id,
       department: accounts.id,
       team: accountsTeam?.id,

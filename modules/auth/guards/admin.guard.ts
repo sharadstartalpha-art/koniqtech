@@ -1,22 +1,13 @@
 import { redirect } from "next/navigation"
 
 import { authGuard } from "./auth.guard"
+import { INTERNAL_PLATFORM_ROLES } from "@/shared/config/roles"
 
 /* ==========================================================
    Internal Platform Roles
 ========================================================== */
 
-const INTERNAL_PLATFORM_ROLES = new Set([
-  "super_admin",
-  "platform_manager",
-  "support",
-  "finance",
-  "developer",
-  "qa",
-  "customer_success",
-  "marketing",
-  "data_entry",
-])
+
 
 export async function adminGuard() {
 

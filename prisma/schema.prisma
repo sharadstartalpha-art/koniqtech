@@ -713,18 +713,27 @@ enum Industry {
 }
 
 enum UserRole {
+  // Customer CRM
   owner
-  admin
   manager
-  marketing
   sales
+  dispatcher
   technician
-  support
+  crew
   accountant
-  data_entry
-  super_admin
-}
 
+  // KoniqTech Platform
+  super_admin
+  platform_manager
+  platform_sales
+  support
+  finance
+  developer
+  qa
+  customer_success
+  marketing
+  data_entry
+}
 enum CRMType {
   roofing
   hvac

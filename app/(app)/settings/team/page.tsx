@@ -95,11 +95,10 @@ async function deleteUser(
     user => user.status === "active"
   ).length
 
-  const admins = users.filter(
-    user =>
-      user.role === "admin" ||
-      user.role === "owner"
-  ).length
+  const admins = users.filter(user =>
+  user.role === "owner" ||
+  user.role === "manager"
+).length
 
   const salesReps = users.filter(
     user => user.role === "sales"

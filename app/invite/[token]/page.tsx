@@ -56,15 +56,27 @@ export default async function Page({
       )
 
 
-      const roleMap: Record<string, UserRole> = {
+     const roleMap: Record<string, UserRole> = {
+  // Customer CRM
   owner: UserRole.owner,
-  admin: UserRole.admin,
   manager: UserRole.manager,
   sales: UserRole.sales,
+  dispatcher: UserRole.dispatcher,
   technician: UserRole.technician,
-  support: UserRole.support,
+  crew: UserRole.crew,
   accountant: UserRole.accountant,
+
+  // KoniqTech Platform
   super_admin: UserRole.super_admin,
+  platform_manager: UserRole.platform_manager,
+  platform_sales: UserRole.platform_sales,
+  support: UserRole.support,
+  finance: UserRole.finance,
+  developer: UserRole.developer,
+  qa: UserRole.qa,
+  customer_success: UserRole.customer_success,
+  marketing: UserRole.marketing,
+  data_entry: UserRole.data_entry,
 }
 
 const orgRole = await prisma.organizationRole.findUnique({

@@ -3,7 +3,7 @@
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 import Link from "next/link"
-
+import { INTERNAL_PLATFORM_ROLES } from "@/shared/config/roles"
 import {
   Building2,
   Shield,
@@ -57,19 +57,18 @@ export default function LoginPage() {
     const session =
       await sessionRes.json()
 
-    const role =
-      session?.user?.role
+    const role = String(
+  session?.user?.role ?? ""
+)
+  .trim()
+  .toLowerCase()
 
-    if(role==="super_admin"){
+if (INTERNAL_PLATFORM_ROLES.has(role)) {
+  window.location.replace("/admin/dashboard")
+  return
+}
 
-      window.location.href=
-      "/admin/dashboard"
-
-      return
-    }
-
-    window.location.href=
-    "/dashboard"
+window.location.replace("/dashboard")
   }
 
   return(

@@ -31,21 +31,28 @@ redirect("/login")
 
 }
 
-const role=
 
-(session.user as any)
-?.role
 
-if(
+const INTERNAL_PLATFORM_ROLES = new Set([
+  "super_admin",
+  "platform_manager",
+  "support",
+  "finance",
+  "developer",
+  "qa",
+  "customer_success",
+  "marketing",
+  "data_entry",
+])
 
-role!==
+const role = String(
+  (session.user as any).role ?? ""
+)
+  .trim()
+  .toLowerCase()
 
-"super_admin"
-
-){
-
-redirect("/dashboard")
-
+if (!INTERNAL_PLATFORM_ROLES.has(role)) {
+  redirect("/dashboard")
 }
 
 const [
@@ -124,7 +131,7 @@ font-semibold
 tracking-tight
 ">
 
-Super Admin
+Platform Administration
 
 </h1>
 

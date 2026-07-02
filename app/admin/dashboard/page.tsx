@@ -131,7 +131,7 @@ font-semibold
 tracking-tight
 ">
 
-Platform Administration
+Platform Administration 
 
 </h1>
 

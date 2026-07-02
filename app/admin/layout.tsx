@@ -8,15 +8,22 @@ import { auth } from "@/auth"
 import AdminSidebar from "@/shared/components/admin/AdminSidebar"
 import AdminHeader from "@/shared/components/admin/AdminHeader"
 
-const INTERNAL_ROLES = [
+/* ==========================================================
+   KONIQTECH INTERNAL PLATFORM ROLES
+   Only these users can access /admin/*
+========================================================== */
+
+const INTERNAL_PLATFORM_ROLES = new Set([
   "super_admin",
-  "manager",
-  "sales",
-  "marketing",
-  "accountant",
+  "platform_manager",
   "support",
+  "finance",
+  "developer",
+  "qa",
+  "customer_success",
+  "marketing",
   "data_entry",
-] as const
+])
 
 export default async function AdminLayout({
   children,
@@ -25,31 +32,64 @@ export default async function AdminLayout({
 }) {
   const session = await auth()
 
+  /* --------------------------------------------------------
+     User must be logged in
+  --------------------------------------------------------- */
+
   if (!session?.user) {
     redirect("/login")
   }
 
-  const role = (session.user as any).role
+  /* --------------------------------------------------------
+     Normalize role
+  --------------------------------------------------------- */
 
-  if (!INTERNAL_ROLES.includes(role)) {
+  const role = String(
+    (session.user as any).role ?? ""
+  ).trim().toLowerCase()
+
+  /* --------------------------------------------------------
+     Customer CRM users are NOT allowed here
+  --------------------------------------------------------- */
+
+  if (!INTERNAL_PLATFORM_ROLES.has(role)) {
     redirect("/dashboard")
   }
 
+  /* --------------------------------------------------------
+     Render Admin Platform
+  --------------------------------------------------------- */
+
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      {/* Sidebar */}
+
+      {/* Left Sidebar */}
+
       <AdminSidebar />
 
-      {/* Right Side */}
+      {/* Right Content */}
+
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Header */}
+
+        {/* Top Header */}
+
         <AdminHeader />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-8">
+
+        <main
+          className="
+            flex-1
+            overflow-y-auto
+            bg-slate-50
+            p-8
+          "
+        >
           {children}
         </main>
+
       </div>
+
     </div>
   )
 }

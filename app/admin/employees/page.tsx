@@ -126,8 +126,7 @@ export default async function AdminEmployeesPage() {
         {isSuperAdmin && (
           <Link
             href="/admin/employees/new"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
+className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition hover:bg-blue-700"          >
             <Plus size={17} />
             Add Employee
           </Link>

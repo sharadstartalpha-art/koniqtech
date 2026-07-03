@@ -346,9 +346,12 @@ export default function EmployeeDataTable({
                         </div>
 
                         <div>
-                          <div className="font-medium text-slate-900">
-                            {fullName}
-                          </div>
+                          <Link
+  href={`/admin/employees/${employee.id}`}
+  className="font-medium text-slate-900 transition hover:text-blue-600"
+>
+  {fullName}
+</Link>
 
                           <div className="text-sm text-slate-500">
                             {employee.email}
@@ -411,30 +414,32 @@ export default function EmployeeDataTable({
                         <div className="absolute right-5 top-12 z-30 w-48 rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl">
                           {canEdit && (
                             <Link
-                              href={`/admin/employees/${employee.id}/edit`}
-                              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                              <Edit3 size={16} />
-                              Edit employee
-                            </Link>
+  href={`/admin/employees/${employee.id}/edit`}
+  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-orange-600 hover:bg-orange-50"
+>
+  <Edit3 size={16} />
+  Edit employee
+</Link>
                           )}
 
                           {canChangeStatus && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleToggleStatus(
-                                  employee.id
-                                )
-                              }
-                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                              <Power size={16} />
+                           <button
+  type="button"
+  onClick={() =>
+    handleToggleStatus(employee.id)
+  }
+  className={
+    employee.active
+      ? "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-orange-600 hover:bg-orange-50"
+      : "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-green-600 hover:bg-green-50"
+  }
+>
+  <Power size={16} />
 
-                              {employee.active
-                                ? "Deactivate"
-                                : "Activate"}
-                            </button>
+  {employee.active
+    ? "Deactivate"
+    : "Activate"}
+</button>
                           )}
 
                           {canDelete && (

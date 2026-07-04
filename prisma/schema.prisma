@@ -237,6 +237,8 @@ model User {
 
   phone String?
 
+  employee Employee?
+
   lastLogin DateTime?
 
   lastSeen DateTime?
@@ -734,6 +736,7 @@ enum UserRole {
   marketing
   data_entry
 }
+
 enum CRMType {
   roofing
   hvac
@@ -1263,8 +1266,6 @@ model Employee {
 
   phone String?
 
-  passwordHash String
-
   departmentId String
 
   roleId String
@@ -1359,6 +1360,10 @@ model Employee {
   assets AssetAssignment[]
 
   knowledgeComments KnowledgeComment[]
+
+  userId String? @unique
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([departmentId])
   @@index([roleId])

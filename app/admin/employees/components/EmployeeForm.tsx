@@ -16,6 +16,15 @@ import {
   UserRound
 } from "lucide-react"
 
+import type {
+  EmployeeActionState,
+} from "../actions"
+
+
+import {
+  useRouter
+} from "next/navigation"
+
 type DepartmentOption = {
   id: string
   name: string
@@ -41,6 +50,8 @@ export type EmployeeFormValues = {
   email?: string
   phone?: string | null
 
+  userRole?: string | null
+
   departmentId?: string
   roleId?: string
   managerId?: string | null
@@ -64,16 +75,14 @@ export type EmployeeFormValues = {
 
 type Props = {
   mode: "create" | "edit"
-
   employee?: EmployeeFormValues
-
   departments: DepartmentOption[]
   roles: RoleOption[]
   managers: ManagerOption[]
 
   action: (
     formData: FormData
-  ) => Promise<void>
+  ) => Promise<EmployeeActionState>
 }
 
 export default function EmployeeForm({
@@ -84,59 +93,77 @@ export default function EmployeeForm({
   managers,
   action
 }: Props) {
-  const [error, setError] =
-    useState<string | null>(null)
+  
+const router = useRouter()
 
   const [isPending, startTransition] =
     useTransition()
 
+    const [message, setMessage] =
+  useState<string | null>(null)
+
+const [fieldErrors, setFieldErrors] =
+  useState<Record<string, string>>({})
+
   function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault()
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault()
 
-    setError(null)
+  const form =
+    event.currentTarget
 
-    const formData = new FormData(
-      event.currentTarget
+  const formData =
+    new FormData(form)
+
+  setMessage(null)
+  setFieldErrors({})
+
+  startTransition(async () => {
+    const result =
+      await action(formData)
+
+    if (!result.success) {
+      setMessage(result.message)
+
+      setFieldErrors(
+        result.errors ?? {}
+      )
+
+      return
+    }
+
+    router.push(
+      "/admin/employees"
     )
 
-    startTransition(async () => {
-      try {
-        await action(formData)
-      } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Unable to save employee."
-        )
-      }
-    })
-  }
+    router.refresh()
+  })
+}
 
   return (
     <form
       onSubmit={handleSubmit}
       className="space-y-6"
     >
-      {error && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle
-            size={18}
-            className="mt-0.5 shrink-0"
-          />
+      {message && (
+  <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+    <AlertCircle
+      size={18}
+      className="mt-0.5 shrink-0"
+    />
 
-          <div>
-            <p className="font-semibold">
-              Unable to save employee
-            </p>
+    <div>
+      <p className="font-semibold">
+        Unable to save employee
+      </p>
 
-            <p className="mt-1">
-              {error}
-            </p>
-          </div>
-        </div>
-      )}
+      <p className="mt-1">
+        {message}
+      </p>
+    </div>
+  </div>
+)}
 
       {/* BASIC INFORMATION */}
 
@@ -232,6 +259,60 @@ export default function EmployeeForm({
               </option>
             ))}
           </SelectField>
+          
+          <SelectField
+  label="Platform Access Role"
+  name="userRole"
+  defaultValue={
+    employee?.userRole ?? ""
+  }
+  required
+>
+  <option value="">
+    Select platform access role
+  </option>
+
+  <option value="super_admin">
+    Super Admin
+  </option>
+
+  <option value="platform_manager">
+    Platform Manager
+  </option>
+
+  <option value="platform_sales">
+    Sales
+  </option>
+
+  <option value="marketing">
+    Marketing
+  </option>
+
+  <option value="finance">
+    Accountant / Finance
+  </option>
+
+  <option value="support">
+    Support
+  </option>
+
+  <option value="data_entry">
+    Data Entry
+  </option>
+
+  <option value="developer">
+    Developer
+  </option>
+
+  <option value="qa">
+    QA
+  </option>
+
+  <option value="customer_success">
+    Customer Success
+  </option>
+</SelectField>
+
 
           <SelectField
             label="Employee Role"

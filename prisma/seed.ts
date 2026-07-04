@@ -437,100 +437,354 @@ async function main() {
     },
   });
 
+/*
+==========================================================
+EMPLOYEE ROLES
+==========================================================
+*/
+
+const employeeRoles = {
+  superAdmin: await prisma.employeeRole.upsert({
+    where: {
+      name: "Super Admin",
+    },
+    update: {
+      description: "Full internal platform administration access",
+      canCreate: true,
+      canEdit: true,
+      canDelete: true,
+      canApprove: true,
+      canAssign: true,
+      canExport: true,
+    },
+    create: {
+      name: "Super Admin",
+      description: "Full internal platform administration access",
+      canCreate: true,
+      canEdit: true,
+      canDelete: true,
+      canApprove: true,
+      canAssign: true,
+      canExport: true,
+    },
+  }),
+
+  platformManager: await prisma.employeeRole.upsert({
+    where: {
+      name: "Platform Manager",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: true,
+      canAssign: true,
+      canExport: true,
+    },
+    create: {
+      name: "Platform Manager",
+      description: "Internal operations management and approvals",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: true,
+      canAssign: true,
+      canExport: true,
+    },
+  }),
+
+  marketing: await prisma.employeeRole.upsert({
+    where: {
+      name: "Marketing Executive",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: true,
+    },
+    create: {
+      name: "Marketing Executive",
+      description: "Internal marketing operations",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: true,
+    },
+  }),
+
+  sales: await prisma.employeeRole.upsert({
+    where: {
+      name: "Sales Executive",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: true,
+    },
+    create: {
+      name: "Sales Executive",
+      description: "Internal sales operations",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: true,
+    },
+  }),
+
+  accountant: await prisma.employeeRole.upsert({
+    where: {
+      name: "Accountant",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: true,
+      canAssign: false,
+      canExport: true,
+    },
+    create: {
+      name: "Accountant",
+      description: "Internal accounting and finance operations",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: true,
+      canAssign: false,
+      canExport: true,
+    },
+  }),
+
+  support: await prisma.employeeRole.upsert({
+    where: {
+      name: "Support Executive",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: true,
+      canExport: false,
+    },
+    create: {
+      name: "Support Executive",
+      description: "Internal customer support operations",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: true,
+      canExport: false,
+    },
+  }),
+
+  dataEntry: await prisma.employeeRole.upsert({
+    where: {
+      name: "Data Entry Operator",
+    },
+    update: {
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: false,
+    },
+    create: {
+      name: "Data Entry Operator",
+      description: "Restricted internal data-entry access",
+      canCreate: true,
+      canEdit: true,
+      canDelete: false,
+      canApprove: false,
+      canAssign: false,
+      canExport: false,
+    },
+  }),
+}
+
+console.log("✓ Employee Roles created")
+
+
+
   /*
   ==========================================================
   USERS
   ==========================================================
   */
 
-  const users = [
-    {
-      name: "Super Admin",
-      email: "superadmin@koniqtech.com",
-      role: UserRole.super_admin,
-      orgRole: superAdminRole.id,
-      department: management.id,
-      team: managementTeam?.id,
-    },
-    {
-      name: "Platform Manager",
-      email: "manager@koniqtech.com",
-      role: UserRole.platform_manager,
-      orgRole: managerRole.id,
-      department: management.id,
-      team: managementTeam?.id,
-    },
-    {
-      name: "Marketing",
-      email: "marketing@koniqtech.com",
-      role: UserRole.marketing,
-      orgRole: marketingRole.id,
-      department: marketing.id,
-      team: marketingTeam?.id,
-    },
-    {
-      name: "Sales",
-      email: "sales@koniqtech.com",
-      role: UserRole.platform_sales,
-      orgRole: salesRole.id,
-      department: sales.id,
-      team: salesTeam?.id,
-    },
-    {
-      name: "Accountant",
-      email: "accounts@koniqtech.com",
-      role: UserRole.finance,
-      orgRole: accountantRole.id,
-      department: accounts.id,
-      team: accountsTeam?.id,
-    },
-    {
-      name: "Support",
-      email: "support@koniqtech.com",
-      role: UserRole.support,
-      orgRole: supportRole.id,
-      department: support.id,
-      team: supportTeam?.id,
-    },
-    {
-      name: "Data Entry",
-      email: "dataentry@koniqtech.com",
-      role: UserRole.data_entry,
-      orgRole: dataEntryRole.id,
-      department: management.id,
-      team: managementTeam?.id,
-    },
-  ];
+ const internalAccounts = [
+  {
+    name: "Super Admin",
+    firstName: "Super",
+    lastName: "Admin",
+    email: "superadmin@koniqtech.com",
+    employeeCode: "KT-ADM-001",
+    userRole: UserRole.super_admin,
+    organizationRoleId: superAdminRole.id,
+    employeeRoleId: employeeRoles.superAdmin.id,
+    departmentId: management.id,
+    teamId: managementTeam?.id,
+    designation: "Super Administrator",
+  },
+  {
+    name: "Platform Manager",
+    firstName: "Platform",
+    lastName: "Manager",
+    email: "manager@koniqtech.com",
+    employeeCode: "KT-MGT-001",
+    userRole: UserRole.platform_manager,
+    organizationRoleId: managerRole.id,
+    employeeRoleId: employeeRoles.platformManager.id,
+    departmentId: management.id,
+    teamId: managementTeam?.id,
+    designation: "Platform Manager",
+  },
+  {
+    name: "Marketing",
+    firstName: "Marketing",
+    lastName: "Executive",
+    email: "marketing@koniqtech.com",
+    employeeCode: "KT-MKT-001",
+    userRole: UserRole.marketing,
+    organizationRoleId: marketingRole.id,
+    employeeRoleId: employeeRoles.marketing.id,
+    departmentId: marketing.id,
+    teamId: marketingTeam?.id,
+    designation: "Marketing Executive",
+  },
+  {
+    name: "Sales",
+    firstName: "Sales",
+    lastName: "Executive",
+    email: "sales@koniqtech.com",
+    employeeCode: "KT-SAL-001",
+    userRole: UserRole.platform_sales,
+    organizationRoleId: salesRole.id,
+    employeeRoleId: employeeRoles.sales.id,
+    departmentId: sales.id,
+    teamId: salesTeam?.id,
+    designation: "Sales Executive",
+  },
+  {
+    name: "Accountant",
+    firstName: "Finance",
+    lastName: "Accountant",
+    email: "accounts@koniqtech.com",
+    employeeCode: "KT-FIN-001",
+    userRole: UserRole.finance,
+    organizationRoleId: accountantRole.id,
+    employeeRoleId: employeeRoles.accountant.id,
+    departmentId: accounts.id,
+    teamId: accountsTeam?.id,
+    designation: "Accountant",
+  },
+  {
+    name: "Support",
+    firstName: "Support",
+    lastName: "Executive",
+    email: "support@koniqtech.com",
+    employeeCode: "KT-SUP-001",
+    userRole: UserRole.support,
+    organizationRoleId: supportRole.id,
+    employeeRoleId: employeeRoles.support.id,
+    departmentId: support.id,
+    teamId: supportTeam?.id,
+    designation: "Support Executive",
+  },
+  {
+    name: "Data Entry",
+    firstName: "Data",
+    lastName: "Entry",
+    email: "dataentry@koniqtech.com",
+    employeeCode: "KT-DAT-001",
+    userRole: UserRole.data_entry,
+    organizationRoleId: dataEntryRole.id,
+    employeeRoleId: employeeRoles.dataEntry.id,
+    departmentId: management.id,
+    teamId: managementTeam?.id,
+    designation: "Data Entry Operator",
+  },
+]
 
-  for (const user of users) {
-    await prisma.user.upsert({
-      where: {
-        email: user.email,
-      },
-      update: {
-        passwordHash,
-        role: user.role,
-        organizationRoleId: user.orgRole,
-        departmentId: user.department,
-        teamId: user.team,
-      },
-      create: {
-        orgId: organization.id,
-        name: user.name,
-        email: user.email,
-        passwordHash,
-        role: user.role,
-        status: "active",
-        emailVerified: true,
-        phoneVerified: true,
-        departmentId: user.department,
-        teamId: user.team,
-        organizationRoleId: user.orgRole,
-      },
-    });
-  }
+for (const account of internalAccounts) {
+  const user = await prisma.user.upsert({
+    where: {
+      email: account.email,
+    },
 
-  console.log("✓ Users created");
+    update: {
+      orgId: organization.id,
+      name: account.name,
+      passwordHash,
+      role: account.userRole,
+      organizationRoleId: account.organizationRoleId,
+      departmentId: account.departmentId,
+      teamId: account.teamId,
+      status: "active",
+      emailVerified: true,
+    },
+
+    create: {
+      orgId: organization.id,
+      name: account.name,
+      email: account.email,
+      passwordHash,
+      role: account.userRole,
+      organizationRoleId: account.organizationRoleId,
+      departmentId: account.departmentId,
+      teamId: account.teamId,
+      status: "active",
+      emailVerified: true,
+      phoneVerified: false,
+    },
+  })
+
+  await prisma.employee.upsert({
+    where: {
+      email: account.email,
+    },
+
+    update: {
+      userId: user.id,
+      employeeCode: account.employeeCode,
+      firstName: account.firstName,
+      lastName: account.lastName,
+      departmentId: account.departmentId,
+      roleId: account.employeeRoleId,
+      designation: account.designation,
+      active: true,
+    },
+
+    create: {
+      userId: user.id,
+      employeeCode: account.employeeCode,
+      firstName: account.firstName,
+      lastName: account.lastName,
+      email: account.email,
+      departmentId: account.departmentId,
+      roleId: account.employeeRoleId,
+      designation: account.designation,
+      joiningDate: new Date(),
+      employmentType: "full_time",
+      salaryType: "monthly",
+      active: true,
+    },
+  })
+}
+
+console.log("✓ Internal Users and Employees created")
 
   /*
   ==========================================================

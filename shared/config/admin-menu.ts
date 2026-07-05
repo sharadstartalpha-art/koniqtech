@@ -96,19 +96,35 @@ export interface AdminMenuSection {
 =========================================================== */
 
 export const ROLE = {
-  SUPER_ADMIN: "super_admin",
+  SUPER_ADMIN:
+    "super_admin",
 
-  PLATFORM_MANAGER: "manager",
+  PLATFORM_MANAGER:
+    "platform_manager",
 
-  SALES: "sales",
+  PLATFORM_SALES:
+    "platform_sales",
 
-  MARKETING: "marketing",
+  SUPPORT:
+    "support",
 
-  ACCOUNTANT: "accountant",
+  FINANCE:
+    "finance",
 
-  SUPPORT: "support",
+  DEVELOPER:
+    "developer",
 
-  DATA_ENTRY: "data_entry",
+  QA:
+    "qa",
+
+  CUSTOMER_SUCCESS:
+    "customer_success",
+
+  MARKETING:
+    "marketing",
+
+  DATA_ENTRY:
+    "data_entry",
 } as const
 
 export type AdminRole =
@@ -953,6 +969,15 @@ export const SUPPORT_MENU: AdminMenuSection[] = [
 /* ===========================================================
    DATA ENTRY MENU
 =========================================================== */
+const DataEntryLeads: AdminMenuItem = {
+  label: "Lead Data Entry",
+  href: "/admin/data-entry",
+  icon: Database,
+}
+
+/* ===========================================================
+   DATA ENTRY MENU
+=========================================================== */
 
 export const DATA_ENTRY_MENU: AdminMenuSection[] = [
 
@@ -968,20 +993,218 @@ export const DATA_ENTRY_MENU: AdminMenuSection[] = [
     title: "Platform",
 
     items: [
-
       Organizations,
+    ],
+  },
+
+  {
+    title: "Data Management",
+
+    items: [
+      Companies,
+      DataEntryLeads,
+    ],
+  },
+
+]
+
+
+
+/* ===========================================================
+   DEVELOPER MENU
+=========================================================== */
+
+export const DEVELOPER_MENU: AdminMenuSection[] = [
+
+  {
+    title: "Dashboard",
+
+    items: [
+      Dashboard,
+    ],
+  },
+
+  {
+    title: "Development",
+
+    items: [
+
+      {
+        label: "Monitoring",
+        href: "/admin/monitoring",
+        icon: Activity,
+      },
+
+      {
+        label: "Platform Logs",
+        href: "/admin/platform-logs",
+        icon: ScrollText,
+      },
+
+      {
+        label: "Database",
+        href: "/admin/database",
+        icon: Database,
+      },
+
+      {
+        label: "API Keys",
+        href: "/admin/api-keys",
+        icon: KeyRound,
+      },
+
+      {
+        label: "Webhooks",
+        href: "/admin/webhooks",
+        icon: Webhook,
+      },
 
     ],
   },
 
   {
-    title: "Sales",
+    title: "Artificial Intelligence",
 
     items: [
 
+      {
+        label: "AI Dashboard",
+        href: "/admin/ai",
+        icon: Brain,
+      },
+
+      {
+        label: "AI Agents",
+        href: "/admin/ai/agents",
+        icon: Bot,
+      },
+
+      {
+        label: "AI Usage",
+        href: "/admin/ai/usage",
+        icon: Cpu,
+      },
+
+      {
+        label: "AI Logs",
+        href: "/admin/ai/logs",
+        icon: FileSearch,
+      },
+
+    ],
+  },
+
+]
+
+
+/* ===========================================================
+   QA MENU
+=========================================================== */
+
+export const QA_MENU: AdminMenuSection[] = [
+
+  {
+    title: "Dashboard",
+
+    items: [
+      Dashboard,
+    ],
+  },
+
+  {
+    title: "Quality Assurance",
+
+    items: [
+
+      {
+        label: "Monitoring",
+        href: "/admin/monitoring",
+        icon: Activity,
+      },
+
+      {
+        label: "Platform Logs",
+        href: "/admin/platform-logs",
+        icon: ScrollText,
+      },
+
+      {
+        label: "Activity Timeline",
+        href: "/admin/activity",
+        icon: History,
+      },
+
+    ],
+  },
+
+  {
+    title: "Platform Review",
+
+    items: [
+
+      Organizations,
+
       Companies,
 
-      Leads,
+      DataEntryLeads,
+
+    ],
+  },
+
+]
+
+
+/* ===========================================================
+   CUSTOMER SUCCESS MENU
+=========================================================== */
+
+export const CUSTOMER_SUCCESS_MENU:
+  AdminMenuSection[] = [
+
+  {
+    title: "Dashboard",
+
+    items: [
+      Dashboard,
+    ],
+  },
+
+  {
+    title: "Customers",
+
+    items: [
+
+      Organizations,
+
+      Companies,
+
+      Subscriptions,
+
+    ],
+  },
+
+  {
+    title: "Customer Success",
+
+    items: [
+
+      {
+        label: "Support Tickets",
+        href: "/admin/support",
+        icon: LifeBuoy,
+      },
+
+      {
+        label: "Knowledge Base",
+        href: "/admin/knowledge",
+        icon: BookOpen,
+      },
+
+      {
+        label: "Announcements",
+        href: "/admin/announcements",
+        icon: Megaphone,
+      },
 
     ],
   },
@@ -1003,13 +1226,13 @@ export const MENU_BY_ROLE: Record<
   [ROLE.PLATFORM_MANAGER]:
     PLATFORM_MANAGER_MENU,
 
-  [ROLE.SALES]:
+  [ROLE.PLATFORM_SALES]:
     SALES_MENU,
 
   [ROLE.MARKETING]:
     MARKETING_MENU,
 
-  [ROLE.ACCOUNTANT]:
+  [ROLE.FINANCE]:
     ACCOUNTANT_MENU,
 
   [ROLE.SUPPORT]:
@@ -1017,5 +1240,14 @@ export const MENU_BY_ROLE: Record<
 
   [ROLE.DATA_ENTRY]:
     DATA_ENTRY_MENU,
+
+  [ROLE.DEVELOPER]:
+    DEVELOPER_MENU,
+
+  [ROLE.QA]:
+    QA_MENU,
+
+  [ROLE.CUSTOMER_SUCCESS]:
+    CUSTOMER_SUCCESS_MENU,
 
 }

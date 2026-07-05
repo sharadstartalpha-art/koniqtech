@@ -399,280 +399,454 @@ useEffect(() => {
 >
 
 
-              {sections.map((section: AdminMenuSection) => {
+             {sections.map(
+  (
+    section: AdminMenuSection,
+    sectionIndex: number
+  ) => {
 
-          const sectionOpen =
-            expanded.includes(section.title)
+    const isFlatSection =
+      !section.title?.trim()
 
-          return (
+    const sectionOpen =
+      isFlatSection ||
+      expanded.includes(
+        section.title
+      )
 
-            <div
-              key={section.title}
-              className="mb-2"
-            >
 
-              {/* =====================================
-                  SECTION HEADER
-              ===================================== */}
+    return (
 
-              <button
-                onClick={() =>
-                  toggleSection(section.title)
-                }
-                className="
-                  mb-1
-                  flex
-                  h-10
-                  w-full
-                  items-center
-                  justify-between
-                  rounded-xl
-                  px-3
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wider
-                  text-slate-500
-                  transition
-                  hover:bg-slate-100
-                  dark:hover:bg-slate-800
-                "
-              >
+      <div
+        key={
+          section.title ||
+          `flat-section-${sectionIndex}`
+        }
+        className="mb-2"
+      >
 
-                <span>
-                  {section.title}
-                </span>
+        {/* =====================================
+            SECTION HEADER
 
-                {sectionOpen ? (
-                  <ChevronDown size={15} />
-                ) : (
-                  <ChevronRight size={15} />
-                )}
+            Empty title:
+            Do not render dropdown header.
 
-              </button>
+            Normal title:
+            Keep existing dropdown behavior.
+        ===================================== */}
 
-              {/* =====================================
-                  SECTION ITEMS
-              ===================================== */}
+        {!isFlatSection && (
 
-              {sectionOpen && (
+          <button
+            type="button"
+            onClick={() =>
+              toggleSection(
+                section.title
+              )
+            }
+            className="
+              mb-1
+              flex
+              h-10
+              w-full
+              items-center
+              justify-between
+              rounded-xl
+              px-3
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wider
+              text-slate-500
+              transition
+              hover:bg-slate-100
+              dark:hover:bg-slate-800
+            "
+          >
 
-                <div className="space-y-1">
+            <span>
+              {section.title}
+            </span>
 
-                  {section.items.map((item) => {
 
-                    const Icon = item.icon
+            {sectionOpen ? (
 
-                    const hasChildren =
-                      !!item.children?.length
+              <ChevronDown
+                size={15}
+              />
 
-                    const active =
-                      item.href
-                        ? pathname === item.href
-                        : (
-                            item.children?.some(
-                              (child) =>
-                                child.href &&
-                                pathname.startsWith(
-                                  child.href
-                                )
-                            ) ?? false
+            ) : (
+
+              <ChevronRight
+                size={15}
+              />
+
+            )}
+
+          </button>
+
+        )}
+
+
+        {/* =====================================
+            SECTION ITEMS
+
+            Flat section:
+            Always visible.
+
+            Normal section:
+            Visible only when expanded.
+        ===================================== */}
+
+        {sectionOpen && (
+
+          <div className="space-y-1">
+
+            {section.items.map(
+              (
+                item: AdminMenuItem
+              ) => {
+
+                const Icon =
+                  item.icon
+
+
+                const hasChildren =
+                  !!item.children?.length
+
+
+                const active =
+                  item.href
+                    ? (
+                        pathname ===
+                          item.href ||
+
+                        (
+                          item.href !==
+                            "/admin/data-entry" &&
+
+                          pathname.startsWith(
+                            `${item.href}/`
                           )
+                        )
+                      )
+                    : (
+                        item.children?.some(
+                          (child) =>
+                            child.href &&
+                            (
+                              pathname ===
+                                child.href ||
 
-                    return (
+                              pathname.startsWith(
+                                `${child.href}/`
+                              )
+                            )
+                        ) ?? false
+                      )
 
-                      <div
-                        key={item.label}
-                        className="space-y-1"
+
+                return (
+
+                  <div
+                    key={
+                      item.href ||
+                      item.label
+                    }
+                    className="space-y-1"
+                  >
+
+                    {/* ==========================
+                        SINGLE ITEM
+                    ========================== */}
+
+                    {!hasChildren && (
+
+                      <Link
+                        href={
+                          item.href!
+                        }
+                        className={clsx(
+
+                          `
+                            flex
+                            h-11
+                            items-center
+                            gap-3
+                            rounded-xl
+                            px-4
+                            transition
+                          `,
+
+                          active
+                            ? `
+                                bg-orange-50
+                                font-medium
+                                text-orange-600
+                                dark:bg-orange-950/30
+                              `
+                            : `
+                                text-slate-700
+                                hover:bg-slate-100
+                                dark:text-slate-300
+                                dark:hover:bg-slate-800
+                              `
+
+                        )}
                       >
 
-                        {/* ==========================
-                            SINGLE ITEM
-                        ========================== */}
+                        <Icon
+                          size={18}
+                        />
 
-                        {!hasChildren && (
 
-                          <Link
-                            href={item.href!}
-                            className={clsx(
+                        <span className="flex-1">
 
-                              "flex h-11 items-center gap-3 rounded-xl px-4 transition",
+                          {item.label}
 
-                              active
-                                ? "bg-orange-50 font-medium text-orange-600 dark:bg-orange-950/30"
-                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                        </span>
 
-                            )}
+
+                        {item.badge && (
+
+                          <span
+                            className="
+                              rounded-full
+                              bg-red-500
+                              px-2
+                              py-0.5
+                              text-[10px]
+                              font-semibold
+                              text-white
+                            "
                           >
 
-                            <Icon size={18} />
+                            {item.badge}
 
-                            <span className="flex-1">
-                              {item.label}
-                            </span>
-
-                            {item.badge && (
-                              <span
-                                className="
-                                  rounded-full
-                                  bg-red-500
-                                  px-2
-                                  py-0.5
-                                  text-[10px]
-                                  font-semibold
-                                  text-white
-                                "
-                              >
-                                {item.badge}
-                              </span>
-                            )}
-
-                          </Link>
+                          </span>
 
                         )}
 
-                        {/* ==========================
-                            GROUP
-                        ========================== */}
+                      </Link>
 
-                        {hasChildren && (
+                    )}
 
-                          <>
-                            <button
-                              onClick={() =>
-                                toggleSection(
-                                  item.label
-                                )
-                              }
-                              className={clsx(
 
-                                "flex h-11 w-full items-center justify-between rounded-xl px-4 transition",
+                    {/* ==========================
+                        GROUP
+                    ========================== */}
 
-                                active
-                                  ? "bg-orange-50 text-orange-600 dark:bg-orange-950/30"
-                                  : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                    {hasChildren && (
 
-                              )}
-                            >
+                      <>
 
-                              <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleSection(
+                              item.label
+                            )
+                          }
+                          className={clsx(
 
-                                <Icon size={18} />
+                            `
+                              flex
+                              h-11
+                              w-full
+                              items-center
+                              justify-between
+                              rounded-xl
+                              px-4
+                              transition
+                            `,
 
-                                <span>
-                                  {item.label}
-                                </span>
+                            active
+                              ? `
+                                  bg-orange-50
+                                  text-orange-600
+                                  dark:bg-orange-950/30
+                                `
+                              : `
+                                  hover:bg-slate-100
+                                  dark:hover:bg-slate-800
+                                `
 
-                              </div>
+                          )}
+                        >
 
-                              {expanded.includes(
-                                item.label
-                              ) ? (
-                                <ChevronDown
-                                  size={16}
-                                />
-                              ) : (
-                                <ChevronRight
-                                  size={16}
-                                />
-                              )}
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                            "
+                          >
 
-                            </button>
+                            <Icon
+                              size={18}
+                            />
 
-                                                        {/* ======================================
-                                CHILDREN (NO ICONS)
-                            ======================================= */}
 
-                            {expanded.includes(item.label) && (
+                            <span>
 
-                              <div
-                                className="
-                                  ml-6
-                                  border-l
-                                  border-slate-200
-                                  pl-4
-                                  dark:border-slate-700
-                                "
-                              >
+                              {item.label}
 
-                                {item.children!.map((child) => {
+                            </span>
 
-                                  const childActive =
-                                    pathname === child.href
+                          </div>
 
-                                  return (
 
-                                    <Link
-                                      key={child.href}
-                                      href={child.href!}
-                                      className={clsx(
+                          {expanded.includes(
+                            item.label
+                          ) ? (
 
-                                        "flex h-10 items-center rounded-lg px-3 text-sm transition",
+                            <ChevronDown
+                              size={16}
+                            />
 
-                                        childActive
-                                          ? "bg-orange-100 font-medium text-orange-700 dark:bg-orange-950/40 dark:text-orange-300"
-                                          : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                          ) : (
 
-                                      )}
-                                    >
+                            <ChevronRight
+                              size={16}
+                            />
 
-                                      {/* No icons for children */}
+                          )}
 
-                                      <span className="flex-1">
+                        </button>
 
-                                        {child.label}
+
+                        {/* ======================
+                            CHILDREN
+                        ====================== */}
+
+                        {expanded.includes(
+                          item.label
+                        ) && (
+
+                          <div
+                            className="
+                              ml-6
+                              border-l
+                              border-slate-200
+                              pl-4
+                              dark:border-slate-700
+                            "
+                          >
+
+                            {item.children!.map(
+                              (child) => {
+
+                                const childActive =
+                                  pathname ===
+                                    child.href ||
+
+                                  (
+                                    child.href
+                                      ? pathname.startsWith(
+                                          `${child.href}/`
+                                        )
+                                      : false
+                                  )
+
+
+                                return (
+
+                                  <Link
+                                    key={
+                                      child.href
+                                    }
+                                    href={
+                                      child.href!
+                                    }
+                                    className={clsx(
+
+                                      `
+                                        flex
+                                        h-10
+                                        items-center
+                                        rounded-lg
+                                        px-3
+                                        text-sm
+                                        transition
+                                      `,
+
+                                      childActive
+                                        ? `
+                                            bg-orange-100
+                                            font-medium
+                                            text-orange-700
+                                            dark:bg-orange-950/40
+                                            dark:text-orange-300
+                                          `
+                                        : `
+                                            text-slate-600
+                                            hover:bg-slate-100
+                                            dark:text-slate-400
+                                            dark:hover:bg-slate-800
+                                          `
+
+                                    )}
+                                  >
+
+                                    <span className="flex-1">
+
+                                      {child.label}
+
+                                    </span>
+
+
+                                    {child.badge && (
+
+                                      <span
+                                        className="
+                                          rounded-full
+                                          bg-orange-600
+                                          px-2
+                                          py-0.5
+                                          text-[10px]
+                                          font-semibold
+                                          text-white
+                                        "
+                                      >
+
+                                        {child.badge}
 
                                       </span>
 
-                                      {child.badge && (
+                                    )}
 
-                                        <span
-                                          className="
-                                            rounded-full
-                                            bg-orange-600
-                                            px-2
-                                            py-0.5
-                                            text-[10px]
-                                            font-semibold
-                                            text-white
-                                          "
-                                        >
+                                  </Link>
 
-                                          {child.badge}
+                                )
 
-                                        </span>
-
-                                      )}
-
-                                    </Link>
-
-                                  )
-
-                                })}
-
-                              </div>
-
+                              }
                             )}
 
-                          </>
+                          </div>
 
                         )}
 
-                      </div>
+                      </>
 
-                    )
+                    )}
 
-                  })}
+                  </div>
 
-                </div>
+                )
 
-              )}
+              }
+            )}
 
-            </div>
+          </div>
 
-          )
+        )}
 
-        })}
+      </div>
+
+    )
+
+  }
+)}
 
            </div>   
 

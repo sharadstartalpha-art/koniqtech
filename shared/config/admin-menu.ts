@@ -67,6 +67,8 @@ import {
   Server,
 
   LucideIcon,
+  MonitorPlay,
+  Send,
 } from "lucide-react"
 
 /* ===========================================================
@@ -1218,6 +1220,43 @@ export const CUSTOMER_SUCCESS_MENU:
 ]
 
 /* ===========================================================
+   PLATFORM_SALES_MENU
+=========================================================== */
+
+export const PLATFORM_SALES_MENU: AdminMenuSection[] = [
+  {
+    title: "",
+    items: [
+      {
+        label: "Dashboard",
+        href: "/admin/sales/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Leads",
+        href: "/admin/sales/leads",
+        icon: Target,
+      },
+      {
+        label: "Outreach",
+        href: "/admin/sales/outreach",
+        icon: Send,
+      },
+      {
+        label: "Demo Requests",
+        href: "/admin/sales/demo-requests",
+        icon: MonitorPlay,
+      },
+      {
+        label: "Reports",
+        href: "/admin/sales/reports",
+        icon: BarChart3,
+      },
+    ],
+  },
+]
+
+/* ===========================================================
    MENU BY ROLE
 =========================================================== */
 
@@ -1232,8 +1271,8 @@ export const MENU_BY_ROLE: Record<
   [ROLE.PLATFORM_MANAGER]:
     PLATFORM_MANAGER_MENU,
 
-  [ROLE.PLATFORM_SALES]:
-    SALES_MENU,
+ [ROLE.PLATFORM_SALES]:
+  PLATFORM_SALES_MENU,
 
   [ROLE.MARKETING]:
     MARKETING_MENU,
@@ -1256,4 +1295,5 @@ export const MENU_BY_ROLE: Record<
   [ROLE.CUSTOMER_SUCCESS]:
     CUSTOMER_SUCCESS_MENU,
 
+   
 }

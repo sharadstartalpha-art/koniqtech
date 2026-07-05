@@ -993,9 +993,21 @@ export const DATA_ENTRY_MENU: AdminMenuSection[] = [
   {
     title: "",
     items: [
-      DataEntryDashboard,
-      DataEntryLeads,
-      DataEntryReports,
+      {
+        label: "Dashboard",
+        href: "/admin/data-entry/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        label: "Leads",
+        href: "/admin/data-entry",
+        icon: Database,
+      },
+      {
+        label: "Reports",
+        href: "/admin/data-entry/reports",
+        icon: BarChart3,
+      },
     ],
   },
 ]

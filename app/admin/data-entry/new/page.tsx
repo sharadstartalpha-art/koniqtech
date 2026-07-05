@@ -60,44 +60,26 @@ export default async function NewDataEntryLeadPage() {
   // These users are available for lead assignment.
   // ----------------------------------------------------------
 
-  const users =
-    await prisma.user.findMany({
+ const users =
+  await prisma.user.findMany({
+    where: {
+      orgId,
 
-      where: {
+      status: "active",
 
-        orgId
+      role: "platform_sales",
+    },
 
-      },
+    orderBy: {
+      name: "asc",
+    },
 
-      orderBy: [
-
-        {
-          name:
-            "asc"
-        },
-
-        {
-          email:
-            "asc"
-        }
-
-      ],
-
-      select: {
-
-        id:
-          true,
-
-        name:
-          true,
-
-        email:
-          true
-
-      }
-
-    })
-
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  })
 
   // ----------------------------------------------------------
   // MAP ASSIGNEE OPTIONS

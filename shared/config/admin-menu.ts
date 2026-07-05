@@ -970,6 +970,12 @@ export const SUPPORT_MENU: AdminMenuSection[] = [
    DATA ENTRY MENU ITEMS
 =========================================================== */
 
+const DataEntryDashboard: AdminMenuItem = {
+  label: "Dashboard",
+  href: "/admin/data-entry/dashboard",
+  icon: LayoutDashboard,
+}
+
 const DataEntryLeads: AdminMenuItem = {
   label: "Leads",
   href: "/admin/data-entry",
@@ -982,36 +988,21 @@ const DataEntryReports: AdminMenuItem = {
   icon: BarChart3,
 }
 
-const DataEntryDashboard: AdminMenuItem = {
-  label: "Dashboard",
-  href: "/admin/data-entry/dashboard",
-  icon: LayoutDashboard,
-}
-
-/* ===========================================================
-   DATA ENTRY MENU
-=========================================================== */
 
 export const DATA_ENTRY_MENU: AdminMenuSection[] = [
-
   {
-    title: "Dashboard",
-
+    title: "",
     items: [
       DataEntryDashboard,
-    ],
-  },
-
-  {
-    title: "Data Entry",
-
-    items: [
       DataEntryLeads,
       DataEntryReports,
     ],
   },
-
 ]
+
+
+
+
 
 /* ===========================================================
    DEVELOPER MENU

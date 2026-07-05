@@ -24,6 +24,7 @@ import LeadForm, {
 import {
   updateLeadAction
 } from "../../actions"
+import { UserRole } from "@prisma/client"
 
 
 // ============================================================
@@ -157,59 +158,46 @@ export default async function EditLeadPage({
   // longer active so existing assignments remain editable.
   // ----------------------------------------------------------
 
-  const users =
-    await prisma.user.findMany({
+ const users =
+  await prisma.user.findMany({
+    where: {
+      orgId,
 
-      where: {
-
-        orgId,
-
-        OR: [
-
-          {
-            status:
-              "active"
-          },
-
-          ...(lead.assignedTo
-            ? [
-                {
-                  id:
-                    lead.assignedTo
-                }
-              ]
-            : [])
-
-        ]
-
-      },
-
-      orderBy: [
-
+      OR: [
         {
-          name:
-            "asc"
+          status: "active",
+
+          role:
+            UserRole.platform_sales,
         },
 
-        {
-          email:
-            "asc"
-        }
-
+        ...(lead.assignedTo
+          ? [
+              {
+                id:
+                  lead.assignedTo,
+              },
+            ]
+          : []),
       ],
+    },
 
-      select: {
+    orderBy: [
+      {
+        name: "asc",
+      },
 
-        id: true,
+      {
+        email: "asc",
+      },
+    ],
 
-        name: true,
-
-        email: true
-
-      }
-
-    })
-
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  })
 
   // ----------------------------------------------------------
   // MAP ASSIGNEES

@@ -932,13 +932,13 @@ export default function LeadForm({
       {/* ==================================================== */}
 
       <FormSection
-        title="Lead Assignment"
-        description="Assign this lead to a user in the current organization."
+        title="Sales Assignment"
+        description="Assign this lead to the salesperson responsible for customer contact and follow-up."
         icon={Users}
       >
 
         <FormField
-          label="Assigned User"
+          label="Sales Person"
           htmlFor="assignedTo"
           error={
             state.errors?.assignedTo
@@ -971,7 +971,7 @@ export default function LeadForm({
             >
 
               <option value="">
-                Leave unassigned
+                Select sales person
               </option>
 
 

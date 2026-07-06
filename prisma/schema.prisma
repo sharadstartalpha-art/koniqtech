@@ -425,14 +425,13 @@ model User {
 
   dispatchJobs DispatchJob[]
 
-  routeOptimizations RouteOptimization[]
-
-  role               UserRole
-  OrganizationRole   OrganizationRole? @relation(fields: [organizationRoleId], references: [id])
-  organizationRoleId String?
-  UserPayroll        UserPayroll[]
-  DispatchBoard      DispatchBoard[]
-  LeadNote           LeadNote[]
+  routeOptimizations   RouteOptimization[]
+  createdDemoSchedules DemoSchedule[]      @relation("DemoScheduleCreator")
+  role                 UserRole
+  OrganizationRole     OrganizationRole?   @relation(fields: [organizationRoleId], references: [id])
+  organizationRoleId   String?
+  UserPayroll          UserPayroll[]
+  DispatchBoard        DispatchBoard[]
 
   @@index([orgId])
   @@index([status])
@@ -1045,9 +1044,7 @@ model LeadNote {
 
   author User @relation("LeadNoteAuthor", fields: [createdBy], references: [id], onDelete: Cascade)
 
-  lead   Lead    @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  User   User?   @relation(fields: [userId], references: [id])
-  userId String?
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
   @@index([createdBy])
@@ -1573,19 +1570,31 @@ model DemoSchedule {
 
   marketingEmployeeId String
 
+  createdByUserId String?
+
   meetingDate DateTime
 
   meetingLink String?
 
-  status DemoStatus
+  status DemoStatus @default(scheduled)
 
   notes String?
 
   createdAt DateTime @default(now())
 
+  updatedAt DateTime @updatedAt
+
   company CompanyLead @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   marketer Employee @relation(fields: [marketingEmployeeId], references: [id], onDelete: Cascade)
+
+  createdBy User? @relation("DemoScheduleCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([marketingEmployeeId])
+  @@index([createdByUserId])
+  @@index([meetingDate])
+  @@index([status])
 }
 
 model SalesPipeline {
@@ -1676,11 +1685,10 @@ enum TaskStatus {
 
 enum DemoStatus {
   scheduled
-
+  confirmed
   completed
-
   cancelled
-
+  rescheduled
   no_show
 }
 

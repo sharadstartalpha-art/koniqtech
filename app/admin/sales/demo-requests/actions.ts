@@ -280,10 +280,13 @@ export async function createDemoRequestAction(
         status:
           DemoStatus.scheduled,
 
+           createdByUserId: session.user.id,
+
       },
 
     })
 
+   
 
     revalidatePath(
       "/admin/sales/demo-requests"
@@ -629,31 +632,35 @@ export async function updateDemoStatusAction(
   const session = await auth()
 
   if (!session?.user) {
-    return
+    redirect("/login")
   }
 
 
   const id =
-    getString(
-      formData,
-      "id"
-    )
+    String(
+      formData.get("id") ?? ""
+    ).trim()
 
 
-  const statusValue =
-    getString(
-      formData,
-      "status"
-    )
+  const status =
+    String(
+      formData.get("status") ?? ""
+    ).trim()
+
+
+  const allowedStatuses = new Set([
+    "scheduled",
+    "confirmed",
+    "completed",
+    "cancelled",
+    "rescheduled",
+    "no_show",
+  ])
 
 
   if (
     !id ||
-    !Object.values(
-      DemoStatus
-    ).includes(
-      statusValue as DemoStatus
-    )
+    !allowedStatuses.has(status)
   ) {
     return
   }
@@ -666,8 +673,13 @@ export async function updateDemoStatusAction(
     },
 
     data: {
-      status:
-        statusValue as DemoStatus,
+      status: status as
+        | "scheduled"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "rescheduled"
+        | "no_show",
     },
 
   })
@@ -677,17 +689,10 @@ export async function updateDemoStatusAction(
     "/admin/sales/demo-requests"
   )
 
-
   revalidatePath(
     `/admin/sales/demo-requests/${id}`
   )
-
-
-  revalidatePath(
-    "/admin/sales/dashboard"
-  )
 }
-
 
 /* ==========================================================
    DELETE DEMO REQUEST

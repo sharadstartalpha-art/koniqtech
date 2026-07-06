@@ -1330,6 +1330,8 @@ model Employee {
 
   active Boolean @default(true)
 
+  demoFollowUps DemoFollowUp[]
+
   favoriteArticles KnowledgeFavorite[]
   knowledgeViews   KnowledgeView[]
 
@@ -1583,6 +1585,8 @@ model DemoSchedule {
   createdAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
+
+  followUps DemoFollowUp[]
 
   company CompanyLead @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -4992,4 +4996,59 @@ model RouteStop {
   optimization RouteOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
 
   job Job @relation(fields: [jobId], references: [id])
+}
+
+model DemoFollowUp {
+  id String @id @default(uuid())
+
+  demoScheduleId String
+
+  marketingEmployeeId String
+
+  followUpDate DateTime
+
+  type DemoFollowUpType
+
+  status DemoFollowUpStatus @default(pending)
+
+  outcome String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  demoSchedule DemoSchedule @relation(fields: [demoScheduleId], references: [id], onDelete: Cascade)
+
+  marketer Employee @relation(fields: [marketingEmployeeId], references: [id], onDelete: Cascade)
+
+  @@index([demoScheduleId])
+  @@index([marketingEmployeeId])
+  @@index([followUpDate])
+  @@index([status])
+  @@index([type])
+}
+
+enum DemoFollowUpType {
+  call
+  email
+  sms
+  whatsapp
+  meeting
+  trial
+  pricing
+  negotiation
+}
+
+enum DemoFollowUpStatus {
+  pending
+  contacted
+  interested
+  trial
+  negotiation
+  won
+  lost
+  completed
+  cancelled
 }

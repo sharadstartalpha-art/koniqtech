@@ -25,7 +25,7 @@ import {
 
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
-
+import OutreachForm from "../../outreach/components/OutreachForm"
 
 /* ==========================================================
    TYPES
@@ -619,6 +619,21 @@ export default async function SalesLeadDetailPage({
 
       </div>
 
+
+{/* ========================================================
+    SALES OUTREACH WORKSPACE
+======================================================== */}
+
+<OutreachForm
+  lead={{
+    id: lead.id,
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    companyName: lead.companyName,
+  }}
+/>
 
       {/* ====================================================
           SUMMARY CARDS

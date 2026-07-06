@@ -1724,12 +1724,10 @@ enum CampaignChannel {
 
 enum CampaignStatus {
   draft
-
   running
-
   paused
-
   completed
+  cancelled
 }
 
 model EmployeeSession {

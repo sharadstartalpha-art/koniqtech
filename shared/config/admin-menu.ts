@@ -799,29 +799,93 @@ export const SALES_MENU: AdminMenuSection[] = [
 
 export const MARKETING_MENU: AdminMenuSection[] = [
 
-  {
-    title: "Dashboard",
+  /* -------------------------------------------------------
+     DASHBOARD
+  ------------------------------------------------------- */
 
+  {
+    title: "",
     items: [
-      Dashboard,
+      {
+        label: "Dashboard",
+        href: "/admin/marketing/dashboard",
+        icon: LayoutDashboard,
+      },
     ],
   },
+
+
+  /* -------------------------------------------------------
+     DEMOS
+  ------------------------------------------------------- */
+
+  {
+    title: "Demos",
+
+    items: [
+
+      {
+        label: "My Demos",
+        href: "/admin/marketing/demos",
+        icon: MonitorPlay,
+      },
+
+      {
+        label: "Demo Calendar",
+        href: "/admin/marketing/calendar",
+        icon: Presentation,
+      },
+
+      {
+        label: "Follow-ups",
+        href: "/admin/marketing/follow-ups",
+        icon: Target,
+      },
+
+    ],
+  },
+
+
+  /* -------------------------------------------------------
+     MARKETING
+  ------------------------------------------------------- */
 
   {
     title: "Marketing",
 
     items: [
 
-      Campaigns,
+      {
+        label: "Campaigns",
+        href: "/admin/marketing/campaigns",
+        icon: Megaphone,
+      },
 
-      EmailCenter,
+      {
+        label: "Email Center",
+        href: "/admin/marketing/email-center",
+        icon: Mail,
+      },
 
-      Newsletter,
+      {
+        label: "Newsletter",
+        href: "/admin/marketing/newsletter",
+        icon: Mail,
+      },
 
-      Templates,
+      {
+        label: "Templates",
+        href: "/admin/marketing/templates",
+        icon: FileText,
+      },
 
     ],
   },
+
+
+  /* -------------------------------------------------------
+     COMMUNICATION
+  ------------------------------------------------------- */
 
   {
     title: "Communication",
@@ -830,14 +894,33 @@ export const MARKETING_MENU: AdminMenuSection[] = [
 
       {
         label: "SMS Queue",
-        href: "/admin/sms-queue",
+        href: "/admin/marketing/sms-queue",
         icon: MessageSquare,
       },
 
       {
         label: "Email Queue",
-        href: "/admin/email-queue",
+        href: "/admin/marketing/email-queue",
         icon: Mail,
+      },
+
+    ],
+  },
+
+
+  /* -------------------------------------------------------
+     REPORTS
+  ------------------------------------------------------- */
+
+  {
+    title: "Reports",
+
+    items: [
+
+      {
+        label: "Marketing Reports",
+        href: "/admin/marketing/reports",
+        icon: BarChart3,
       },
 
     ],

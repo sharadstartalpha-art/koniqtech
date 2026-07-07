@@ -218,8 +218,10 @@ model Organization {
 
   dispatchBoards DispatchBoard[]
 
-  routeOptimizations RouteOptimization[]
-  OrganizationRole   OrganizationRole[]
+  routeOptimizations  RouteOptimization[]
+  OrganizationRole    OrganizationRole[]
+  MarketingNewsletter MarketingNewsletter[]
+  CompanyLead         CompanyLead[]
 }
 
 model User {
@@ -432,6 +434,9 @@ model User {
   organizationRoleId   String?
   UserPayroll          UserPayroll[]
   DispatchBoard        DispatchBoard[]
+
+  createdMarketingCampaigns   MarketingCampaign[]   @relation("MarketingCampaignCreator")
+  createdMarketingNewsletters MarketingNewsletter[] @relation("MarketingNewsletterCreator")
 
   @@index([orgId])
   @@index([status])
@@ -1416,8 +1421,8 @@ model EmployeeRole {
 }
 
 model CompanyLead {
-  id String @id @default(uuid())
-
+  id          String @id @default(uuid())
+  orgId       String
   companyName String
 
   ownerName String?
@@ -1456,7 +1461,8 @@ model CompanyLead {
 
   assignedTo String?
 
-  assignedEmployee Employee? @relation(fields: [assignedTo], references: [id])
+  assignedEmployee       Employee?               @relation(fields: [assignedTo], references: [id])
+  marketingCampaignLeads MarketingCampaignLead[]
 
   createdAt DateTime @default(now())
 
@@ -1468,6 +1474,9 @@ model CompanyLead {
   DemoSchedule  DemoSchedule[]
   SalesPipeline SalesPipeline[]
 
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
   @@index([companyName])
   @@index([status])
   @@index([assignedTo])
@@ -1640,7 +1649,42 @@ model MarketingCampaign {
 
   conversions Int @default(0)
 
+  updatedAt DateTime @updatedAt
+
+  createdByUserId String?
+
+  createdBy User? @relation("MarketingCampaignCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
+
+  campaignLeads MarketingCampaignLead[]
+
+  @@index([status])
+  @@index([channel])
+  @@index([createdByUserId])
+}
+
+model MarketingCampaignLead {
+  id String @id @default(uuid())
+
+  campaignId String
+
+  companyLeadId String
+
+  converted Boolean @default(false)
+
+  convertedAt DateTime?
+
+  attributedAt DateTime @default(now())
+
+  campaign MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  companyLead CompanyLead @relation(fields: [companyLeadId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, companyLeadId])
+  @@index([campaignId])
+  @@index([companyLeadId])
+  @@index([converted])
 }
 
 enum LeadSource {
@@ -1714,15 +1758,9 @@ enum SalesStage {
 
 enum CampaignChannel {
   email
-
-  linkedin
-
-  facebook
-
-  youtube
-
-  google
-
+  social
+  ads
+  sms
   webinar
 }
 
@@ -3639,6 +3677,8 @@ model UserEmailQueue {
 
   userId String?
 
+  newsletterId String?
+
   toEmail String
 
   subject String
@@ -3667,7 +3707,12 @@ model UserEmailQueue {
 
   user User? @relation(fields: [userId], references: [id])
 
+  newsletter MarketingNewsletter? @relation(fields: [newsletterId], references: [id], onDelete: SetNull)
+
   @@index([orgId])
+  @@index([newsletterId])
+  @@index([status])
+  @@index([scheduledAt])
 }
 
 model UserSmsQueue {
@@ -5051,4 +5096,89 @@ enum DemoFollowUpStatus {
   lost
   completed
   cancelled
+}
+
+enum EmailQueueStatus {
+  queued
+  processing
+  sent
+  failed
+}
+
+model MarketingNewsletter {
+  id String @id @default(uuid())
+
+  orgId String
+
+  title String
+
+  subject String
+
+  previewText String?
+
+  content String @db.Text
+
+  audience NewsletterAudience @default(all)
+
+  status NewsletterStatus @default(draft)
+
+  scheduledAt DateTime?
+
+  sentAt DateTime?
+
+  recipientCount Int @default(0)
+
+  sentCount Int @default(0)
+
+  failedCount Int @default(0)
+
+  openedCount Int @default(0)
+
+  clickedCount Int @default(0)
+
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  emailQueue UserEmailQueue[]
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdBy User? @relation("MarketingNewsletterCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([status])
+  @@index([audience])
+  @@index([scheduledAt])
+  @@index([createdByUserId])
+}
+
+enum NewsletterAudience {
+  all
+  prospects
+  customers
+  trial
+  inactive
+}
+
+enum NewsletterStatus {
+  draft
+  scheduled
+  queued
+  sending
+  sent
+  partially_failed
+  failed
+  cancelled
+}
+
+enum NewsletterAudienceType {
+  all_leads
+  qualified_leads
+  demo_scheduled
+  demo_completed
+  trial_users
+  custom
 }

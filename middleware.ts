@@ -35,14 +35,7 @@ new URL("/login", req.url)
 );
 }
 
-if (
-authToken &&
-(path === "/login" || path === "/register")
-) {
-return NextResponse.redirect(
-new URL("/dashboard", req.url)
-);
-}
+
 
 const response = NextResponse.next();
 

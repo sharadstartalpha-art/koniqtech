@@ -14,6 +14,10 @@ import {
   CheckCircle2
 } from "lucide-react"
 
+import {
+  getDashboardForRole
+} from "@/shared/config/role-dashboard"
+
 export default function LoginPage() {
 
   const [email,setEmail] = useState("")
@@ -64,11 +68,16 @@ export default function LoginPage() {
   .toLowerCase()
 
 if (INTERNAL_PLATFORM_ROLES.has(role)) {
-  window.location.replace("/admin/dashboard")
+  window.location.replace(
+    getDashboardForRole(role)
+  )
+
   return
 }
 
 window.location.replace("/dashboard")
+
+
   }
 
   return(

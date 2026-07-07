@@ -218,6 +218,7 @@ model Organization {
 
   dispatchBoards DispatchBoard[]
 
+  marketingTemplates MarketingTemplate[]
   marketingCampaigns MarketingCampaign[]
 
   routeOptimizations  RouteOptimization[]
@@ -439,6 +440,8 @@ model User {
 
   createdMarketingCampaigns   MarketingCampaign[]   @relation("MarketingCampaignCreator")
   createdMarketingNewsletters MarketingNewsletter[] @relation("MarketingNewsletterCreator")
+
+  createdMarketingTemplates MarketingTemplate[] @relation("MarketingTemplateCreator")
 
   @@index([orgId])
   @@index([status])
@@ -5185,4 +5188,60 @@ enum NewsletterAudienceType {
   demo_completed
   trial_users
   custom
+}
+
+model MarketingTemplate {
+  id String @id @default(uuid())
+
+  orgId String
+
+  name String
+
+  description String?
+
+  category MarketingTemplateCategory
+
+  subject String?
+
+  previewText String?
+
+  content String @db.Text
+
+  status MarketingTemplateStatus @default(active)
+
+  usageCount Int @default(0)
+
+  createdByUserId String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  createdBy User? @relation("MarketingTemplateCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([category])
+  @@index([status])
+  @@index([createdByUserId])
+}
+
+enum MarketingTemplateCategory {
+  campaign
+  newsletter
+  demo_invitation
+  demo_reminder
+  follow_up
+  sales_outreach
+  trial
+  onboarding
+  re_engagement
+  custom
+}
+
+enum MarketingTemplateStatus {
+  active
+  inactive
+  archived
 }

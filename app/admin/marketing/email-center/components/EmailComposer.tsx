@@ -7,231 +7,158 @@ import {
 } from "react"
 
 import {
-  AlertCircle,
-  Check,
-  ChevronDown,
-  Eye,
-  Loader2,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
   Mail,
   Megaphone,
-  Search,
   Send,
-  UserRound,
   Users,
-  X,
+  XCircle,
 } from "lucide-react"
 
 import {
   queueMarketingEmailAction,
+  type QueueMarketingEmailInput,
 } from "../actions"
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-type CampaignOption = {
-  id: string
-  title: string
-  channel: string
-  status: string
-  storedLeads: number
-  conversions: number
-  attributedLeads: number
-}
-
-type RecipientOption = {
+type Recipient = {
   id: string
   companyName: string
   ownerName: string | null
-  email: string
+  primaryEmail: string
   industry: string | null
+  city: string | null
+  state: string | null
   country: string | null
-  status: string
-  campaignIds: string[]
-  converted: boolean
 }
 
-type SenderOption = {
+type Campaign = {
   id: string
-  name: string
-  email: string
+  title: string
 }
 
 type EmailComposerProps = {
-  campaigns: CampaignOption[]
-  recipients: RecipientOption[]
-  sender: SenderOption
+  recipients: Recipient[]
+  campaigns: Campaign[]
 }
 
-type AudienceMode =
-  | "all"
-  | "campaign"
-  | "manual"
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const PERSONALIZATION_TOKENS = [
+  "{{companyName}}",
+  "{{ownerName}}",
+  "{{industry}}",
+  "{{city}}",
+  "{{state}}",
+  "{{country}}",
+]
 
 /* =========================================================
    COMPONENT
 ========================================================= */
 
 export default function EmailComposer({
-  campaigns,
   recipients,
-  sender,
+  campaigns,
 }: EmailComposerProps) {
-  const [
-    isPending,
-    startTransition,
-  ] = useTransition()
+  const [isPending, startTransition] =
+    useTransition()
 
-  const [
-    audienceMode,
-    setAudienceMode,
-  ] = useState<AudienceMode>("manual")
-
-  const [
-    campaignId,
-    setCampaignId,
-  ] = useState("")
+  const [campaignId, setCampaignId] =
+    useState("")
 
   const [
     selectedRecipientIds,
     setSelectedRecipientIds,
   ] = useState<string[]>([])
 
-  const [
-    search,
-    setSearch,
-  ] = useState("")
+  const [subject, setSubject] =
+    useState("")
 
-  const [
-    subject,
-    setSubject,
-  ] = useState("")
+  const [message, setMessage] =
+    useState("")
 
-  const [
-    message,
-    setMessage,
-  ] = useState("")
+  const [template, setTemplate] =
+    useState("")
 
-  const [
-    previewOpen,
-    setPreviewOpen,
-  ] = useState(false)
+  const [deliveryMode, setDeliveryMode] =
+    useState<"send_now" | "schedule">(
+      "send_now"
+    )
 
-  const [
-    recipientPanelOpen,
-    setRecipientPanelOpen,
-  ] = useState(true)
+  const [scheduledAt, setScheduledAt] =
+    useState("")
 
-  const [
-    result,
-    setResult,
-  ] = useState<{
-    success?: boolean
-    message?: string
-  } | null>(null)
+  const [search, setSearch] =
+    useState("")
+
+  const [result, setResult] =
+    useState<{
+      success: boolean
+      message: string
+    } | null>(null)
 
   /* =======================================================
      FILTERED RECIPIENTS
   ======================================================= */
 
-  const campaignRecipients = useMemo(() => {
-    if (!campaignId) {
-      return []
-    }
-
-    return recipients.filter((recipient) =>
-      recipient.campaignIds.includes(
-        campaignId
-      )
-    )
-  }, [
-    campaignId,
-    recipients,
-  ])
-
-  const searchedRecipients = useMemo(() => {
-    const normalizedSearch =
-      search.trim().toLowerCase()
-
-    if (!normalizedSearch) {
-      return recipients
-    }
-
-    return recipients.filter((recipient) => {
-      const searchableText = [
-        recipient.companyName,
-        recipient.ownerName,
-        recipient.email,
-        recipient.industry,
-        recipient.country,
-        recipient.status,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-
-      return searchableText.includes(
-        normalizedSearch
-      )
-    })
-  }, [
-    recipients,
-    search,
-  ])
-
-  /* =======================================================
-     EFFECTIVE RECIPIENT IDS
-  ======================================================= */
-
-  const effectiveRecipientIds =
+  const filteredRecipients =
     useMemo(() => {
-      if (audienceMode === "all") {
-        return recipients.map(
-          (recipient) => recipient.id
-        )
+      const query =
+        search.trim().toLowerCase()
+
+      if (!query) {
+        return recipients
       }
-
-      if (audienceMode === "campaign") {
-        return campaignRecipients.map(
-          (recipient) => recipient.id
-        )
-      }
-
-      return selectedRecipientIds
-    }, [
-      audienceMode,
-      recipients,
-      campaignRecipients,
-      selectedRecipientIds,
-    ])
-
-  const effectiveRecipients =
-    useMemo(() => {
-      const selectedSet = new Set(
-        effectiveRecipientIds
-      )
 
       return recipients.filter(
-        (recipient) =>
-          selectedSet.has(recipient.id)
+        (recipient) => {
+          return (
+            recipient.companyName
+              .toLowerCase()
+              .includes(query) ||
+            recipient.ownerName
+              ?.toLowerCase()
+              .includes(query) ||
+            recipient.primaryEmail
+              .toLowerCase()
+              .includes(query) ||
+            recipient.industry
+              ?.toLowerCase()
+              .includes(query) ||
+            recipient.city
+              ?.toLowerCase()
+              .includes(query) ||
+            recipient.country
+              ?.toLowerCase()
+              .includes(query)
+          )
+        }
       )
-    }, [
-      recipients,
-      effectiveRecipientIds,
-    ])
+    }, [recipients, search])
 
   /* =======================================================
-     SELECTED CAMPAIGN
+     SELECT ALL STATE
   ======================================================= */
 
-  const selectedCampaign =
-    campaigns.find(
-      (campaign) =>
-        campaign.id === campaignId
-    ) ?? null
+  const allVisibleSelected =
+    filteredRecipients.length > 0 &&
+    filteredRecipients.every(
+      (recipient) =>
+        selectedRecipientIds.includes(
+          recipient.id
+        )
+    )
 
   /* =======================================================
-     HELPERS
+     TOGGLE RECIPIENT
   ======================================================= */
 
   function toggleRecipient(
@@ -255,11 +182,27 @@ export default function EmailComposer({
     )
   }
 
-  function selectAllVisible() {
+  /* =======================================================
+     SELECT / DESELECT ALL VISIBLE
+  ======================================================= */
+
+  function toggleAllVisible() {
     const visibleIds =
-      searchedRecipients.map(
+      filteredRecipients.map(
         (recipient) => recipient.id
       )
+
+    if (allVisibleSelected) {
+      setSelectedRecipientIds(
+        (current) =>
+          current.filter(
+            (id) =>
+              !visibleIds.includes(id)
+          )
+      )
+
+      return
+    }
 
     setSelectedRecipientIds(
       (current) =>
@@ -272,23 +215,46 @@ export default function EmailComposer({
     )
   }
 
-  function clearRecipients() {
-    setSelectedRecipientIds([])
+  /* =======================================================
+     INSERT TOKEN
+  ======================================================= */
+
+  function insertToken(
+    token: string
+  ) {
+    setMessage(
+      (current) =>
+        `${current}${current ? " " : ""}${token}`
+    )
   }
 
-  function handleAudienceMode(
-    mode: AudienceMode
-  ) {
-    setAudienceMode(mode)
-    setResult(null)
+  /* =======================================================
+     VALIDATION
+  ======================================================= */
 
-    if (mode === "campaign") {
-      setRecipientPanelOpen(false)
+  function validateForm() {
+    if (
+      selectedRecipientIds.length === 0
+    ) {
+      return "Select at least one recipient."
     }
 
-    if (mode === "manual") {
-      setRecipientPanelOpen(true)
+    if (!subject.trim()) {
+      return "Email subject is required."
     }
+
+    if (!message.trim()) {
+      return "Email message is required."
+    }
+
+    if (
+      deliveryMode === "schedule" &&
+      !scheduledAt
+    ) {
+      return "Select a scheduled date and time."
+    }
+
+    return null
   }
 
   /* =======================================================
@@ -298,1695 +264,518 @@ export default function EmailComposer({
   function handleSubmit() {
     setResult(null)
 
-    if (!subject.trim()) {
+    const validationError =
+      validateForm()
+
+    if (validationError) {
       setResult({
         success: false,
-        message:
-          "Email subject is required.",
-      })
-
-      return
-    }
-
-    if (!message.trim()) {
-      setResult({
-        success: false,
-        message:
-          "Email message is required.",
-      })
-
-      return
-    }
-
-    if (
-      audienceMode === "campaign" &&
-      !campaignId
-    ) {
-      setResult({
-        success: false,
-        message:
-          "Select a campaign first.",
-      })
-
-      return
-    }
-
-    if (
-      effectiveRecipientIds.length === 0
-    ) {
-      setResult({
-        success: false,
-        message:
-          "Select at least one recipient.",
+        message: validationError,
       })
 
       return
     }
 
     startTransition(async () => {
-      const response =
-        await queueMarketingEmailAction({
+      const input: QueueMarketingEmailInput =
+        {
           campaignId:
             campaignId || null,
 
           recipientIds:
-            effectiveRecipientIds,
+            selectedRecipientIds,
 
           subject:
             subject.trim(),
 
           message:
             message.trim(),
-        })
+
+          template:
+            template.trim() || null,
+
+          deliveryMode,
+
+          scheduledAt:
+            deliveryMode === "schedule"
+              ? scheduledAt
+              : null,
+        }
+
+      /*
+       * The action accepts:
+       *
+       * queueMarketingEmailAction(
+       *   input,
+       *   formData
+       * )
+       */
+
+      
+
+     const response =
+  await queueMarketingEmailAction(input)
 
       setResult(response)
 
       if (response.success) {
         setSubject("")
         setMessage("")
-        setSelectedRecipientIds([])
+        setTemplate("")
         setCampaignId("")
-        setAudienceMode("manual")
+        setScheduledAt("")
+        setDeliveryMode(
+          "send_now"
+        )
+        setSelectedRecipientIds([])
       }
     })
   }
 
   /* =======================================================
-     RENDER
+     UI
   ======================================================= */
 
   return (
-    <>
-      <div
-        className="
-          grid
-          gap-6
-          xl:grid-cols-[minmax(0,1fr)_380px]
-        "
-      >
-        {/* ===============================================
-            LEFT COLUMN
-        =============================================== */}
+    <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      {/* ===============================================
+          RECIPIENT PANEL
+      =============================================== */}
 
-        <div className="space-y-6">
-          {/* =============================================
-              CAMPAIGN
-          ============================================= */}
-
-          <section
-            className="
-              rounded-2xl
-              border
-              border-slate-200
-              bg-white
-              p-6
-            "
-          >
-            <div
-              className="
-                flex
-                items-start
-                gap-3
-              "
-            >
-              <div
-                className="
-                  flex
-                  h-10
-                  w-10
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-orange-50
-                "
-              >
-                <Megaphone
-                  className="
-                    h-5
-                    w-5
-                    text-orange-600
-                  "
-                />
-              </div>
-
-              <div>
-                <h2
-                  className="
-                    font-bold
-                    text-slate-950
-                  "
-                >
-                  Campaign
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                  "
-                >
-                  Optionally associate this
-                  email with a marketing
-                  campaign.
-                </p>
-              </div>
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Users className="h-5 w-5" />
             </div>
 
-            <div className="mt-5">
-              <label
-                htmlFor="campaign"
-                className="
-                  mb-2
-                  block
-                  text-sm
-                  font-semibold
-                  text-slate-700
-                "
-              >
-                Marketing campaign
-              </label>
-
-              <div className="relative">
-                <select
-                  id="campaign"
-                  value={campaignId}
-                  onChange={(event) => {
-                    setCampaignId(
-                      event.target.value
-                    )
-                    setResult(null)
-                  }}
-                  className="
-                    h-12
-                    w-full
-                    appearance-none
-                    rounded-xl
-                    border
-                    border-slate-200
-                    bg-white
-                    px-4
-                    pr-10
-                    text-sm
-                    text-slate-900
-                    outline-none
-                    transition
-                    focus:border-blue-500
-                    focus:ring-4
-                    focus:ring-blue-50
-                  "
-                >
-                  <option value="">
-                    No campaign selected
-                  </option>
-
-                  {campaigns.map(
-                    (campaign) => (
-                      <option
-                        key={campaign.id}
-                        value={campaign.id}
-                      >
-                        {campaign.title} ·{" "}
-                        {campaign.channel} ·{" "}
-                        {campaign.status}
-                      </option>
-                    )
-                  )}
-                </select>
-
-                <ChevronDown
-                  className="
-                    pointer-events-none
-                    absolute
-                    right-4
-                    top-1/2
-                    h-4
-                    w-4
-                    -translate-y-1/2
-                    text-slate-400
-                  "
-                />
-              </div>
-
-              {selectedCampaign && (
-                <div
-                  className="
-                    mt-4
-                    grid
-                    gap-3
-                    sm:grid-cols-3
-                  "
-                >
-                  <MiniStat
-                    label="Attributed leads"
-                    value={
-                      selectedCampaign
-                        .attributedLeads
-                    }
-                  />
-
-                  <MiniStat
-                    label="Stored leads"
-                    value={
-                      selectedCampaign
-                        .storedLeads
-                    }
-                  />
-
-                  <MiniStat
-                    label="Conversions"
-                    value={
-                      selectedCampaign
-                        .conversions
-                    }
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* =============================================
-              AUDIENCE
-          ============================================= */}
-
-          <section
-            className="
-              rounded-2xl
-              border
-              border-slate-200
-              bg-white
-              p-6
-            "
-          >
-            <div
-              className="
-                flex
-                items-start
-                justify-between
-                gap-4
-              "
-            >
-              <div>
-                <h2
-                  className="
-                    font-bold
-                    text-slate-950
-                  "
-                >
-                  Audience
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                  "
-                >
-                  Choose who should receive
-                  this email.
-                </p>
-              </div>
-
-              <div
-                className="
-                  rounded-full
-                  bg-blue-50
-                  px-3
-                  py-1
-                  text-xs
-                  font-bold
-                  text-blue-700
-                "
-              >
-                {
-                  effectiveRecipientIds.length
-                }{" "}
-                selected
-              </div>
-            </div>
-
-            {/* MODE CARDS */}
-
-            <div
-              className="
-                mt-5
-                grid
-                gap-3
-                md:grid-cols-3
-              "
-            >
-              <AudienceCard
-                active={
-                  audienceMode === "all"
-                }
-                title="All recipients"
-                description={`${recipients.length} available`}
-                icon={
-                  <Users className="h-5 w-5" />
-                }
-                onClick={() =>
-                  handleAudienceMode("all")
-                }
-              />
-
-              <AudienceCard
-                active={
-                  audienceMode ===
-                  "campaign"
-                }
-                title="Campaign leads"
-                description={
-                  campaignId
-                    ? `${campaignRecipients.length} attributed`
-                    : "Select campaign"
-                }
-                icon={
-                  <Megaphone className="h-5 w-5" />
-                }
-                onClick={() =>
-                  handleAudienceMode(
-                    "campaign"
-                  )
-                }
-              />
-
-              <AudienceCard
-                active={
-                  audienceMode === "manual"
-                }
-                title="Manual selection"
-                description={`${selectedRecipientIds.length} selected`}
-                icon={
-                  <UserRound className="h-5 w-5" />
-                }
-                onClick={() =>
-                  handleAudienceMode(
-                    "manual"
-                  )
-                }
-              />
-            </div>
-
-            {/* CAMPAIGN WARNING */}
-
-            {audienceMode === "campaign" &&
-              !campaignId && (
-                <div
-                  className="
-                    mt-4
-                    flex
-                    items-start
-                    gap-2
-                    rounded-xl
-                    border
-                    border-orange-200
-                    bg-orange-50
-                    p-4
-                    text-sm
-                    text-orange-800
-                  "
-                >
-                  <AlertCircle
-                    className="
-                      mt-0.5
-                      h-4
-                      w-4
-                      shrink-0
-                    "
-                  />
-
-                  Select a campaign above to
-                  load its attributed leads.
-                </div>
-              )}
-
-            {/* MANUAL RECIPIENT PANEL */}
-
-            {audienceMode === "manual" && (
-              <div className="mt-5">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setRecipientPanelOpen(
-                      (current) => !current
-                    )
-                  }
-                  className="
-                    flex
-                    w-full
-                    items-center
-                    justify-between
-                    rounded-xl
-                    border
-                    border-slate-200
-                    bg-slate-50
-                    px-4
-                    py-3
-                    text-left
-                    text-sm
-                    font-semibold
-                    text-slate-800
-                  "
-                >
-                  <span>
-                    Select recipients
-                  </span>
-
-                  <ChevronDown
-                    className={`
-                      h-4
-                      w-4
-                      transition-transform
-                      ${
-                        recipientPanelOpen
-                          ? "rotate-180"
-                          : ""
-                      }
-                    `}
-                  />
-                </button>
-
-                {recipientPanelOpen && (
-                  <div
-                    className="
-                      mt-3
-                      overflow-hidden
-                      rounded-xl
-                      border
-                      border-slate-200
-                    "
-                  >
-                    {/* SEARCH */}
-
-                    <div
-                      className="
-                        border-b
-                        border-slate-200
-                        p-3
-                      "
-                    >
-                      <div className="relative">
-                        <Search
-                          className="
-                            absolute
-                            left-3
-                            top-1/2
-                            h-4
-                            w-4
-                            -translate-y-1/2
-                            text-slate-400
-                          "
-                        />
-
-                        <input
-                          value={search}
-                          onChange={(
-                            event
-                          ) =>
-                            setSearch(
-                              event.target
-                                .value
-                            )
-                          }
-                          placeholder="Search company, contact, email, industry..."
-                          className="
-                            h-10
-                            w-full
-                            rounded-lg
-                            border
-                            border-slate-200
-                            pl-9
-                            pr-4
-                            text-sm
-                            outline-none
-                            focus:border-blue-500
-                          "
-                        />
-                      </div>
-
-                      <div
-                        className="
-                          mt-3
-                          flex
-                          items-center
-                          justify-between
-                          gap-3
-                        "
-                      >
-                        <span
-                          className="
-                            text-xs
-                            text-slate-500
-                          "
-                        >
-                          {
-                            searchedRecipients.length
-                          }{" "}
-                          recipients shown
-                        </span>
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            gap-2
-                          "
-                        >
-                          <button
-                            type="button"
-                            onClick={
-                              clearRecipients
-                            }
-                            className="
-                              text-xs
-                              font-semibold
-                              text-red-600
-                              hover:text-red-700
-                            "
-                          >
-                            Clear
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={
-                              selectAllVisible
-                            }
-                            className="
-                              text-xs
-                              font-semibold
-                              text-blue-600
-                              hover:text-blue-700
-                            "
-                          >
-                            Select visible
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* RECIPIENT LIST */}
-
-                    <div
-                      className="
-                        max-h-[320px]
-                        overflow-y-auto
-                      "
-                    >
-                      {searchedRecipients.length ===
-                      0 ? (
-                        <div
-                          className="
-                            p-8
-                            text-center
-                            text-sm
-                            text-slate-500
-                          "
-                        >
-                          No matching recipients
-                          found.
-                        </div>
-                      ) : (
-                        searchedRecipients.map(
-                          (recipient) => {
-                            const selected =
-                              selectedRecipientIds.includes(
-                                recipient.id
-                              )
-
-                            return (
-                              <button
-                                key={
-                                  recipient.id
-                                }
-                                type="button"
-                                onClick={() =>
-                                  toggleRecipient(
-                                    recipient.id
-                                  )
-                                }
-                                className="
-                                  flex
-                                  w-full
-                                  items-center
-                                  gap-3
-                                  border-b
-                                  border-slate-100
-                                  px-4
-                                  py-3
-                                  text-left
-                                  transition
-                                  last:border-b-0
-                                  hover:bg-slate-50
-                                "
-                              >
-                                <div
-                                  className={`
-                                    flex
-                                    h-5
-                                    w-5
-                                    shrink-0
-                                    items-center
-                                    justify-center
-                                    rounded
-                                    border
-                                    ${
-                                      selected
-                                        ? "border-blue-600 bg-blue-600 text-white"
-                                        : "border-slate-300 bg-white"
-                                    }
-                                  `}
-                                >
-                                  {selected && (
-                                    <Check className="h-3.5 w-3.5" />
-                                  )}
-                                </div>
-
-                                <div
-                                  className="
-                                    min-w-0
-                                    flex-1
-                                  "
-                                >
-                                  <div
-                                    className="
-                                      flex
-                                      flex-wrap
-                                      items-center
-                                      gap-2
-                                    "
-                                  >
-                                    <p
-                                      className="
-                                        truncate
-                                        text-sm
-                                        font-semibold
-                                        text-slate-900
-                                      "
-                                    >
-                                      {
-                                        recipient.companyName
-                                      }
-                                    </p>
-
-                                    {recipient.converted && (
-                                      <span
-                                        className="
-                                          rounded-full
-                                          bg-green-50
-                                          px-2
-                                          py-0.5
-                                          text-[10px]
-                                          font-bold
-                                          text-green-700
-                                        "
-                                      >
-                                        Converted
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <p
-                                    className="
-                                      mt-0.5
-                                      truncate
-                                      text-xs
-                                      text-slate-500
-                                    "
-                                  >
-                                    {
-                                      recipient.email
-                                    }
-                                  </p>
-                                </div>
-
-                                <div
-                                  className="
-                                    hidden
-                                    text-right
-                                    sm:block
-                                  "
-                                >
-                                  <p
-                                    className="
-                                      text-xs
-                                      font-medium
-                                      text-slate-600
-                                    "
-                                  >
-                                    {recipient.industry ??
-                                      "General"}
-                                  </p>
-
-                                  <p
-                                    className="
-                                      mt-0.5
-                                      text-[11px]
-                                      text-slate-400
-                                    "
-                                  >
-                                    {recipient.country ??
-                                      "—"}
-                                  </p>
-                                </div>
-                              </button>
-                            )
-                          }
-                        )
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          {/* =============================================
-              EMAIL CONTENT
-          ============================================= */}
-
-          <section
-            className="
-              rounded-2xl
-              border
-              border-slate-200
-              bg-white
-              p-6
-            "
-          >
-            <div
-              className="
-                flex
-                items-start
-                gap-3
-              "
-            >
-              <div
-                className="
-                  flex
-                  h-10
-                  w-10
-                  items-center
-                  justify-center
-                  rounded-xl
-                  bg-blue-50
-                "
-              >
-                <Mail
-                  className="
-                    h-5
-                    w-5
-                    text-blue-600
-                  "
-                />
-              </div>
-
-              <div>
-                <h2
-                  className="
-                    font-bold
-                    text-slate-950
-                  "
-                >
-                  Email Content
-                </h2>
-
-                <p
-                  className="
-                    mt-1
-                    text-sm
-                    text-slate-500
-                  "
-                >
-                  Write the subject and
-                  message that recipients
-                  will receive.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-5">
-              {/* SUBJECT */}
-
-              <div>
-                <label
-                  htmlFor="subject"
-                  className="
-                    mb-2
-                    block
-                    text-sm
-                    font-semibold
-                    text-slate-700
-                  "
-                >
-                  Subject
-                </label>
-
-                <input
-                  id="subject"
-                  value={subject}
-                  onChange={(event) =>
-                    setSubject(
-                      event.target.value
-                    )
-                  }
-                  maxLength={180}
-                  placeholder="Enter email subject..."
-                  className="
-                    h-12
-                    w-full
-                    rounded-xl
-                    border
-                    border-slate-200
-                    px-4
-                    text-sm
-                    outline-none
-                    transition
-                    focus:border-blue-500
-                    focus:ring-4
-                    focus:ring-blue-50
-                  "
-                />
-
-                <div
-                  className="
-                    mt-1
-                    text-right
-                    text-xs
-                    text-slate-400
-                  "
-                >
-                  {subject.length}/180
-                </div>
-              </div>
-
-              {/* MESSAGE */}
-
-              <div>
-                <label
-                  htmlFor="message"
-                  className="
-                    mb-2
-                    block
-                    text-sm
-                    font-semibold
-                    text-slate-700
-                  "
-                >
-                  Message
-                </label>
-
-                <textarea
-                  id="message"
-                  value={message}
-                  onChange={(event) =>
-                    setMessage(
-                      event.target.value
-                    )
-                  }
-                  rows={14}
-                  placeholder={`Hi {{ownerName}},
-
-We would love to show you how KoniqTech can help {{companyName}} streamline operations, follow-ups, and customer management.
-
-Best regards,
-KoniqTech Team`}
-                  className="
-                    w-full
-                    resize-y
-                    rounded-xl
-                    border
-                    border-slate-200
-                    px-4
-                    py-3
-                    text-sm
-                    leading-6
-                    outline-none
-                    transition
-                    focus:border-blue-500
-                    focus:ring-4
-                    focus:ring-blue-50
-                  "
-                />
-
-                <div
-                  className="
-                    mt-2
-                    flex
-                    flex-wrap
-                    gap-2
-                  "
-                >
-                  <VariableButton
-                    label="{{ownerName}}"
-                    onClick={() =>
-                      setMessage(
-                        (current) =>
-                          current +
-                          "{{ownerName}}"
-                      )
-                    }
-                  />
-
-                  <VariableButton
-                    label="{{companyName}}"
-                    onClick={() =>
-                      setMessage(
-                        (current) =>
-                          current +
-                          "{{companyName}}"
-                      )
-                    }
-                  />
-
-                  <VariableButton
-                    label="{{industry}}"
-                    onClick={() =>
-                      setMessage(
-                        (current) =>
-                          current +
-                          "{{industry}}"
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* =============================================
-              RESULT
-          ============================================= */}
-
-          {result?.message && (
-            <div
-              className={`
-                flex
-                items-start
-                gap-3
-                rounded-xl
-                border
-                p-4
-                text-sm
-                ${
-                  result.success
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : "border-red-200 bg-red-50 text-red-800"
-                }
-              `}
-            >
-              {result.success ? (
-                <Check
-                  className="
-                    mt-0.5
-                    h-4
-                    w-4
-                    shrink-0
-                  "
-                />
-              ) : (
-                <AlertCircle
-                  className="
-                    mt-0.5
-                    h-4
-                    w-4
-                    shrink-0
-                  "
-                />
-              )}
-
-              {result.message}
-            </div>
-          )}
-        </div>
-
-        {/* ===============================================
-            RIGHT SUMMARY
-        =============================================== */}
-
-        <aside className="space-y-5">
-          <div
-            className="
-              sticky
-              top-6
-              space-y-5
-            "
-          >
-            <section
-              className="
-                rounded-2xl
-                border
-                border-slate-200
-                bg-white
-                p-5
-              "
-            >
-              <h2
-                className="
-                  font-bold
-                  text-slate-950
-                "
-              >
-                Delivery Summary
+            <div>
+              <h2 className="font-semibold text-slate-950">
+                Recipients
               </h2>
 
-              <div className="mt-5 space-y-4">
-                <SummaryRow
-                  label="Sender"
-                  value={sender.name}
-                />
+              <p className="text-sm text-slate-500">
+                {
+                  selectedRecipientIds.length
+                }{" "}
+                selected
+              </p>
+            </div>
+          </div>
 
-                <SummaryRow
-                  label="Sender email"
-                  value={
-                    sender.email || "—"
-                  }
-                />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Search companies or emails..."
+            className="mt-4 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
 
-                <SummaryRow
-                  label="Audience"
-                  value={
-                    audienceMode === "all"
-                      ? "All recipients"
-                      : audienceMode ===
-                          "campaign"
-                        ? "Campaign leads"
-                        : "Manual selection"
-                  }
-                />
+          <button
+            type="button"
+            onClick={toggleAllVisible}
+            className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            {allVisibleSelected
+              ? "Deselect visible recipients"
+              : "Select all visible recipients"}
+          </button>
+        </div>
 
-                <SummaryRow
-                  label="Recipients"
-                  value={String(
-                    effectiveRecipientIds.length
-                  )}
-                />
+        <div className="max-h-[650px] overflow-y-auto p-3">
+          {filteredRecipients.length ===
+          0 ? (
+            <div className="px-4 py-12 text-center">
+              <Users className="mx-auto h-8 w-8 text-slate-300" />
 
-                <SummaryRow
-                  label="Campaign"
-                  value={
-                    selectedCampaign?.title ??
-                    "Not assigned"
-                  }
-                />
-              </div>
+              <p className="mt-3 text-sm font-medium text-slate-700">
+                No recipients found
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredRecipients.map(
+                (recipient) => {
+                  const checked =
+                    selectedRecipientIds.includes(
+                      recipient.id
+                    )
 
-              <div
-                className="
-                  mt-5
-                  border-t
-                  border-slate-100
-                  pt-5
-                "
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPreviewOpen(true)
-                  }
-                  disabled={
-                    !subject.trim() &&
-                    !message.trim()
-                  }
-                  className="
-                    flex
-                    h-11
-                    w-full
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-xl
-                    border
-                    border-blue-200
-                    bg-blue-50
-                    text-sm
-                    font-bold
-                    text-blue-700
-                    transition
-                    hover:bg-blue-100
-                    disabled:cursor-not-allowed
-                    disabled:opacity-50
-                  "
-                >
-                  <Eye className="h-4 w-4" />
-
-                  Preview Email
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isPending}
-                  className="
-                    mt-3
-                    flex
-                    h-12
-                    w-full
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-xl
-                    bg-green-600
-                    text-sm
-                    font-bold
-                    text-white
-                    transition
-                    hover:bg-green-700
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
-                >
-                  {isPending ? (
-                    <>
-                      <Loader2
-                        className="
-                          h-4
-                          w-4
-                          animate-spin
-                        "
+                  return (
+                    <label
+                      key={
+                        recipient.id
+                      }
+                      className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition ${
+                        checked
+                          ? "border-blue-300 bg-blue-50"
+                          : "border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          checked
+                        }
+                        onChange={() =>
+                          toggleRecipient(
+                            recipient.id
+                          )
+                        }
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600"
                       />
 
-                      Queueing...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-
-                      Queue Email
-                    </>
-                  )}
-                </button>
-              </div>
-            </section>
-
-            {/* RECIPIENT PREVIEW */}
-
-            <section
-              className="
-                rounded-2xl
-                border
-                border-slate-200
-                bg-white
-                p-5
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                "
-              >
-                <h2
-                  className="
-                    font-bold
-                    text-slate-950
-                  "
-                >
-                  Recipients
-                </h2>
-
-                <span
-                  className="
-                    text-xs
-                    font-bold
-                    text-slate-500
-                  "
-                >
-                  {
-                    effectiveRecipients.length
-                  }
-                </span>
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  max-h-[300px]
-                  space-y-2
-                  overflow-y-auto
-                "
-              >
-                {effectiveRecipients.length ===
-                0 ? (
-                  <div
-                    className="
-                      rounded-xl
-                      bg-slate-50
-                      p-5
-                      text-center
-                      text-sm
-                      text-slate-500
-                    "
-                  >
-                    No recipients selected.
-                  </div>
-                ) : (
-                  effectiveRecipients
-                    .slice(0, 20)
-                    .map((recipient) => (
-                      <div
-                        key={recipient.id}
-                        className="
-                          rounded-xl
-                          bg-slate-50
-                          p-3
-                        "
-                      >
-                        <p
-                          className="
-                            truncate
-                            text-sm
-                            font-semibold
-                            text-slate-900
-                          "
-                        >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
                           {
                             recipient.companyName
                           }
                         </p>
 
-                        <p
-                          className="
-                            mt-0.5
-                            truncate
-                            text-xs
-                            text-slate-500
-                          "
-                        >
-                          {recipient.email}
+                        <p className="mt-0.5 truncate text-xs text-slate-500">
+                          {
+                            recipient.primaryEmail
+                          }
                         </p>
+
+                        {(recipient.industry ||
+                          recipient.city) && (
+                          <p className="mt-1 text-xs text-slate-400">
+                            {[
+                              recipient.industry,
+                              recipient.city,
+                              recipient.state,
+                            ]
+                              .filter(
+                                Boolean
+                              )
+                              .join(
+                                " • "
+                              )}
+                          </p>
+                        )}
                       </div>
-                    ))
-                )}
+                    </label>
+                  )
+                }
+              )}
+            </div>
+          )}
+        </div>
+      </section>
 
-                {effectiveRecipients.length >
-                  20 && (
-                  <p
-                    className="
-                      py-2
-                      text-center
-                      text-xs
-                      font-semibold
-                      text-slate-500
-                    "
-                  >
-                    +
-                    {effectiveRecipients.length -
-                      20}{" "}
-                    more recipients
-                  </p>
-                )}
-              </div>
-            </section>
+      {/* ===============================================
+          COMPOSER PANEL
+      =============================================== */}
+
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-50 text-green-600">
+              <Mail className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-slate-950">
+                Compose Email
+              </h2>
+
+              <p className="text-sm text-slate-500">
+                Create and queue personalized
+                marketing emails
+              </p>
+            </div>
           </div>
-        </aside>
-      </div>
+        </div>
 
-      {/* =================================================
-          PREVIEW MODAL
-      ================================================= */}
+        <div className="space-y-6 p-6">
+          {/* CAMPAIGN */}
 
-      {previewOpen && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-slate-950/50
-            p-4
-          "
-        >
-          <div
-            className="
-              max-h-[90vh]
-              w-full
-              max-w-3xl
-              overflow-hidden
-              rounded-2xl
-              bg-white
-              shadow-2xl
-            "
-          >
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                border-b
-                border-slate-200
-                px-6
-                py-4
-              "
+          <div>
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+              <Megaphone className="h-4 w-4" />
+              Marketing campaign
+            </label>
+
+            <select
+              value={campaignId}
+              onChange={(event) =>
+                setCampaignId(
+                  event.target.value
+                )
+              }
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <div>
-                <h2
-                  className="
-                    font-bold
-                    text-slate-950
-                  "
-                >
-                  Email Preview
-                </h2>
+              <option value="">
+                No campaign
+              </option>
 
-                <p
-                  className="
-                    mt-0.5
-                    text-xs
-                    text-slate-500
-                  "
-                >
-                  Preview before queueing
-                  delivery
-                </p>
+              {campaigns.map(
+                (campaign) => (
+                  <option
+                    key={
+                      campaign.id
+                    }
+                    value={
+                      campaign.id
+                    }
+                  >
+                    {
+                      campaign.title
+                    }
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+
+          {/* SUBJECT */}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Subject
+            </label>
+
+            <input
+              type="text"
+              value={subject}
+              onChange={(event) =>
+                setSubject(
+                  event.target.value
+                )
+              }
+              placeholder="Enter email subject"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          {/* TEMPLATE */}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Template name
+              <span className="ml-1 font-normal text-slate-400">
+                optional
+              </span>
+            </label>
+
+            <input
+              type="text"
+              value={template}
+              onChange={(event) =>
+                setTemplate(
+                  event.target.value
+                )
+              }
+              placeholder="Example: demo-follow-up"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          {/* MESSAGE */}
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Message
+            </label>
+
+            <textarea
+              value={message}
+              onChange={(event) =>
+                setMessage(
+                  event.target.value
+                )
+              }
+              rows={14}
+              placeholder="Write your marketing email..."
+              className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm leading-6 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+
+            <div className="mt-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Personalization tokens
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                {PERSONALIZATION_TOKENS.map(
+                  (token) => (
+                    <button
+                      key={token}
+                      type="button"
+                      onClick={() =>
+                        insertToken(
+                          token
+                        )
+                      }
+                      className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                    >
+                      {token}
+                    </button>
+                  )
+                )}
               </div>
+            </div>
+          </div>
+
+          {/* DELIVERY MODE */}
+
+          <div>
+            <label className="mb-3 block text-sm font-medium text-slate-700">
+              Delivery
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setDeliveryMode(
+                    "send_now"
+                  )
+                }
+                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${
+                  deliveryMode ===
+                  "send_now"
+                    ? "border-green-300 bg-green-50"
+                    : "border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                <Send className="h-5 w-5 text-green-600" />
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Send now
+                  </p>
+
+                  <p className="text-xs text-slate-500">
+                    Add emails to the queue
+                    immediately
+                  </p>
+                </div>
+              </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  setPreviewOpen(false)
+                  setDeliveryMode(
+                    "schedule"
+                  )
                 }
-                className="
-                  flex
-                  h-9
-                  w-9
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-slate-500
-                  transition
-                  hover:bg-red-50
-                  hover:text-red-600
-                "
+                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${
+                  deliveryMode ===
+                  "schedule"
+                    ? "border-orange-300 bg-orange-50"
+                    : "border-slate-200 hover:bg-slate-50"
+                }`}
               >
-                <X className="h-5 w-5" />
+                <CalendarClock className="h-5 w-5 text-orange-600" />
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    Schedule
+                  </p>
+
+                  <p className="text-xs text-slate-500">
+                    Queue for a future date
+                  </p>
+                </div>
               </button>
             </div>
+          </div>
 
-            <div
-              className="
-                max-h-[calc(90vh-80px)]
-                overflow-y-auto
-                p-6
-              "
-            >
-              <div
-                className="
-                  rounded-xl
-                  border
-                  border-slate-200
-                "
-              >
-                <div
-                  className="
-                    space-y-2
-                    border-b
-                    border-slate-200
-                    bg-slate-50
-                    p-4
-                    text-sm
-                  "
-                >
-                  <div>
-                    <span
-                      className="
-                        font-semibold
-                        text-slate-500
-                      "
-                    >
-                      From:
-                    </span>{" "}
-                    <span className="text-slate-900">
-                      {sender.name} &lt;
-                      {sender.email}&gt;
-                    </span>
-                  </div>
+          {/* SCHEDULE DATE */}
 
-                  <div>
-                    <span
-                      className="
-                        font-semibold
-                        text-slate-500
-                      "
-                    >
-                      To:
-                    </span>{" "}
-                    <span className="text-slate-900">
-                      {
-                        effectiveRecipientIds.length
-                      }{" "}
-                      recipient
-                      {effectiveRecipientIds.length ===
-                      1
-                        ? ""
-                        : "s"}
-                    </span>
-                  </div>
+          {deliveryMode ===
+            "schedule" && (
+            <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-orange-900">
+                <Clock3 className="h-4 w-4" />
+                Scheduled date and time
+              </label>
 
-                  <div>
-                    <span
-                      className="
-                        font-semibold
-                        text-slate-500
-                      "
-                    >
-                      Subject:
-                    </span>{" "}
-                    <span
-                      className="
-                        font-semibold
-                        text-slate-950
-                      "
-                    >
-                      {subject ||
-                        "(No subject)"}
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className="
-                    min-h-[300px]
-                    whitespace-pre-wrap
-                    p-6
-                    text-sm
-                    leading-7
-                    text-slate-700
-                  "
-                >
-                  {message ||
-                    "No message content."}
-                </div>
-              </div>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(event) =>
+                  setScheduledAt(
+                    event.target.value
+                  )
+                }
+                className="w-full rounded-xl border border-orange-300 bg-white px-4 py-3 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              />
             </div>
+          )}
+
+          {/* RESULT */}
+
+          {result && (
+            <div
+              className={`flex items-start gap-3 rounded-xl border p-4 ${
+                result.success
+                  ? "border-green-200 bg-green-50 text-green-800"
+                  : "border-red-200 bg-red-50 text-red-800"
+              }`}
+            >
+              {result.success ? (
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+              ) : (
+                <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              )}
+
+              <p className="text-sm font-medium">
+                {result.message}
+              </p>
+            </div>
+          )}
+
+          {/* SUBMIT */}
+
+          <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-slate-500">
+              <span className="font-semibold text-slate-900">
+                {
+                  selectedRecipientIds.length
+                }
+              </span>{" "}
+              recipient
+              {selectedRecipientIds.length ===
+              1
+                ? ""
+                : "s"}{" "}
+              selected
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isPending}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                deliveryMode ===
+                "schedule"
+                  ? "bg-orange-600 hover:bg-orange-700"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              {deliveryMode ===
+              "schedule" ? (
+                <CalendarClock className="h-4 w-4" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+
+              {isPending
+                ? "Processing..."
+                : deliveryMode ===
+                    "schedule"
+                  ? "Schedule Emails"
+                  : "Queue Emails"}
+            </button>
           </div>
         </div>
-      )}
-    </>
-  )
-}
-
-/* =========================================================
-   AUDIENCE CARD
-========================================================= */
-
-function AudienceCard({
-  active,
-  title,
-  description,
-  icon,
-  onClick,
-}: {
-  active: boolean
-  title: string
-  description: string
-  icon: React.ReactNode
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`
-        rounded-xl
-        border
-        p-4
-        text-left
-        transition
-        ${
-          active
-            ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100"
-            : "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40"
-        }
-      `}
-    >
-      <div
-        className={`
-          flex
-          h-9
-          w-9
-          items-center
-          justify-center
-          rounded-lg
-          ${
-            active
-              ? "bg-blue-100 text-blue-700"
-              : "bg-slate-100 text-slate-600"
-          }
-        `}
-      >
-        {icon}
-      </div>
-
-      <p
-        className="
-          mt-3
-          text-sm
-          font-bold
-          text-slate-900
-        "
-      >
-        {title}
-      </p>
-
-      <p
-        className="
-          mt-1
-          text-xs
-          text-slate-500
-        "
-      >
-        {description}
-      </p>
-    </button>
-  )
-}
-
-/* =========================================================
-   MINI STAT
-========================================================= */
-
-function MiniStat({
-  label,
-  value,
-}: {
-  label: string
-  value: number
-}) {
-  return (
-    <div
-      className="
-        rounded-xl
-        bg-slate-50
-        p-3
-      "
-    >
-      <p
-        className="
-          text-xs
-          text-slate-500
-        "
-      >
-        {label}
-      </p>
-
-      <p
-        className="
-          mt-1
-          text-lg
-          font-bold
-          text-slate-950
-        "
-      >
-        {value}
-      </p>
+      </section>
     </div>
-  )
-}
-
-/* =========================================================
-   SUMMARY ROW
-========================================================= */
-
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
-  return (
-    <div
-      className="
-        flex
-        items-start
-        justify-between
-        gap-4
-      "
-    >
-      <span
-        className="
-          text-sm
-          text-slate-500
-        "
-      >
-        {label}
-      </span>
-
-      <span
-        className="
-          max-w-[190px]
-          break-words
-          text-right
-          text-sm
-          font-semibold
-          text-slate-900
-        "
-      >
-        {value}
-      </span>
-    </div>
-  )
-}
-
-/* =========================================================
-   VARIABLE BUTTON
-========================================================= */
-
-function VariableButton({
-  label,
-  onClick,
-}: {
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="
-        rounded-lg
-        border
-        border-slate-200
-        bg-slate-50
-        px-2.5
-        py-1.5
-        font-mono
-        text-xs
-        font-semibold
-        text-slate-600
-        transition
-        hover:border-blue-200
-        hover:bg-blue-50
-        hover:text-blue-700
-      "
-    >
-      {label}
-    </button>
   )
 }

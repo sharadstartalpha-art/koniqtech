@@ -1,23 +1,32 @@
 import Link from "next/link"
 
 import {
+  notFound,
+  redirect,
+} from "next/navigation"
+
+import {
   ArrowLeft,
+  Building2,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
   Clock3,
+  ExternalLink,
+  Globe2,
   Mail,
+  MapPin,
   Megaphone,
   MessageSquare,
   MousePointerClick,
-  PauseCircle,
-  PlayCircle,
+  Pencil,
   Radio,
+  Send,
   Target,
-  Trash2,
   TrendingUp,
   UserRound,
-  UsersRound,
+  Users,
+  Video,
 } from "lucide-react"
 
 import {
@@ -25,21 +34,19 @@ import {
   CampaignStatus,
 } from "@prisma/client"
 
-import { notFound } from "next/navigation"
-
-import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
+import prisma from "@/shared/lib/prisma"
 
-import {
-  deleteCampaignAction,
-  updateCampaignStatusAction,
-} from "../actions"
+import CampaignDeleteButton from "./components/CampaignDeleteButton"
+import CampaignLeadActions from "./components/CampaignLeadActions"
+import CampaignLeadSelector from "./components/CampaignLeadSelector"
+import CampaignStatusControls from "./components/CampaignStatusControls"
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-type PageProps = {
+type CampaignDetailPageProps = {
   params: Promise<{
     id: string
   }>
@@ -67,8 +74,12 @@ function formatDate(
 }
 
 function formatDateTime(
-  value: Date
+  value: Date | null
 ) {
+  if (!value) {
+    return "—"
+  }
+
   return new Intl.DateTimeFormat(
     "en-US",
     {
@@ -82,8 +93,17 @@ function formatDateTime(
 }
 
 function formatCurrency(
-  value: number
+  value: {
+    toString(): string
+  } | null
 ) {
+  if (!value) {
+    return "—"
+  }
+
+  const amount =
+    Number(value.toString())
+
   return new Intl.NumberFormat(
     "en-US",
     {
@@ -91,119 +111,280 @@ function formatCurrency(
       currency: "USD",
       maximumFractionDigits: 0,
     }
+  ).format(amount)
+}
+
+function formatMetricCurrency(
+  value: number | null
+) {
+  if (value === null) {
+    return "—"
+  }
+
+  return new Intl.NumberFormat(
+    "en-US",
+    {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2,
+    }
   ).format(value)
 }
 
-/* =========================================================
-   STATUS CONFIG
-========================================================= */
+function formatLabel(
+  value: string
+) {
+  return value
+    .replaceAll("_", " ")
+    .replace(
+      /\b\w/g,
+      (character) =>
+        character.toUpperCase()
+    )
+}
 
-const STATUS_CONFIG: Record<
-  CampaignStatus,
-  {
-    label: string
-    className: string
+function calculateRate(
+  numerator: number,
+  denominator: number
+) {
+  if (denominator === 0) {
+    return 0
   }
-> = {
-  draft: {
-    label: "Draft",
-    className:
-      "bg-slate-100 text-slate-700",
-  },
 
-  running: {
-    label: "Running",
-    className:
-      "bg-green-100 text-green-700",
-  },
-
-  paused: {
-    label: "Paused",
-    className:
-      "bg-orange-100 text-orange-700",
-  },
-
-  completed: {
-    label: "Completed",
-    className:
-      "bg-blue-100 text-blue-700",
-  },
-
-  cancelled: {
-    label: "Cancelled",
-    className:
-      "bg-red-100 text-red-700",
-  },
+  return Math.round(
+    (numerator / denominator) *
+      100
+  )
 }
 
 /* =========================================================
-   CHANNEL CONFIG
+   STATUS STYLE
 ========================================================= */
 
-const CHANNEL_CONFIG: Record<
-  CampaignChannel,
-  {
-    label: string
+function getStatusStyle(
+  status: CampaignStatus
+) {
+  switch (status) {
+    case CampaignStatus.running:
+      return {
+        badge:
+          "border-green-200 bg-green-50 text-green-700",
+
+        dot:
+          "bg-green-500",
+      }
+
+    case CampaignStatus.paused:
+      return {
+        badge:
+          "border-orange-200 bg-orange-50 text-orange-700",
+
+        dot:
+          "bg-orange-500",
+      }
+
+    case CampaignStatus.completed:
+      return {
+        badge:
+          "border-blue-200 bg-blue-50 text-blue-700",
+
+        dot:
+          "bg-blue-500",
+      }
+
+    case CampaignStatus.cancelled:
+      return {
+        badge:
+          "border-red-200 bg-red-50 text-red-700",
+
+        dot:
+          "bg-red-500",
+      }
+
+    default:
+      return {
+        badge:
+          "border-slate-200 bg-slate-50 text-slate-700",
+
+        dot:
+          "bg-slate-400",
+      }
   }
-> = {
-  email: {
-    label: "Email",
-  },
+}
 
-  social: {
-    label: "Social Media",
-  },
+/* =========================================================
+   CHANNEL ICON
+========================================================= */
 
-  ads: {
-    label: "Paid Ads",
-  },
+function ChannelIcon({
+  channel,
+}: {
+  channel: CampaignChannel
+}) {
+  const className =
+    "h-5 w-5"
 
-  sms: {
-    label: "SMS",
-  },
+  switch (channel) {
+    case CampaignChannel.email:
+      return (
+        <Mail
+          className={className}
+        />
+      )
 
-  webinar: {
-    label: "Webinar",
-  },
+    case CampaignChannel.social:
+      return (
+        <Radio
+          className={className}
+        />
+      )
+
+    case CampaignChannel.ads:
+      return (
+        <MousePointerClick
+          className={className}
+        />
+      )
+
+    case CampaignChannel.sms:
+      return (
+        <MessageSquare
+          className={className}
+        />
+      )
+
+    case CampaignChannel.webinar:
+      return (
+        <Video
+          className={className}
+        />
+      )
+
+    default:
+      return (
+        <Megaphone
+          className={className}
+        />
+      )
+  }
 }
 
 /* =========================================================
    PAGE
 ========================================================= */
 
-export default async function CampaignDetailsPage({
+export default async function CampaignDetailPage({
   params,
-}: PageProps) {
-  const session = await auth()
+}: CampaignDetailPageProps) {
+  /* =======================================================
+     AUTH
+  ======================================================= */
+
+  const session =
+    await auth()
 
   if (!session?.user?.id) {
-    return (
-      <div className="p-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-          You are not authorized to view this page.
-        </div>
-      </div>
-    )
+    redirect("/login")
   }
 
-  const { id } = await params
+  const orgId =
+    session.user.orgId
+
+  if (!orgId) {
+    redirect("/login")
+  }
 
   /* =======================================================
-     CAMPAIGN
+     PARAMS
+  ======================================================= */
+
+  const { id } =
+    await params
+
+  /* =======================================================
+     CAMPAIGN QUERY
   ======================================================= */
 
   const campaign =
-    await prisma.marketingCampaign.findUnique({
+    await prisma.marketingCampaign.findFirst({
       where: {
         id,
+        orgId,
       },
 
-      include: {
+      select: {
+        id: true,
+
+        title: true,
+
+        channel: true,
+
+        budget: true,
+
+        startDate: true,
+
+        endDate: true,
+
+        status: true,
+
+        leads: true,
+
+        conversions: true,
+
+        createdAt: true,
+
+        updatedAt: true,
+
         createdBy: {
           select: {
             id: true,
             name: true,
             email: true,
+          },
+        },
+
+        campaignLeads: {
+          select: {
+            id: true,
+
+            converted: true,
+
+            convertedAt: true,
+
+            attributedAt: true,
+
+            companyLead: {
+              select: {
+                id: true,
+
+                companyName: true,
+
+                ownerName: true,
+
+                industry: true,
+
+                website: true,
+
+                primaryEmail: true,
+
+                primaryPhone: true,
+
+                country: true,
+
+                state: true,
+
+                city: true,
+
+                source: true,
+
+                status: true,
+              },
+            },
+          },
+
+          orderBy: {
+            attributedAt:
+              "desc",
           },
         },
       },
@@ -214,69 +395,103 @@ export default async function CampaignDetailsPage({
   }
 
   /* =======================================================
-     CALCULATIONS
+     AVAILABLE LEADS
   ======================================================= */
 
-  const budget =
-    campaign.budget
-      ? Number(campaign.budget)
-      : 0
+  const existingCompanyLeadIds =
+    campaign.campaignLeads.map(
+      (campaignLead) =>
+        campaignLead.companyLead.id
+    )
 
-  const conversionRate =
-    campaign.leads > 0
-      ? Math.round(
-          (campaign.conversions /
-            campaign.leads) *
-            100
-        )
-      : 0
+  const availableLeads =
+    await prisma.companyLead.findMany({
+      where: {
+        orgId,
 
-  const costPerLead =
-    campaign.leads > 0
-      ? budget / campaign.leads
-      : 0
+        ...(existingCompanyLeadIds.length >
+        0
+          ? {
+              id: {
+                notIn:
+                  existingCompanyLeadIds,
+              },
+            }
+          : {}),
+      },
 
-  const costPerConversion =
-    campaign.conversions > 0
-      ? budget /
-        campaign.conversions
-      : 0
+      select: {
+        id: true,
 
-  const status =
-    STATUS_CONFIG[campaign.status]
+        companyName: true,
 
-  const channel =
-    CHANNEL_CONFIG[campaign.channel]
+        ownerName: true,
+
+        primaryEmail: true,
+
+        city: true,
+
+        state: true,
+
+        country: true,
+
+        industry: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      take: 200,
+    })
 
   /* =======================================================
-     SERVER ACTION BINDINGS
+     METRICS
   ======================================================= */
 
-  const startCampaignAction =
-    updateCampaignStatusAction.bind(
-      null,
-      campaign.id,
-      CampaignStatus.running
+  const actualLeadCount =
+    campaign.campaignLeads.length
+
+  const convertedLeadCount =
+    campaign.campaignLeads.filter(
+      (lead) =>
+        lead.converted
+    ).length
+
+  const pendingLeadCount =
+    actualLeadCount -
+    convertedLeadCount
+
+  const conversionRate =
+    calculateRate(
+      convertedLeadCount,
+      actualLeadCount
     )
 
-  const pauseCampaignAction =
-    updateCampaignStatusAction.bind(
-      null,
-      campaign.id,
-      CampaignStatus.paused
-    )
+  const budgetAmount =
+    campaign.budget
+      ? Number(
+          campaign.budget.toString()
+        )
+      : null
 
-  const completeCampaignAction =
-    updateCampaignStatusAction.bind(
-      null,
-      campaign.id,
-      CampaignStatus.completed
-    )
+  const costPerLead =
+    budgetAmount !== null &&
+    actualLeadCount > 0
+      ? budgetAmount /
+        actualLeadCount
+      : null
 
-  const deleteAction =
-    deleteCampaignAction.bind(
-      null,
-      campaign.id
+  const costPerConversion =
+    budgetAmount !== null &&
+    convertedLeadCount > 0
+      ? budgetAmount /
+        convertedLeadCount
+      : null
+
+  const statusStyle =
+    getStatusStyle(
+      campaign.status
     )
 
   /* =======================================================
@@ -284,516 +499,972 @@ export default async function CampaignDetailsPage({
   ======================================================= */
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-[1500px] space-y-6 p-6 lg:p-8">
-        {/* =================================================
-            BREADCRUMB
-        ================================================= */}
+    <div className="min-h-screen bg-slate-50/70">
+      <div className="mx-auto max-w-[1600px] space-y-7 p-6 lg:p-8">
 
-        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          <Link
-            href="/admin/marketing/dashboard"
-            className="transition hover:text-blue-600"
-          >
-            Marketing
-          </Link>
+        {/* ===============================================
+            BACK
+        =============================================== */}
 
-          <span>/</span>
+        <Link
+          href="/admin/marketing/campaigns"
+          className="
+            inline-flex
+            items-center
+            gap-2
+            text-sm
+            font-medium
+            text-slate-500
+            transition
+            hover:text-blue-600
+          "
+        >
+          <ArrowLeft className="h-4 w-4" />
 
-          <Link
-            href="/admin/marketing/campaigns"
-            className="transition hover:text-blue-600"
-          >
-            Campaigns
-          </Link>
+          Back to Campaigns
+        </Link>
 
-          <span>/</span>
-
-          <span className="font-medium text-slate-900">
-            {campaign.title}
-          </span>
-        </div>
-
-        {/* =================================================
+        {/* ===============================================
             HEADER
-        ================================================= */}
+        =============================================== */}
 
-        <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-start">
-          <div>
-            <Link
-              href="/admin/marketing/campaigns"
-              className="mb-4 inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+        <div
+          className="
+            flex
+            flex-col
+            gap-5
+            xl:flex-row
+            xl:items-start
+            xl:justify-between
+          "
+        >
+          <div className="flex items-start gap-4">
+
+            <div
+              className="
+                flex
+                h-14
+                w-14
+                shrink-0
+                items-center
+                justify-center
+                rounded-2xl
+                bg-blue-50
+                text-blue-600
+              "
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ChannelIcon
+                channel={
+                  campaign.channel
+                }
+              />
+            </div>
 
-              Back to Campaigns
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+
+                <h1
+                  className="
+                    text-3xl
+                    font-bold
+                    tracking-tight
+                    text-slate-950
+                  "
+                >
+                  {campaign.title}
+                </h1>
+
+                <span
+                  className={`
+                    inline-flex
+                    items-center
+                    gap-2
+                    rounded-full
+                    border
+                    px-3
+                    py-1
+                    text-xs
+                    font-semibold
+                    ${statusStyle.badge}
+                  `}
+                >
+                  <span
+                    className={`
+                      h-1.5
+                      w-1.5
+                      rounded-full
+                      ${statusStyle.dot}
+                    `}
+                  />
+
+                  {formatLabel(
+                    campaign.status
+                  )}
+                </span>
+
+              </div>
+
+              <div
+                className="
+                  mt-3
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-x-5
+                  gap-y-2
+                  text-sm
+                  text-slate-500
+                "
+              >
+                <span className="inline-flex items-center gap-2">
+                  <Megaphone className="h-4 w-4" />
+
+                  {formatLabel(
+                    campaign.channel
+                  )}
+                </span>
+
+                <span className="inline-flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4" />
+
+                  Created{" "}
+                  {formatDate(
+                    campaign.createdAt
+                  )}
+                </span>
+
+                {campaign.createdBy && (
+                  <span className="inline-flex items-center gap-2">
+                    <UserRound className="h-4 w-4" />
+
+                    {campaign.createdBy.name ||
+                      campaign.createdBy.email}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ===========================================
+              HEADER ACTIONS
+          =========================================== */}
+
+          <div className="flex flex-wrap gap-3">
+
+            <Link
+              href={`/admin/marketing/campaigns/${campaign.id}/edit`}
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                bg-orange-500
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-white
+                shadow-sm
+                transition
+                hover:bg-orange-600
+              "
+            >
+              <Pencil className="h-4 w-4" />
+
+              Edit Campaign
             </Link>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-                {campaign.title}
-              </h1>
+            <Link
+              href={`/admin/marketing/email-center/new?campaignId=${campaign.id}`}
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                bg-green-600
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-white
+                shadow-sm
+                transition
+                hover:bg-green-700
+              "
+            >
+              <Send className="h-4 w-4" />
 
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${status.className}`}
-              >
-                {status.label}
-              </span>
-            </div>
+              Send Campaign Email
+            </Link>
 
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-500">
-              <span className="inline-flex items-center gap-2">
-                <Megaphone className="h-4 w-4" />
+            <Link
+              href="/admin/marketing/email-center"
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                bg-blue-600
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-white
+                shadow-sm
+                transition
+                hover:bg-blue-700
+              "
+            >
+              <Mail className="h-4 w-4" />
 
-                {channel.label}
-              </span>
-
-              <span className="inline-flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-
-                Created{" "}
-                {formatDate(
-                  campaign.createdAt
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* ===============================================
-              ACTIONS
-          =============================================== */}
-
-          <div className="flex flex-wrap gap-2">
-            {campaign.status !==
-              CampaignStatus.running && (
-              <form action={startCampaignAction}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
-                >
-                  <PlayCircle className="h-4 w-4" />
-
-                  Start Campaign
-                </button>
-              </form>
-            )}
-
-            {campaign.status ===
-              CampaignStatus.running && (
-              <form action={pauseCampaignAction}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600"
-                >
-                  <PauseCircle className="h-4 w-4" />
-
-                  Pause
-                </button>
-              </form>
-            )}
-
-            {campaign.status !==
-              CampaignStatus.completed && (
-              <form action={completeCampaignAction}>
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-
-                  Complete
-                </button>
-              </form>
-            )}
-
-            <form action={deleteAction}>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-
-                Delete
-              </button>
-            </form>
+              Email Center
+            </Link>
           </div>
         </div>
 
-        {/* =================================================
-            METRICS
-        ================================================= */}
+        {/* ===============================================
+            PERFORMANCE CARDS
+        =============================================== */}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            title="Campaign Budget"
-            value={formatCurrency(budget)}
-            subtitle="Total allocated budget"
-            icon={
-              <CircleDollarSign className="h-5 w-5 text-green-600" />
-            }
-          />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
-          <MetricCard
-            title="Leads Generated"
-            value={campaign.leads.toLocaleString()}
-            subtitle="Campaign attributed leads"
-            icon={
-              <UsersRound className="h-5 w-5 text-blue-600" />
-            }
-          />
+          {/* LEADS */}
 
-          <MetricCard
-            title="Conversions"
-            value={campaign.conversions.toLocaleString()}
-            subtitle="Successful conversions"
-            icon={
-              <Target className="h-5 w-5 text-violet-600" />
-            }
-          />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Users className="h-5 w-5" />
+            </div>
 
-          <MetricCard
-            title="Conversion Rate"
-            value={`${conversionRate}%`}
-            subtitle="Leads converted"
-            icon={
-              <TrendingUp className="h-5 w-5 text-orange-600" />
-            }
-          />
+            <p className="mt-5 text-3xl font-bold text-slate-950">
+              {actualLeadCount}
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Attributed Leads
+            </p>
+          </div>
+
+          {/* CONVERTED */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+
+            <p className="mt-5 text-3xl font-bold text-slate-950">
+              {convertedLeadCount}
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Conversions
+            </p>
+          </div>
+
+          {/* PENDING */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+              <Clock3 className="h-5 w-5" />
+            </div>
+
+            <p className="mt-5 text-3xl font-bold text-slate-950">
+              {pendingLeadCount}
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Open Opportunities
+            </p>
+          </div>
+
+          {/* RATE */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+
+            <p className="mt-5 text-3xl font-bold text-slate-950">
+              {conversionRate}%
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Conversion Rate
+            </p>
+          </div>
+
+          {/* BUDGET */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+              <CircleDollarSign className="h-5 w-5" />
+            </div>
+
+            <p className="mt-5 text-2xl font-bold text-slate-950">
+              {formatCurrency(
+                campaign.budget
+              )}
+            </p>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Campaign Budget
+            </p>
+          </div>
         </div>
 
-        {/* =================================================
-            MAIN GRID
-        ================================================= */}
+        {/* ===============================================
+            STATUS CONTROLS
+        =============================================== */}
 
-        <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-          {/* ===============================================
-              PERFORMANCE
-          =============================================== */}
+        <CampaignStatusControls
+          campaignId={
+            campaign.id
+          }
+          currentStatus={
+            campaign.status
+          }
+        />
 
-          <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-6 py-5">
-                <h2 className="text-lg font-bold text-slate-950">
-                  Campaign Performance
-                </h2>
+        {/* ===============================================
+            CAMPAIGN INFORMATION
+        =============================================== */}
 
-                <p className="mt-1 text-sm text-slate-500">
-                  Current campaign acquisition and conversion metrics.
+        <div className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
+
+          {/* OVERVIEW */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+            <div className="border-b border-slate-200 px-6 py-5">
+              <h2 className="font-bold text-slate-950">
+                Campaign Overview
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Campaign schedule and
+                performance information.
+              </p>
+            </div>
+
+            <div className="grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+
+              {/* CHANNEL */}
+
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Channel
+                </p>
+
+                <div className="mt-3 flex items-center gap-2 font-semibold text-slate-900">
+                  <ChannelIcon
+                    channel={
+                      campaign.channel
+                    }
+                  />
+
+                  {formatLabel(
+                    campaign.channel
+                  )}
+                </div>
+              </div>
+
+              {/* START DATE */}
+
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Start Date
+                </p>
+
+                <p className="mt-3 font-semibold text-slate-900">
+                  {formatDate(
+                    campaign.startDate
+                  )}
                 </p>
               </div>
 
-              <div className="grid gap-4 p-6 md:grid-cols-2">
-                <PerformanceItem
-                  icon={
-                    <MousePointerClick className="h-5 w-5 text-blue-600" />
-                  }
-                  label="Total Leads"
-                  value={campaign.leads.toLocaleString()}
-                />
+              {/* END DATE */}
 
-                <PerformanceItem
-                  icon={
-                    <Target className="h-5 w-5 text-green-600" />
-                  }
-                  label="Conversions"
-                  value={campaign.conversions.toLocaleString()}
-                />
+              <div className="rounded-xl bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  End Date
+                </p>
 
-                <PerformanceItem
-                  icon={
-                    <CircleDollarSign className="h-5 w-5 text-orange-600" />
-                  }
-                  label="Cost Per Lead"
-                  value={
-                    campaign.leads > 0
-                      ? formatCurrency(
-                          costPerLead
-                        )
-                      : "$0"
-                  }
-                />
-
-                <PerformanceItem
-                  icon={
-                    <TrendingUp className="h-5 w-5 text-violet-600" />
-                  }
-                  label="Cost Per Conversion"
-                  value={
-                    campaign.conversions > 0
-                      ? formatCurrency(
-                          costPerConversion
-                        )
-                      : "$0"
-                  }
-                />
-              </div>
-            </section>
-
-            {/* =============================================
-                CONVERSION PROGRESS
-            ============================================= */}
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-950">
-                    Conversion Progress
-                  </h2>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Campaign lead-to-conversion performance.
-                  </p>
-                </div>
-
-                <div className="text-2xl font-bold text-slate-950">
-                  {conversionRate}%
-                </div>
-              </div>
-
-              <div className="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-blue-600 transition-all"
-                  style={{
-                    width: `${Math.min(
-                      conversionRate,
-                      100
-                    )}%`,
-                  }}
-                />
-              </div>
-
-              <div className="mt-4 flex justify-between text-sm">
-                <span className="text-slate-500">
-                  {campaign.conversions} converted
-                </span>
-
-                <span className="text-slate-500">
-                  {campaign.leads} total leads
-                </span>
-              </div>
-            </section>
-          </div>
-
-          {/* ===============================================
-              SIDEBAR DETAILS
-          =============================================== */}
-
-          <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 px-6 py-5">
-                <h2 className="text-lg font-bold text-slate-950">
-                  Campaign Details
-                </h2>
-              </div>
-
-              <div className="divide-y divide-slate-100 px-6">
-                <DetailRow
-                  icon={
-                    <Radio className="h-4 w-4" />
-                  }
-                  label="Channel"
-                  value={channel.label}
-                />
-
-                <DetailRow
-                  icon={
-                    <CalendarDays className="h-4 w-4" />
-                  }
-                  label="Start Date"
-                  value={formatDate(
-                    campaign.startDate
-                  )}
-                />
-
-                <DetailRow
-                  icon={
-                    <CalendarDays className="h-4 w-4" />
-                  }
-                  label="End Date"
-                  value={formatDate(
+                <p className="mt-3 font-semibold text-slate-900">
+                  {formatDate(
                     campaign.endDate
                   )}
-                />
+                </p>
+              </div>
 
-                <DetailRow
-                  icon={
-                    <Clock3 className="h-4 w-4" />
-                  }
-                  label="Last Updated"
-                  value={formatDateTime(
+              {/* CPL */}
+
+              <div className="rounded-xl bg-blue-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                  Cost per Lead
+                </p>
+
+                <p className="mt-3 font-bold text-blue-900">
+                  {formatMetricCurrency(
+                    costPerLead
+                  )}
+                </p>
+              </div>
+
+              {/* CPC */}
+
+              <div className="rounded-xl bg-green-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-green-600">
+                  Cost per Conversion
+                </p>
+
+                <p className="mt-3 font-bold text-green-900">
+                  {formatMetricCurrency(
+                    costPerConversion
+                  )}
+                </p>
+              </div>
+
+              {/* UPDATED */}
+
+              <div className="rounded-xl bg-orange-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-orange-600">
+                  Last Updated
+                </p>
+
+                <p className="mt-3 text-sm font-semibold text-orange-900">
+                  {formatDateTime(
                     campaign.updatedAt
                   )}
-                />
+                </p>
               </div>
-            </section>
+            </div>
+          </div>
 
-            {/* =============================================
-                CREATED BY
-            ============================================= */}
+          {/* PERFORMANCE */}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-bold text-slate-950">
-                Created By
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+            <div className="border-b border-slate-200 px-6 py-5">
+              <h2 className="font-bold text-slate-950">
+                Performance
               </h2>
 
-              <div className="mt-5 flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50">
-                  <UserRound className="h-5 w-5 text-blue-600" />
+              <p className="mt-1 text-sm text-slate-500">
+                Campaign funnel progress.
+              </p>
+            </div>
+
+            <div className="space-y-6 p-6">
+
+              {/* ATTRIBUTED */}
+
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-600">
+                    Attributed Leads
+                  </span>
+
+                  <span className="font-bold text-slate-950">
+                    {actualLeadCount}
+                  </span>
                 </div>
 
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">
-                    {campaign.createdBy?.name ||
-                      "Unknown user"}
-                  </p>
-
-                  <p className="mt-1 truncate text-sm text-slate-500">
-                    {campaign.createdBy?.email ||
-                      "Creator account unavailable"}
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* =============================================
-                CHANNEL SUMMARY
-            ============================================= */}
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50">
-                  {campaign.channel ===
-                    CampaignChannel.email && (
-                    <Mail className="h-5 w-5 text-violet-600" />
-                  )}
-
-                  {campaign.channel ===
-                    CampaignChannel.sms && (
-                    <MessageSquare className="h-5 w-5 text-violet-600" />
-                  )}
-
-                  {campaign.channel !==
-                    CampaignChannel.email &&
-                    campaign.channel !==
-                      CampaignChannel.sms && (
-                      <Megaphone className="h-5 w-5 text-violet-600" />
-                    )}
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                    Campaign Channel
-                  </p>
-
-                  <p className="mt-1 font-semibold text-slate-950">
-                    {channel.label}
-                  </p>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-blue-500"
+                    style={{
+                      width:
+                        actualLeadCount > 0
+                          ? "100%"
+                          : "0%",
+                    }}
+                  />
                 </div>
               </div>
-            </section>
+
+              {/* CONVERTED */}
+
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-slate-600">
+                    Converted
+                  </span>
+
+                  <span className="font-bold text-green-700">
+                    {convertedLeadCount}
+                  </span>
+                </div>
+
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className="h-full rounded-full bg-green-500"
+                    style={{
+                      width:
+                        `${conversionRate}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* RATE */}
+
+              <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                <div className="flex items-center gap-3">
+                  <Target className="h-5 w-5 text-green-600" />
+
+                  <div>
+                    <p className="text-sm font-semibold text-green-900">
+                      Conversion Rate
+                    </p>
+
+                    <p className="mt-1 text-2xl font-bold text-green-800">
+                      {conversionRate}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
 
-/* =========================================================
-   METRIC CARD
-========================================================= */
+        {/* ===============================================
+            LEAD SELECTOR
+        =============================================== */}
 
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  icon,
-}: {
-  title: string
-  value: string
-  subtitle: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-500">
-            {title}
-          </p>
+        <CampaignLeadSelector
+          campaignId={
+            campaign.id
+          }
+          leads={
+            availableLeads
+          }
+        />
 
-          <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-            {value}
-          </p>
+        {/* ===============================================
+            ATTRIBUTED LEADS
+        =============================================== */}
 
-          <p className="mt-2 text-xs text-slate-400">
-            {subtitle}
-          </p>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+          {/* HEADER */}
+
+          <div
+            className="
+              flex
+              flex-col
+              gap-4
+              border-b
+              border-slate-200
+              px-6
+              py-5
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
+          >
+            <div>
+              <h2 className="font-bold text-slate-950">
+                Campaign Leads
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Companies attributed to
+                this marketing campaign.
+              </p>
+            </div>
+
+            <Link
+              href={`/admin/marketing/email-center/new?campaignId=${campaign.id}`}
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                rounded-lg
+                bg-green-50
+                px-4
+                py-2
+                text-sm
+                font-semibold
+                text-green-700
+                transition
+                hover:bg-green-100
+              "
+            >
+              <Mail className="h-4 w-4" />
+
+              Email Leads
+            </Link>
+          </div>
+
+          {/* EMPTY */}
+
+          {campaign.campaignLeads.length ===
+          0 ? (
+            <div
+              className="
+                flex
+                flex-col
+                items-center
+                justify-center
+                px-6
+                py-16
+                text-center
+              "
+            >
+              <div
+                className="
+                  flex
+                  h-14
+                  w-14
+                  items-center
+                  justify-center
+                  rounded-2xl
+                  bg-blue-50
+                  text-blue-600
+                "
+              >
+                <Users className="h-6 w-6" />
+              </div>
+
+              <h3 className="mt-4 font-bold text-slate-950">
+                No attributed leads
+              </h3>
+
+              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Use the Add Leads control
+                above to associate company
+                leads with this campaign.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1350px]">
+
+                {/* TABLE HEAD */}
+
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-left">
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Company
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Contact
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Location
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Industry
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Attribution
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Conversion
+                    </th>
+
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Actions
+                    </th>
+
+                  </tr>
+                </thead>
+
+                {/* TABLE BODY */}
+
+                <tbody className="divide-y divide-slate-100">
+                  {campaign.campaignLeads.map(
+                    (campaignLead) => {
+                      const company =
+                        campaignLead.companyLead
+
+                      const location =
+                        [
+                          company.city,
+                          company.state,
+                          company.country,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")
+
+                      return (
+                        <tr
+                          key={
+                            campaignLead.id
+                          }
+                          className="
+                            transition
+                            hover:bg-slate-50/70
+                          "
+                        >
+
+                          {/* COMPANY */}
+
+                          <td className="px-6 py-5">
+                            <div className="flex items-start gap-3">
+
+                              <div
+                                className="
+                                  flex
+                                  h-10
+                                  w-10
+                                  shrink-0
+                                  items-center
+                                  justify-center
+                                  rounded-xl
+                                  bg-blue-50
+                                  text-blue-600
+                                "
+                              >
+                                <Building2 className="h-5 w-5" />
+                              </div>
+
+                              <div>
+                                <p className="font-semibold text-slate-950">
+                                  {company.companyName}
+                                </p>
+
+                                {company.website && (
+                                  <a
+                                    href={
+                                      company.website
+                                    }
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="
+                                      mt-1
+                                      inline-flex
+                                      items-center
+                                      gap-1
+                                      text-xs
+                                      text-blue-600
+                                      hover:underline
+                                    "
+                                  >
+                                    <Globe2 className="h-3 w-3" />
+
+                                    Website
+
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* CONTACT */}
+
+                          <td className="px-6 py-5">
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium text-slate-700">
+                                {company.ownerName ||
+                                  "Contact not provided"}
+                              </p>
+
+                              <p className="text-xs text-slate-500">
+                                {company.primaryEmail ||
+                                  "No email"}
+                              </p>
+
+                              {company.primaryPhone && (
+                                <p className="text-xs text-slate-400">
+                                  {company.primaryPhone}
+                                </p>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* LOCATION */}
+
+                          <td className="px-6 py-5">
+                            <div className="flex items-start gap-2 text-sm text-slate-600">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+
+                              <span>
+                                {location ||
+                                  "Not provided"}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* INDUSTRY */}
+
+                          <td className="px-6 py-5">
+                            <span
+                              className="
+                                inline-flex
+                                rounded-full
+                                bg-blue-50
+                                px-3
+                                py-1
+                                text-xs
+                                font-semibold
+                                text-blue-700
+                              "
+                            >
+                              {company.industry ||
+                                "General"}
+                            </span>
+                          </td>
+
+                          {/* ATTRIBUTION */}
+
+                          <td className="px-6 py-5">
+                            <p className="text-sm font-medium text-slate-700">
+                              {formatDate(
+                                campaignLead.attributedAt
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                              {formatLabel(
+                                company.source
+                              )}
+                            </p>
+                          </td>
+
+                          {/* CONVERSION */}
+
+                          <td className="px-6 py-5">
+                            {campaignLead.converted ? (
+                              <div>
+                                <span
+                                  className="
+                                    inline-flex
+                                    items-center
+                                    gap-2
+                                    rounded-full
+                                    border
+                                    border-green-200
+                                    bg-green-50
+                                    px-3
+                                    py-1
+                                    text-xs
+                                    font-semibold
+                                    text-green-700
+                                  "
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+
+                                  Converted
+                                </span>
+
+                                {campaignLead.convertedAt && (
+                                  <p className="mt-2 text-xs text-slate-400">
+                                    {formatDate(
+                                      campaignLead.convertedAt
+                                    )}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <span
+                                className="
+                                  inline-flex
+                                  items-center
+                                  gap-2
+                                  rounded-full
+                                  border
+                                  border-orange-200
+                                  bg-orange-50
+                                  px-3
+                                  py-1
+                                  text-xs
+                                  font-semibold
+                                  text-orange-700
+                                "
+                              >
+                                <Clock3 className="h-3.5 w-3.5" />
+
+                                Open
+                              </span>
+                            )}
+                          </td>
+
+                          {/* ACTIONS */}
+
+                          <td className="px-6 py-5">
+                            <CampaignLeadActions
+                              campaignId={
+                                campaign.id
+                              }
+                              companyLeadId={
+                                company.id
+                              }
+                              companyName={
+                                company.companyName
+                              }
+                              converted={
+                                campaignLead.converted
+                              }
+                            />
+                          </td>
+                        </tr>
+                      )
+                    }
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50">
-          {icon}
-        </div>
+        {/* ===============================================
+            DANGER ZONE
+        =============================================== */}
+
+        <section
+          className="
+            rounded-2xl
+            border
+            border-red-200
+            bg-white
+            p-6
+            shadow-sm
+          "
+        >
+          <div
+            className="
+              flex
+              flex-col
+              gap-5
+              xl:flex-row
+              xl:items-start
+              xl:justify-between
+            "
+          >
+            <div>
+              <h2 className="font-bold text-red-900">
+                Danger Zone
+              </h2>
+
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Permanently delete this
+                campaign and its campaign
+                attribution records. The
+                underlying company leads
+                remain available in the
+                lead database.
+              </p>
+            </div>
+
+            <CampaignDeleteButton
+              campaignId={
+                campaign.id
+              }
+              campaignTitle={
+                campaign.title
+              }
+            />
+          </div>
+        </section>
       </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   PERFORMANCE ITEM
-========================================================= */
-
-function PerformanceItem({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50">
-        {icon}
-      </div>
-
-      <div>
-        <p className="text-sm text-slate-500">
-          {label}
-        </p>
-
-        <p className="mt-1 text-xl font-bold text-slate-950">
-          {value}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   DETAIL ROW
-========================================================= */
-
-function DetailRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-4">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        {icon}
-
-        <span>{label}</span>
-      </div>
-
-      <span className="text-right text-sm font-semibold text-slate-900">
-        {value}
-      </span>
     </div>
   )
 }

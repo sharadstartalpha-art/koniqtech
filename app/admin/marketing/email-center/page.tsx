@@ -1,528 +1,546 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 import {
-  AlertCircle,
   ArrowRight,
-  CheckCircle2,
   Clock3,
-  FileText,
   Mail,
   Megaphone,
-  Plus,
   Send,
   Users,
 } from "lucide-react"
 
 import { auth } from "@/auth"
+
 import prisma from "@/shared/lib/prisma"
+
+import EmailComposer from "./components/EmailComposer"
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+type EmailCenterPageProps = {
+  searchParams?: Promise<{
+    campaignId?: string
+  }>
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getInitials(
+  value: string
+) {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) =>
+      part.charAt(0).toUpperCase()
+    )
+    .join("")
+}
 
 /* =========================================================
    PAGE
 ========================================================= */
 
-export default async function MarketingEmailCenterPage() {
+export default async function MarketingEmailCenterPage({
+  searchParams,
+}: EmailCenterPageProps) {
   const session = await auth()
 
-  if (!session?.user?.id) {
-    return (
-      <div className="p-6">
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-medium text-red-700">
-          You are not authorized to view the Email Center.
-        </div>
-      </div>
-    )
+  if (!session?.user) {
+    redirect("/login")
   }
 
+  const userId =
+    session.user.id
+
+  const orgId =
+    session.user.orgId
+
+  if (!userId || !orgId) {
+    redirect("/login")
+  }
+
+  const params =
+    searchParams
+      ? await searchParams
+      : {}
+
+  const selectedCampaignId =
+    params.campaignId || null
+
   /* =======================================================
-     SAFE DATA
+     DATA
   ======================================================= */
 
   const [
-    totalCampaigns,
-    runningCampaigns,
-    emailCampaigns,
+    recipientsRaw,
+    campaigns,
+    queueCount,
+    sentCount,
+    failedCount,
+    recentQueue,
   ] = await Promise.all([
-    prisma.marketingCampaign.count(),
-
-    prisma.marketingCampaign.count({
+    prisma.companyLead.findMany({
       where: {
-        status: "running",
+        orgId,
+
+        primaryEmail: {
+          not: null,
+        },
+      },
+
+      select: {
+        id: true,
+        companyName: true,
+        ownerName: true,
+        primaryEmail: true,
+        industry: true,
+        city: true,
+        state: true,
+        country: true,
+      },
+
+      orderBy: {
+        companyName: "asc",
+      },
+
+      take: 500,
+    }),
+
+    prisma.marketingCampaign.findMany({
+      where: {
+        orgId,
+      },
+
+      select: {
+        id: true,
+        title: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
       },
     }),
 
-    prisma.marketingCampaign.count({
+    prisma.userEmailQueue.count({
       where: {
-        channel: "email",
+        orgId,
+
+        status: {
+          in: [
+            "pending",
+            "queued",
+          ],
+        },
       },
+    }),
+
+    prisma.userEmailQueue.count({
+      where: {
+        orgId,
+        status: "sent",
+      },
+    }),
+
+    prisma.userEmailQueue.count({
+      where: {
+        orgId,
+        status: "failed",
+      },
+    }),
+
+    prisma.userEmailQueue.findMany({
+      where: {
+        orgId,
+      },
+
+      select: {
+        id: true,
+        toEmail: true,
+        subject: true,
+        status: true,
+        scheduledAt: true,
+        sentAt: true,
+        createdAt: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      take: 8,
     }),
   ])
 
+  /* =======================================================
+     NORMALIZE RECIPIENTS
+  ======================================================= */
+
+  const recipients =
+    recipientsRaw.flatMap(
+      (recipient) => {
+        if (
+          !recipient.primaryEmail
+        ) {
+          return []
+        }
+
+        return [
+          {
+            id:
+              recipient.id,
+
+            companyName:
+              recipient.companyName,
+
+            ownerName:
+              recipient.ownerName,
+
+            primaryEmail:
+              recipient.primaryEmail,
+
+            industry:
+              recipient.industry,
+
+            city:
+              recipient.city,
+
+            state:
+              recipient.state,
+
+            country:
+              recipient.country,
+          },
+        ]
+      }
+    )
+
+  /* =======================================================
+     STATS
+  ======================================================= */
+
+  const stats = [
+    {
+      label:
+        "Available Recipients",
+
+      value:
+        recipients.length,
+
+      icon:
+        Users,
+
+      iconClass:
+        "bg-blue-50 text-blue-600",
+    },
+
+    {
+      label:
+        "Active Campaigns",
+
+      value:
+        campaigns.length,
+
+      icon:
+        Megaphone,
+
+      iconClass:
+        "bg-orange-50 text-orange-600",
+    },
+
+    {
+      label:
+        "Queued Emails",
+
+      value:
+        queueCount,
+
+      icon:
+        Clock3,
+
+      iconClass:
+        "bg-orange-50 text-orange-600",
+    },
+
+    {
+      label:
+        "Sent Emails",
+
+      value:
+        sentCount,
+
+      icon:
+        Send,
+
+      iconClass:
+        "bg-green-50 text-green-600",
+    },
+  ]
+
+  /* =======================================================
+     UI
+  ======================================================= */
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-[1500px] space-y-6 p-6 lg:p-8">
-
-        {/* =================================================
+    <div className="min-h-screen bg-slate-50/70">
+      <div className="mx-auto max-w-[1600px] space-y-7 p-6 lg:p-8">
+        {/* ===============================================
             HEADER
-        ================================================= */}
+        =============================================== */}
 
-        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-blue-600">
-              Marketing Communication
-            </p>
+            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
+              <span>
+                Marketing
+              </span>
 
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
+              <ArrowRight className="h-3.5 w-3.5" />
+
+              <span>
+                Email Center
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">
               Email Center
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Create marketing emails, manage campaign
-              communication, monitor delivery queues, and
-              review email activity.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Compose, personalize,
+              schedule, and queue
+              marketing emails for
+              company leads.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin/marketing/templates"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                border
-                border-blue-200
-                bg-blue-50
-                px-4
-                py-2.5
-                text-sm
-                font-semibold
-                text-blue-700
-                transition
-                hover:bg-blue-100
-              "
-            >
-              <FileText className="h-4 w-4" />
+          <Link
+            href="/admin/marketing/campaigns"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          >
+            <Megaphone className="h-4 w-4" />
 
-              Email Templates
-            </Link>
-
-            <Link
-              href="/admin/marketing/email-center/new"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                bg-green-600
-                px-4
-                py-2.5
-                text-sm
-                font-semibold
-                text-white
-                transition
-                hover:bg-green-700
-              "
-            >
-              <Plus className="h-4 w-4" />
-
-              Compose Email
-            </Link>
-          </div>
+            View Campaigns
+          </Link>
         </div>
 
-        {/* =================================================
-            METRICS
-        ================================================= */}
+        {/* ===============================================
+            STATS
+        =============================================== */}
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            title="Email Campaigns"
-            value={emailCampaigns.toString()}
-            subtitle="Campaigns using email"
-            icon={
-              <Mail className="h-5 w-5 text-blue-600" />
-            }
-          />
+          {stats.map((stat) => {
+            const Icon =
+              stat.icon
 
-          <MetricCard
-            title="Running Campaigns"
-            value={runningCampaigns.toString()}
-            subtitle="Currently active"
-            icon={
-              <Send className="h-5 w-5 text-green-600" />
-            }
-          />
+            return (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {
+                        stat.label
+                      }
+                    </p>
 
-          <MetricCard
-            title="All Campaigns"
-            value={totalCampaigns.toString()}
-            subtitle="Across every channel"
-            icon={
-              <Megaphone className="h-5 w-5 text-orange-600" />
-            }
-          />
+                    <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+                      {
+                        stat.value
+                      }
+                    </p>
+                  </div>
 
-          <MetricCard
-            title="Audience"
-            value="Leads"
-            subtitle="Marketing lead contacts"
-            icon={
-              <Users className="h-5 w-5 text-violet-600" />
-            }
-          />
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconClass}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
 
-        {/* =================================================
-            QUICK ACTIONS
-        ================================================= */}
+        {/* ===============================================
+            FAILURE NOTICE
+        =============================================== */}
 
-        <section className="rounded-2xl border border-slate-200 bg-white">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <h2 className="text-lg font-bold text-slate-950">
-              Email Operations
-            </h2>
+        {failedCount > 0 && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <Mail className="h-5 w-5 text-red-600" />
 
-            <p className="mt-1 text-sm text-slate-500">
-              Manage the complete marketing email workflow.
-            </p>
+              <div>
+                <p className="text-sm font-semibold text-red-900">
+                  Email delivery
+                  attention required
+                </p>
+
+                <p className="mt-1 text-sm text-red-700">
+                  {failedCount} email
+                  {failedCount === 1
+                    ? ""
+                    : "s"}{" "}
+                  currently have failed
+                  status.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ===============================================
+            COMPOSER
+        =============================================== */}
+
+        <EmailComposer
+          recipients={recipients}
+          campaigns={campaigns}
+        />
+
+        {/* ===============================================
+            RECENT EMAIL ACTIVITY
+        =============================================== */}
+
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <div>
+              <h2 className="font-semibold text-slate-950">
+                Recent Email Activity
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Latest queued and sent
+                marketing emails
+              </p>
+            </div>
+
+            <Mail className="h-5 w-5 text-slate-400" />
           </div>
 
-          <div className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-4">
-            <OperationCard
-              href="/admin/marketing/email-center/new"
-              title="Compose Email"
-              description="Create and send a new marketing email."
-              icon={
-                <Mail className="h-5 w-5 text-green-600" />
-              }
-            />
+          {recentQueue.length ===
+          0 ? (
+            <div className="px-6 py-16 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100">
+                <Mail className="h-6 w-6 text-slate-400" />
+              </div>
 
-            <OperationCard
-              href="/admin/marketing/templates"
-              title="Templates"
-              description="Create and manage reusable email templates."
-              icon={
-                <FileText className="h-5 w-5 text-blue-600" />
-              }
-            />
+              <p className="mt-4 font-semibold text-slate-900">
+                No email activity
+                yet
+              </p>
 
-            <OperationCard
-              href="/admin/marketing/email-queue"
-              title="Email Queue"
-              description="Monitor pending and processing email jobs."
-              icon={
-                <Clock3 className="h-5 w-5 text-orange-600" />
-              }
-            />
+              <p className="mt-1 text-sm text-slate-500">
+                Queued emails will
+                appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentQueue.map(
+                (email) => {
+                  const status =
+                    email.status.toLowerCase()
 
-            <OperationCard
-              href="/admin/marketing/campaigns"
-              title="Campaigns"
-              description="Connect emails with marketing campaigns."
-              icon={
-                <Megaphone className="h-5 w-5 text-violet-600" />
-              }
-            />
-          </div>
+                  const statusClass =
+                    status === "sent"
+                      ? "bg-green-50 text-green-700"
+                      : status ===
+                          "failed"
+                        ? "bg-red-50 text-red-700"
+                        : status ===
+                            "sending"
+                          ? "bg-blue-50 text-blue-700"
+                          : "bg-orange-50 text-orange-700"
+
+                  const displayDate =
+                    email.sentAt ||
+                    email.scheduledAt ||
+                    email.createdAt
+
+                  return (
+                    <div
+                      key={email.id}
+                      className="flex flex-col gap-4 px-6 py-4 transition hover:bg-slate-50/80 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
+                          {getInitials(
+                            email.toEmail
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">
+                            {
+                              email.subject
+                            }
+                          </p>
+
+                          <p className="mt-1 truncate text-xs text-slate-500">
+                            To:{" "}
+                            {
+                              email.toEmail
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 pl-14 md:pl-0">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusClass}`}
+                        >
+                          {
+                            email.status
+                          }
+                        </span>
+
+                        <span className="whitespace-nowrap text-xs text-slate-400">
+                          {displayDate.toLocaleString(
+                            "en-US",
+                            {
+                              month:
+                                "short",
+                              day:
+                                "numeric",
+                              hour:
+                                "numeric",
+                              minute:
+                                "2-digit",
+                            }
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                }
+              )}
+            </div>
+          )}
         </section>
 
-        {/* =================================================
-            MAIN GRID
-        ================================================= */}
+        {/* ===============================================
+            SELECTED CAMPAIGN INFO
+        =============================================== */}
 
-        <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-
-          {/* ===============================================
-              EMAIL WORKFLOW
-          =============================================== */}
-
-          <section className="rounded-2xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-6 py-5">
-              <h2 className="text-lg font-bold text-slate-950">
-                Email Workflow
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Standard marketing email delivery process.
-              </p>
-            </div>
-
-            <div className="space-y-3 p-6">
-              <WorkflowRow
-                number="01"
-                title="Choose Audience"
-                description="Select leads or campaign recipients."
-                icon={
-                  <Users className="h-5 w-5 text-blue-600" />
-                }
-              />
-
-              <WorkflowRow
-                number="02"
-                title="Prepare Message"
-                description="Write the email or use an existing template."
-                icon={
-                  <FileText className="h-5 w-5 text-violet-600" />
-                }
-              />
-
-              <WorkflowRow
-                number="03"
-                title="Queue Delivery"
-                description="Create queue records for controlled delivery."
-                icon={
-                  <Clock3 className="h-5 w-5 text-orange-600" />
-                }
-              />
-
-              <WorkflowRow
-                number="04"
-                title="Track Delivery"
-                description="Monitor sent, delivered, and failed emails."
-                icon={
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                }
-              />
-            </div>
-          </section>
-
-          {/* ===============================================
-              DELIVERY HEALTH
-          =============================================== */}
-
-          <section className="rounded-2xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-6 py-5">
-              <h2 className="text-lg font-bold text-slate-950">
-                Delivery Center
-              </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Email delivery monitoring shortcuts.
-              </p>
-            </div>
-
-            <div className="space-y-3 p-6">
-              <DeliveryRow
-                label="Queued"
-                description="Waiting for processing"
-                icon={
-                  <Clock3 className="h-5 w-5 text-orange-600" />
-                }
-              />
-
-              <DeliveryRow
-                label="Sent"
-                description="Successfully submitted"
-                icon={
-                  <Send className="h-5 w-5 text-blue-600" />
-                }
-              />
-
-              <DeliveryRow
-                label="Delivered"
-                description="Accepted by recipient server"
-                icon={
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                }
-              />
-
-              <DeliveryRow
-                label="Failed"
-                description="Requires attention or retry"
-                icon={
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                }
-              />
-
-              <Link
-                href="/admin/marketing/email-queue"
-                className="
-                  mt-4
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                  rounded-xl
-                  bg-blue-600
-                  px-4
-                  py-3
-                  text-sm
-                  font-semibold
-                  text-white
-                  transition
-                  hover:bg-blue-700
-                "
-              >
-                Open Email Queue
-
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </section>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   METRIC CARD
-========================================================= */
-
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  icon,
-}: {
-  title: string
-  value: string
-  subtitle: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-500">
-            {title}
-          </p>
-
-          <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-            {value}
-          </p>
-
-          <p className="mt-2 text-xs text-slate-400">
-            {subtitle}
-          </p>
-        </div>
-
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50">
-          {icon}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   OPERATION CARD
-========================================================= */
-
-function OperationCard({
-  href,
-  title,
-  description,
-  icon,
-}: {
-  href: string
-  title: string
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <Link
-      href={href}
-      className="
-        group
-        rounded-xl
-        border
-        border-slate-200
-        p-5
-        transition
-        hover:border-blue-200
-        hover:bg-blue-50/40
-      "
-    >
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50">
-        {icon}
-      </div>
-
-      <h3 className="mt-4 font-bold text-slate-950">
-        {title}
-      </h3>
-
-      <p className="mt-2 text-sm leading-6 text-slate-500">
-        {description}
-      </p>
-
-      <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-blue-600">
-        Open
-
-        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-      </div>
-    </Link>
-  )
-}
-
-/* =========================================================
-   WORKFLOW ROW
-========================================================= */
-
-function WorkflowRow({
-  number,
-  title,
-  description,
-  icon,
-}: {
-  number: string
-  title: string
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50">
-        {icon}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-blue-600">
-            {number}
-          </span>
-
-          <h3 className="font-semibold text-slate-950">
-            {title}
-          </h3>
-        </div>
-
-        <p className="mt-1 text-sm text-slate-500">
-          {description}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   DELIVERY ROW
-========================================================= */
-
-function DeliveryRow({
-  label,
-  description,
-  icon,
-}: {
-  label: string
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-4">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50">
-        {icon}
-      </div>
-
-      <div>
-        <p className="font-semibold text-slate-950">
-          {label}
-        </p>
-
-        <p className="mt-0.5 text-xs text-slate-500">
-          {description}
-        </p>
+        {selectedCampaignId && (
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+            Email Center opened from
+            campaign context. Select
+            the matching campaign in
+            the composer before
+            queueing the email batch.
+          </div>
+        )}
       </div>
     </div>
   )

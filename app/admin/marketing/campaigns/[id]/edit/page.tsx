@@ -1,37 +1,160 @@
 import Link from "next/link"
-import { redirect } from "next/navigation"
+
+import {
+  notFound,
+  redirect,
+} from "next/navigation"
 
 import {
   ArrowLeft,
   CalendarDays,
   Megaphone,
+  Pencil,
   ShieldCheck,
   Target,
 } from "lucide-react"
 
 import { auth } from "@/auth"
 
-import CampaignForm from "../components/CampaignForm"
+import prisma from "@/shared/lib/prisma"
+
+import CampaignEditForm from "./components/CampaignEditForm"
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+type CampaignEditPageProps = {
+  params: Promise<{
+    id: string
+  }>
+}
+
+/* =========================================================
+   DATE HELPER
+========================================================= */
+
+function formatDateInput(
+  value: Date | null
+) {
+  if (!value) {
+    return ""
+  }
+
+  return value
+    .toISOString()
+    .slice(0, 10)
+}
 
 /* =========================================================
    PAGE
 ========================================================= */
 
-export default async function NewMarketingCampaignPage() {
+export default async function CampaignEditPage({
+  params,
+}: CampaignEditPageProps) {
   /* =======================================================
      AUTH
   ======================================================= */
 
-  const session = await auth()
+  const session =
+    await auth()
 
   if (!session?.user?.id) {
     redirect("/login")
   }
 
-  const orgId = session.user.orgId
+  const orgId =
+    session.user.orgId
 
   if (!orgId) {
     redirect("/login")
+  }
+
+  /* =======================================================
+     PARAMS
+  ======================================================= */
+
+  const { id } =
+    await params
+
+  /* =======================================================
+     CAMPAIGN
+  ======================================================= */
+
+  const campaign =
+    await prisma.marketingCampaign.findFirst({
+      where: {
+        id,
+        orgId,
+      },
+
+      select: {
+        id: true,
+
+        title: true,
+
+        channel: true,
+
+        budget: true,
+
+        startDate: true,
+
+        endDate: true,
+
+        status: true,
+
+        leads: true,
+
+        conversions: true,
+
+        createdAt: true,
+
+        updatedAt: true,
+
+        _count: {
+          select: {
+            campaignLeads: true,
+          },
+        },
+      },
+    })
+
+  if (!campaign) {
+    notFound()
+  }
+
+  /* =======================================================
+     CLIENT-SAFE CAMPAIGN DATA
+  ======================================================= */
+
+  const campaignData = {
+    id:
+      campaign.id,
+
+    title:
+      campaign.title,
+
+    channel:
+      campaign.channel,
+
+    budget:
+      campaign.budget
+        ? campaign.budget.toString()
+        : "",
+
+    startDate:
+      formatDateInput(
+        campaign.startDate
+      ),
+
+    endDate:
+      formatDateInput(
+        campaign.endDate
+      ),
+
+    status:
+      campaign.status,
   }
 
   /* =======================================================
@@ -41,12 +164,13 @@ export default async function NewMarketingCampaignPage() {
   return (
     <div className="min-h-screen bg-slate-50/70">
       <div className="mx-auto max-w-[1400px] space-y-7 p-6 lg:p-8">
+
         {/* ===============================================
-            BACK LINK
+            BACK
         =============================================== */}
 
         <Link
-          href="/admin/marketing/campaigns"
+          href={`/admin/marketing/campaigns/${campaign.id}`}
           className="
             inline-flex
             items-center
@@ -60,7 +184,7 @@ export default async function NewMarketingCampaignPage() {
         >
           <ArrowLeft className="h-4 w-4" />
 
-          Back to Campaigns
+          Back to Campaign
         </Link>
 
         {/* ===============================================
@@ -70,6 +194,7 @@ export default async function NewMarketingCampaignPage() {
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <div className="mb-3 flex items-center gap-3">
+
               <div
                 className="
                   flex
@@ -78,44 +203,53 @@ export default async function NewMarketingCampaignPage() {
                   items-center
                   justify-center
                   rounded-2xl
-                  bg-blue-50
-                  text-blue-600
+                  bg-orange-50
+                  text-orange-600
                 "
               >
-                <Megaphone className="h-6 w-6" />
+                <Pencil className="h-5 w-5" />
               </div>
 
               <span
                 className="
                   rounded-full
-                  bg-green-50
+                  bg-blue-50
                   px-3
                   py-1
                   text-xs
                   font-semibold
-                  text-green-700
+                  text-blue-700
                 "
               >
-                New Marketing Campaign
+                Campaign Settings
               </span>
+
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-              Create Campaign
+              Edit Campaign
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Create a marketing campaign, select its primary
-              channel, configure the budget and schedule, and
-              start tracking attributed leads and conversions.
+              Update the campaign settings,
+              marketing channel, budget,
+              schedule, and current campaign
+              status.
+            </p>
+
+            <p className="mt-3 text-sm font-semibold text-slate-700">
+              {campaign.title}
             </p>
           </div>
 
           {/* ===========================================
-              QUICK INFO
+              CAMPAIGN STATS
           =========================================== */}
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:w-[460px]">
+          <div className="grid gap-3 sm:grid-cols-3 xl:w-[620px]">
+
+            {/* LEADS */}
+
             <div
               className="
                 rounded-2xl
@@ -127,6 +261,7 @@ export default async function NewMarketingCampaignPage() {
               "
             >
               <div className="flex items-start gap-3">
+
                 <div
                   className="
                     flex
@@ -144,16 +279,19 @@ export default async function NewMarketingCampaignPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Attribution
+                  <p className="text-xs text-slate-500">
+                    Leads
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Track leads and conversions against the campaign.
+                  <p className="mt-1 text-xl font-bold text-slate-950">
+                    {campaign._count.campaignLeads}
                   </p>
                 </div>
+
               </div>
             </div>
+
+            {/* CONVERSIONS */}
 
             <div
               className="
@@ -166,6 +304,50 @@ export default async function NewMarketingCampaignPage() {
               "
             >
               <div className="flex items-start gap-3">
+
+                <div
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-green-50
+                    text-green-600
+                  "
+                >
+                  <Megaphone className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-500">
+                    Conversions
+                  </p>
+
+                  <p className="mt-1 text-xl font-bold text-slate-950">
+                    {campaign.conversions}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* SCHEDULE */}
+
+            <div
+              className="
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                p-4
+                shadow-sm
+              "
+            >
+              <div className="flex items-start gap-3">
+
                 <div
                   className="
                     flex
@@ -183,21 +365,26 @@ export default async function NewMarketingCampaignPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Scheduling
+                  <p className="text-xs text-slate-500">
+                    Status
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Define campaign dates and control campaign status.
+                  <p className="mt-1 text-sm font-bold capitalize text-slate-950">
+                    {campaign.status.replaceAll(
+                      "_",
+                      " "
+                    )}
                   </p>
                 </div>
+
               </div>
             </div>
+
           </div>
         </div>
 
         {/* ===============================================
-            TENANT SAFETY
+            SECURITY INFO
         =============================================== */}
 
         <div
@@ -221,21 +408,25 @@ export default async function NewMarketingCampaignPage() {
             </p>
 
             <p className="mt-1 text-sm leading-6 text-green-700">
-              This campaign will be created inside your current
-              organization. Campaign leads and related marketing
-              activity remain isolated to the same organization.
+              This campaign was loaded using
+              both the campaign ID and the
+              authenticated organization ID.
+              Updates are validated again by
+              the server action.
             </p>
           </div>
         </div>
 
         {/* ===============================================
-            CAMPAIGN FORM
+            EDIT FORM
         =============================================== */}
 
-        <CampaignForm />
+        <CampaignEditForm
+          campaign={campaignData}
+        />
 
         {/* ===============================================
-            WORKFLOW INFO
+            INFO
         =============================================== */}
 
         <section
@@ -249,6 +440,7 @@ export default async function NewMarketingCampaignPage() {
           "
         >
           <div className="flex items-start gap-4">
+
             <div
               className="
                 flex
@@ -267,18 +459,22 @@ export default async function NewMarketingCampaignPage() {
 
             <div>
               <h2 className="font-bold text-slate-950">
-                Campaign workflow
+                Campaign performance data
               </h2>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                After creating the campaign, you can attribute
-                company leads to it, send campaign emails through
-                the Marketing Email Center, and track conversions
-                from the campaign detail page.
+                Editing campaign settings does
+                not remove attributed leads or
+                conversion history. Lead
+                attribution remains connected
+                through the campaign lead
+                relation records.
               </p>
             </div>
+
           </div>
         </section>
+
       </div>
     </div>
   )

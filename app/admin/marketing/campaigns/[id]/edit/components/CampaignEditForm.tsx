@@ -1,6 +1,9 @@
 "use client"
 
+import Link from "next/link"
+
 import {
+  FormEvent,
   useState,
   useTransition,
 } from "react"
@@ -28,12 +31,34 @@ import {
   Video,
 } from "lucide-react"
 
-import Link from "next/link"
-
 import {
-  createCampaignAction,
-  type CreateCampaignInput,
-} from "../actions"
+  updateCampaignAction,
+  type UpdateCampaignInput,
+} from "../../../actions"
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+type CampaignEditData = {
+  id: string
+
+  title: string
+
+  channel: CampaignChannel
+
+  budget: string
+
+  startDate: string
+
+  endDate: string
+
+  status: CampaignStatus
+}
+
+type CampaignEditFormProps = {
+  campaign: CampaignEditData
+}
 
 /* =========================================================
    HELPERS
@@ -123,13 +148,18 @@ const CHANNEL_OPTIONS = [
     icon:
       Video,
   },
-]
+] satisfies Array<{
+  value: CampaignChannel
+  label: string
+  description: string
+  icon: typeof Mail
+}>
 
 /* =========================================================
    STATUS OPTIONS
 ========================================================= */
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS: CampaignStatus[] = [
   CampaignStatus.draft,
   CampaignStatus.running,
   CampaignStatus.paused,
@@ -141,7 +171,9 @@ const STATUS_OPTIONS = [
    COMPONENT
 ========================================================= */
 
-export default function CampaignForm() {
+export default function CampaignEditForm({
+  campaign,
+}: CampaignEditFormProps) {
   const router =
     useRouter()
 
@@ -157,37 +189,49 @@ export default function CampaignForm() {
   const [
     title,
     setTitle,
-  ] = useState("")
+  ] =
+    useState(
+      campaign.title
+    )
 
   const [
     channel,
     setChannel,
   ] =
     useState<CampaignChannel>(
-      CampaignChannel.email
+      campaign.channel
     )
 
   const [
     budget,
     setBudget,
-  ] = useState("")
+  ] =
+    useState(
+      campaign.budget
+    )
 
   const [
     startDate,
     setStartDate,
-  ] = useState("")
+  ] =
+    useState(
+      campaign.startDate
+    )
 
   const [
     endDate,
     setEndDate,
-  ] = useState("")
+  ] =
+    useState(
+      campaign.endDate
+    )
 
   const [
     status,
     setStatus,
   ] =
     useState<CampaignStatus>(
-      CampaignStatus.draft
+      campaign.status
     )
 
   const [
@@ -207,12 +251,30 @@ export default function CampaignForm() {
     )
 
   /* =======================================================
+     DIRTY STATE
+  ======================================================= */
+
+  const hasChanges =
+    title.trim() !==
+      campaign.title ||
+    channel !==
+      campaign.channel ||
+    budget !==
+      campaign.budget ||
+    startDate !==
+      campaign.startDate ||
+    endDate !==
+      campaign.endDate ||
+    status !==
+      campaign.status
+
+  /* =======================================================
      SUBMIT
   ======================================================= */
 
   function handleSubmit(
     event:
-      React.FormEvent<HTMLFormElement>
+      FormEvent<HTMLFormElement>
   ) {
     event.preventDefault()
 
@@ -220,7 +282,7 @@ export default function CampaignForm() {
     setSuccess(null)
 
     /* -----------------------------------------------------
-       CLIENT VALIDATION
+       TITLE VALIDATION
     ----------------------------------------------------- */
 
     if (!title.trim()) {
@@ -231,16 +293,29 @@ export default function CampaignForm() {
       return
     }
 
+    /* -----------------------------------------------------
+       BUDGET VALIDATION
+    ----------------------------------------------------- */
+
     if (
-      budget &&
-      Number(budget) < 0
+      budget.trim() &&
+      (
+        Number.isNaN(
+          Number(budget)
+        ) ||
+        Number(budget) < 0
+      )
     ) {
       setError(
-        "Budget cannot be negative."
+        "Campaign budget must be zero or greater."
       )
 
       return
     }
+
+    /* -----------------------------------------------------
+       DATE VALIDATION
+    ----------------------------------------------------- */
 
     if (
       startDate &&
@@ -260,7 +335,7 @@ export default function CampaignForm() {
     ----------------------------------------------------- */
 
     const input:
-      CreateCampaignInput = {
+      UpdateCampaignInput = {
         title:
           title.trim(),
 
@@ -281,45 +356,45 @@ export default function CampaignForm() {
       }
 
     /* -----------------------------------------------------
-       SERVER ACTION
+       UPDATE
     ----------------------------------------------------- */
 
     startTransition(
       async () => {
-        const result =
-          await createCampaignAction(
-            input
-          )
+        try {
+          const result =
+            await updateCampaignAction(
+              campaign.id,
+              input
+            )
 
-        if (!result.success) {
-          setError(
+          if (!result.success) {
+            setError(
+              result.message
+            )
+
+            return
+          }
+
+          setSuccess(
             result.message
           )
 
-          return
-        }
-
-        setSuccess(
-          result.message
-        )
-
-        if (
-          result.campaignId
-        ) {
           router.push(
-            `/admin/marketing/campaigns/${result.campaignId}`
+            `/admin/marketing/campaigns/${campaign.id}`
           )
 
           router.refresh()
+        } catch (actionError) {
+          console.error(
+            "Campaign update error:",
+            actionError
+          )
 
-          return
+          setError(
+            "Unable to update campaign."
+          )
         }
-
-        router.push(
-          "/admin/marketing/campaigns"
-        )
-
-        router.refresh()
       }
     )
   }
@@ -340,7 +415,17 @@ export default function CampaignForm() {
       {error && (
         <div
           role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+          className="
+            rounded-xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-3
+            text-sm
+            font-medium
+            text-red-700
+          "
         >
           {error}
         </div>
@@ -349,20 +434,57 @@ export default function CampaignForm() {
       {success && (
         <div
           role="status"
-          className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700"
+          className="
+            rounded-xl
+            border
+            border-green-200
+            bg-green-50
+            px-4
+            py-3
+            text-sm
+            font-medium
+            text-green-700
+          "
         >
           {success}
         </div>
       )}
 
       {/* =================================================
-          BASIC INFORMATION
+          CAMPAIGN INFORMATION
       ================================================= */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-5">
+      <section
+        className="
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          shadow-sm
+        "
+      >
+        <div
+          className="
+            border-b
+            border-slate-200
+            px-6
+            py-5
+          "
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                bg-blue-50
+                text-blue-600
+              "
+            >
               <Megaphone className="h-5 w-5" />
             </div>
 
@@ -372,22 +494,30 @@ export default function CampaignForm() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Define the campaign name,
-                channel, and initial status.
+                Update the campaign name
+                and current operational
+                status.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-6 p-6">
+        <div className="grid gap-6 p-6 lg:grid-cols-[1fr_320px]">
           {/* TITLE */}
 
           <div>
             <label
               htmlFor="campaign-title"
-              className="mb-2 block text-sm font-semibold text-slate-700"
+              className="
+                mb-2
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+              "
             >
               Campaign Title
+
               <span className="ml-1 text-red-500">
                 *
               </span>
@@ -403,7 +533,7 @@ export default function CampaignForm() {
                 )
               }
               disabled={isPending}
-              placeholder="Example: HVAC Summer Outreach 2026"
+              placeholder="Campaign title"
               className="
                 h-12
                 w-full
@@ -426,9 +556,9 @@ export default function CampaignForm() {
             />
 
             <p className="mt-2 text-xs text-slate-400">
-              Use a descriptive name that
-              clearly identifies the target
-              audience or campaign goal.
+              Use a descriptive campaign
+              name that identifies the
+              target audience or objective.
             </p>
           </div>
 
@@ -437,9 +567,15 @@ export default function CampaignForm() {
           <div>
             <label
               htmlFor="campaign-status"
-              className="mb-2 block text-sm font-semibold text-slate-700"
+              className="
+                mb-2
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+              "
             >
-              Initial Status
+              Campaign Status
             </label>
 
             <select
@@ -485,36 +621,123 @@ export default function CampaignForm() {
               )}
             </select>
 
-            {status ===
-              CampaignStatus.running && (
-              <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">
-                This campaign will be
-                created with a running
-                status. Use Draft if it
-                still requires preparation.
-              </div>
-            )}
+            <p className="mt-2 text-xs text-slate-400">
+              Current campaign lifecycle
+              status.
+            </p>
           </div>
         </div>
+
+        {/* STATUS INFORMATION */}
+
+        {status ===
+          CampaignStatus.running && (
+          <div
+            className="
+              mx-6
+              mb-6
+              rounded-xl
+              border
+              border-green-200
+              bg-green-50
+              px-4
+              py-3
+              text-sm
+              text-green-700
+            "
+          >
+            This campaign is currently
+            marked as running.
+          </div>
+        )}
+
+        {status ===
+          CampaignStatus.paused && (
+          <div
+            className="
+              mx-6
+              mb-6
+              rounded-xl
+              border
+              border-orange-200
+              bg-orange-50
+              px-4
+              py-3
+              text-sm
+              text-orange-700
+            "
+          >
+            This campaign is paused.
+            Existing lead attribution
+            remains unchanged.
+          </div>
+        )}
+
+        {status ===
+          CampaignStatus.cancelled && (
+          <div
+            className="
+              mx-6
+              mb-6
+              rounded-xl
+              border
+              border-red-200
+              bg-red-50
+              px-4
+              py-3
+              text-sm
+              text-red-700
+            "
+          >
+            This campaign is marked as
+            cancelled. Historical
+            campaign records will remain
+            available.
+          </div>
+        )}
       </section>
 
       {/* =================================================
-          CHANNEL
+          CAMPAIGN CHANNEL
       ================================================= */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-5">
+      <section
+        className="
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          shadow-sm
+        "
+      >
+        <div
+          className="
+            border-b
+            border-slate-200
+            px-6
+            py-5
+          "
+        >
           <h2 className="font-bold text-slate-950">
             Campaign Channel
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Select the primary marketing
-            channel for this campaign.
+            Change the primary marketing
+            channel used by this campaign.
           </p>
         </div>
 
-        <div className="grid gap-3 p-6 sm:grid-cols-2 xl:grid-cols-5">
+        <div
+          className="
+            grid
+            gap-3
+            p-6
+            sm:grid-cols-2
+            xl:grid-cols-5
+          "
+        >
           {CHANNEL_OPTIONS.map(
             (option) => {
               const Icon =
@@ -571,11 +794,25 @@ export default function CampaignForm() {
                     <Icon className="h-5 w-5" />
                   </div>
 
-                  <p className="mt-4 text-sm font-bold text-slate-950">
+                  <p
+                    className="
+                      mt-4
+                      text-sm
+                      font-bold
+                      text-slate-950
+                    "
+                  >
                     {option.label}
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                  <p
+                    className="
+                      mt-1
+                      text-xs
+                      leading-5
+                      text-slate-500
+                    "
+                  >
                     {
                       option.description
                     }
@@ -591,10 +828,37 @@ export default function CampaignForm() {
           BUDGET AND SCHEDULE
       ================================================= */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-5">
+      <section
+        className="
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          shadow-sm
+        "
+      >
+        <div
+          className="
+            border-b
+            border-slate-200
+            px-6
+            py-5
+          "
+        >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+            <div
+              className="
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+                rounded-xl
+                bg-orange-50
+                text-orange-600
+              "
+            >
               <CalendarDays className="h-5 w-5" />
             </div>
 
@@ -604,26 +868,50 @@ export default function CampaignForm() {
               </h2>
 
               <p className="mt-1 text-sm text-slate-500">
-                Configure campaign budget
+                Update campaign budget
                 and active dates.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6 p-6 md:grid-cols-3">
+        <div
+          className="
+            grid
+            gap-6
+            p-6
+            md:grid-cols-3
+          "
+        >
           {/* BUDGET */}
 
           <div>
             <label
               htmlFor="campaign-budget"
-              className="mb-2 block text-sm font-semibold text-slate-700"
+              className="
+                mb-2
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+              "
             >
               Budget
             </label>
 
             <div className="relative">
-              <CircleDollarSign className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <CircleDollarSign
+                className="
+                  pointer-events-none
+                  absolute
+                  left-3.5
+                  top-1/2
+                  h-5
+                  w-5
+                  -translate-y-1/2
+                  text-slate-400
+                "
+              />
 
               <input
                 id="campaign-budget"
@@ -662,8 +950,7 @@ export default function CampaignForm() {
             </div>
 
             <p className="mt-2 text-xs text-slate-400">
-              Optional campaign budget
-              in USD.
+              Campaign budget in USD.
             </p>
           </div>
 
@@ -672,7 +959,13 @@ export default function CampaignForm() {
           <div>
             <label
               htmlFor="campaign-start-date"
-              className="mb-2 block text-sm font-semibold text-slate-700"
+              className="
+                mb-2
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+              "
             >
               Start Date
             </label>
@@ -713,7 +1006,13 @@ export default function CampaignForm() {
           <div>
             <label
               htmlFor="campaign-end-date"
-              className="mb-2 block text-sm font-semibold text-slate-700"
+              className="
+                mb-2
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+              "
             >
               End Date
             </label>
@@ -756,12 +1055,27 @@ export default function CampaignForm() {
       </section>
 
       {/* =================================================
-          FORM ACTIONS
+          ACTION BAR
       ================================================= */}
 
-      <div className="flex flex-col-reverse gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div
+        className="
+          flex
+          flex-col-reverse
+          gap-3
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          p-5
+          shadow-sm
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+        "
+      >
         <Link
-          href="/admin/marketing/campaigns"
+          href={`/admin/marketing/campaigns/${campaign.id}`}
           className="
             inline-flex
             h-11
@@ -785,42 +1099,53 @@ export default function CampaignForm() {
           Cancel
         </Link>
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="
-            inline-flex
-            h-11
-            items-center
-            justify-center
-            gap-2
-            rounded-xl
-            bg-green-600
-            px-6
-            text-sm
-            font-semibold
-            text-white
-            shadow-sm
-            transition
-            hover:bg-green-700
-            disabled:cursor-not-allowed
-            disabled:opacity-60
-          "
-        >
-          {isPending ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-
-              Creating Campaign...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-
-              Create Campaign
-            </>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {!hasChanges && (
+            <span className="text-xs text-slate-400">
+              No unsaved changes
+            </span>
           )}
-        </button>
+
+          <button
+            type="submit"
+            disabled={
+              isPending ||
+              !hasChanges
+            }
+            className="
+              inline-flex
+              h-11
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              bg-green-600
+              px-6
+              text-sm
+              font-semibold
+              text-white
+              shadow-sm
+              transition
+              hover:bg-green-700
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            {isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+
+                Saving Changes...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+
+                Save Changes
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </form>
   )

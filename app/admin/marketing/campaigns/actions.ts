@@ -1,362 +1,354 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
+
 import {
   CampaignChannel,
   CampaignStatus,
+  Prisma,
 } from "@prisma/client"
 
-import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
-
 import { auth } from "@/auth"
+
 import prisma from "@/shared/lib/prisma"
 
 /* =========================================================
    TYPES
 ========================================================= */
 
-export type CampaignActionState = {
+export type CampaignActionResult = {
   success: boolean
   message: string
+  campaignId?: string
+}
 
-  errors?: Record<
-    string,
-    string[]
-  >
+export type CreateCampaignInput = {
+  title: string
+  channel: CampaignChannel
+  budget?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  status?: CampaignStatus
+}
+
+export type UpdateCampaignInput = {
+  title: string
+  channel: CampaignChannel
+  budget?: number | null
+  startDate?: string | null
+  endDate?: string | null
+  status: CampaignStatus
 }
 
 /* =========================================================
-   ENUM VALIDATION
+   SESSION HELPER
 ========================================================= */
 
-const VALID_CHANNELS =
-  Object.values(CampaignChannel)
+async function getAuthenticatedContext() {
+  const session = await auth()
 
-const VALID_STATUSES =
-  Object.values(CampaignStatus)
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  if (!session.user.orgId) {
+    throw new Error(
+      "Organization context is missing"
+    )
+  }
+
+  return {
+    userId: session.user.id,
+    orgId: session.user.orgId,
+  }
+}
+
+/* =========================================================
+   DATE HELPER
+========================================================= */
+
+function parseOptionalDate(
+  value?: string | null
+) {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(
+      "Invalid campaign date"
+    )
+  }
+
+  return date
+}
+
+/* =========================================================
+   BUDGET HELPER
+========================================================= */
+
+function parseOptionalBudget(
+  value?: number | null
+) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return null
+  }
+
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new Error(
+      "Campaign budget must be zero or greater"
+    )
+  }
+
+  return new Prisma.Decimal(value)
+}
 
 /* =========================================================
    CREATE CAMPAIGN
 ========================================================= */
 
 export async function createCampaignAction(
-  _previousState: CampaignActionState,
-  formData: FormData
-): Promise<CampaignActionState> {
-  /* =======================================================
-     AUTHENTICATION
-  ======================================================= */
-
-  const session = await auth()
-
-  if (
-    !session?.user?.id
-  ) {
-    return {
-      success: false,
-      message:
-        "You must be signed in to create a campaign.",
-    }
-  }
-
-  /* =======================================================
-     FORM VALUES
-  ======================================================= */
-
-  const title =
-    formData
-      .get("title")
-      ?.toString()
-      .trim() ?? ""
-
-  const channelValue =
-    formData
-      .get("channel")
-      ?.toString()
-      .trim() ?? ""
-
-  const statusValue =
-    formData
-      .get("status")
-      ?.toString()
-      .trim() ?? ""
-
-  const budgetValue =
-    formData
-      .get("budget")
-      ?.toString()
-      .trim() ?? ""
-
-  const startDateValue =
-    formData
-      .get("startDate")
-      ?.toString()
-      .trim() ?? ""
-
-  const endDateValue =
-    formData
-      .get("endDate")
-      ?.toString()
-      .trim() ?? ""
-
-  /* =======================================================
-     VALIDATION
-  ======================================================= */
-
-  const errors: Record<
-    string,
-    string[]
-  > = {}
-
-  /* TITLE */
-
-  if (!title) {
-    errors.title = [
-      "Campaign title is required.",
-    ]
-  } else if (title.length < 3) {
-    errors.title = [
-      "Campaign title must contain at least 3 characters.",
-    ]
-  } else if (title.length > 150) {
-    errors.title = [
-      "Campaign title must not exceed 150 characters.",
-    ]
-  }
-
-  /* CHANNEL */
-
-  if (
-    !VALID_CHANNELS.includes(
-      channelValue as CampaignChannel
-    )
-  ) {
-    errors.channel = [
-      "Please select a valid campaign channel.",
-    ]
-  }
-
-  /* STATUS */
-
-  if (
-    !VALID_STATUSES.includes(
-      statusValue as CampaignStatus
-    )
-  ) {
-    errors.status = [
-      "Please select a valid campaign status.",
-    ]
-  }
-
-  /* BUDGET */
-
-  let budget: number | null = null
-
-  if (budgetValue) {
-    const parsedBudget =
-      Number(budgetValue)
-
-    if (
-      Number.isNaN(parsedBudget) ||
-      parsedBudget < 0
-    ) {
-      errors.budget = [
-        "Budget must be a valid positive number.",
-      ]
-    } else {
-      budget = parsedBudget
-    }
-  }
-
-  /* START DATE */
-
-  let startDate: Date | null = null
-
-  if (startDateValue) {
-    const parsedStartDate =
-      new Date(
-        `${startDateValue}T00:00:00.000Z`
-      )
-
-    if (
-      Number.isNaN(
-        parsedStartDate.getTime()
-      )
-    ) {
-      errors.startDate = [
-        "Please enter a valid start date.",
-      ]
-    } else {
-      startDate =
-        parsedStartDate
-    }
-  }
-
-  /* END DATE */
-
-  let endDate: Date | null = null
-
-  if (endDateValue) {
-    const parsedEndDate =
-      new Date(
-        `${endDateValue}T23:59:59.999Z`
-      )
-
-    if (
-      Number.isNaN(
-        parsedEndDate.getTime()
-      )
-    ) {
-      errors.endDate = [
-        "Please enter a valid end date.",
-      ]
-    } else {
-      endDate =
-        parsedEndDate
-    }
-  }
-
-  /* DATE RANGE */
-
-  if (
-    startDate &&
-    endDate &&
-    endDate < startDate
-  ) {
-    errors.endDate = [
-      "End date cannot be earlier than the start date.",
-    ]
-  }
-
-  /* RETURN VALIDATION ERRORS */
-
-  if (
-    Object.keys(errors).length > 0
-  ) {
-    return {
-      success: false,
-      message:
-        "Please correct the highlighted fields.",
-      errors,
-    }
-  }
-
-  /* =======================================================
-     CREATE CAMPAIGN
-  ======================================================= */
-
+  input: CreateCampaignInput
+): Promise<CampaignActionResult> {
   try {
-    await prisma.marketingCampaign.create({
-      data: {
-        title,
+    const {
+      userId,
+      orgId,
+    } =
+      await getAuthenticatedContext()
 
-        channel:
-          channelValue as CampaignChannel,
+    const title =
+      input.title.trim()
 
-        status:
-          statusValue as CampaignStatus,
+    if (!title) {
+      return {
+        success: false,
+        message:
+          "Campaign title is required",
+      }
+    }
 
-        budget,
+    const startDate =
+      parseOptionalDate(
+        input.startDate
+      )
 
-        startDate,
+    const endDate =
+      parseOptionalDate(
+        input.endDate
+      )
 
-        endDate,
+    if (
+      startDate &&
+      endDate &&
+      endDate < startDate
+    ) {
+      return {
+        success: false,
+        message:
+          "End date cannot be before start date",
+      }
+    }
 
-        leads: 0,
+    const campaign =
+      await prisma.marketingCampaign.create({
+        data: {
+          orgId,
 
-        conversions: 0,
+          title,
 
-        createdByUserId:
-          session.user.id,
-      },
-    })
+          channel:
+            input.channel,
 
-    /* =====================================================
-       REVALIDATION
-    ===================================================== */
+          budget:
+            parseOptionalBudget(
+              input.budget
+            ),
+
+          startDate,
+
+          endDate,
+
+          status:
+            input.status ??
+            CampaignStatus.draft,
+
+          leads: 0,
+
+          conversions: 0,
+
+          createdByUserId:
+            userId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
 
     revalidatePath(
       "/admin/marketing/campaigns"
     )
 
-    revalidatePath(
-      "/admin/marketing/dashboard"
-    )
-
     return {
       success: true,
       message:
-        "Campaign created successfully.",
+        "Campaign created successfully",
+      campaignId:
+        campaign.id,
     }
   } catch (error) {
     console.error(
-      "CREATE_MARKETING_CAMPAIGN_ERROR",
+      "createCampaignAction error:",
       error
     )
 
     return {
       success: false,
       message:
-        "Unable to create the campaign. Please try again.",
+        error instanceof Error
+          ? error.message
+          : "Failed to create campaign",
     }
   }
 }
 
 /* =========================================================
-   UPDATE CAMPAIGN STATUS
+   UPDATE CAMPAIGN
 ========================================================= */
 
-export async function updateCampaignStatusAction(
+export async function updateCampaignAction(
   campaignId: string,
-  status: CampaignStatus
-) {
-  const session = await auth()
+  input: UpdateCampaignInput
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
 
-  if (
-    !session?.user?.id
-  ) {
-    throw new Error(
-      "Unauthorized"
+    if (!campaignId) {
+      return {
+        success: false,
+        message:
+          "Campaign ID is required",
+      }
+    }
+
+    const existingCampaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (!existingCampaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    const title =
+      input.title.trim()
+
+    if (!title) {
+      return {
+        success: false,
+        message:
+          "Campaign title is required",
+      }
+    }
+
+    const startDate =
+      parseOptionalDate(
+        input.startDate
+      )
+
+    const endDate =
+      parseOptionalDate(
+        input.endDate
+      )
+
+    if (
+      startDate &&
+      endDate &&
+      endDate < startDate
+    ) {
+      return {
+        success: false,
+        message:
+          "End date cannot be before start date",
+      }
+    }
+
+    await prisma.marketingCampaign.update({
+      where: {
+        id: campaignId,
+      },
+
+      data: {
+        title,
+
+        channel:
+          input.channel,
+
+        budget:
+          parseOptionalBudget(
+            input.budget
+          ),
+
+        startDate,
+
+        endDate,
+
+        status:
+          input.status,
+      },
+    })
+
+    revalidatePath(
+      "/admin/marketing/campaigns"
     )
-  }
 
-  if (
-    !campaignId
-  ) {
-    throw new Error(
-      "Campaign ID is required."
+    revalidatePath(
+      `/admin/marketing/campaigns/${campaignId}`
     )
-  }
 
-  if (
-    !VALID_STATUSES.includes(status)
-  ) {
-    throw new Error(
-      "Invalid campaign status."
+    return {
+      success: true,
+      message:
+        "Campaign updated successfully",
+      campaignId,
+    }
+  } catch (error) {
+    console.error(
+      "updateCampaignAction error:",
+      error
     )
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update campaign",
+    }
   }
-
-  await prisma.marketingCampaign.update({
-    where: {
-      id: campaignId,
-    },
-
-    data: {
-      status,
-    },
-  })
-
-  revalidatePath(
-    "/admin/marketing/campaigns"
-  )
-
-  revalidatePath(
-    `/admin/marketing/campaigns/${campaignId}`
-  )
-
-  revalidatePath(
-    "/admin/marketing/dashboard"
-  )
 }
 
 /* =========================================================
@@ -365,40 +357,611 @@ export async function updateCampaignStatusAction(
 
 export async function deleteCampaignAction(
   campaignId: string
-) {
-  const session = await auth()
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
 
-  if (
-    !session?.user?.id
-  ) {
-    throw new Error(
-      "Unauthorized"
+    if (!campaignId) {
+      return {
+        success: false,
+        message:
+          "Campaign ID is required",
+      }
+    }
+
+    const campaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (!campaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.marketingCampaignLead.deleteMany({
+          where: {
+            campaignId,
+          },
+        })
+
+        await tx.marketingCampaign.delete({
+          where: {
+            id: campaignId,
+          },
+        })
+      }
     )
-  }
 
-  if (
-    !campaignId
-  ) {
-    throw new Error(
-      "Campaign ID is required."
+    revalidatePath(
+      "/admin/marketing/campaigns"
     )
+
+    return {
+      success: true,
+      message:
+        "Campaign deleted successfully",
+    }
+  } catch (error) {
+    console.error(
+      "deleteCampaignAction error:",
+      error
+    )
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete campaign",
+    }
   }
+}
 
-  await prisma.marketingCampaign.delete({
-    where: {
-      id: campaignId,
-    },
-  })
+/* =========================================================
+   CHANGE CAMPAIGN STATUS
+========================================================= */
 
-  revalidatePath(
-    "/admin/marketing/campaigns"
-  )
+export async function changeCampaignStatusAction(
+  campaignId: string,
+  status: CampaignStatus
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
 
-  revalidatePath(
-    "/admin/marketing/dashboard"
-  )
+    const campaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
 
-  redirect(
-    "/admin/marketing/campaigns"
-  )
+        select: {
+          id: true,
+        },
+      })
+
+    if (!campaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    await prisma.marketingCampaign.update({
+      where: {
+        id: campaignId,
+      },
+
+      data: {
+        status,
+      },
+    })
+
+    revalidatePath(
+      "/admin/marketing/campaigns"
+    )
+
+    revalidatePath(
+      `/admin/marketing/campaigns/${campaignId}`
+    )
+
+    return {
+      success: true,
+      message:
+        "Campaign status updated successfully",
+      campaignId,
+    }
+  } catch (error) {
+    console.error(
+      "changeCampaignStatusAction error:",
+      error
+    )
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update campaign status",
+    }
+  }
+}
+
+/* =========================================================
+   ADD LEADS TO CAMPAIGN
+========================================================= */
+
+export async function addCampaignLeadsAction(
+  campaignId: string,
+  companyLeadIds: string[]
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
+
+    if (!campaignId) {
+      return {
+        success: false,
+        message:
+          "Campaign ID is required",
+      }
+    }
+
+    const uniqueLeadIds =
+      Array.from(
+        new Set(companyLeadIds)
+      )
+
+    if (
+      uniqueLeadIds.length === 0
+    ) {
+      return {
+        success: false,
+        message:
+          "Select at least one lead",
+      }
+    }
+
+    /* -----------------------------------------------------
+       VERIFY CAMPAIGN OWNERSHIP
+    ----------------------------------------------------- */
+
+    const campaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (!campaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    /* -----------------------------------------------------
+       VERIFY LEAD OWNERSHIP
+    ----------------------------------------------------- */
+
+    const validLeads =
+      await prisma.companyLead.findMany({
+        where: {
+          orgId,
+
+          id: {
+            in: uniqueLeadIds,
+          },
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (
+      validLeads.length === 0
+    ) {
+      return {
+        success: false,
+        message:
+          "No valid leads were found",
+      }
+    }
+
+    const validLeadIds =
+      validLeads.map(
+        (lead) => lead.id
+      )
+
+    /* -----------------------------------------------------
+       CREATE ATTRIBUTION RECORDS
+    ----------------------------------------------------- */
+
+    await prisma.marketingCampaignLead.createMany({
+      data:
+        validLeadIds.map(
+          (companyLeadId) => ({
+            campaignId,
+            companyLeadId,
+          })
+        ),
+
+      skipDuplicates: true,
+    })
+
+    /* -----------------------------------------------------
+       SYNCHRONIZE LEAD COUNTER
+    ----------------------------------------------------- */
+
+    const leadCount =
+      await prisma.marketingCampaignLead.count({
+        where: {
+          campaignId,
+        },
+      })
+
+    await prisma.marketingCampaign.update({
+      where: {
+        id: campaignId,
+      },
+
+      data: {
+        leads:
+          leadCount,
+      },
+    })
+
+    revalidatePath(
+      "/admin/marketing/campaigns"
+    )
+
+    revalidatePath(
+      `/admin/marketing/campaigns/${campaignId}`
+    )
+
+    return {
+      success: true,
+      message:
+        `${validLeadIds.length} lead(s) added to campaign`,
+      campaignId,
+    }
+  } catch (error) {
+    console.error(
+      "addCampaignLeadsAction error:",
+      error
+    )
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to add campaign leads",
+    }
+  }
+}
+
+/* =========================================================
+   REMOVE LEAD FROM CAMPAIGN
+========================================================= */
+
+/* =========================================================
+   REMOVE LEAD FROM CAMPAIGN
+========================================================= */
+
+export async function removeCampaignLeadAction(
+  campaignId: string,
+  companyLeadId: string
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
+
+    /* -----------------------------------------------------
+       VERIFY CAMPAIGN OWNERSHIP
+    ----------------------------------------------------- */
+
+    const campaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (!campaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    /* -----------------------------------------------------
+       VERIFY CAMPAIGN LEAD EXISTS
+    ----------------------------------------------------- */
+
+    const campaignLead =
+      await prisma.marketingCampaignLead.findFirst({
+        where: {
+          campaignId,
+          companyLeadId,
+        },
+
+        select: {
+          id: true,
+          converted: true,
+        },
+      })
+
+    if (!campaignLead) {
+      return {
+        success: false,
+        message:
+          "Campaign lead not found",
+      }
+    }
+
+    /* -----------------------------------------------------
+       DELETE + RECALCULATE COUNTERS
+    ----------------------------------------------------- */
+
+    await prisma.$transaction(
+      async (tx) => {
+        /* DELETE ATTRIBUTION */
+
+        await tx.marketingCampaignLead.delete({
+          where: {
+            id: campaignLead.id,
+          },
+        })
+
+        /* COUNT REMAINING LEADS */
+
+        const leadCount =
+          await tx.marketingCampaignLead.count({
+            where: {
+              campaignId,
+            },
+          })
+
+        /* COUNT REMAINING CONVERSIONS */
+
+        const conversionCount =
+          await tx.marketingCampaignLead.count({
+            where: {
+              campaignId,
+              converted: true,
+            },
+          })
+
+        /* SYNCHRONIZE CAMPAIGN COUNTERS */
+
+        await tx.marketingCampaign.update({
+          where: {
+            id: campaignId,
+          },
+
+          data: {
+            leads:
+              leadCount,
+
+            conversions:
+              conversionCount,
+          },
+        })
+      }
+    )
+
+    /* -----------------------------------------------------
+       REVALIDATE
+    ----------------------------------------------------- */
+
+    revalidatePath(
+      "/admin/marketing/campaigns"
+    )
+
+    revalidatePath(
+      `/admin/marketing/campaigns/${campaignId}`
+    )
+
+    revalidatePath(
+      "/admin/marketing/dashboard"
+    )
+
+    /* -----------------------------------------------------
+       RESULT
+    ----------------------------------------------------- */
+
+    return {
+      success: true,
+
+      message:
+        campaignLead.converted
+          ? "Converted lead removed and campaign metrics updated"
+          : "Lead removed from campaign",
+
+      campaignId,
+    }
+  } catch (error) {
+    console.error(
+      "removeCampaignLeadAction error:",
+      error
+    )
+
+    return {
+      success: false,
+
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to remove campaign lead",
+    }
+  }
+}
+
+/* =========================================================
+   MARK LEAD AS CONVERTED
+========================================================= */
+
+export async function markCampaignLeadConvertedAction(
+  campaignId: string,
+  companyLeadId: string
+): Promise<CampaignActionResult> {
+  try {
+    const {
+      orgId,
+    } =
+      await getAuthenticatedContext()
+
+    const campaign =
+      await prisma.marketingCampaign.findFirst({
+        where: {
+          id: campaignId,
+          orgId,
+        },
+
+        select: {
+          id: true,
+        },
+      })
+
+    if (!campaign) {
+      return {
+        success: false,
+        message:
+          "Campaign not found",
+      }
+    }
+
+    const campaignLead =
+      await prisma.marketingCampaignLead.findFirst({
+        where: {
+          campaignId,
+          companyLeadId,
+        },
+
+        select: {
+          id: true,
+          converted: true,
+        },
+      })
+
+    if (!campaignLead) {
+      return {
+        success: false,
+        message:
+          "Campaign lead not found",
+      }
+    }
+
+    if (campaignLead.converted) {
+      return {
+        success: true,
+        message:
+          "Lead is already marked as converted",
+        campaignId,
+      }
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.marketingCampaignLead.update({
+          where: {
+            id:
+              campaignLead.id,
+          },
+
+          data: {
+            converted: true,
+
+            convertedAt:
+              new Date(),
+          },
+        })
+
+        const conversionCount =
+          await tx.marketingCampaignLead.count({
+            where: {
+              campaignId,
+              converted: true,
+            },
+          })
+
+        await tx.marketingCampaign.update({
+          where: {
+            id: campaignId,
+          },
+
+          data: {
+            conversions:
+              conversionCount,
+          },
+        })
+      }
+    )
+
+    revalidatePath(
+      "/admin/marketing/campaigns"
+    )
+
+    revalidatePath(
+      `/admin/marketing/campaigns/${campaignId}`
+    )
+
+    return {
+      success: true,
+      message:
+        "Lead marked as converted",
+      campaignId,
+    }
+  } catch (error) {
+    console.error(
+      "markCampaignLeadConvertedAction error:",
+      error
+    )
+
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to update conversion",
+    }
+  }
 }

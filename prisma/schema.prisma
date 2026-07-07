@@ -218,6 +218,8 @@ model Organization {
 
   dispatchBoards DispatchBoard[]
 
+  marketingCampaigns MarketingCampaign[]
+
   routeOptimizations  RouteOptimization[]
   OrganizationRole    OrganizationRole[]
   MarketingNewsletter MarketingNewsletter[]
@@ -1633,6 +1635,8 @@ model SalesPipeline {
 model MarketingCampaign {
   id String @id @default(uuid())
 
+  orgId String
+
   title String
 
   channel CampaignChannel
@@ -1659,6 +1663,9 @@ model MarketingCampaign {
 
   campaignLeads MarketingCampaignLead[]
 
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
   @@index([status])
   @@index([channel])
   @@index([createdByUserId])
@@ -1682,9 +1689,6 @@ model MarketingCampaignLead {
   companyLead CompanyLead @relation(fields: [companyLeadId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, companyLeadId])
-  @@index([campaignId])
-  @@index([companyLeadId])
-  @@index([converted])
 }
 
 enum LeadSource {

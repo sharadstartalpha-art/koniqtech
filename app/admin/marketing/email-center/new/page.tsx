@@ -4,75 +4,78 @@ import { redirect } from "next/navigation"
 import {
   ArrowLeft,
   Mail,
-  Megaphone,
-  Send,
   ShieldCheck,
+  Sparkles,
   Users,
 } from "lucide-react"
 
 import { auth } from "@/auth"
+
 import prisma from "@/shared/lib/prisma"
 
 import EmailComposer from "../components/EmailComposer"
 
 /* =========================================================
+   TYPES
+========================================================= */
+
+type NewMarketingEmailPageProps = {
+  searchParams?: Promise<{
+    campaignId?: string
+  }>
+}
+
+/* =========================================================
    PAGE
 ========================================================= */
 
-export default async function NewMarketingEmailPage() {
+export default async function NewMarketingEmailPage({
+  searchParams,
+}: NewMarketingEmailPageProps) {
   /* =======================================================
      AUTH
   ======================================================= */
 
   const session = await auth()
 
-  if (!session?.user?.id) {
+  if (!session?.user) {
     redirect("/login")
   }
+
+  const userId =
+    session.user.id
+
+  const orgId =
+    session.user.orgId
+
+  if (!userId || !orgId) {
+    redirect("/login")
+  }
+
+  /* =======================================================
+     SEARCH PARAMS
+  ======================================================= */
+
+  const params =
+    searchParams
+      ? await searchParams
+      : {}
+
+  const selectedCampaignId =
+    params.campaignId || null
 
   /* =======================================================
      DATA
   ======================================================= */
 
   const [
-    campaigns,
-    companies,
-    campaignLeadCount,
+    recipientsRaw,
+    campaignsRaw,
   ] = await Promise.all([
-    prisma.marketingCampaign.findMany({
-      where: {
-        status: {
-          in: [
-            "draft",
-            "running",
-          ],
-        },
-      },
-
-      select: {
-        id: true,
-        title: true,
-        channel: true,
-        status: true,
-        leads: true,
-        conversions: true,
-
-        _count: {
-          select: {
-            campaignLeads: true,
-          },
-        },
-      },
-
-      orderBy: {
-        createdAt: "desc",
-      },
-
-      take: 100,
-    }),
-
     prisma.companyLead.findMany({
       where: {
+        orgId,
+
         primaryEmail: {
           not: null,
         },
@@ -80,19 +83,20 @@ export default async function NewMarketingEmailPage() {
 
       select: {
         id: true,
-        companyName: true,
-        ownerName: true,
-        primaryEmail: true,
-        industry: true,
-        country: true,
-        status: true,
 
-        marketingCampaignLeads: {
-          select: {
-            campaignId: true,
-            converted: true,
-          },
-        },
+        companyName: true,
+
+        ownerName: true,
+
+        primaryEmail: true,
+
+        industry: true,
+
+        city: true,
+
+        state: true,
+
+        country: true,
       },
 
       orderBy: {
@@ -102,422 +106,220 @@ export default async function NewMarketingEmailPage() {
       take: 500,
     }),
 
-    prisma.marketingCampaignLead.count(),
+    prisma.marketingCampaign.findMany({
+      where: {
+        orgId,
+      },
+
+      select: {
+        id: true,
+
+        title: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
   ])
 
   /* =======================================================
-     SERIALIZE CAMPAIGNS
+     NORMALIZE RECIPIENTS
   ======================================================= */
 
-  const campaignOptions = campaigns.map(
-    (campaign) => ({
-      id: campaign.id,
+  const recipients =
+    recipientsRaw.flatMap(
+      (recipient) => {
+        if (
+          !recipient.primaryEmail
+        ) {
+          return []
+        }
 
-      title: campaign.title,
+        return [
+          {
+            id:
+              recipient.id,
 
-      channel: campaign.channel,
+            companyName:
+              recipient.companyName,
 
-      status: campaign.status,
+            ownerName:
+              recipient.ownerName,
 
-      storedLeads: campaign.leads,
+            primaryEmail:
+              recipient.primaryEmail,
 
-      conversions: campaign.conversions,
+            industry:
+              recipient.industry,
 
-      attributedLeads:
-        campaign._count.campaignLeads,
-    })
-  )
+            city:
+              recipient.city,
 
-  /* =======================================================
-     SERIALIZE RECIPIENTS
-  ======================================================= */
+            state:
+              recipient.state,
 
-  const recipientOptions = companies
-    .filter(
-      (
-        company
-      ): company is typeof company & {
-        primaryEmail: string
-      } =>
-        typeof company.primaryEmail ===
-          "string" &&
-        company.primaryEmail.trim().length > 0
+            country:
+              recipient.country,
+          },
+        ]
+      }
     )
-    .map((company) => ({
-      id: company.id,
-
-      companyName: company.companyName,
-
-      ownerName:
-        company.ownerName ?? null,
-
-      email: company.primaryEmail,
-
-      industry:
-        company.industry ?? null,
-
-      country:
-        company.country ?? null,
-
-      status: company.status,
-
-      campaignIds:
-        company.marketingCampaignLeads.map(
-          (item) => item.campaignId
-        ),
-
-      converted:
-        company.marketingCampaignLeads.some(
-          (item) => item.converted
-        ),
-    }))
 
   /* =======================================================
-     STATS
+     NORMALIZE CAMPAIGNS
   ======================================================= */
 
-  const emailCampaignCount =
-    campaignOptions.filter(
-      (campaign) =>
-        campaign.channel === "email"
-    ).length
+  const campaigns =
+    campaignsRaw.map(
+      (campaign) => ({
+        id:
+          campaign.id,
 
-  const runningCampaignCount =
-    campaignOptions.filter(
-      (campaign) =>
-        campaign.status === "running"
-    ).length
+        title:
+          campaign.title,
+      })
+    )
+
+  /* =======================================================
+     UI
+  ======================================================= */
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div
-        className="
-          mx-auto
-          max-w-[1500px]
-          space-y-6
-          p-6
-          lg:p-8
-        "
-      >
+    <div className="min-h-screen bg-slate-50/70">
+      <div className="mx-auto max-w-[1500px] space-y-7 p-6 lg:p-8">
         {/* ===============================================
-            BREADCRUMB
+            BACK LINK
         =============================================== */}
 
-        <div>
-          <Link
-            href="/admin/marketing/email-center"
-            className="
-              inline-flex
-              items-center
-              gap-2
-              text-sm
-              font-medium
-              text-slate-500
-              transition
-              hover:text-blue-600
-            "
-          >
-            <ArrowLeft className="h-4 w-4" />
+        <Link
+          href="/admin/marketing/email-center"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-blue-600"
+        >
+          <ArrowLeft className="h-4 w-4" />
 
-            Back to Email Center
-          </Link>
-        </div>
+          Back to Email Center
+        </Link>
 
         {/* ===============================================
             HEADER
         =============================================== */}
 
-        <div
-          className="
-            flex
-            flex-col
-            justify-between
-            gap-5
-            lg:flex-row
-            lg:items-center
-          "
-        >
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p
-              className="
-                text-sm
-                font-semibold
-                text-blue-600
-              "
-            >
-              Marketing Communication
-            </p>
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Mail className="h-5 w-5" />
+              </div>
 
-            <h1
-              className="
-                mt-1
-                text-3xl
-                font-bold
-                tracking-tight
-                text-slate-950
-              "
-            >
+              <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                Marketing Email
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950">
               Compose Marketing Email
             </h1>
 
-            <p
-              className="
-                mt-2
-                max-w-3xl
-                text-sm
-                leading-6
-                text-slate-500
-              "
-            >
-              Create targeted marketing emails,
-              select campaign audiences, and queue
-              messages for controlled delivery.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Create a personalized
+              email campaign, select
+              company leads, and queue
+              emails for immediate or
+              scheduled delivery.
             </p>
           </div>
 
-          <div
-            className="
-              flex
-              items-center
-              gap-2
-              rounded-xl
-              border
-              border-green-200
-              bg-green-50
-              px-4
-              py-3
-              text-sm
-              font-semibold
-              text-green-700
-            "
-          >
-            <ShieldCheck className="h-5 w-5" />
+          {/* ===========================================
+              INFO CARDS
+          =========================================== */}
 
-            Authenticated Sender
+          <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <Users className="h-4 w-4" />
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500">
+                  Available Leads
+                </p>
+
+                <p className="font-bold text-slate-950">
+                  {recipients.length}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
+                <Sparkles className="h-4 w-4" />
+              </div>
+
+              <div>
+                <p className="text-xs text-slate-500">
+                  Campaigns
+                </p>
+
+                <p className="font-bold text-slate-950">
+                  {campaigns.length}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ===============================================
-            STATS
+            TENANT SAFETY NOTICE
         =============================================== */}
 
-        <div
-          className="
-            grid
-            gap-4
-            sm:grid-cols-2
-            xl:grid-cols-4
-          "
-        >
-          <StatCard
-            label="Available Recipients"
-            value={recipientOptions.length}
-            description="Leads with valid email"
-            icon={
-              <Users className="h-5 w-5 text-blue-600" />
-            }
-          />
+        <div className="flex items-start gap-3 rounded-2xl border border-green-200 bg-green-50 px-5 py-4">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
 
-          <StatCard
-            label="Available Campaigns"
-            value={campaignOptions.length}
-            description="Draft and running"
-            icon={
-              <Megaphone className="h-5 w-5 text-orange-600" />
-            }
-          />
+          <div>
+            <p className="text-sm font-semibold text-green-900">
+              Organization-scoped email delivery
+            </p>
 
-          <StatCard
-            label="Email Campaigns"
-            value={emailCampaignCount}
-            description="Email channel campaigns"
-            icon={
-              <Mail className="h-5 w-5 text-violet-600" />
-            }
-          />
-
-          <StatCard
-            label="Attributed Leads"
-            value={campaignLeadCount}
-            description="Campaign-linked leads"
-            icon={
-              <Send className="h-5 w-5 text-green-600" />
-            }
-          />
+            <p className="mt-1 text-sm leading-6 text-green-700">
+              Only recipients and
+              campaigns belonging to
+              your organization are
+              available in this
+              composer.
+            </p>
+          </div>
         </div>
+
+        {/* ===============================================
+            CAMPAIGN CONTEXT
+        =============================================== */}
+
+        {selectedCampaignId && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4">
+            <p className="text-sm font-semibold text-blue-900">
+              Campaign context detected
+            </p>
+
+            <p className="mt-1 text-sm text-blue-700">
+              This email was opened
+              from a marketing campaign.
+              Select the corresponding
+              campaign inside the
+              composer before queueing
+              the email.
+            </p>
+          </div>
+        )}
 
         {/* ===============================================
             COMPOSER
         =============================================== */}
 
         <EmailComposer
-          campaigns={campaignOptions}
-          recipients={recipientOptions}
-          sender={{
-            id: session.user.id,
-            name:
-              session.user.name ??
-              "Marketing Team",
-            email:
-              session.user.email ?? "",
-          }}
+          recipients={recipients}
+          campaigns={campaigns}
         />
-
-        {/* ===============================================
-            DELIVERY INFORMATION
-        =============================================== */}
-
-        <section
-          className="
-            rounded-2xl
-            border
-            border-blue-200
-            bg-blue-50
-            p-5
-          "
-        >
-          <div
-            className="
-              flex
-              items-start
-              gap-3
-            "
-          >
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                shrink-0
-                items-center
-                justify-center
-                rounded-xl
-                bg-blue-100
-              "
-            >
-              <Send
-                className="
-                  h-5
-                  w-5
-                  text-blue-700
-                "
-              />
-            </div>
-
-            <div>
-              <h2
-                className="
-                  font-bold
-                  text-blue-950
-                "
-              >
-                Controlled Email Delivery
-              </h2>
-
-              <p
-                className="
-                  mt-1
-                  max-w-4xl
-                  text-sm
-                  leading-6
-                  text-blue-800
-                "
-              >
-                Marketing emails should be queued
-                instead of sending hundreds of
-                messages directly inside a server
-                action. The queue worker can process
-                emails in controlled batches and
-                record delivery failures separately.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
-    </div>
-  )
-}
-
-/* =========================================================
-   STAT CARD
-========================================================= */
-
-function StatCard({
-  label,
-  value,
-  description,
-  icon,
-}: {
-  label: string
-  value: number
-  description: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div
-      className="
-        rounded-2xl
-        border
-        border-slate-200
-        bg-white
-        p-5
-      "
-    >
-      <div
-        className="
-          flex
-          items-start
-          justify-between
-          gap-4
-        "
-      >
-        <div>
-          <p
-            className="
-              text-sm
-              font-medium
-              text-slate-500
-            "
-          >
-            {label}
-          </p>
-
-          <p
-            className="
-              mt-3
-              text-3xl
-              font-bold
-              tracking-tight
-              text-slate-950
-            "
-          >
-            {value}
-          </p>
-
-          <p
-            className="
-              mt-2
-              text-xs
-              text-slate-400
-            "
-          >
-            {description}
-          </p>
-        </div>
-
-        <div
-          className="
-            flex
-            h-11
-            w-11
-            items-center
-            justify-center
-            rounded-xl
-            bg-slate-50
-          "
-        >
-          {icon}
-        </div>
       </div>
     </div>
   )

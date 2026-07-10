@@ -560,7 +560,7 @@ const channelPerformance =
   />
 </div>
         {/* =================================================
-            PRIMARY METRICS
+            PRIMARY METRICS 
         ================================================= */}
 
         <div

@@ -17,7 +17,9 @@ import {
 
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
-
+import ReportFilters from "./components/ReportFilters"
+import CampaignChart from "./components/CampaignChart"
+import ChannelPerformanceChart from "./components/ChannelPerformanceChart"
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -346,6 +348,71 @@ export default async function MarketingReportsPage() {
       emailQueueCount
     )
 
+
+
+
+    const campaignChartData =
+  await prisma.marketingCampaign.findMany({
+    where: {
+      orgId
+    },
+
+    select: {
+      id: true,
+      title: true,
+      channel: true,
+      leads: true,
+      conversions: true
+    },
+
+    orderBy: {
+      createdAt: "desc"
+    },
+
+    take: 10
+  })
+
+
+
+  const channelMap = new Map<
+  string,
+  {
+    channel: string
+    campaigns: number
+    leads: number
+    conversions: number
+  }
+>()
+
+for (const campaign of campaigns) {
+  const key = campaign.channel
+
+  const existing =
+    channelMap.get(key)
+
+  if (existing) {
+    existing.campaigns += 1
+    existing.leads += campaign.leads
+    existing.conversions +=
+      campaign.conversions
+  } else {
+    channelMap.set(key, {
+      channel: key,
+      campaigns: 1,
+      leads: campaign.leads,
+      conversions:
+        campaign.conversions
+    })
+  }
+}
+
+const channelPerformance =
+  Array.from(
+    channelMap.values()
+  ).sort(
+    (a, b) =>
+      b.leads - a.leads
+  )
   /* =======================================================
      UI
   ======================================================= */
@@ -470,6 +537,28 @@ export default async function MarketingReportsPage() {
           </div>
         </div>
 
+
+        <ReportFilters />
+
+        <CampaignChart 
+        campaigns={campaignChartData}/>
+
+
+        <div
+  className="
+    grid
+    gap-6
+    xl:grid-cols-2
+  "
+>
+  <CampaignChart
+    campaigns={campaignChartData}
+  />
+
+  <ChannelPerformanceChart
+    channels={channelPerformance}
+  />
+</div>
         {/* =================================================
             PRIMARY METRICS
         ================================================= */}

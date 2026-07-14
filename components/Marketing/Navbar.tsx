@@ -19,17 +19,20 @@ useState(false)
 return(
 
 <header
-className="
-sticky
-top-0
-z-50
+  className="
+  sticky
+  top-[100%]
+  mt-3
+  z-[999]
 
-border-b
-border-slate-800
+  overflow-visible
 
-bg-slate-950/90
-backdrop-blur
-"
+  border-b
+  border-slate-800
+
+  bg-slate-950/90
+  backdrop-blur
+  "
 >
 
 <div
@@ -140,10 +143,10 @@ Features
   <div
     className={`
     absolute
-    top-full
-    left-0
-    pt-3
-    z-50
+    top-[100%]
+    mt-3
+    z-[999]
+    
 
     transition-all
     duration-200
@@ -158,20 +161,19 @@ Features
 
     <div
       className="
-      w-64
+w-72
 
-      bg-slate-900/95
-      backdrop-blur-xl
+rounded-2xl
 
-      border
-      border-slate-800
+border
+border-slate-800
 
-      rounded-2xl
+bg-slate-900
 
-      overflow-hidden
+shadow-[0_30px_60px_rgba(0,0,0,.55)]
 
-      shadow-2xl
-      "
+overflow-hidden
+"
     >
 
       <Link
@@ -239,6 +241,30 @@ Features
   </div>
 
 </div>
+
+<Link
+  href="/ai"
+  className="
+  text-slate-300
+  hover:text-white
+  transition-colors
+  "
+>
+  AI
+</Link>
+
+<Link
+  href="/integrations"
+  className="
+  text-slate-300
+  hover:text-white
+  transition-colors
+  "
+>
+  Integrations
+</Link>
+
+
 <Link
 href="/pricing"
 className="

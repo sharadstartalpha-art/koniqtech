@@ -101,8 +101,21 @@ text-slate-400
 "
 >
 
+
 <Link href="/features">
 Features
+</Link>
+
+<br/>
+
+<Link href="/ai">
+AI Platform
+</Link>
+
+<br/>
+
+<Link href="/integrations">
+Integrations
 </Link>
 
 <br/>
@@ -114,7 +127,7 @@ Pricing
 <br/>
 
 <Link href="/docs">
-Docs
+Documentation
 </Link>
 
 <br/>
@@ -145,6 +158,12 @@ space-y-3
 text-slate-400
 "
 >
+
+<Link href="/industries">
+All Industries
+</Link>
+
+<br/>    
 
 <Link href="/industries/roofing">
 Roofing

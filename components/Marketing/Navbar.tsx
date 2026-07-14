@@ -19,20 +19,19 @@ useState(false)
 return(
 
 <header
-  className="
-  sticky
-  top-[100%]
-  mt-3
-  z-[999]
+className="
+sticky
+top-0
+z-50
 
-  overflow-visible
+overflow-visible
 
-  border-b
-  border-slate-800
+border-b
+border-slate-800
 
-  bg-slate-950/90
-  backdrop-blur
-  "
+bg-slate-950/90
+backdrop-blur
+"
 >
 
 <div
@@ -243,7 +242,7 @@ overflow-hidden
 </div>
 
 <Link
-  href="/ai"
+  href="/ai-platform"
   className="
   text-slate-300
   hover:text-white

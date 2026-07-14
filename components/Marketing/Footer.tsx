@@ -108,7 +108,7 @@ Features
 
 <br/>
 
-<Link href="/ai">
+<Link href="/ai-platform">
 AI Platform
 </Link>
 

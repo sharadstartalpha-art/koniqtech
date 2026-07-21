@@ -469,19 +469,19 @@ export default function RegisterPage() {
             >
 
               <option value="roofing">
-                Roofing CRM ($199)
+                Roofing 
               </option>
 
               <option value="hvac">
-                HVAC CRM ($199)
+                HVAC 
               </option>
 
               <option value="plumbing">
-                Plumbing CRM ($199)
+                Plumbing 
               </option>
 
               <option value="landscaping">
-                Landscaping CRM ($199)
+                Landscaping 
               </option>
 
             </select>

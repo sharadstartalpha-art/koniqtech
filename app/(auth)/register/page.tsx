@@ -1,240 +1,415 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-
+import Image from "next/image";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  Mail,
-  Lock,
   Building2,
-  User
-} from "lucide-react"
+  CheckCircle2,
+  Clock3,
+  Globe,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  User,
+  Wrench,
+  Home,
+  Trees,
+  Snowflake,
+} from "lucide-react";
+
+type Industry = {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: React.ReactNode;
+  features: string[];
+};
+
+const industries: Industry[] = [
+  {
+    id: "roofing",
+    title: "Roofing CRM",
+    subtitle: "For Roofing Contractors",
+    description:
+      "Estimate, schedule, dispatch crews and manage insurance claims.",
+    icon: <Home className="h-7 w-7 text-orange-500" />,
+    features: [
+      "Roof Measurements",
+      "Insurance Claims",
+      "Crew Scheduling",
+    ],
+  },
+  {
+    id: "hvac",
+    title: "HVAC CRM",
+    subtitle: "Heating & Cooling",
+    description:
+      "Service agreements, maintenance scheduling and technician dispatch.",
+    icon: <Snowflake className="h-7 w-7 text-sky-500" />,
+    features: [
+      "Maintenance Plans",
+      "Equipment History",
+      "Recurring Service",
+    ],
+  },
+  {
+    id: "plumbing",
+    title: "Plumbing CRM",
+    subtitle: "Residential & Commercial",
+    description:
+      "Manage emergency jobs, invoices and technician routes.",
+    icon: <Wrench className="h-7 w-7 text-green-500" />,
+    features: [
+      "Emergency Dispatch",
+      "Job Costing",
+      "Digital Invoices",
+    ],
+  },
+  {
+    id: "landscaping",
+    title: "Landscaping CRM",
+    subtitle: "Outdoor Services",
+    description:
+      "Recurring lawn care scheduling with automated reminders.",
+    icon: <Trees className="h-7 w-7 text-emerald-500" />,
+    features: [
+      "Recurring Visits",
+      "Route Optimization",
+      "Season Planning",
+    ],
+  },
+];
+
+const stats = [
+  {
+    value: "10K+",
+    label: "Jobs Managed",
+  },
+  {
+    value: "99.99%",
+    label: "Platform Uptime",
+  },
+  {
+    value: "24/7",
+    label: "Support",
+  },
+];
+
+const features = [
+  "Lead Management",
+  "Job Scheduling",
+  "Dispatch Board",
+  "Invoices",
+  "Customer Portal",
+  "Mobile Technician App",
+  "AI Automation",
+  "Analytics Dashboard",
+];
+
+const testimonial = {
+  quote:
+    "KoniqTech helped us replace spreadsheets with a professional CRM. Dispatching crews is now effortless.",
+  author: "Michael Anderson",
+  company: "Anderson Roofing",
+};
 
 export default function RegisterPage() {
-
-  const [name,setName] = useState("")
-  const [company,setCompany] = useState("")
-  const [email,setEmail] = useState("")
-  const [password,setPassword] = useState("")
-  const [crmType,setCrmType] = useState("roofing")
-  const [otp,setOtp] = useState("")
-  const [step,setStep] = useState(1)
-
-  const [sendingOtp,setSendingOtp] =
-    useState(false)
-
-  const [registering,setRegistering] =
-    useState(false)
-
-  async function sendOtp(){
-
-    if(!email.trim()){
-
-      alert("Please enter your email")
-
-      return
-    }
-
-    try{
-
-      setSendingOtp(true)
-
-      const res =
-        await fetch(
-          "/api/auth/send-otp",
-          {
-            method:"POST",
-            headers:{
-              "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-              email
-            })
-          }
-        )
-
-      const data =
-        await res.json()
-
-      if(!res.ok){
-
-        alert(
-          data.error ||
-          "Failed to send OTP"
-        )
-
-        return
-      }
-
-      setStep(2)
-
-      alert("OTP sent")
-
-    }catch(error){
-
-      console.error(error)
-
-      alert("Something went wrong")
-
-    }finally{
-
-      setSendingOtp(false)
-
-    }
-
-  }
-
-  async function register(){
-
-    if(!otp.trim()){
-
-      alert("Please enter OTP")
-
-      return
-    }
-
-    try{
-
-      setRegistering(true)
-
-      const res =
-        await fetch(
-          "/api/auth/register",
-          {
-            method:"POST",
-            headers:{
-              "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-              name,
-              company,
-              email,
-              password,
-              otp,
-              crmType
-            })
-          }
-        )
-
-      const data =
-        await res.json()
-
-      if(!res.ok){
-
-        alert(
-          data.error ||
-          "Registration failed"
-        )
-
-        return
-      }
-
-      const redirectUrl =
-        `/subscriptions/paypal?crm=${crmType}&company=${encodeURIComponent(company)}&email=${encodeURIComponent(email)}`
-
-      window.location.href =
-        redirectUrl
-
-    }catch(error){
-
-      console.error(error)
-
-      alert("Something went wrong")
-
-    }finally{
-
-      setRegistering(false)
-
-    }
-
-  }
-
-  return(
-
-    <div className="
-    min-h-screen
-    grid
-    lg:grid-cols-2
-    ">
-
-      {/* LEFT SIDE */}
-
-      <div className="
-      hidden
-      lg:flex
-
-      relative
-
-      overflow-hidden
-
-      bg-gradient-to-br
-
-      from-slate-950
-      via-slate-900
-      to-black
-      ">
-
-        <div className="
-        absolute
-        inset-0
-
-        bg-[radial-gradient(circle_at_top_right,#f97316,transparent_30%)]
-
-        opacity-30
-        " />
-
-        <div className="
-        absolute
-        inset-0
-
-        bg-[radial-gradient(circle_at_bottom_left,#fb923c,transparent_25%)]
-
-        opacity-20
-        " />
-
-        <div className="
-        relative
-        z-10
-
-        flex
-        flex-col
-        justify-between
-
-        p-20
-
-        text-white
-        ">
-
-          <div>
-
-            <div className="
-            flex
-            items-center
-            gap-4
-            ">
-
-              <img
+  const [selectedIndustry, setSelectedIndustry] = useState("roofing");
+
+  const currentIndustry = useMemo(
+    () =>
+      industries.find((x) => x.id === selectedIndustry) ??
+      industries[0],
+    [selectedIndustry]
+  );
+
+  return (
+    <main className="min-h-screen bg-white">
+      <div className="grid min-h-screen lg:grid-cols-2">
+        {/* LEFT PANEL */}
+        <section className="relative hidden overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-black lg:flex">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(249,115,22,.35),transparent_35%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(251,146,60,.25),transparent_30%)]" />
+
+          <div className="relative z-10 flex w-full flex-col justify-between px-16 py-14 text-white">
+            {/* Logo */}
+            <div className="flex items-center gap-4">
+              <Image
                 src="/logo.png"
-                className="w-14 h-14"
+                alt="KoniqTech"
+                width={60}
+                height={60}
+                className="rounded-xl bg-white p-1"
               />
 
               <div>
-
-                <h1 className="
-                text-3xl
-                font-bold
-                ">
-                  Koniqtech
+                <h1 className="text-3xl font-bold">
+                  KoniqTech
                 </h1>
 
-                <p className="
-                text-slate-400
-                ">
+                <p className="text-slate-300">
                   Field Service CRM
                 </p>
+              </div>
+            </div>
+
+            {/* Hero */}
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/20 px-5 py-2 text-sm font-medium text-orange-300">
+                <Sparkles className="h-4 w-4" />
+                CRM Platform
+              </div>
+
+              <h2 className="mt-8 text-7xl font-black leading-tight">
+                Create Your
+
+                <span className="block text-orange-400">
+                  Service
+                </span>
+
+                Business Workspace
+              </h2>
+
+              <p className="mt-8 text-xl leading-9 text-slate-300">
+                Launch your CRM with scheduling,
+                dispatching, estimates,
+                invoicing, customer management,
+                AI automation and analytics.
+              </p>
+
+              {/* Stats */}
+              <div className="mt-12 grid grid-cols-3 gap-5">
+                {stats.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-3xl border border-white/10 bg-white/10 p-5 backdrop-blur"
+                  >
+                    <div className="text-3xl font-bold">
+                      {item.value}
+                    </div>
+
+                    <div className="mt-2 text-sm text-slate-300">
+                      {item.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Features */}
+              <div className="mt-12 space-y-4">
+                {features.map((feature) => (
+                  <div
+                    key={feature}
+                    className="flex items-center gap-3"
+                  >
+                    <CheckCircle2 className="h-5 w-5 text-orange-400" />
+
+                    <span className="text-slate-200">
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Testimonial */}
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-6 backdrop-blur">
+              <div className="mb-4 flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star
+                    key={index}
+                    className="h-4 w-4 fill-orange-400 text-orange-400"
+                  />
+                ))}
+              </div>
+
+              <p className="leading-8 text-slate-200">
+                "{testimonial.quote}"
+              </p>
+
+              <div className="mt-6">
+                <p className="font-semibold">
+                  {testimonial.author}
+                </p>
+
+                <p className="text-sm text-slate-400">
+                  {testimonial.company}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* RIGHT PANEL */}
+        <section className="flex items-center justify-center bg-slate-50 px-6 py-12 lg:px-10">
+          <div className="w-full max-w-xl rounded-[34px] border border-slate-200 bg-white p-8 shadow-[0_25px_80px_rgba(0,0,0,.08)] lg:p-10">
+
+            {/* Header */}
+            <div className="mb-8">
+              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-2 text-sm font-medium text-orange-600">
+                <ShieldCheck className="h-4 w-4" />
+                Secure Registration
+              </div>
+
+              <h1 className="mt-5 text-5xl font-black tracking-tight text-slate-900">
+                Create Account
+              </h1>
+
+              <p className="mt-3 text-lg text-slate-500">
+                Build your professional field service CRM in just a few minutes.
+              </p>
+
+              {/* Progress */}
+              <div className="mt-8 flex items-center gap-3">
+                <div className="h-2 flex-1 rounded-full bg-orange-500" />
+                <div className="h-2 flex-1 rounded-full bg-slate-200" />
+              </div>
+
+              <div className="mt-2 flex justify-between text-sm text-slate-500">
+                <span>Account</span>
+                <span>Verification</span>
+              </div>
+            </div>
+
+           {/* FORM */}
+
+<div className="space-y-6">
+
+  {/* Name */}
+
+  <div>
+    <label className="mb-2 block text-sm font-semibold text-slate-700">
+      Full Name
+    </label>
+
+    <div className="relative">
+      <User
+        className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+      />
+
+      <input
+        type="text"
+        placeholder="John Anderson"
+        className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 outline-none transition focus:border-orange-500 focus:bg-white"
+      />
+    </div>
+  </div>
+
+  {/* Company */}
+
+  <div>
+    <label className="mb-2 block text-sm font-semibold text-slate-700">
+      Company Name
+    </label>
+
+    <div className="relative">
+      <Building2
+        className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+      />
+
+      <input
+        type="text"
+        placeholder="ABC Roofing LLC"
+        className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 outline-none transition focus:border-orange-500 focus:bg-white"
+      />
+    </div>
+  </div>
+
+  {/* Email */}
+
+  <div>
+    <label className="mb-2 block text-sm font-semibold text-slate-700">
+      Business Email
+    </label>
+
+    <div className="relative">
+      <Mail
+        className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+      />
+
+      <input
+        type="email"
+        placeholder="john@company.com"
+        className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 outline-none transition focus:border-orange-500 focus:bg-white"
+      />
+    </div>
+
+    <p className="mt-2 text-xs text-slate-500">
+      Work email recommended.
+    </p>
+  </div>
+
+  {/* INDUSTRY */}
+
+  <div>
+
+    <label className="mb-3 block text-sm font-semibold text-slate-700">
+      Choose Your Industry
+    </label>
+
+    <div className="grid gap-4">
+
+      {industries.map((industry) => (
+
+        <button
+          key={industry.id}
+          type="button"
+          onClick={() => setSelectedIndustry(industry.id)}
+          className={`rounded-2xl border p-5 text-left transition-all ${
+            selectedIndustry === industry.id
+              ? "border-orange-500 bg-orange-50 shadow-lg"
+              : "border-slate-200 hover:border-orange-300 hover:bg-orange-50/40"
+          }`}
+        >
+
+          <div className="flex items-start gap-4">
+
+            <div className="rounded-xl bg-white p-3 shadow">
+              {industry.icon}
+            </div>
+
+            <div className="flex-1">
+
+              <div className="flex items-center justify-between">
+
+                <div>
+
+                  <h3 className="font-bold text-slate-900">
+                    {industry.title}
+                  </h3>
+
+                  <p className="text-sm text-slate-500">
+                    {industry.subtitle}
+                  </p>
+
+                </div>
+
+                {selectedIndustry === industry.id && (
+                  <CheckCircle2 className="h-6 w-6 text-orange-500" />
+                )}
+
+              </div>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {industry.description}
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+
+                {industry.features.map((feature) => (
+
+                  <span
+                    key={feature}
+                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700"
+                  >
+                    {feature}
+                  </span>
+
+                ))}
 
               </div>
 
@@ -242,553 +417,151 @@ export default function RegisterPage() {
 
           </div>
 
-          <div>
+        </button>
 
-            <div className="
-            inline-flex
+      ))}
 
-            items-center
-            gap-2
+    </div>
 
-            px-4
-            py-2
+  </div>
 
-            rounded-full
+  {/* Selected Industry */}
 
-            bg-orange-500/20
+  <div className="rounded-3xl border border-orange-200 bg-orange-50 p-5">
 
-            text-orange-300
-            ">
+    <div className="flex items-center gap-3">
 
-              <Sparkles size={16}/>
+      {currentIndustry.icon}
 
-              CRM Platform
+      <div>
 
-            </div>
-
-            <h1 className="
-            text-7xl
-
-            font-bold
-
-            leading-tight
-
-            mt-8
-            ">
-
-              Create Your
-
-              <span className="
-              block
-              text-orange-400
-              ">
-                Service Business
-              </span>
-
-              Workspace
-
-            </h1>
-
-            <p className="
-            text-xl
-
-            text-slate-300
-
-            mt-8
-
-            max-w-xl
-            ">
-
-              Launch your CRM with
-              subscriptions, dispatch,
-              automation, invoicing and AI.
-
-            </p>
-
-            <div className="
-            grid
-            grid-cols-3
-            gap-4
-
-            mt-12
-            ">
-
-              <Metric
-                value="10k+"
-                label="Jobs Managed"
-              />
-
-              <Metric
-                value="AI"
-                label="Automation"
-              />
-
-              <Metric
-                value="99.9%"
-                label="Uptime"
-              />
-
-            </div>
-
-            <div className="
-            mt-10
-            space-y-4
-            ">
-
-              <Feature text="Lead Management" />
-
-              <Feature text="Job Scheduling" />
-
-              <Feature text="Crew Dispatch" />
-
-              <Feature text="Online Payments" />
-
-            </div>
-
-          </div>
-
+        <div className="font-bold">
+          {currentIndustry.title}
         </div>
 
-      </div>
-
-      {/* RIGHT SIDE */}
-
-      <div className="
-      bg-slate-50
-
-      flex
-      items-start
-      justify-center
-
-      pt-16
-      px-10
-      ">
-
-        <div className="
-        w-full
-
-        max-w-[500px]
-
-        bg-white
-
-        border
-
-        rounded-[36px]
-
-        p-10
-
-        shadow-[0_20px_80px_rgba(0,0,0,0.08)]
-        ">
-
-          <p className="
-          text-sm
-          text-slate-500
-          ">
-            Start Your Journey
-          </p>
-
-          <h1 className="
-          text-5xl
-
-          font-bold
-
-          mt-2
-          ">
-            Create Account
-          </h1>
-
-          <p className="
-          text-slate-500
-
-          mt-3
-          ">
-            Build your CRM workspace
-          </p>
-
-          <div className="
-          inline-flex
-
-          mt-4
-
-          px-3
-          py-1
-
-          rounded-full
-
-          bg-orange-50
-
-          text-orange-600
-
-          text-xs
-          font-medium
-          ">
-
-            Field Service CRM
-
-          </div>
-
-          <div className="
-          space-y-4
-
-          mt-8
-          ">
-
-            <InputIcon
-              icon={<User size={18}/>}
-              placeholder="Full Name"
-              value={name}
-              onChange={setName}
-            />
-
-            <InputIcon
-              icon={<Building2 size={18}/>}
-              placeholder="Company Name"
-              value={company}
-              onChange={setCompany}
-            />
-
-            <select
-              value={crmType}
-              onChange={e=>
-                setCrmType(
-                  e.target.value
-                )
-              }
-              className="
-              w-full
-              h-14
-
-              px-4
-
-              rounded-2xl
-
-              border
-
-              bg-slate-50
-              "
-            >
-
-              <option value="roofing">
-                Roofing 
-              </option>
-
-              <option value="hvac">
-                HVAC 
-              </option>
-
-              <option value="plumbing">
-                Plumbing 
-              </option>
-
-              <option value="landscaping">
-                Landscaping 
-              </option>
-
-            </select>
-
-            <InputIcon
-              icon={<Mail size={18}/>}
-              placeholder="Email"
-              value={email}
-              onChange={setEmail}
-            />
-
-            <PasswordInput
-              value={password}
-              onChange={setPassword}
-            />
-
-            {step === 1 ? (
-
-              <button
-                onClick={sendOtp}
-                disabled={sendingOtp}
-                className="
-                w-full
-                h-14
-
-                rounded-2xl
-
-                bg-gradient-to-r
-
-                from-orange-500
-                to-orange-600
-
-                text-white
-
-                font-semibold
-                "
-              >
-
-                {sendingOtp
-                  ? "Sending OTP..."
-                  : "Send OTP"}
-
-              </button>
-
-            ) : (
-
-              <>
-
-                <input
-                  value={otp}
-                  onChange={e=>
-                    setOtp(
-                      e.target.value
-                    )
-                  }
-                  placeholder="Enter OTP"
-                  className="
-                  w-full
-                  h-14
-
-                  px-4
-
-                  rounded-2xl
-
-                  border
-
-                  bg-slate-50
-                  "
-                />
-
-                <button
-                  onClick={register}
-                  disabled={registering}
-                  className="
-                  w-full
-                  h-14
-
-                  rounded-2xl
-
-                  bg-gradient-to-r
-
-                  from-orange-500
-                  to-orange-600
-
-                  text-white
-
-                  font-semibold
-
-                  flex
-                  items-center
-                  justify-center
-                  gap-2
-                  "
-                >
-
-                  {registering
-                    ? "Creating Account..."
-                    :
-                    <>
-                      Continue
-                      <ArrowRight size={16}/>
-                    </>
-                  }
-
-                </button>
-
-              </>
-
-            )}
-
-            <div className="
-            text-center
-
-            pt-2
-
-            text-sm
-            text-slate-500
-            ">
-
-              Already have an account?
-
-              <Link
-                href="/login"
-                className="
-                ml-2
-
-                font-medium
-
-                text-orange-600
-
-                hover:text-orange-700
-                "
-              >
-                Sign In
-              </Link>
-
-            </div>
-
-          </div>
-
+        <div className="text-sm text-slate-600">
+          {currentIndustry.description}
         </div>
 
       </div>
 
     </div>
 
-  )
-}
+  </div>
 
-function Metric({
-  value,
-  label
-}:any){
+  {/* TRUST */}
 
-  return(
+  <div className="grid grid-cols-2 gap-4">
 
-    <div className="
-    bg-white/10
+    <div className="rounded-2xl border bg-slate-50 p-4">
 
-    rounded-3xl
+      <ShieldCheck className="mb-2 h-5 w-5 text-green-600" />
 
-    p-5
-    ">
+      <p className="text-sm font-semibold">
+        SSL Secured
+      </p>
 
-      <div className="
-      text-3xl
-      font-bold
-      ">
-        {value}
+    </div>
+
+    <div className="rounded-2xl border bg-slate-50 p-4">
+
+      <Clock3 className="mb-2 h-5 w-5 text-orange-500" />
+
+      <p className="text-sm font-semibold">
+        Setup in 2 Minutes
+      </p>
+
+    </div>
+
+    <div className="rounded-2xl border bg-slate-50 p-4">
+
+      <Globe className="mb-2 h-5 w-5 text-blue-600" />
+
+      <p className="text-sm font-semibold">
+        Cloud Hosted
+      </p>
+
+    </div>
+
+    <div className="rounded-2xl border bg-slate-50 p-4">
+
+      <Star className="mb-2 h-5 w-5 fill-orange-400 text-orange-400" />
+
+      <p className="text-sm font-semibold">
+        Premium Support
+      </p>
+
+    </div>
+
+  </div>
+
+  {/* BUTTON */}
+
+  <button
+    className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-lg font-semibold text-white transition hover:scale-[1.01]"
+  >
+
+    Continue
+
+    <ArrowRight className="h-5 w-5" />
+
+  </button>
+
+  {/* LOGIN */}
+
+  <div className="text-center text-sm text-slate-600">
+
+    Already have an account?
+
+    <Link
+      href="/login"
+      className="ml-2 font-semibold text-orange-600 hover:text-orange-700"
+    >
+      Sign In
+    </Link>
+
+  </div>
+
+  {/* FOOTER */}
+
+  <div className="rounded-2xl bg-slate-100 p-5 text-center text-sm text-slate-600">
+
+    By creating an account you agree to our
+
+    <Link
+      href="/terms"
+      className="mx-1 font-semibold text-orange-600"
+    >
+      Terms
+    </Link>
+
+    and
+
+    <Link
+      href="/privacy"
+      className="ml-1 font-semibold text-orange-600"
+    >
+      Privacy Policy
+    </Link>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+            {/* Registration Form */}
+            {/* Industry Cards */}
+            {/* Trust Section */}
+            {/* Terms */}
+            {/* OTP */}
+            {/* Buttons */}
+          </div>
+        </section>
       </div>
-
-      <div className="
-      text-sm
-      text-slate-400
-      ">
-        {label}
-      </div>
-
-    </div>
-
-  )
-}
-
-function Feature({
-  text
-}:any){
-
-  return(
-
-    <div className="
-    flex
-    items-center
-    gap-3
-    ">
-
-      <CheckCircle2
-        size={18}
-        className="text-orange-400"
-      />
-
-      <span className="
-      text-slate-300
-      ">
-        {text}
-      </span>
-
-    </div>
-
-  )
-}
-
-function InputIcon({
-  icon,
-  placeholder,
-  value,
-  onChange
-}:any){
-
-  return(
-
-    <div className="relative">
-
-      <div className="
-      absolute
-      left-4
-      top-1/2
-      -translate-y-1/2
-
-      text-slate-400
-      ">
-        {icon}
-      </div>
-
-      <input
-        value={value}
-        onChange={e=>
-          onChange(
-            e.target.value
-          )
-        }
-        placeholder={placeholder}
-        className="
-        w-full
-        h-14
-
-        pl-12
-        pr-4
-
-        rounded-2xl
-
-        border
-
-        bg-slate-50
-        "
-      />
-
-    </div>
-
-  )
-}
-
-function PasswordInput({
-  value,
-  onChange
-}:any){
-
-  return(
-
-    <div className="relative">
-
-      <Lock
-        size={18}
-        className="
-        absolute
-        left-4
-        top-1/2
-        -translate-y-1/2
-
-        text-slate-400
-        "
-      />
-
-      <input
-        type="password"
-        value={value}
-        onChange={e=>
-          onChange(
-            e.target.value
-          )
-        }
-        placeholder="Password"
-        className="
-        w-full
-        h-14
-
-        pl-12
-        pr-4
-
-        rounded-2xl
-
-        border
-
-        bg-slate-50
-        "
-      />
-
-    </div>
-
-  )
+    </main>
+  );
 }

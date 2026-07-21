@@ -724,6 +724,8 @@ model OtpCode {
   createdAt DateTime @default(now())
 }
 
+
+
 enum Industry {
   roofing
   hvac

@@ -1,337 +1,149 @@
-import bcrypt from "bcryptjs"
+import { NextRequest, NextResponse } from "next/server";
 
-import prisma from "@/shared/lib/prisma"
+import { Prisma } from "@prisma/client";
 
-import { NextResponse } from "next/server"
+import {
+  registerUser,
+  RegisterError,
+} from "@/shared/lib/auth/register";
 
-import { CRMType } from "@prisma/client"
-
-function makeSlug(
-text:string
-){
-
-return text
-
-.toLowerCase()
-
-.replace(/\s+/g,"-")
-
-.replace(/[^a-z0-9-]/g,"")
-
-}
+import {
+  registerSchema,
+} from "@/shared/lib/validators/register";
 
 export async function POST(
-
-req:Request
-
-){
-
-try{
-
-const body=
-
-await req.json()
-
-const {
-
-name,
-
-company,
-
-email,
-
-password,
-
-
-otp,
-
-crmType
-
-}=body
-
-const existingUser=
-
-await prisma.user.findUnique({
-
-where:{
-
-email
-
-}
-
-})
-
-if(existingUser){
-
-return NextResponse.json(
-
-{
-
-error:
-
-"User already exists"
-
-},
-
-{
-
-status:400
-
-}
-
-)
-
-}
-
-const otpRecord=
-
-await prisma.otpCode.findFirst({
-
-where:{
-
-email,
-
-code:otp,
-
-expiresAt:{
-
-gt:new Date()
-
-}
-
-},
-
-orderBy:{
-
-createdAt:
-
-"desc"
-
-}
-
-})
-
-if(!otpRecord){
-
-return NextResponse.json(
-
-{
-
-error:
-
-"Invalid OTP"
-
-},
-
-{
-
-status:400
-
-}
-
-)
-
-}
-
-const org=
-
-await prisma.organization.create({
-
-data:{
-
-name:company,
-
-slug:
-
-makeSlug(
-
-company
-
-)+
-
-"-"+
-
-Date.now(),
-
-crmType:
-
-crmType ||
-
-CRMType.roofing,
-
-industry:
-
-"roofing",
-
-plan:
-
-"pro"
-
-}
-
-})
-
-const passwordHash=
-
-await bcrypt.hash(
-
-password,
-
-10
-
-)
-
-const user=
-
-await prisma.user.create({
-
-data:{
-
-name,
-
-email,
-
-passwordHash,
-
-role:
-
-"owner",
-
-organization:{
-
-connect:{
-
-id:org.id
-
-}
-
-}
-
-}
-
-})
-
-await prisma.organizationSettings.create({
-
-data:{
-
-orgId:
-
-org.id,
-
-timezone:
-
-"America/Chicago",
-
-currency:
-
-"USD"
-
-}
-
-})
-
-await prisma.subscription.create({
-
-data:{
-
-orgId:
-
-org.id,
-
-provider:
-
-"paypal",
-
-externalId:
-
-"SUB-"+
-
-Date.now(),
-
-plan:
-
-"pro",
-
-status:"active",
-
-
-
-
-amount:
-
-199,
-
-currency:
-
-"USD",
-
-interval:
-
-"month"
-
-}
-
-})
-
-await prisma.otpCode.update({
-
-where:{
-
-id:
-
-otpRecord.id
-
-},
-
-data:{
-
-verified:true
-
-}
-
-})
-
-return NextResponse.json({
-
-success:true,
-
-redirect:
-
-"/payment",
-
-user
-
-})
-
-}
-
-catch(error){
-
-console.error(
-
-error
-
-)
-
-return NextResponse.json(
-
-{
-
-error:
-
-"Registration failed"
-
-},
-
-{
-
-status:500
-
-}
-
-)
-
-}
-
+  request: NextRequest
+) {
+  try {
+    const body = await request.json();
+
+    const parsed =
+      registerSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation failed.",
+          errors: parsed.error.flatten(),
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const result = await registerUser(
+      parsed.data
+    );
+
+    return NextResponse.json(
+      {
+        success: true,
+
+        message: result.message,
+
+        data: {
+          userId: result.userId,
+
+          organizationId:
+            result.organizationId,
+
+          subscriptionId:
+            result.subscriptionId,
+
+          roleId: result.roleId,
+
+          slug: result.slug,
+        },
+      },
+      {
+        status: 201,
+      }
+    );
+  } catch (error) {
+    console.error(
+      "Registration Error:",
+      error
+    );
+
+    if (error instanceof RegisterError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: error.message,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      error instanceof
+      Prisma.PrismaClientKnownRequestError
+    ) {
+      switch (error.code) {
+        case "P2002":
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                "A record with the same unique value already exists.",
+            },
+            {
+              status: 409,
+            }
+          );
+
+        case "P2025":
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                "Required record was not found.",
+            },
+            {
+              status: 404,
+            }
+          );
+
+        default:
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                "Database operation failed.",
+            },
+            {
+              status: 500,
+            }
+          );
+      }
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Invalid request payload.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Internal server error.",
+      },
+      {
+        status: 500,
+      }
+    );
+  }
 }

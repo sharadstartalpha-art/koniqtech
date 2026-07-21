@@ -1,32 +1,94 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import prisma from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
+import { generateOtp } from "@/shared/lib/auth/otp";
 import { resend } from "@/shared/lib/resend";
 
-export async function POST(req: Request) {
+const OTP_EXPIRY_MINUTES = 10;
+
+interface SendOtpBody {
+  email: string;
+}
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email);
+}
+
+
+async function sendOtpEmail(
+  email: string,
+  otp: string
+) {
+  await resend.emails.send({
+    from: "KoniqTech <noreply@koniqtech.com>",
+
+    to: email,
+
+    subject: "Verify your email",
+
+    html: `
+      <div style="font-family:Arial,sans-serif">
+
+        <h2>Email Verification</h2>
+
+        <p>Your verification code is:</p>
+
+        <h1 style="letter-spacing:6px">
+          ${otp}
+        </h1>
+
+        <p>
+          This code expires in
+          ${OTP_EXPIRY_MINUTES} minutes.
+        </p>
+
+      </div>
+    `,
+  });
+}
+
+
+export async function POST(
+  request: NextRequest
+) {
   try {
-    const body = await req.json();
+    const body =
+      (await request.json()) as SendOtpBody;
 
-    const email = body.email?.trim().toLowerCase();
+    const email = normalizeEmail(body.email);
 
-    if (!email) {
+    if (!isValidEmail(email)) {
       return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
+        {
+          success: false,
+          message: "Invalid email address.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
+    const existingUser =
+      await prisma.user.findUnique({
+        where: {
+          email,
+        },
+        select: {
+          id: true,
+        },
+      });
 
     if (existingUser) {
       return NextResponse.json(
         {
-          error: "Email already exists",
+          success: false,
+          message:
+            "An account already exists with this email.",
         },
         {
           status: 409,
@@ -34,71 +96,87 @@ export async function POST(req: Request) {
       );
     }
 
-    // Remove previous OTPs for this email
+    const otp = generateOtp();
+
+    const expiresAt = getExpiryDate();
+
     await prisma.otpCode.deleteMany({
       where: {
         email,
       },
     });
 
-    // Generate new OTP
-    const code = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-
     await prisma.otpCode.create({
       data: {
         email,
-        code,
-        expiresAt: new Date(
-          Date.now() + 1000 * 60 * 10 // 10 minutes
-        ),
+        code: otp,
+        expiresAt,
+        verified: false,
       },
     });
 
-    await resend.emails.send({
-      from: "KONIQ CRM <otp@koniqtech.com>",
-      to: email,
-      subject: "Verify your KONIQ CRM account",
-      html: `
-        <div style="
-          font-family: Arial;
-          padding: 40px;
-          background: #f5f7fb;
-        ">
-          <h1>Welcome to KONIQ CRM</h1>
+    try {
+      await sendOtpEmail(email, otp);
+    } catch (emailError) {
+      await prisma.otpCode.deleteMany({
+        where: {
+          email,
+        },
+      });
 
-          <p>Use the OTP below:</p>
+      console.error(
+        "Failed to send OTP email:",
+        emailError
+      );
 
-          <div style="
-            font-size: 42px;
-            font-weight: bold;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-          ">
-            ${code}
-          </div>
-
-          <p>Expires in 10 minutes.</p>
-        </div>
-      `,
-    });
-
-    return NextResponse.json({
-      ok: true,
-      message: "OTP sent successfully",
-    });
-  } catch (error) {
-    console.error("Send OTP error:", error);
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Unable to send verification email. Please try again.",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
 
     return NextResponse.json(
       {
-        error: "Failed to send OTP",
+        success: true,
+        message:
+          "Verification code sent successfully.",
+      },
+      {
+        status: 200,
+      }
+    );
+
+
+
+      } catch (error) {
+    console.error("Send OTP Error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Something went wrong while sending the verification code.",
       },
       {
         status: 500,
       }
     );
   }
+}
+
+
+function getExpiryDate() {
+  const expires = new Date();
+
+  expires.setMinutes(
+    expires.getMinutes() + OTP_EXPIRY_MINUTES
+  );
+
+  return expires;
 }

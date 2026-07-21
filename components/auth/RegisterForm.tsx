@@ -147,17 +147,22 @@ export default function RegisterForm() {
 
   async function goToOtpStep() {
   const valid = await trigger([
-    "fullName",
-    "companyName",
-    "email",
-    "password",
-    "confirmPassword",
-    "industry",
-    "crmType",
-    "acceptTerms",
-  ]);
+  "fullName",
+  "companyName",
+  "email",
+  "password",
+  "confirmPassword",
+  "industry",
+  "crmType",
+  "acceptTerms",
+]);
 
-  if (!valid) return;
+console.log("Form valid:", valid);
+
+if (!valid) {
+  console.log("Errors:", errors);
+  return;
+}
 
   setApiError("");
   setApiSuccess("");

@@ -506,20 +506,25 @@ return (
   )}
 </div>
 
-<LoadingButton
-  type="button"
-  loading={sendingOtp}
-  loadingText="Sending Verification Code..."
-  disabled={!isValid || isSubmitting}
-  onClick={goToOtpStep}
-  className="w-full"
->
-  <span className="flex items-center justify-center gap-2">
-    Continue
 
-    <ArrowRight className="h-5 w-5" />
-  </span>
-</LoadingButton>
+
+<button
+  type="button"
+  onClick={() => {
+    alert("CLICKED");
+    console.log("CLICKED");
+    goToOtpStep();
+  }}
+  style={{
+    width: "100%",
+    padding: "16px",
+    background: "red",
+    color: "white",
+    fontWeight: "bold",
+  }}
+>
+  TEST BUTTON
+</button>
 
 <div className="text-center text-sm text-slate-500">
   Already have an account?

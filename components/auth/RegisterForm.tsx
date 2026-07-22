@@ -260,10 +260,17 @@ if (!valid) {
   return (
     <>
   <form
-    onSubmit={handleSubmit(onSubmit)}
-    className="space-y-8"
-    noValidate
-  >
+  onSubmit={handleSubmit(
+    onSubmit,
+    (errors) => {
+      console.log("RHF ERRORS");
+      console.log(errors);
+      alert(JSON.stringify(errors, null, 2));
+    }
+  )}
+  className="space-y-8"
+  noValidate
+>
     <StepIndicator
       currentStep={step}
       steps={[

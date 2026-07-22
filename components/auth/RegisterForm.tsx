@@ -470,10 +470,13 @@ if (!valid) {
         )}
 
         <button
-  type="submit"
+  type="button"
+  onClick={() => {
+    alert("CLICK WORKS");
+  }}
   className="w-full rounded-xl bg-red-600 p-4 text-white"
 >
-  TEST SUBMIT
+  TEST CLICK
 </button>
 
       </div>

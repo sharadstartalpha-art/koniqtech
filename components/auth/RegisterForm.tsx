@@ -488,7 +488,7 @@ if (!valid) {
   type="submit"
   className="w-full rounded-xl bg-red-600 p-4 text-white"
 >
-  TEST SUBMIT
+  Continue
 </button>
 
       </div>

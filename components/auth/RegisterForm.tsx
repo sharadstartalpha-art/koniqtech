@@ -124,18 +124,15 @@ export default function RegisterForm() {
     setApiError("");
     setApiSuccess("");
 
-    const valid = await trigger([
-      "fullName",
-      "companyName",
-      "email",
-      "password",
-      "confirmPassword",
-      "industry",
-      "crmType",
-      "acceptTerms",
-    ]);
+    const valid = await trigger();
 
-    if (!valid) return;
+console.log("VALID =", valid);
+console.log("VALUES =", getValues());
+
+if (!valid) {
+  console.log("ERRORS =", errors);
+  return;
+}
 
     try {
       setSendingOtp(true);

@@ -469,16 +469,12 @@ if (!valid) {
           </p>
         )}
 
-        <LoadingButton
-          type="submit"
-          loading={sendingOtp}
-          loadingText="Sending Verification Code..."
-          rightIcon={
-            <ArrowRight className="h-5 w-5" />
-          }
-        >
-          Continue
-        </LoadingButton>
+        <button
+  type="submit"
+  className="w-full rounded-xl bg-red-600 p-4 text-white"
+>
+  TEST SUBMIT
+</button>
 
       </div>
     )}

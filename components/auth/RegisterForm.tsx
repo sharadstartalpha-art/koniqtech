@@ -5,27 +5,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useForm } from "react-hook-form";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import {
-  Mail,
-  Lock,
-  User,
   Building2,
-  Eye,
-  EyeOff,
-  ArrowRight,
   CheckCircle2,
-  Loader2,
+  Lock,
+  Mail,
+  ShieldCheck,
+  User,
+  ArrowRight,
 } from "lucide-react";
 
-import FormInput from "./FormInput";
-import LoadingButton from "./LoadingButton";
-import PasswordStrength from "./PasswordStrength";
-import IndustrySelector from "./IndustrySelector";
-import OtpInput from "./OtpInput";
-import StepIndicator from "./StepIndicator";
+import { Industry, CRMType } from "@prisma/client";
+
+import LoadingButton from "@/components/auth/LoadingButton";
+import FormInput from "@/components/auth/FormInput";
+import PasswordStrength from "@/components/auth/PasswordStrength";
+import IndustrySelector from "@/components/auth/IndustrySelector";
+import OtpInput from "@/components/auth/OtpInput";
+import StepIndicator from "@/components/auth/StepIndicator";
 
 import {
   registerSchema,
@@ -37,42 +36,33 @@ export default function RegisterForm() {
 
   const [step, setStep] = useState(1);
 
-  const [otp, setOtp] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
 
-  const [sendingOtp, setSendingOtp] =
+  const [verifying, setVerifying] = useState(false);
+
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
-
-  const [registering, setRegistering] =
-    useState(false);
-
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [
-    showConfirmPassword,
-    setShowConfirmPassword,
-  ] = useState(false);
-
-  const [secondsLeft, setSecondsLeft] =
-    useState(0);
 
   const [apiError, setApiError] =
-    useState("");
+    useState<string>("");
 
   const [apiSuccess, setApiSuccess] =
-    useState("");
+    useState<string>("");
 
   const {
     register,
     handleSubmit,
     watch,
     trigger,
-    getValues,
     setValue,
+    getValues,
     formState: {
       errors,
       isSubmitting,
-      isValid,
     },
   } = useForm<RegisterSchema>({
     resolver: zodResolver(registerSchema),
@@ -92,9 +82,9 @@ export default function RegisterForm() {
 
       otp: "",
 
-      industry: "roofing",
+      industry: Industry.roofing,
 
-      crmType: "roofing",
+      crmType: CRMType.roofing,
 
       phone: "",
 
@@ -116,7 +106,7 @@ export default function RegisterForm() {
 
   const industry = watch("industry");
 
-  const email = watch("email");
+  const otp = watch("otp");
 
   const passwordStrength = useMemo(() => {
     let score = 0;
@@ -129,8 +119,7 @@ export default function RegisterForm() {
 
     if (/[0-9]/.test(password)) score++;
 
-    if (/[^A-Za-z0-9]/.test(password))
-      score++;
+    if (/[!@#$%^&*]/.test(password)) score++;
 
     return score;
   }, [password]);
@@ -138,186 +127,169 @@ export default function RegisterForm() {
   useEffect(() => {
     if (secondsLeft <= 0) return;
 
-    const timer = setInterval(() => {
-      setSecondsLeft((value) => value - 1);
+    const timer = setTimeout(() => {
+      setSecondsLeft((v) => v - 1);
     }, 1000);
 
-    return () => clearInterval(timer);
+    return () => clearTimeout(timer);
   }, [secondsLeft]);
 
-  async function goToOtpStep() {
-  const valid = await trigger([
-  "fullName",
-  "companyName",
-  "email",
-  "password",
-  "confirmPassword",
-  "industry",
-  "crmType",
-  "acceptTerms",
-]);
+  const goToOtpStep = async () => {
+    setApiError("");
+    setApiSuccess("");
 
-console.log("Form valid:", valid);
+    const valid = await trigger([
+      "fullName",
+      "companyName",
+      "email",
+      "password",
+      "confirmPassword",
+      "industry",
+      "crmType",
+      "acceptTerms",
+    ]);
 
-if (!valid) {
-  console.log("Errors:", errors);
-  return;
-}
+    if (!valid) return;
 
-  setApiError("");
-  setApiSuccess("");
+    try {
+      setSendingOtp(true);
 
-  try {
-    setSendingOtp(true);
+      const response = await fetch(
+        "/api/auth/send-otp",
+        {
+          method: "POST",
 
-    const response = await fetch(
-      "/api/auth/send-otp",
-      {
-        method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          email,
-        }),
-      }
-    );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      setApiError(
-        data.message ??
-          "Unable to send verification code."
+          body: JSON.stringify({
+            email: getValues("email"),
+          }),
+        }
       );
 
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        setApiError(
+          result.message ??
+            "Unable to send OTP."
+        );
+
+        return;
+      }
+
+      setApiSuccess(result.message);
+
+      setSecondsLeft(60);
+
+      setStep(2);
+    } catch {
+      setApiError(
+        "Something went wrong."
+      );
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const verifyAndRegister = async () => {
+    setApiError("");
+    setApiSuccess("");
+
+    try {
+      setVerifying(true);
+
+      const response = await fetch(
+        "/api/auth/register",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify(
+            getValues()
+          ),
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        setApiError(
+          result.message ??
+            "Registration failed."
+        );
+
+        return;
+      }
+
+      setApiSuccess(
+        "Registration successful."
+      );
+
+      setStep(3);
+    } catch {
+      setApiError(
+        "Something went wrong."
+      );
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resendOtp = async () => {
+    if (secondsLeft > 0) return;
+
+    await goToOtpStep();
+  };
+
+  const onSubmit = async () => {
+    if (step === 1) {
+      await goToOtpStep();
       return;
     }
 
-    setApiSuccess(
-      "Verification code sent successfully."
-    );
-
-    setStep(2);
-
-    setSecondsLeft(60);
-  } catch {
-    setApiError(
-      "Unable to send verification code."
-    );
-  } finally {
-    setSendingOtp(false);
-  }
-}
-
-
-async function verifyAndRegister() {
-  try {
-    setRegistering(true);
-
-    setApiError("");
-
-    setApiSuccess("");
-
-    const values = getValues();
-
-    const response = await fetch(
-      "/api/auth/register",
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          ...values,
-
-          otp,
-        }),
-      }
-    );
-
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message ??
-          "Registration failed."
-      );
+    if (step === 2) {
+      await verifyAndRegister();
+      return;
     }
+  };
 
-    setApiSuccess(
-      "Workspace created successfully."
-    );
-
-    setStep(3);
-
-    setTimeout(() => {
-      router.push(
-        `/checkout?plan=starter&email=${encodeURIComponent(
-          values.email
-        )}`
-      );
-    }, 2500);
-  } catch (error) {
-    setApiError(
-      error instanceof Error
-        ? error.message
-        : "Registration failed."
-    );
-  } finally {
-    setRegistering(false);
-  }
-}
-
-const onSubmit = async () => {
-  if (step === 1) {
-    await goToOtpStep();
-
-    return;
-  }
-
-  if (step === 2) {
-    await verifyAndRegister();
-  }
-};
-
-return (
+  return (
+    <>
   <form
     onSubmit={handleSubmit(onSubmit)}
     className="space-y-8"
     noValidate
   >
     <StepIndicator
-  currentStep={step}
-  steps={[
-    {
-      id: 1,
-      title: "Account",
-      description: "Create your workspace",
-    },
-    {
-      id: 2,
-      title: "Verification",
-      description: "Verify your email",
-    },
-    {
-      id: 3,
-      title: "Complete",
-      description: "Finish setup",
-    },
-  ]}
-/>
+      currentStep={step}
+      steps={[
+        {
+          id: 1,
+          title: "Account",
+        },
+        {
+          id: 2,
+          title: "Verification",
+        },
+        {
+          id: 3,
+          title: "Complete",
+        },
+      ]}
+    />
 
     {apiError && (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+      <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
         <p className="text-sm font-medium text-red-700">
           {apiError}
         </p>
@@ -325,7 +297,7 @@ return (
     )}
 
     {apiSuccess && (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
         <p className="text-sm font-medium text-green-700">
           {apiSuccess}
         </p>
@@ -333,418 +305,375 @@ return (
     )}
 
     {step === 1 && (
-      <>
+      <div className="space-y-6">
 
-      <div className="space-y-2">
-  <h2 className="text-3xl font-bold text-slate-900">
-    Create Your Workspace
-  </h2>
+        <FormInput
+          label="Full Name"
+          required
+          leftIcon={
+            <User className="h-5 w-5 text-slate-400" />
+          }
+          error={errors.fullName?.message}
+          {...register("fullName")}
+        />
 
-  <p className="text-slate-600">
-    Create your KoniqTech account to start
-    managing customers, jobs, dispatch,
-    estimates, invoices and AI automation.
-  </p>
-</div>
-<div className="grid gap-6 md:grid-cols-2">
+        <FormInput
+          label="Company Name"
+          required
+          leftIcon={
+            <Building2 className="h-5 w-5 text-slate-400" />
+          }
+          error={errors.companyName?.message}
+          {...register("companyName")}
+        />
 
-  <FormInput
-  label="Full Name"
-  placeholder="John Smith"
-  leftIcon={<User className="h-5 w-5" />}
-  error={errors.fullName?.message}
-  {...register("fullName")}
-/>
+        <FormInput
+          label="Business Email"
+          type="email"
+          required
+          leftIcon={
+            <Mail className="h-5 w-5 text-slate-400" />
+          }
+          error={errors.email?.message}
+          {...register("email")}
+        />
 
-<FormInput
-  label="Company Name"
-  placeholder="ABC Roofing LLC"
-  leftIcon={<Building2 className="h-5 w-5" />}
-  error={errors.companyName?.message}
-  {...register("companyName")}
-/>
+        <div className="space-y-2">
 
-<FormInput
-  label="Business Email"
-  type="email"
-  placeholder="john@company.com"
-  leftIcon={<Mail className="h-5 w-5" />}
-  error={errors.email?.message}
-  {...register("email")}
-/>
+          <FormInput
+            label="Password"
+            required
+            type={
+              showPassword
+                ? "text"
+                : "password"
+            }
+            leftIcon={
+              <Lock className="h-5 w-5 text-slate-400" />
+            }
+            error={errors.password?.message}
+            rightIcon={
+              <button
+                type="button"
+                onClick={() =>
+                  setShowPassword((v) => !v)
+                }
+                className="text-xs font-semibold text-orange-600"
+              >
+                {showPassword
+                  ? "Hide"
+                  : "Show"}
+              </button>
+            }
+            {...register("password")}
+          />
 
-<div className="space-y-3">
-  <FormInput
-    label="Password"
-    type={
-      showPassword
-        ? "text"
-        : "password"
-    }
-    placeholder="Create a secure password"
-    leftIcon={<Lock className="h-5 w-5" />}
-    error={errors.password?.message}
-    {...register("password")}
-  />
+          <PasswordStrength
+            password={password}
+           
+          />
 
-  <PasswordStrength
-    password={password}
-  />
+        </div>
 
-  <button
-    type="button"
-    onClick={() =>
-      setShowPassword(v => !v)
-    }
-    className="text-sm text-orange-600 hover:text-orange-700"
-  >
-    {showPassword
-      ? "Hide Password"
-      : "Show Password"}
-  </button>
-</div>
-</div>
+        <FormInput
+          label="Confirm Password"
+          required
+          type={
+            showConfirmPassword
+              ? "text"
+              : "password"
+          }
+          leftIcon={
+            <ShieldCheck className="h-5 w-5 text-slate-400" />
+          }
+          error={
+            errors.confirmPassword?.message
+          }
+          rightIcon={
+            <button
+              type="button"
+              onClick={() =>
+                setShowConfirmPassword(
+                  (v) => !v
+                )
+              }
+              className="text-xs font-semibold text-orange-600"
+            >
+              {showConfirmPassword
+                ? "Hide"
+                : "Show"}
+            </button>
+          }
+          {...register("confirmPassword")}
+        />
 
-<div className="space-y-3">
-  <FormInput
-    label="Confirm Password"
-    type={
-      showConfirmPassword
-        ? "text"
-        : "password"
-    }
-    placeholder="Confirm your password"
-    leftIcon={<Lock className="h-5 w-5" />}
-    error={errors.confirmPassword?.message}
-    {...register("confirmPassword")}
-  />
+        <div className="space-y-3">
 
-  <button
-    type="button"
-    onClick={() =>
-      setShowConfirmPassword(v => !v)
-    }
-    className="text-sm text-orange-600 hover:text-orange-700"
-  >
-    {showConfirmPassword
-      ? "Hide Password"
-      : "Show Password"}
-  </button>
+          <label className="text-sm font-semibold text-slate-700">
+            Select Industry
+          </label>
 
-  {!errors.confirmPassword &&
-    watch("confirmPassword") &&
-    watch("confirmPassword") === password && (
-      <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-3">
-        <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <IndustrySelector
+            value={industry}
+            onChange={(value) => {
+              setValue(
+                "industry",
+                value as Industry,
+                {
+                  shouldValidate: true,
+                }
+              );
 
-        <span className="text-sm font-medium text-green-700">
-          Passwords match
-        </span>
+              setValue(
+                "crmType",
+                value as CRMType,
+                {
+                  shouldValidate: true,
+                }
+              );
+            }}
+          />
+
+          {errors.industry && (
+            <p className="text-sm text-red-600">
+              {errors.industry.message}
+            </p>
+          )}
+
+        </div>
+
+        <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+
+          <input
+            type="checkbox"
+            className="mt-1 h-5 w-5 rounded"
+            {...register("acceptTerms")}
+          />
+
+          <span className="text-sm leading-6 text-slate-600">
+            I agree to the{" "}
+            <a
+              href="/terms"
+              className="font-semibold text-orange-600"
+            >
+              Terms
+            </a>{" "}
+            and{" "}
+            <a
+              href="/privacy"
+              className="font-semibold text-orange-600"
+            >
+              Privacy Policy
+            </a>
+          </span>
+
+        </label>
+
+        {errors.acceptTerms && (
+          <p className="text-sm text-red-600">
+            {errors.acceptTerms.message}
+          </p>
+        )}
+
+        <LoadingButton
+          type="submit"
+          loading={sendingOtp}
+          loadingText="Sending Verification Code..."
+          rightIcon={
+            <ArrowRight className="h-5 w-5" />
+          }
+        >
+          Continue
+        </LoadingButton>
+
       </div>
-    )}
-</div>
-
-<div className="space-y-3">
-  <label className="text-sm font-semibold text-slate-700">
-    Select Industry
-  </label>
-
-  <IndustrySelector
-    value={industry}
-    onChange={(value) => {
-      setValue("industry", value, {
-        shouldValidate: true,
-      });
-
-      setValue("crmType", value, {
-        shouldValidate: true,
-      });
-    }}
-  />
-
-  {errors.industry && (
-    <p className="text-sm text-red-600">
-      {errors.industry.message}
-    </p>
-  )}
-</div>
-
-<div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-  <label className="flex items-start gap-3">
-    <input
-      type="checkbox"
-      className="mt-1 h-5 w-5 rounded border-slate-300"
-      {...register("acceptTerms")}
-    />
-
-    <span className="text-sm text-slate-600">
-      I agree to the{" "}
-      <a
-        href="/terms"
-        target="_blank"
-        className="font-semibold text-orange-600"
-      >
-        Terms
-      </a>
-
-      {" "}and{" "}
-
-      <a
-        href="/privacy"
-        target="_blank"
-        className="font-semibold text-orange-600"
-      >
-        Privacy Policy
-      </a>
-    </span>
-  </label>
-
-  {errors.acceptTerms && (
-    <p className="mt-3 text-sm text-red-600">
-      {errors.acceptTerms.message}
-    </p>
-  )}
-</div>
-
-
-
-<button
-  type="button"
-  onClick={async () => {
-  alert("CLICKED");
-  console.log("CLICKED");
-
-  console.log("Step 1");
-
-  const valid = await trigger([
-    "fullName",
-    "companyName",
-    "email",
-    "password",
-    "confirmPassword",
-    "industry",
-    "crmType",
-    "acceptTerms",
-  ]);
-
-  console.log("Step 2");
-  console.log("Valid:", valid);
-  console.log("Errors:", errors);
-
-  if (!valid) return;
-
-  console.log("Step 3");
-
-  const response = await fetch("/api/auth/send-otp", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: getValues("email"),
-    }),
-  });
-
-  console.log("Step 4", response.status);
-}}
-
-  style={{
-    width: "100%",
-    padding: "16px",
-    background: "red",
-    color: "white",
-    fontWeight: "bold",
-  }}
->
-  TEST BUTTON 
-</button>
-
-<div className="text-center text-sm text-slate-500">
-  Already have an account?
-
-  <a
-    href="/login"
-    className="ml-2 font-semibold text-orange-600 hover:text-orange-700"
-  >
-    Sign In
-  </a>
-</div>
-
-      </>
     )}
 
         {step === 2 && (
-      <>
-        <div className="space-y-2 text-center">
-          <h2 className="text-3xl font-bold text-slate-900">
+      <div className="space-y-8">
+
+        <div className="text-center">
+
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100">
+            <Mail className="h-8 w-8 text-orange-600" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-900">
             Verify Your Email
           </h2>
 
-          <p className="text-slate-600">
-            We've sent a verification code to
+          <p className="mt-3 text-slate-600">
+            We've sent a 6-digit verification code to
           </p>
 
-          <p className="font-semibold text-orange-600">
-            {email}
+          <p className="mt-1 font-semibold text-slate-900">
+            {watch("email")}
           </p>
+
         </div>
 
-                <OtpInput
+        <OtpInput
           value={otp}
-          onChange={setOtp}
+          onChange={(value) =>
+            setValue("otp", value, {
+              shouldValidate: true,
+            })
+          }
           length={6}
+          disabled={verifying}
         />
 
-                {apiError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-            <p className="text-sm font-medium text-red-700">
-              {apiError}
-            </p>
-          </div>
+        {errors.otp && (
+          <p className="text-center text-sm font-medium text-red-600">
+            {errors.otp.message}
+          </p>
         )}
 
-        {apiSuccess && (
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-            <p className="text-sm font-medium text-green-700">
-              {apiSuccess}
-            </p>
-          </div>
-        )}
+        <div className="rounded-2xl border border-orange-100 bg-orange-50 p-5">
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-          {secondsLeft > 0 ? (
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-500">
-                Resend code in
-              </span>
+          <div className="flex items-center justify-between">
 
-              <span className="font-semibold text-orange-600">
-                {secondsLeft}s
-              </span>
+            <div>
+              <p className="font-semibold text-slate-900">
+                Didn't receive the code?
+              </p>
+
+              <p className="mt-1 text-sm text-slate-600">
+                Check your spam folder or resend another OTP.
+              </p>
             </div>
-          ) : (
-            <button
+
+            <LoadingButton
               type="button"
-              onClick={goToOtpStep}
-              disabled={sendingOtp}
-              className="font-semibold text-orange-600 transition hover:text-orange-700 disabled:opacity-50"
+              variant="outline"
+              size="md"
+              loading={sendingOtp}
+              disabled={secondsLeft > 0}
+              onClick={resendOtp}
             >
-              {sendingOtp
-                ? "Sending..."
-                : "Resend Verification Code"}
-            </button>
-          )}
+              {secondsLeft > 0
+                ? `Resend (${secondsLeft}s)`
+                : "Resend OTP"}
+            </LoadingButton>
+
+          </div>
+
         </div>
 
-                <LoadingButton
-          type="submit"
-          loading={registering}
-          loadingText="Creating Workspace..."
-          disabled={
-            otp.length !== 6 ||
-            registering
-          }
-          className="w-full"
-        >
-          <span className="flex items-center justify-center gap-2">
-            Verify & Create Workspace
+        <div className="flex gap-4">
 
-            <ArrowRight className="h-5 w-5" />
-          </span>
-        </LoadingButton>
-                <button
-          type="button"
-          onClick={() => {
-            setStep(1);
+          <LoadingButton
+            type="button"
+            variant="outline"
+            size="lg"
+            fullWidth
+            onClick={() => {
+              setStep(1);
+              setApiError("");
+              setApiSuccess("");
+            }}
+          >
+            Back
+          </LoadingButton>
 
-            setOtp("");
+          <LoadingButton
+            type="submit"
+            loading={verifying}
+            loadingText="Creating Account..."
+            fullWidth
+            rightIcon={
+              <ArrowRight className="h-5 w-5" />
+            }
+          >
+            Verify & Create Account
+          </LoadingButton>
 
-            setApiError("");
+        </div>
 
-            setApiSuccess("");
-          }}
-          className="w-full rounded-xl border border-slate-300 py-3 font-medium text-slate-700 transition hover:bg-slate-100"
-        >
-          Back
-        </button>
-              </>
+      </div>
     )}
 
         {step === 3 && (
-      <>
+      <div className="space-y-8">
+
         <div className="flex justify-center">
           <div className="flex h-24 w-24 items-center justify-center rounded-full bg-green-100">
             <CheckCircle2 className="h-14 w-14 text-green-600" />
           </div>
         </div>
 
-        <div className="space-y-3 text-center">
+        <div className="text-center space-y-3">
+
           <h2 className="text-3xl font-bold text-slate-900">
-            Workspace Created Successfully!
+            Welcome to KoniqTech!
           </h2>
 
           <p className="mx-auto max-w-lg text-slate-600">
-            Your KoniqTech workspace has been created successfully.
-            We're preparing your account and you'll be redirected
-            to complete your subscription.
+            Your workspace has been created successfully.
+            We're preparing your CRM and redirecting you to
+            complete your subscription.
           </p>
+
         </div>
 
-                <div className="rounded-2xl border border-green-200 bg-green-50 p-6">
-          <div className="flex items-center justify-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-green-600" />
+        <div className="rounded-2xl border border-green-200 bg-green-50 p-6">
 
-            <span className="font-medium text-green-700">
-              Finalizing your account...
+          <div className="space-y-4">
+
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+
+              <span className="font-medium text-slate-800">
+                Organization Created
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+
+              <span className="font-medium text-slate-800">
+                Owner Account Ready
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+
+              <span className="font-medium text-slate-800">
+                Email Verified
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+
+              <span className="font-medium text-slate-800">
+                Trial Activated
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="flex justify-center">
+
+          <div className="flex items-center gap-3 rounded-xl bg-orange-50 px-5 py-3">
+
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
+
+            <span className="font-medium text-orange-700">
+              Redirecting to Checkout...
             </span>
+
           </div>
+
         </div>
 
-                <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 md:grid-cols-3">
-          <div className="rounded-xl bg-slate-50 p-4 text-center">
-            <div className="mb-2 text-lg font-bold text-orange-600">
-              ✓
-            </div>
-
-            <h4 className="font-semibold">
-              Organization Created
-            </h4>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Your company workspace is ready. 
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-slate-50 p-4 text-center">
-            <div className="mb-2 text-lg font-bold text-orange-600">
-              ✓
-            </div>
-
-            <h4 className="font-semibold">
-              Owner Account Ready
-            </h4>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Administrator account configured.
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-slate-50 p-4 text-center">
-            <div className="mb-2 text-lg font-bold text-orange-600">
-              ✓
-            </div>
-
-            <h4 className="font-semibold">
-              Trial Activated
-            </h4>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Your free trial has started.
-            </p>
-          </div>
-        </div>
-              </>
+      </div>
     )}
-      </form>
+
+  </form>
+</>
 );
 }

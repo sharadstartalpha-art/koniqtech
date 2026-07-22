@@ -265,15 +265,7 @@ export default function RegisterPage() {
               </p>
 
               {/* Progress */}
-              <div className="mt-8 flex items-center gap-3">
-                <div className="h-2 flex-1 rounded-full bg-orange-500" />
-                <div className="h-2 flex-1 rounded-full bg-slate-200" />
-              </div>
-
-              <div className="mt-2 flex justify-between text-sm text-slate-500">
-                <span>Account</span>
-                <span>Verification</span>
-              </div>
+              
             </div>
 
            {/* FORM */}

@@ -19,6 +19,7 @@ import {
   Trees,
   Snowflake,
 } from "lucide-react";
+import RegisterForm from "@/components/auth/RegisterForm";
 
 type Industry = {
   id: string;

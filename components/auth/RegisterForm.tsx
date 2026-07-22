@@ -510,11 +510,44 @@ return (
 
 <button
   type="button"
-  onClick={() => {
-    alert("CLICKED");
-    console.log("CLICKED");
-    goToOtpStep();
-  }}
+  onClick={async () => {
+  alert("CLICKED");
+  console.log("CLICKED");
+
+  console.log("Step 1");
+
+  const valid = await trigger([
+    "fullName",
+    "companyName",
+    "email",
+    "password",
+    "confirmPassword",
+    "industry",
+    "crmType",
+    "acceptTerms",
+  ]);
+
+  console.log("Step 2");
+  console.log("Valid:", valid);
+  console.log("Errors:", errors);
+
+  if (!valid) return;
+
+  console.log("Step 3");
+
+  const response = await fetch("/api/auth/send-otp", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: getValues("email"),
+    }),
+  });
+
+  console.log("Step 4", response.status);
+}}
+
   style={{
     width: "100%",
     padding: "16px",

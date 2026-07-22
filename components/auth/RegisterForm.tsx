@@ -241,16 +241,21 @@ if (!valid) {
   };
 
   const onSubmit = async () => {
-    if (step === 1) {
-      await goToOtpStep();
-      return;
-    }
+  console.log("onSubmit called. Step =", step);
 
-    if (step === 2) {
-      await verifyAndRegister();
-      return;
-    }
-  };
+  if (step === 1) {
+    await goToOtpStep();
+    return;
+  }
+
+  if (step === 2) {
+    await verifyAndRegister();
+    return;
+  }
+};
+
+    
+  
 
   return (
     <>

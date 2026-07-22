@@ -34,11 +34,11 @@ export const registerSchema = z
 
     confirmPassword: z.string(),
 
-    otp: z
-      .string()
-      .trim()
-      .length(6, "OTP must contain exactly 6 digits.")
-      .regex(/^\d+$/, "OTP must contain only digits."),
+   otp: z
+  .string()
+  .trim()
+  .length(6, "OTP must contain exactly 6 digits.")
+  .regex(/^\d+$/, "OTP must contain only digits."),
 
     industry: z.nativeEnum(Industry),
 

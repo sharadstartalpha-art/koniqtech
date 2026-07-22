@@ -106,7 +106,7 @@ export default function RegisterForm() {
 
   const industry = watch("industry");
 
-  const otp = watch("otp");
+  const otp = watch("otp") ?? "";
 
   const passwordStrength = useMemo(() => {
     let score = 0;
@@ -200,6 +200,12 @@ export default function RegisterForm() {
     setApiError("");
     setApiSuccess("");
 
+    const otp = getValues("otp");
+
+    if (!otp || otp.length !== 6) {
+    setApiError("Please enter the 6-digit OTP.");
+     return;
+    }
     try {
       setVerifying(true);
 

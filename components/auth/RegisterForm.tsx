@@ -124,7 +124,16 @@ export default function RegisterForm() {
     setApiError("");
     setApiSuccess("");
 
-    const valid = await trigger();
+    const valid = await trigger([
+  "fullName",
+  "companyName",
+  "email",
+  "password",
+  "confirmPassword",
+  "industry",
+  "crmType",
+  "acceptTerms",
+]);
 
 console.log("VALID =", valid);
 console.log("VALUES =", getValues());

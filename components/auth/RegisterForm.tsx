@@ -711,7 +711,7 @@ return (
             </h4>
 
             <p className="mt-1 text-sm text-slate-500">
-              Your company workspace is ready.
+              Your company workspace is ready. 
             </p>
           </div>
 

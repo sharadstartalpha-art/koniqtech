@@ -259,13 +259,12 @@ if (!valid) {
 
   return (
     <>
-  <form
+ <form
   onSubmit={handleSubmit(
     onSubmit,
     (errors) => {
-      console.log("RHF ERRORS");
-      console.log(errors);
-      alert(JSON.stringify(errors, null, 2));
+      console.log("FORM ERRORS:", errors);
+      alert("Validation failed. Open Console.");
     }
   )}
   className="space-y-8"
@@ -476,14 +475,11 @@ if (!valid) {
           </p>
         )}
 
-        <button
-  type="button"
-  onClick={() => {
-    alert("CLICK WORKS");
-  }}
+       <button
+  type="submit"
   className="w-full rounded-xl bg-red-600 p-4 text-white"
 >
-  TEST CLICK
+  TEST SUBMIT
 </button>
 
       </div>

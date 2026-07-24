@@ -38,29 +38,31 @@ export async function POST(
     );
 
     return NextResponse.json(
-      {
-        success: true,
+  {
+    success: true,
 
-        message: result.message,
+    message: result.message,
 
-        data: {
-          userId: result.userId,
+    orgId: result.organizationId,
 
-          organizationId:
-            result.organizationId,
+    data: {
+      userId: result.userId,
 
-          subscriptionId:
-            result.subscriptionId,
+      organizationId: result.organizationId,
 
-          roleId: result.roleId,
+      subscriptionId: result.subscriptionId,
 
-          slug: result.slug,
-        },
-      },
-      {
-        status: 201,
-      }
-    );
+      roleId: result.roleId,
+
+      slug: result.slug,
+    },
+  },
+  {
+    status: 201,
+  }
+);
+
+
   } catch (error) {
     console.error(
       "Registration Error:",

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+
 import { prisma } from "@/shared/lib/prisma";
 
 import {
@@ -10,31 +10,29 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+    
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    const { plan, orgId } = await req.json();
+
+   if (
+  !orgId ||
+  (plan !== "starter" &&
+    plan !== "growth" &&
+    plan !== "professional")
+) {
+  return NextResponse.json(
+    {
+      message: "Invalid organization or plan.",
+    },
+    {
+      status: 400,
     }
-
-    const { plan } = await req.json();
-
-    if (
-      plan !== "starter" &&
-      plan !== "growth" &&
-      plan !== "professional"
-    ) {
-      return NextResponse.json(
-        { message: "Invalid plan." },
-        { status: 400 }
-      );
-    }
+  );
+}
 
    const organization = await prisma.organization.findUnique({
   where: {
-    id: session.user.orgId,
+     id: orgId,
   },
 });
 
@@ -76,11 +74,11 @@ export async function POST(req: NextRequest) {
               payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED",
             },
 
-            return_url:
-              `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
+           return_url:
+           `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?orgId=${organization.id}`,
 
-            cancel_url:
-              `${process.env.NEXT_PUBLIC_APP_URL}/register/plan`,
+           cancel_url:
+`${process.env.NEXT_PUBLIC_APP_URL}/register/plan?orgId=${organization.id}`,
           },
         }),
       }

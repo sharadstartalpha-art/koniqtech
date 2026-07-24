@@ -4,12 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
-function PaymentSuccessContent() {
+function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [message, setMessage] = useState(
-    "Verifying your PayPal subscription..."
+    "Verifying your subscription..."
   );
 
   useEffect(() => {
@@ -19,8 +19,10 @@ function PaymentSuccessContent() {
         searchParams.get("subscriptionId") ||
         searchParams.get("ba_token");
 
-      if (!subscriptionId) {
-        setMessage("Subscription ID not found.");
+      const orgId = searchParams.get("orgId");
+
+      if (!subscriptionId || !orgId) {
+        setMessage("Invalid payment session.");
 
         setTimeout(() => {
           router.replace("/register/plan");
@@ -30,7 +32,7 @@ function PaymentSuccessContent() {
       }
 
       try {
-        const res = await fetch(
+        const response = await fetch(
           "/api/paypal/verify-subscription",
           {
             method: "POST",
@@ -39,15 +41,16 @@ function PaymentSuccessContent() {
             },
             body: JSON.stringify({
               subscriptionId,
+              orgId,
             }),
           }
         );
 
-        const data = await res.json();
+        const result = await response.json();
 
-        if (!res.ok) {
+        if (!response.ok) {
           throw new Error(
-            data.message || "Verification failed."
+            result.message || "Verification failed."
           );
         }
 
@@ -56,14 +59,14 @@ function PaymentSuccessContent() {
         );
 
         setTimeout(() => {
-          router.replace("/dashboard");
+          router.replace("/login");
         }, 2000);
-      } catch (error: any) {
-        console.error(error);
+      } catch (err: any) {
+        console.error(err);
 
         setMessage(
-          error.message ??
-            "Unable to verify your subscription."
+          err.message ||
+            "Unable to verify subscription."
         );
 
         setTimeout(() => {
@@ -78,6 +81,7 @@ function PaymentSuccessContent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-lg rounded-3xl border bg-white p-10 shadow-xl">
+
         <div className="flex justify-center">
           <div className="rounded-full bg-green-100 p-5">
             <CheckCircle2 className="h-14 w-14 text-green-600" />
@@ -89,12 +93,11 @@ function PaymentSuccessContent() {
         </h1>
 
         <p className="mt-4 text-center text-slate-600">
-          Thank you for subscribing to KoniqTech.
+          Thank you for choosing KoniqTech.
         </p>
 
         <div className="mt-10 flex items-center justify-center gap-3 rounded-xl bg-orange-50 p-4">
           <Loader2 className="h-5 w-5 animate-spin text-orange-600" />
-
           <span className="font-medium text-orange-700">
             {message}
           </span>
@@ -103,11 +106,12 @@ function PaymentSuccessContent() {
         <div className="mt-8 rounded-xl border border-green-200 bg-green-50 p-4">
           <ul className="space-y-2 text-sm text-green-800">
             <li>✓ Organization Created</li>
-            <li>✓ Owner Account Ready</li>
-            <li>✓ Subscription Activated</li>
-            <li>✓ Redirecting to Dashboard...</li>
+            <li>✓ Subscription Verified</li>
+            <li>✓ Account Activated</li>
+            <li>✓ Redirecting to Login...</li>
           </ul>
         </div>
+
       </div>
     </div>
   );
@@ -122,7 +126,7 @@ export default function PaymentSuccessPage() {
         </div>
       }
     >
-      <PaymentSuccessContent />
+      <SuccessContent />
     </Suspense>
   );
 }

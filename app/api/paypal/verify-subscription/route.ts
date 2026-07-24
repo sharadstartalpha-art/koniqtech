@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+
 import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/prisma";
 import { getPayPalAccessToken, getPayPalBaseUrl } from "@/shared/lib/paypal";
@@ -7,39 +7,37 @@ import { getPayPalAccessToken, getPayPalBaseUrl } from "@/shared/lib/paypal";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
+  
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+   const { subscriptionId, orgId } = await req.json();
+
+    if (!subscriptionId || !orgId) {
+  return NextResponse.json(
+    {
+      message: "Subscription ID or Organization ID missing.",
+    },
+    {
+      status: 400,
     }
+  );
+}
 
-    const { subscriptionId } = await req.json();
+   const organization = await prisma.organization.findUnique({
+  where: {
+    id: orgId,
+  },
+});
 
-    if (!subscriptionId) {
-      return NextResponse.json(
-        { message: "Subscription ID missing." },
-        { status: 400 }
-      );
+if (!organization) {
+  return NextResponse.json(
+    {
+      message: "Organization not found.",
+    },
+    {
+      status: 404,
     }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-      include: {
-        organization: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { message: "User not found." },
-        { status: 404 }
-      );
-    }
+  );
+}
 
    const accessToken = await getPayPalAccessToken();
 
@@ -95,7 +93,7 @@ const subscription = await response.json();
 
     await prisma.subscription.upsert({
       where: {
-        orgId: user.orgId,
+        orgId,
       },
 
       update: {
@@ -136,7 +134,7 @@ const subscription = await response.json();
       },
 
       create: {
-        orgId: user.orgId,
+        orgId,
 
         provider: "paypal",
 
@@ -180,7 +178,7 @@ const subscription = await response.json();
 
     await prisma.organization.update({
       where: {
-        id: user.orgId,
+        id: orgId,
       },
 
       data: {

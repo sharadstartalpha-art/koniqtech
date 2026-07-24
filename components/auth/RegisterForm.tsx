@@ -272,11 +272,19 @@ if (!valid) {
         return;
       }
 
-      setApiSuccess(
-        "Registration successful."
-      );
+      setApiSuccess("Registration successful.");
 
-      setStep(3);
+const orgId =
+  result.orgId ??
+  result.data?.organizationId;
+
+setStep(3);
+
+setTimeout(() => {
+  router.push(
+    `/register/plan?orgId=${orgId}`
+  );
+}, 1500);
 
       useEffect(() => {
   if (step !== 3) return;

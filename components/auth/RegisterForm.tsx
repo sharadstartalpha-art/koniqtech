@@ -462,14 +462,14 @@ if (!valid) {
           <span className="text-sm leading-6 text-slate-600">
             I agree to the{" "}
             <a
-              href="/terms"
+              href="/terms-and-conditions"
               className="font-semibold text-orange-600"
             >
               Terms
             </a>{" "}
             and{" "}
             <a
-              href="/privacy"
+              href="/privacy-policy"
               className="font-semibold text-orange-600"
             >
               Privacy Policy

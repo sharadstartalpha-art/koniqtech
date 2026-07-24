@@ -120,6 +120,49 @@ export default function RegisterForm() {
     return () => clearTimeout(timer);
   }, [secondsLeft]);
 
+
+
+  useEffect(() => {
+  if (step !== 3) return;
+
+  const redirectToPaypal = async () => {
+    try {
+      const response = await fetch(
+        "/api/paypal/create-subscription",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            plan: getValues("plan"),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to create subscription."
+        );
+      }
+
+      window.location.href = data.approvalUrl;
+    } catch (err: any) {
+      console.error(err);
+
+      setApiError(
+        err.message || "Unable to connect to PayPal."
+      );
+    }
+  };
+
+  redirectToPaypal();
+}, [step]);
+
+
+
   const goToOtpStep = async () => {
     setApiError("");
     setApiSuccess("");
@@ -234,6 +277,39 @@ if (!valid) {
       );
 
       setStep(3);
+
+      useEffect(() => {
+  if (step !== 3) return;
+
+  const redirectToPaypal = async () => {
+    const response = await fetch(
+      "/api/paypal/create-subscription",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          plan: getValues("plan"),
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message);
+    }
+
+    window.location.href = data.approvalUrl;
+  };
+
+  redirectToPaypal();
+}, [step]);
+
+
+
+
     } catch {
       setApiError(
         "Something went wrong."

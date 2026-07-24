@@ -118,8 +118,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      url: approveLink.href,
-    });
+  approvalUrl: approveLink.href,
+});
   } catch (error) {
     console.error(error);
 

@@ -66,41 +66,7 @@ async function main() {
   ==========================================================
   */
 
-  await prisma.subscription.upsert({
-    where: {
-      orgId: organization.id,
-    },
-    update: {},
-    create: {
-      orgId: organization.id,
 
-      provider: "development",
-
-      externalId: null,
-
-      customerId: "DEV-CUSTOMER",
-
-      plan: "Enterprise",
-
-      status: SubscriptionStatus.active,
-
-      billingCycle: BillingCycle.monthly,
-
-      amount: new Prisma.Decimal(0),
-
-      currency: "USD",
-
-      interval: "month",
-
-      userLimit: 100,
-
-      storageLimit: 500,
-
-      aiCredits: 100000,
-    },
-  });
-
-  console.log("✓ Subscription created");
 
   /*
   ==========================================================

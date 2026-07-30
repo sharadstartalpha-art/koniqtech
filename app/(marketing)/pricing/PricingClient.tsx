@@ -61,7 +61,15 @@ const plans = [
       "AI Quotes",
       "SMS Automation",
       "Customer Portal",
-      "Priority Support"
+      "Priority Support",
+      "Voice AI",
+"Route AI",
+"Workflow Automation",
+"AI Reports",
+"AI Analytics",
+"GPS Tracking",
+"Warehouse",
+"Payroll"
     ]
   },
   {
@@ -74,13 +82,19 @@ const plans = [
     button: "Contact Sales",
     features: [
       "Everything in Professional",
+      "Unlimited Locations",
+       "Multiple Cities",
       "Multiple Branches",
+      "Multi-office Scheduling",
+      "Centralized Reporting",
       "White Label",
       "Dedicated Success Manager",
       "Custom Integrations",
       "Advanced Permissions",
       "Enterprise SLA",
       "SSO",
+      "Priority Migration",
+      "White-glove Onboarding",
       "Custom Onboarding"
     ]
   }

@@ -60,10 +60,12 @@ credentials.email
 
 },
 
-include:{
-
-organization:true
-
+include: {
+  organization: {
+    include: {
+      subscriptions: true,
+    },
+  },
 }
 
 })
@@ -92,18 +94,21 @@ return null
 
 }
 
-return{
+return {
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  role: user.role,
+  orgId: user.orgId,
 
-id:user.id,
+  subscriptionPlan:
+  user.organization.subscriptions &&
+  user.organization.subscriptions.status === "active"
+    ? user.organization.subscriptions.plan
+    : user.organization.plan,
 
-email:user.email,
-
-name:user.name,
-
-role:user.role,
-
-orgId:user.orgId
-
+  industry:
+    user.organization.industry,
 }
 
 }
@@ -132,6 +137,9 @@ token.role=
 token.orgId=
 (user as any).orgId
 
+token.subscriptionPlan = (user as any).subscriptionPlan;
+token.industry = (user as any).industry;
+
 }
 
 return token
@@ -155,6 +163,12 @@ token.role as string
 
 (session.user as any).orgId=
 token.orgId as string
+
+(session.user as any).subscriptionPlan =
+  token.subscriptionPlan;
+
+(session.user as any).industry =
+  token.industry;
 
 }
 

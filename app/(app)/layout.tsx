@@ -54,6 +54,9 @@ children:React.ReactNode
 const [role,setRole] =
 useState("")
 
+const [subscriptionPlan, setSubscriptionPlan] = useState("")
+const [industry, setIndustry] = useState("")
+
 const pathname=
 usePathname()
 
@@ -184,10 +187,16 @@ async function load() {
 
 
 setRole(
-  (session?.user as any)?.role ||
-  "sales"
+  (session?.user as any)?.role ?? "sales"
 )
 
+setSubscriptionPlan(
+  (session?.user as any)?.subscriptionPlan ?? "starter"
+)
+
+setIndustry(
+  (session?.user as any)?.industry ?? ""
+)
 
 
 
@@ -269,11 +278,21 @@ Koniqtech
     <div className="space-y-1">
 
   {section.items
-    .filter(
-      item =>
-        !item.roles ||
-        item.roles.includes(role)
-    )
+   .filter((item) => {
+  const roleOk =
+    !item.roles ||
+    item.roles.includes(role as any)
+
+  const planOk =
+    !item.plans ||
+    item.plans.includes(subscriptionPlan as any)
+
+  const industryOk =
+    !item.industries ||
+    item.industries.includes(industry as any)
+
+  return roleOk && planOk && industryOk
+})
     .map(item => {
 
       const Icon = item.icon
@@ -333,7 +352,22 @@ Koniqtech
 
               <div className="ml-8 mt-2 space-y-1">
 
-          {item.children.map((child) => {
+          {item.children
+  .filter((child) => {
+    const roleOk =
+      !child.roles ||
+      child.roles.includes(role as any)
+
+    const planOk =
+      !child.plans ||
+      child.plans.includes(subscriptionPlan as any)
+
+    const industryOk =
+      !child.industries ||
+      child.industries.includes(industry as any)
+
+    return roleOk && planOk && industryOk
+  }).map((child) => {
 
   const ChildIcon = child.icon
 

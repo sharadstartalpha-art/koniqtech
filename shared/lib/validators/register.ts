@@ -1,4 +1,4 @@
-import { CRMType, Industry } from "@prisma/client";
+import { CRMType, Industry, SubscriptionPlan } from "@prisma/client";
 import { z } from "zod";
 
 export const registerSchema = z
@@ -50,7 +50,9 @@ currency: z.string().default("USD"),
 
 language: z.string().default("en"),
 
-    plan: z.string().default("starter"),
+   plan: z
+  .nativeEnum(SubscriptionPlan)
+  .default(SubscriptionPlan.starter),
 
     acceptTerms: z
   .boolean()

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
+import { SubscriptionPlan } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/prisma";
 import { getPayPalAccessToken, getPayPalBaseUrl } from "@/shared/lib/paypal";
@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
   try {
   
 
+
+    
    const { subscriptionId, orgId } = await req.json();
 
     if (!subscriptionId || !orgId) {
@@ -75,21 +77,21 @@ const subscription = await response.json();
       );
     }
 
-    let plan = "starter";
+   let plan: SubscriptionPlan = SubscriptionPlan.starter;
 
-    if (
-      subscription.plan_id ===
-      process.env.PAYPAL_GROWTH_PLAN_ID
-    ) {
-      plan = "growth";
-    }
+if (
+  subscription.plan_id ===
+  process.env.PAYPAL_PROFESSIONAL_PLAN_ID
+) {
+  plan = SubscriptionPlan.professional;
+}
 
-    if (
-      subscription.plan_id ===
-      process.env.PAYPAL_PROFESSIONAL_PLAN_ID
-    ) {
-      plan = "professional";
-    }
+if (
+  subscription.plan_id ===
+  process.env.PAYPAL_ENTERPRISE_PLAN_ID
+) {
+  plan = SubscriptionPlan.enterprise;
+}
 
     await prisma.subscription.upsert({
       where: {

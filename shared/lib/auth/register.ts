@@ -3,6 +3,7 @@ import {
   CRMType,
   Industry,
   Prisma,
+  SubscriptionPlan,
   SubscriptionStatus,
   UserRole,
 } from "@prisma/client";
@@ -29,7 +30,7 @@ export interface RegisterInput {
   currency?: string;
   language?: string;
 
-  plan?: string;
+  plan?: SubscriptionPlan;
 }
 
 export interface RegisterResult {
@@ -56,7 +57,7 @@ export class RegisterError extends Error {
   }
 }
 
-const DEFAULT_PLAN = "starter";
+const DEFAULT_PLAN = SubscriptionPlan.starter;
 
 const DEFAULT_TIMEZONE = "UTC";
 

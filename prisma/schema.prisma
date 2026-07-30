@@ -18,7 +18,7 @@ model Organization {
 
   crmType CRMType
 
-  plan String @default("starter")
+  plan SubscriptionPlan @default(starter)
 
   logo String?
 
@@ -1250,7 +1250,7 @@ model Subscription {
 
   customerId String?
 
-  plan String
+  plan SubscriptionPlan
 
   status SubscriptionStatus @default(trial)
 
@@ -5244,4 +5244,10 @@ enum MarketingTemplateStatus {
   active
   inactive
   archived
+}
+
+enum SubscriptionPlan {
+  starter
+  professional
+  enterprise
 }

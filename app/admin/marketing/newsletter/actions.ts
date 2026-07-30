@@ -266,6 +266,9 @@ ${content}
     ===================================================== */
 
     if (deliveryMode === "draft") {
+      if (!session.user.email) {
+  throw new Error("Authenticated user email is missing.")
+}
       await prisma.userEmailQueue.create({
         data: {
           orgId,

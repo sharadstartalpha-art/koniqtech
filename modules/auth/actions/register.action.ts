@@ -4,7 +4,9 @@ import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
-import { CRMType } from "@prisma/client"
+
+
+import { CRMType, Industry, Prisma, SubscriptionPlan, SubscriptionStatus, UserRole } from "@prisma/client"
 
 function makeSlug(
 text:string
@@ -88,13 +90,9 @@ data.crmType ||
 
 CRMType.roofing,
 
-industry:
+industry: Industry.roofing,
 
-"roofing",
-
-plan:
-
-"pro",
+plan: SubscriptionPlan.starter,
 
 email:
 
@@ -142,17 +140,11 @@ externalId:
 
 Date.now(),
 
-plan:
+plan: SubscriptionPlan.starter,
 
-"pro",
+status: SubscriptionStatus.active,
 
-status:
-
-"active",
-
-amount:
-
-199,
+amount: new Prisma.Decimal("199"),
 
 currency:
 
@@ -186,9 +178,7 @@ passwordHash:
 
 hash,
 
-role:
-
-"owner"
+role: UserRole.owner,
 
 }
 

@@ -2,8 +2,9 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SubscriptionPlan } from "@prisma/client";
 
-type Plan = "starter" | "growth" | "professional";
+type Plan = SubscriptionPlan;
 
 function ChoosePlanContent() {
   const router = useRouter();
@@ -38,9 +39,14 @@ function ChoosePlanContent() {
       }
 
       window.location.href = result.approvalUrl;
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
+    } catch (error) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Unable to create subscription.";
+
+  alert(message);
+} finally {
       setLoading(null);
     }
   }
@@ -55,23 +61,47 @@ function ChoosePlanContent() {
         <PlanCard
           title="Starter"
           price="$99/mo"
-          loading={loading === "starter"}
-          onClick={() => subscribe("starter")}
+          
+          features={[
+  "Unlimited Leads",
+  "Customers",
+  "Jobs",
+  "Invoices",
+  "AI Assistant",
+]}
+
+
+          loading={loading === SubscriptionPlan.starter}
+          onClick={() => subscribe(SubscriptionPlan.starter)}
         />
 
         <PlanCard
-          title="Growth"
-          price="$199/mo"
-          loading={loading === "growth"}
-          onClick={() => subscribe("growth")}
-        />
+  title="Professional"
+  price="$199/mo"
+  features={[
+  "Everything in Starter",
+  "Advanced AI",
+  "Automation",
+  "Reports",
+  "Unlimited Users",
+]}
+  loading={loading === SubscriptionPlan.professional}
+  onClick={() => subscribe(SubscriptionPlan.professional)}
+/>
 
         <PlanCard
-          title="Professional"
-          price="$299/mo"
-          loading={loading === "professional"}
-          onClick={() => subscribe("professional")}
-        />
+  title="Enterprise"
+  price="$499/mo"
+  features={[
+  "Everything in Professional",
+  "Multi-location",
+  "Priority Support",
+  "Dedicated Success Manager",
+  "Custom Integrations",
+]}
+  loading={loading === SubscriptionPlan.enterprise}
+  onClick={() => subscribe(SubscriptionPlan.enterprise)}
+/>
       </div>
     </main>
   );
@@ -80,28 +110,43 @@ function ChoosePlanContent() {
 function PlanCard({
   title,
   price,
+  
+  features,
   loading,
   onClick,
 }: {
   title: string;
   price: string;
+  
+  features: string[];
   loading: boolean;
-  onClick: () => void;
+  onClick: () => void | Promise<void>;
 }) {
   return (
-    <div className="rounded-2xl border p-8 shadow">
-      <h2 className="text-2xl font-bold">{title}</h2>
+   <div className="rounded-2xl border p-8 shadow">
+  <h2 className="text-2xl font-bold">{title}</h2>
 
-      <p className="mt-4 text-4xl font-extrabold">{price}</p>
+  <p className="mt-4 text-4xl font-extrabold">{price}</p>
 
-      <button
-        onClick={onClick}
-        disabled={loading}
-        className="mt-8 w-full rounded-lg bg-blue-600 py-3 text-white"
+  <ul className="mt-6 space-y-2">
+    {features.map((feature) => (
+      <li
+        key={feature}
+        className="text-sm text-slate-600"
       >
-        {loading ? "Redirecting..." : "Subscribe"}
-      </button>
-    </div>
+        ✓ {feature}
+      </li>
+    ))}
+  </ul>
+
+  <button
+    onClick={onClick}
+    disabled={loading}
+    className="mt-8 w-full rounded-lg bg-blue-600 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    {loading ? "Redirecting..." : "Subscribe"}
+  </button>
+</div>
   );
 }
 

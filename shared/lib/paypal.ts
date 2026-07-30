@@ -1,3 +1,5 @@
+import { SubscriptionPlan } from "@prisma/client";
+
 const PAYPAL_BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://api-m.paypal.com"
@@ -46,20 +48,20 @@ export function getPayPalBaseUrl() {
 }
 
 /**
- * Get Plan ID from environment
+ * Get PayPal Plan ID
  */
 export function getPayPalPlanId(
-  plan: "starter" | "growth" | "professional"
-) {
+  plan: SubscriptionPlan
+): string {
   switch (plan) {
-    case "starter":
+    case SubscriptionPlan.starter:
       return process.env.PAYPAL_STARTER_PLAN_ID!;
 
-    case "growth":
-      return process.env.PAYPAL_GROWTH_PLAN_ID!;
-
-    case "professional":
+    case SubscriptionPlan.professional:
       return process.env.PAYPAL_PROFESSIONAL_PLAN_ID!;
+
+    case SubscriptionPlan.enterprise:
+      return process.env.PAYPAL_ENTERPRISE_PLAN_ID!;
 
     default:
       throw new Error("Invalid PayPal plan.");

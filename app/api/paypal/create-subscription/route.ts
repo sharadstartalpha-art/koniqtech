@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SubscriptionPlan } from "@prisma/client";
 
 import { prisma } from "@/shared/lib/prisma";
 
@@ -10,40 +11,44 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    
-
     const { plan, orgId } = await req.json();
 
-   if (
-  !orgId ||
-  (plan !== "starter" &&
-    plan !== "growth" &&
-    plan !== "professional")
-) {
-  return NextResponse.json(
-    {
-      message: "Invalid organization or plan.",
-    },
-    {
-      status: 400,
-    }
-  );
-}
+    const validPlans = Object.values(SubscriptionPlan);
 
-   const organization = await prisma.organization.findUnique({
-  where: {
-     id: orgId,
-  },
-});
-
-    if (!organization) {
+    if (
+      !orgId ||
+      !validPlans.includes(plan as SubscriptionPlan)
+    ) {
       return NextResponse.json(
-        { message: "Organization not found." },
-        { status: 404 }
+        {
+          message: "Invalid organization or plan.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const accessToken = await getPayPalAccessToken();
+    const organization =
+      await prisma.organization.findUnique({
+        where: {
+          id: orgId,
+        },
+      });
+
+    if (!organization) {
+      return NextResponse.json(
+        {
+          message: "Organization not found.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    const accessToken =
+      await getPayPalAccessToken();
 
     const response = await fetch(
       `${getPayPalBaseUrl()}/v1/billing/subscriptions`,
@@ -56,7 +61,9 @@ export async function POST(req: NextRequest) {
         },
 
         body: JSON.stringify({
-          plan_id: getPayPalPlanId(plan),
+          plan_id: getPayPalPlanId(
+            plan as SubscriptionPlan
+          ),
 
           custom_id: organization.id,
 
@@ -65,20 +72,25 @@ export async function POST(req: NextRequest) {
 
             locale: "en-US",
 
-            shipping_preference: "NO_SHIPPING",
+            shipping_preference:
+              "NO_SHIPPING",
 
-            user_action: "SUBSCRIBE_NOW",
+            user_action:
+              "SUBSCRIBE_NOW",
 
             payment_method: {
-              payer_selected: "PAYPAL",
-              payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED",
+              payer_selected:
+                "PAYPAL",
+
+              payee_preferred:
+                "IMMEDIATE_PAYMENT_REQUIRED",
             },
 
-           return_url:
-           `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?orgId=${organization.id}`,
+            return_url:
+              `${process.env.NEXT_PUBLIC_APP_URL}/payment/success?orgId=${organization.id}`,
 
-           cancel_url:
-`${process.env.NEXT_PUBLIC_APP_URL}/register/plan?orgId=${organization.id}`,
+            cancel_url:
+              `${process.env.NEXT_PUBLIC_APP_URL}/register/plan?orgId=${organization.id}`,
           },
         }),
       }
@@ -91,7 +103,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(
         {
-          message: "Unable to create subscription.",
+          message:
+            "Unable to create subscription.",
           paypal: data,
         },
         {
@@ -100,14 +113,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const approveLink = data.links?.find(
-      (link: any) => link.rel === "approve"
-    );
+    const approveLink =
+      data.links?.find(
+        (
+          link: {
+            rel: string;
+            href: string;
+          }
+        ) => link.rel === "approve"
+      );
 
     if (!approveLink) {
       return NextResponse.json(
         {
-          message: "Approval URL not found.",
+          message:
+            "Approval URL not found.",
         },
         {
           status: 500,
@@ -116,14 +136,15 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-  approvalUrl: approveLink.href,
-});
+      approvalUrl: approveLink.href,
+    });
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       {
-        message: "Internal server error.",
+        message:
+          "Internal server error.",
       },
       {
         status: 500,

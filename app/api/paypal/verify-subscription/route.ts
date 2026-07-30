@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SubscriptionPlan } from "@prisma/client";
+import { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/prisma";
 import { getPayPalAccessToken, getPayPalBaseUrl } from "@/shared/lib/paypal";
@@ -107,7 +107,7 @@ if (
 
         plan,
 
-        status: "active",
+        status: SubscriptionStatus.active,
 
         currency:
           subscription.billing_info

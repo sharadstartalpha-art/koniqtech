@@ -1,0 +1,5 @@
+﻿{
+  "Description": "Domain ownership verification file for Microsoft 365 - place in the website root",
+  "Domain": "koniqtech.com",
+  "Id": "2f0c74b6-6a07-462a-a7e5-c56308554fc3"
+}

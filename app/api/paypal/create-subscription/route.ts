@@ -98,6 +98,10 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
+    console.log("Status:", response.status);
+console.log("PayPal Response:");
+console.log(JSON.stringify(data, null, 2));
+
     if (!response.ok) {
       console.error(data);
 

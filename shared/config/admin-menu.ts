@@ -515,6 +515,117 @@ export const SUPER_ADMIN_MENU: AdminMenuSection[] = [
     ],
   },
 
+
+/* ------------------------------------------------------ */
+  /* Developer Tools */
+  /* ------------------------------------------------------ */
+
+{
+  title: "Developer Tools",
+
+  items: [
+    {
+      label: "Developer Tools",
+
+      icon: Wrench,
+
+      children: [
+        {
+          label: "Dashboard",
+          href: "/admin/developer-tools",
+          icon: LayoutDashboard,
+        },
+
+        {
+          label: "Demo Data",
+          href: "/admin/developer-tools/demo-data",
+          icon: Database,
+        },
+
+        {
+          label: "Organizations",
+          href: "/admin/developer-tools/organizations",
+          icon: Building2,
+        },
+
+        {
+          label: "Users",
+          href: "/admin/developer-tools/users",
+          icon: Users,
+        },
+
+        {
+          label: "Subscriptions",
+          href: "/admin/developer-tools/subscriptions",
+          icon: CreditCard,
+        },
+
+        {
+          label: "Roles",
+          href: "/admin/developer-tools/roles",
+          icon: ShieldCheck,
+        },
+
+        {
+          label: "PayPal",
+          href: "/admin/developer-tools/paypal",
+          icon: BadgeDollarSign,
+        },
+
+        {
+          label: "Email",
+          href: "/admin/developer-tools/email",
+          icon: Mail,
+        },
+
+        {
+          label: "Storage",
+          href: "/admin/developer-tools/storage",
+          icon: HardDrive,
+        },
+
+        {
+          label: "Queue",
+          href: "/admin/developer-tools/queue",
+          icon: Layers,
+        },
+
+        {
+          label: "Logs",
+          href: "/admin/developer-tools/logs",
+          icon: ScrollText,
+        },
+
+        {
+          label: "Health",
+          href: "/admin/developer-tools/health",
+          icon: Activity,
+        },
+
+        {
+          label: "Environment",
+          href: "/admin/developer-tools/environment",
+          icon: Server,
+        },
+
+        {
+          label: "Features",
+          href: "/admin/developer-tools/features",
+          icon: Cpu,
+        },
+
+        {
+          label: "Login As",
+          href: "/admin/developer-tools/login-as",
+          icon: UserCog,
+        },
+      ],
+    },
+  ],
+},
+
+
+
   /* ------------------------------------------------------ */
   /* Settings */
   /* ------------------------------------------------------ */

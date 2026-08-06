@@ -24,6 +24,7 @@
     "@paypal/react-paypal-js": "^9.2.0",
     "@pinecone-database/pinecone": "^7.2.0",
     "@prisma/client": "^6.9.0",
+    "@radix-ui/react-tooltip": "^1.2.16",
     "@react-google-maps/api": "^2.20.8",
     "@sentry/nextjs": "^10.53.1",
     "@tailwindcss/postcss": "^4.3.0",

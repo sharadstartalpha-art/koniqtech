@@ -441,7 +441,10 @@ model User {
   createdMarketingCampaigns   MarketingCampaign[]   @relation("MarketingCampaignCreator")
   createdMarketingNewsletters MarketingNewsletter[] @relation("MarketingNewsletterCreator")
 
-  createdMarketingTemplates MarketingTemplate[] @relation("MarketingTemplateCreator")
+  createdMarketingTemplates MarketingTemplate[]    @relation("MarketingTemplateCreator")
+  adminImpersonations       ImpersonationSession[] @relation("AdminImpersonations")
+
+  targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
 
   @@index([orgId])
   @@index([status])
@@ -5250,4 +5253,17 @@ enum SubscriptionPlan {
   starter
   professional
   enterprise
+}
+
+model ImpersonationSession {
+  id          String @id @default(uuid())
+  adminUserId String
+  adminUser   User   @relation("AdminImpersonations", fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  targetUserId String
+  targetUser   User      @relation("TargetImpersonations", fields: [targetUserId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
 }

@@ -1,14 +1,21 @@
+// app/api/admin/developer-tools/users/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
-
 import bcrypt from "bcryptjs";
-
-import { Prisma, UserRole } from "@prisma/client";
+import { z } from "zod";
+import {
+  Prisma,
+  SubscriptionStatus,
+  UserRole,
+} from "@prisma/client";
 
 import { auth } from "@/auth";
+import prisma from "@/shared/lib/prisma";
 
-import { prisma } from "@/shared/lib/prisma";
 import { createUserSchema } from "@/shared/lib/validators/user";
+import { SUBSCRIPTION_PLANS } from "@/shared/lib/admin/subscription-plans";
 
+export const dynamic = "force-dynamic";
 
 function unauthorized() {
   return NextResponse.json(
@@ -16,9 +23,7 @@ function unauthorized() {
       success: false,
       message: "Unauthorized",
     },
-    {
-      status: 401,
-    }
+    { status: 401 }
   );
 }
 
@@ -28,26 +33,33 @@ function forbidden() {
       success: false,
       message: "Forbidden",
     },
-    {
-      status: 403,
-    }
+    { status: 403 }
   );
 }
 
 function internalError(error: unknown) {
-  console.error(error);
+  console.error("Admin Users API Error:", error);
 
   return NextResponse.json(
     {
       success: false,
       message: "Internal Server Error",
     },
-    {
-      status: 500,
-    }
+    { status: 500 }
   );
 }
 
+function isSuperAdmin(session: any) {
+  return (
+    session?.user?.role === UserRole.super_admin
+  );
+}
+
+/**
+ * GET /api/admin/developer-tools/users
+ *
+ * Returns real users from PostgreSQL.
+ */
 export async function GET(
   request: NextRequest
 ) {
@@ -58,10 +70,7 @@ export async function GET(
       return unauthorized();
     }
 
-    if (
-      session.user.role !==
-      UserRole.super_admin
-    ) {
+    if (!isSuperAdmin(session)) {
       return forbidden();
     }
 
@@ -69,29 +78,43 @@ export async function GET(
       new URL(request.url);
 
     const search =
-      searchParams.get("search") ??
-      "";
+      searchParams.get("search")?.trim() ?? "";
 
-    const role =
-      searchParams.get("role");
+    const roleParam =
+      searchParams.get("role") ?? "";
 
     const status =
-      searchParams.get("status");
+      searchParams.get("status")?.trim() ?? "";
+
+    const orgId =
+      searchParams.get("orgId")?.trim() ?? "";
+
+    const requestedPage = Number(
+      searchParams.get("page") ?? "1"
+    );
+
+    const requestedLimit = Number(
+      searchParams.get("limit") ?? "20"
+    );
 
     const page =
-      Number(
-        searchParams.get("page") ?? 1
-      );
+      Number.isFinite(requestedPage) &&
+      requestedPage > 0
+        ? Math.floor(requestedPage)
+        : 1;
 
     const limit =
-      Number(
-        searchParams.get("limit") ?? 20
-      );
+      Number.isFinite(requestedLimit) &&
+      requestedLimit > 0
+        ? Math.min(
+            Math.floor(requestedLimit),
+            100
+          )
+        : 20;
 
-    const where: Prisma.UserWhereInput =
-      {};
+    const where: Prisma.UserWhereInput = {};
 
-    if (search.trim()) {
+    if (search) {
       where.OR = [
         {
           name: {
@@ -109,50 +132,77 @@ export async function GET(
     }
 
     if (
-      role &&
+      roleParam &&
       Object.values(UserRole).includes(
-        role as UserRole
+        roleParam as UserRole
       )
     ) {
-      where.role =
-        role as UserRole;
+      where.role = roleParam as UserRole;
     }
 
     if (status) {
       where.status = status;
     }
 
-    const [users, total] =
-      await prisma.$transaction([
-        prisma.user.findMany({
-          where,
+    if (orgId) {
+      where.orgId = orgId;
+    }
 
-          include: {
-            organization: {
+     const [users, total] =
+  await prisma.$transaction([
+    prisma.user.findMany({
+      where,
+
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        lastLogin: true,
+        lastSeen: true,
+        emailVerified: true,
+        createdAt: true,
+
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            crmType: true,
+            plan: true,
+            active: true,
+
+            subscriptions: {
               select: {
                 id: true,
-                name: true,
-                slug: true,
                 plan: true,
-                active: true,
+                status: true,
+                amount: true,
+                currency: true,
+                billingCycle: true,
+                renewAt: true,
+                cancelAtPeriodEnd: true,
               },
             },
           },
+        },
+      },
 
-          orderBy: {
-            createdAt: "desc",
-          },
+      orderBy: {
+        createdAt: "desc",
+      },
 
-          skip:
-            (page - 1) * limit,
+      skip: (page - 1) * limit,
 
-          take: limit,
-        }),
+      take: limit,
+    }),
 
-        prisma.user.count({
-          where,
-        }),
-      ]);
+    prisma.user.count({
+      where,
+    }),
+  ]);
 
     return NextResponse.json({
       success: true,
@@ -163,9 +213,7 @@ export async function GET(
         page,
         limit,
         total,
-        pages: Math.ceil(
-          total / limit
-        ),
+        pages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
@@ -173,6 +221,12 @@ export async function GET(
   }
 }
 
+/**
+ * POST /api/admin/developer-tools/users
+ *
+ * Creates a real CRM user and assigns
+ * a subscription to the user's organization.
+ */
 export async function POST(
   request: NextRequest
 ) {
@@ -183,20 +237,14 @@ export async function POST(
       return unauthorized();
     }
 
-    if (
-      session.user.role !==
-      UserRole.super_admin
-    ) {
+    if (!isSuperAdmin(session)) {
       return forbidden();
     }
 
-   const rawBody =
-  await request.json();
+    const rawBody = await request.json();
 
-const body =
-  createUserSchema.parse(
-    rawBody
-  );
+    const body =
+      createUserSchema.parse(rawBody);
 
     const {
       orgId,
@@ -205,22 +253,35 @@ const body =
       password,
       role,
       phone,
+      plan,
     } = body;
 
-    
+    const planConfig =
+      SUBSCRIPTION_PLANS[plan];
 
-    
+    if (!planConfig) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid subscription plan.",
+        },
+        { status: 400 }
+      );
+    }
 
     const organization =
-      await prisma.organization.findUnique({
-        where: {
-          id: orgId,
-        },
-        select: {
-          id: true,
-          active: true,
-        },
-      });
+  await prisma.organization.findUnique({
+    where: {
+      id: orgId,
+    },
+
+    select: {
+      id: true,
+      name: true,
+      active: true,
+      plan: true,
+    },
+  });
 
     if (!organization) {
       return NextResponse.json(
@@ -237,16 +298,22 @@ const body =
         {
           success: false,
           message:
-            "Organization is inactive.",
+            "Cannot create a user inside an inactive organization.",
         },
         { status: 400 }
       );
     }
 
+    const normalizedEmail =
+      email.toLowerCase().trim();
+
     const existingUser =
       await prisma.user.findUnique({
         where: {
-          email: email.toLowerCase(),
+          email: normalizedEmail,
+        },
+        select: {
+          id: true,
         },
       });
 
@@ -255,7 +322,7 @@ const body =
         {
           success: false,
           message:
-            "Email already exists.",
+            "A user with this email already exists.",
         },
         { status: 409 }
       );
@@ -264,74 +331,215 @@ const body =
     const passwordHash =
       await bcrypt.hash(password, 12);
 
-   const user = await prisma.$transaction(
-  async (tx) => {
-    return await tx.user.create({
-      data: {
-        orgId,
+    const now = new Date();
 
-        name: name.trim(),
+    const renewAt = new Date(now);
+    renewAt.setMonth(
+      renewAt.getMonth() + 1
+    );
 
-        email: email.toLowerCase(),
+    const result =
+      await prisma.$transaction(
+        async (tx) => {
+          const user =
+            await tx.user.create({
+              data: {
+                orgId,
 
-        passwordHash,
+                name: name.trim(),
 
-        role,
+                email: normalizedEmail,
 
-        phone: phone?.trim() || null,
+                passwordHash,
 
-        status: "active",
-      },
+                role,
 
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-      },
-    });
-  }
-);
+                phone:
+                  phone?.trim() || null,
+
+                status: "active",
+
+                emailVerified: false,
+
+                failedLoginAttempts: 0,
+              },
+
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                status: true,
+                createdAt: true,
+
+                organization: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    crmType: true,
+                  },
+                },
+              },
+            });
+
+          /**
+           * Subscription is organization-level
+           * because Subscription.orgId is unique.
+           */
+         const subscription =
+  await tx.subscription.upsert({
+    where: {
+      orgId,
+    },
+
+    create: {
+      orgId,
+      provider: "admin",
+      externalId: null,
+      customerId: null,
+      plan,
+      status: SubscriptionStatus.active,
+      billingCycle: "monthly",
+      amount: new Prisma.Decimal(
+        planConfig.amount
+      ),
+      currency: "USD",
+      renewAt,
+      nextInvoiceDate: renewAt,
+      trialStart: null,
+      trialEnd: null,
+      interval: "month",
+      cancelAtPeriodEnd: false,
+      userLimit: planConfig.userLimit,
+      storageLimit: planConfig.storageLimit,
+      aiCredits: planConfig.aiCredits,
+    },
+
+    update: {
+      plan,
+      status: SubscriptionStatus.active,
+      billingCycle: "monthly",
+      amount: new Prisma.Decimal(
+        planConfig.amount
+      ),
+      currency: "USD",
+      renewAt,
+      nextInvoiceDate: renewAt,
+      trialStart: null,
+      trialEnd: null,
+      interval: "month",
+      cancelAtPeriodEnd: false,
+      userLimit: planConfig.userLimit,
+      storageLimit: planConfig.storageLimit,
+      aiCredits: planConfig.aiCredits,
+    },
+  });
+
+          /**
+           * Keep Organization.plan synchronized
+           * with Subscription.plan.
+           */
+          const updatedOrganization =
+            await tx.organization.update({
+              where: {
+                id: orgId,
+              },
+
+              data: {
+                plan,
+
+                usersLimit:
+                  planConfig.userLimit,
+
+                subscriptionEndsAt:
+                  renewAt,
+              },
+
+              select: {
+                id: true,
+                name: true,
+                plan: true,
+                usersLimit: true,
+                subscriptionEndsAt: true,
+              },
+            });
+
+          return {
+            user,
+            subscription,
+            organization:
+              updatedOrganization,
+          };
+        }
+      );
 
     return NextResponse.json(
       {
         success: true,
 
         message:
-          "User created successfully.",
+          "User created and subscription assigned successfully.",
 
-        data: user,
+        data: result,
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
-  console.error(
-    "Create User Error",
-    error
-  );
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Validation failed.",
+          errors: error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
 
-  if (
-    error instanceof
-    Prisma.PrismaClientKnownRequestError
-  ) {
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Database operation failed.",
-        code: error.code,
-      },
-      {
-        status: 400,
+    if (
+      error instanceof
+      Prisma.PrismaClientKnownRequestError
+    ) {
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "A record with the same unique value already exists.",
+          },
+          { status: 409 }
+        );
       }
-    );
-  }
 
-  return internalError(error);
-}
+      if (error.code === "P2025") {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "The requested record could not be found.",
+          },
+          { status: 404 }
+        );
+      }
+
+      console.error(
+        "Prisma error:",
+        error
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Database operation failed.",
+          code: error.code,
+        },
+        { status: 400 }
+      );
+    }
+
+    return internalError(error);
+  }
 }

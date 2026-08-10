@@ -1,1092 +1,747 @@
-"use client";
-
-import { useMemo, useState } from "react";
 import Link from "next/link";
-
 import {
-  Users,
-  User,
-  Shield,
-  Search,
-  RefreshCw,
-  Plus,
-  Eye,
-  LogIn,
-  KeyRound,
-  Ban,
-  CheckCircle2,
-  MoreHorizontal,
-  Mail,
-} from "lucide-react";
+  Prisma,
+  SubscriptionPlan,
+  UserRole,
+} from "@prisma/client";
 
-type UserRole =
-  | "Owner"
-  | "Manager"
-  | "Sales"
-  | "Dispatcher"
-  | "Technician";
+import prisma from "@/shared/lib/prisma";
 
-type UserStatus =
-  | "Active"
-  | "Invited"
-  | "Suspended";
+import CreateUserForm from "@/components/admin/developer-tools/CreateUserForm";
 
-interface UserRecord {
-  id: string;
+export const dynamic = "force-dynamic";
 
-  name: string;
+type UsersPageProps = {
+  searchParams: Promise<{
+    q?: string;
+    role?: string;
+    status?: string;
+    orgId?: string;
+    page?: string;
+  }>;
+};
 
-  email: string;
+const LIMIT = 15;
 
-  organization: string;
-
-  role: UserRole;
-
-  status: UserStatus;
-
-  lastLogin: string;
-
-  createdAt: string;
-}
-
-const users: UserRecord[] = [
-  {
-    id: "user_001",
-    name: "John Carter",
-    email: "john@abcroofing.com",
-    organization: "ABC Roofing",
-    role: "Owner",
-    status: "Active",
-    lastLogin: "10 minutes ago",
-    createdAt: "2026-07-01",
-  },
-  {
-    id: "user_002",
-    name: "Michael Ross",
-    email: "michael@elitehvac.com",
-    organization: "Elite HVAC",
-    role: "Manager",
-    status: "Invited",
-    lastLogin: "-",
-    createdAt: "2026-07-15",
-  },
-  {
-    id: "user_003",
-    name: "Sarah Smith",
-    email: "sarah@primeplumbing.com",
-    organization: "Prime Plumbing",
-    role: "Sales",
-    status: "Active",
-    lastLogin: "Yesterday",
-    createdAt: "2026-06-20",
-  },
-  {
-    id: "user_004",
-    name: "David Lee",
-    email: "david@greenlandscape.com",
-    organization: "Green Landscape",
-    role: "Technician",
-    status: "Suspended",
-    lastLogin: "3 weeks ago",
-    createdAt: "2026-05-05",
-  },
+const CUSTOMER_ROLES: UserRole[] = [
+  UserRole.owner,
+  UserRole.manager,
+  UserRole.sales,
+  UserRole.dispatcher,
+  UserRole.technician,
+  UserRole.crew,
+  UserRole.accountant,
 ];
 
-export default function DeveloperUsersPage() {
+function formatRole(role: UserRole) {
+  return role
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    );
+}
 
-      const [search, setSearch] =
-    useState("");
-
-  const [roleFilter, setRoleFilter] =
-    useState("All");
-
-  const [statusFilter, setStatusFilter] =
-    useState("All");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [selectedUser, setSelectedUser] =
-    useState<UserRecord | null>(null);
-
-      const stats = useMemo(() => ({
-    total: users.length,
-
-    active: users.filter(
-      (u) => u.status === "Active"
-    ).length,
-
-    invited: users.filter(
-      (u) => u.status === "Invited"
-    ).length,
-
-    suspended: users.filter(
-      (u) => u.status === "Suspended"
-    ).length,
-
-    owners: users.filter(
-      (u) => u.role === "Owner"
-    ).length,
-
-    technicians: users.filter(
-      (u) => u.role === "Technician"
-    ).length,
-  }), []);
-
-    const filteredUsers =
-    useMemo(() => {
-      return users.filter((user) => {
-
-        const matchesSearch =
-          user.name
-            .toLowerCase()
-            .includes(search.toLowerCase()) ||
-
-          user.email
-            .toLowerCase()
-            .includes(search.toLowerCase());
-
-        const matchesRole =
-          roleFilter === "All" ||
-          user.role === roleFilter;
-
-        const matchesStatus =
-          statusFilter === "All" ||
-          user.status === statusFilter;
-
-        return (
-          matchesSearch &&
-          matchesRole &&
-          matchesStatus
-        );
-
-      });
-    }, [
-      search,
-      roleFilter,
-      statusFilter,
-    ]);
-
-
-
-
-
-
-      function refreshUsers() {
-    setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+function formatPlan(
+  plan: SubscriptionPlan | null
+) {
+  if (!plan) {
+    return "No Plan";
   }
 
-  function getRoleColor(
-    role: UserRole
-  ) {
-    switch (role) {
-      case "Owner":
-        return "bg-amber-100 text-amber-700";
+  return plan
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    );
+}
 
-      case "Manager":
-        return "bg-indigo-100 text-indigo-700";
+function formatDate(
+  date: Date | null
+) {
+  if (!date) {
+    return "—";
+  }
 
-      case "Sales":
-        return "bg-blue-100 text-blue-700";
-
-      case "Dispatcher":
-        return "bg-purple-100 text-purple-700";
-
-      case "Technician":
-        return "bg-green-100 text-green-700";
-
-      default:
-        return "bg-slate-100 text-slate-700";
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     }
-  }
-
-
-      const [actionLoading, setActionLoading] =
-  useState(false);
-
-const [successMessage, setSuccessMessage] =
-  useState("");
-
-const [errorMessage, setErrorMessage] =
-  useState("");
-
-const [showActions, setShowActions] =
-  useState(false);
-
-const [showDeleteModal, setShowDeleteModal] =
-  useState(false);
-
-
-  const [currentPage, setCurrentPage] =
-  useState(1);
-
-const pageSize = 10;
-
-  async function loginAsUser(
-  user: UserRecord
-) {
-  try {
-    setActionLoading(true);
-
-    // TODO:
-    // POST /api/admin/developer-tools/login-as
-
-    console.log(
-      "Login As",
-      user.email
-    );
-
-    setSuccessMessage(
-      `Logged in as ${user.name}.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to login as user."
-    );
-  } finally {
-    setActionLoading(false);
-  }
+  ).format(date);
 }
 
-
-async function resetPassword(
-  user: UserRecord
+function formatDateTime(
+  date: Date | null
 ) {
-  try {
-    setActionLoading(true);
-
-    // TODO:
-    // POST /api/admin/users/reset-password
-
-    setSuccessMessage(
-      `Password reset email sent to ${user.email}.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to reset password."
-    );
-  } finally {
-    setActionLoading(false);
+  if (!date) {
+    return "Never";
   }
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }
+  ).format(date);
 }
 
+export default async function UsersPage({
+  searchParams,
+}: UsersPageProps) {
+  const params = await searchParams;
 
-async function suspendUser(
-  user: UserRecord
-) {
-  try {
-    setActionLoading(true);
+  const q =
+    typeof params.q === "string"
+      ? params.q.trim()
+      : "";
 
-    // TODO
+  const role =
+    typeof params.role === "string"
+      ? params.role
+      : "";
 
-    setSuccessMessage(
-      `${user.name} suspended.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to suspend user."
-    );
-  } finally {
-    setActionLoading(false);
-  }
-}
+  const status =
+    typeof params.status === "string"
+      ? params.status
+      : "";
 
-async function activateUser(
-  user: UserRecord
-) {
-  try {
-    setActionLoading(true);
+  const orgId =
+    typeof params.orgId === "string"
+      ? params.orgId
+      : "";
 
-    // TODO
-
-    setSuccessMessage(
-      `${user.name} activated.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to activate user."
-    );
-  } finally {
-    setActionLoading(false);
-  }
-}
-
-async function resendInvitation(
-  user: UserRecord
-) {
-  try {
-    setActionLoading(true);
-
-    // TODO
-
-    setSuccessMessage(
-      `Invitation sent to ${user.email}.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to resend invitation."
-    );
-  } finally {
-    setActionLoading(false);
-  }
-}
-
-
-async function deleteUser(
-  user: UserRecord
-) {
-  try {
-    setActionLoading(true);
-
-    // TODO
-
-    setSuccessMessage(
-      `${user.name} deleted.`
-    );
-  } catch {
-    setErrorMessage(
-      "Unable to delete user."
-    );
-  } finally {
-    setActionLoading(false);
-  }
-}
-
-const totalPages = Math.max(
-  1,
-  Math.ceil(
-    filteredUsers.length /
-      pageSize
-  )
-);
-
-const paginatedUsers =
-  filteredUsers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+  const parsedPage = Number(
+    params.page ?? "1"
   );
 
-    return (
-    <div className="space-y-8">
+  const page =
+    Number.isFinite(parsedPage) &&
+    parsedPage > 0
+      ? Math.floor(parsedPage)
+      : 1;
 
-     {successMessage && (
-  <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-green-700">
-    {successMessage}
-  </div>
-)}
+  const where: Prisma.UserWhereInput = {};
 
-{errorMessage && (
-  <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-    {errorMessage}
-  </div>
-)}
+  if (q) {
+    where.OR = [
+      {
+        name: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
 
-      {/* Header */}
+  if (
+    role &&
+    CUSTOMER_ROLES.includes(
+      role as UserRole
+    )
+  ) {
+    where.role = role as UserRole;
+  }
 
-      <section className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-8 text-white shadow-xl">
+  if (status) {
+    where.status = status;
+  }
 
-        <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
+  if (orgId) {
+    where.orgId = orgId;
+  }
 
-          <div>
+  /*
+   * Load everything from the real database.
+   *
+   * IMPORTANT:
+   * The Organization -> Subscription relation
+   * in your schema is called `subscriptions`.
+   */
+  const [
+    users,
+    total,
+    activeUsers,
+    organizations,
+  ] = await Promise.all([
+    prisma.user.findMany({
+      where,
 
-            <div className="mb-4 flex items-center gap-4">
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        lastLogin: true,
+        lastSeen: true,
+        emailVerified: true,
+        createdAt: true,
 
-              <div className="rounded-2xl bg-white/10 p-4">
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            crmType: true,
+            plan: true,
+            active: true,
 
-                <Users className="h-8 w-8" />
+            subscriptions: {
+              select: {
+                id: true,
+                plan: true,
+                status: true,
+                amount: true,
+                currency: true,
+                billingCycle: true,
+                renewAt: true,
+                cancelAtPeriodEnd: true,
+                userLimit: true,
+                storageLimit: true,
+                aiCredits: true,
+              },
+            },
+          },
+        },
+      },
 
-              </div>
+      orderBy: {
+        createdAt: "desc",
+      },
 
-              <div>
+      skip: (page - 1) * LIMIT,
 
-                <h1 className="text-4xl font-bold">
-                  User Testing
-                </h1>
+      take: LIMIT,
+    }),
 
-                <p className="mt-2 text-slate-300">
-                  Test users, permissions, roles and Login-As functionality.
-                </p>
+    prisma.user.count({
+      where,
+    }),
 
-              </div>
+    prisma.user.count({
+      where: {
+        ...where,
+        status: "active",
+      },
+    }),
 
-            </div>
+    prisma.organization.findMany({
+      where: {
+        active: true,
+      },
 
+      select: {
+        id: true,
+        name: true,
+        crmType: true,
+        plan: true,
+        active: true,
+      },
+
+      orderBy: {
+        name: "asc",
+      },
+    }),
+  ]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / LIMIT)
+  );
+
+  const currentPage = Math.min(
+    page,
+    totalPages
+  );
+
+  function buildUrl(
+    targetPage: number
+  ) {
+    const search =
+      new URLSearchParams();
+
+    if (q) {
+      search.set("q", q);
+    }
+
+    if (role) {
+      search.set("role", role);
+    }
+
+    if (status) {
+      search.set("status", status);
+    }
+
+    if (orgId) {
+      search.set("orgId", orgId);
+    }
+
+    search.set(
+      "page",
+      String(targetPage)
+    );
+
+    return `?${search.toString()}`;
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* ===================================================== */}
+      {/* HEADER */}
+      {/* ===================================================== */}
+
+      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div>
+          <div className="mb-2 text-sm text-slate-500">
+            Admin / Developer Tools / Users
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <h1 className="text-2xl font-bold text-slate-900">
+            Users
+          </h1>
 
-            <button
-              onClick={refreshUsers}
-              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 font-medium transition hover:bg-white/20"
-            >
-              <RefreshCw
-                className={`h-5 w-5 ${
-                  loading ? "animate-spin" : ""
-                }`}
-              />
-
-              Refresh
-
-            </button>
-
-            <button className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold transition hover:bg-blue-700">
-
-              <Plus className="h-5 w-5" />
-
-              New User
-
-            </button>
-
-          </div>
-
+          <p className="mt-1 text-sm text-slate-500">
+            Manage CRM users, roles,
+            organizations and subscriptions.
+          </p>
         </div>
 
-      </section>
+        <CreateUserForm
+          organizations={organizations.map(
+            (organization) => ({
+              id: organization.id,
+              name: organization.name,
+              crmType:
+                String(
+                  organization.crmType
+                ),
+              plan:
+                String(
+                  organization.plan
+                ),
+              active:
+                organization.active,
+            })
+          )}
+        />
+      </div>
 
-      {/* Statistics */}
+      {/* ===================================================== */}
+      {/* STATISTICS */}
+      {/* ===================================================== */}
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-6">
-
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-
-          <Users className="mb-4 h-8 w-8 text-blue-600" />
-
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">
             Total Users
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.total}
-          </h3>
-
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {total}
+          </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-
-          <CheckCircle2 className="mb-4 h-8 w-8 text-green-600" />
-
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">
-            Active
+            Active Users
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.active}
-          </h3>
-
+          <p className="mt-2 text-3xl font-bold text-green-600">
+            {activeUsers}
+          </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-
-          <Mail className="mb-4 h-8 w-8 text-blue-600" />
-
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">
-            Invited
+            Organizations
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.invited}
-          </h3>
-
+          <p className="mt-2 text-3xl font-bold text-blue-600">
+            {organizations.length}
+          </p>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-
-          <Ban className="mb-4 h-8 w-8 text-red-600" />
-
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">
-            Suspended
+            Showing
           </p>
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.suspended}
-          </h3>
-
-        </div>
-
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-
-          <Shield className="mb-4 h-8 w-8 text-amber-600" />
-
-          <p className="text-sm text-slate-500">
-            Owners
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {users.length}
           </p>
+        </div>
+      </div>
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.owners}
-          </h3>
+      {/* ===================================================== */}
+      {/* FILTERS */}
+      {/* ===================================================== */}
 
+      <form
+        method="GET"
+        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      >
+        <div className="grid gap-3 md:grid-cols-4">
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Search name or email..."
+            className="rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+
+          <select
+            name="role"
+            defaultValue={role}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">
+              All Roles
+            </option>
+
+            {CUSTOMER_ROLES.map(
+              (customerRole) => (
+                <option
+                  key={customerRole}
+                  value={customerRole}
+                >
+                  {formatRole(
+                    customerRole
+                  )}
+                </option>
+              )
+            )}
+          </select>
+
+          <select
+            name="status"
+            defaultValue={status}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">
+              All Statuses
+            </option>
+
+            <option value="active">
+              Active
+            </option>
+
+            <option value="inactive">
+              Inactive
+            </option>
+
+            <option value="invited">
+              Invited
+            </option>
+
+            <option value="suspended">
+              Suspended
+            </option>
+          </select>
+
+          <select
+            name="orgId"
+            defaultValue={orgId}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          >
+            <option value="">
+              All Organizations
+            </option>
+
+            {organizations.map(
+              (organization) => (
+                <option
+                  key={organization.id}
+                  value={organization.id}
+                >
+                  {organization.name}
+                </option>
+              )
+            )}
+          </select>
         </div>
 
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="mt-4 flex gap-3">
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            Search
+          </button>
 
-          <User className="mb-4 h-8 w-8 text-indigo-600" />
+          <Link
+            href="/admin/developer-tools/users"
+            className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            Reset
+          </Link>
+        </div>
+      </form>
 
-          <p className="text-sm text-slate-500">
-            Technicians
-          </p>
+      {/* ===================================================== */}
+      {/* TABLE */}
+      {/* ===================================================== */}
 
-          <h3 className="mt-2 text-3xl font-bold">
-            {stats.technicians}
-          </h3>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1200px] text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  User
+                </th>
 
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Organization
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  CRM
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Role
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Status
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Subscription
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Last Login
+                </th>
+
+                <th className="px-5 py-4 text-left font-semibold text-slate-600">
+                  Created
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {users.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    className="px-6 py-16 text-center"
+                  >
+                    <div className="text-lg font-semibold text-slate-900">
+                      No users found
+                    </div>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Try changing your filters
+                      or create a new user.
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => {
+                  const subscription =
+                    user.organization
+                      .subscriptions;
+
+                  return (
+                    <tr
+                      key={user.id}
+                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                    >
+                      {/* USER */}
+                      <td className="px-5 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-700">
+                            {user.name
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
+
+                          <div>
+                            <div className="font-semibold text-slate-900">
+                              {user.name}
+                            </div>
+
+                            <div className="text-xs text-slate-500">
+                              {user.email}
+                            </div>
+
+                            {user.phone && (
+                              <div className="text-xs text-slate-400">
+                                {user.phone}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* ORGANIZATION */}
+                      <td className="px-5 py-5">
+                        <div className="font-medium text-slate-900">
+                          {
+                            user
+                              .organization
+                              .name
+                          }
+                        </div>
+
+                        <div className="mt-1 text-xs">
+                          {user.organization
+                            .active ? (
+                            <span className="text-green-600">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="text-red-600">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* CRM */}
+                      <td className="px-5 py-5">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-700">
+                          {String(
+                            user.organization
+                              .crmType
+                          )}
+                        </span>
+                      </td>
+
+                      {/* ROLE */}
+                      <td className="px-5 py-5">
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                          {formatRole(
+                            user.role
+                          )}
+                        </span>
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="px-5 py-5">
+                        {user.status ===
+                        "active" ? (
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                            {user.status}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* SUBSCRIPTION */}
+                      <td className="px-5 py-5">
+                        {subscription ? (
+                          <div>
+                            <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+                              {formatPlan(
+                                subscription.plan
+                              )}
+                            </span>
+
+                            <div className="mt-2 text-xs text-slate-500">
+                              $
+                              {subscription.amount.toString()}
+                              {" / "}
+                              {String(
+                                subscription.billingCycle
+                              )}
+                            </div>
+
+                            {subscription.renewAt && (
+                              <div className="mt-1 text-xs text-slate-400">
+                                Renews{" "}
+                                {formatDate(
+                                  subscription.renewAt
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">
+                            No subscription
+                          </span>
+                        )}
+                      </td>
+
+                      {/* LAST LOGIN */}
+                      <td className="px-5 py-5 text-slate-600">
+                        {formatDateTime(
+                          user.lastLogin
+                        )}
+                      </td>
+
+                      {/* CREATED */}
+                      <td className="px-5 py-5 text-slate-600">
+                        {formatDate(
+                          user.createdAt
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-      </section>
+        {/* =================================================== */}
+        {/* PAGINATION */}
+        {/* =================================================== */}
 
-      {/* Filters */}
+        <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
+          <div className="text-sm text-slate-500">
+            Page{" "}
+            <span className="font-semibold text-slate-900">
+              {currentPage}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-900">
+              {totalPages}
+            </span>
 
-      <section className="rounded-2xl border bg-white p-6 shadow-sm">
-
-        <div className="grid gap-4 lg:grid-cols-4">
-
-          <div className="relative">
-
-            <Search className="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search user..."
-              className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 outline-none focus:border-blue-500"
-            />
-
+            <span className="ml-2">
+              ({total} users)
+            </span>
           </div>
 
-          <select
-            value={roleFilter}
-            onChange={(e) =>
-              setRoleFilter(e.target.value)
-            }
-            className="rounded-xl border border-slate-300 px-4 py-3"
-          >
-            <option>All</option>
-            <option>Owner</option>
-            <option>Manager</option>
-            <option>Sales</option>
-            <option>Dispatcher</option>
-            <option>Technician</option>
-          </select>
-
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
-            className="rounded-xl border border-slate-300 px-4 py-3"
-          >
-            <option>All</option>
-            <option>Active</option>
-            <option>Invited</option>
-            <option>Suspended</option>
-          </select>
-
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 transition hover:bg-slate-100">
-
-            <Search className="h-5 w-5" />
-
-            Search
-
-          </button>
-
-        </div>
-
-      </section>
-
-      {/* Users Table */}
-
-         <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-
-  <div className="overflow-x-auto">
-
-    <table className="min-w-full">
-
-      <thead className="bg-slate-50">
-
-        <tr>
-
-          <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-            User
-          </th>
-
-          <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">
-            Organization
-          </th>
-
-          <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
-            Role
-          </th>
-
-          <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
-            Status
-          </th>
-
-          <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
-            Last Login
-          </th>
-
-          <th className="px-6 py-4 text-center text-sm font-semibold text-slate-600">
-            Created
-          </th>
-
-          <th className="px-6 py-4 text-right text-sm font-semibold text-slate-600">
-            Actions
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {paginatedUsers.map((user) => (
-
-          <tr
-            key={user.id}
-            className="border-t transition hover:bg-slate-50"
-          >
-
-            <td className="px-6 py-5">
-
-              <div className="flex items-center gap-4">
-
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700">
-
-                  {user.name.charAt(0)}
-
-                </div>
-
-                <div>
-
-                  <p className="font-semibold">
-                    {user.name}
-                  </p>
-
-                  <p className="text-sm text-slate-500">
-                    {user.email}
-                  </p>
-
-                </div>
-
-              </div>
-
-            </td>
-
-            <td className="px-6 py-5">
-
-              <div>
-
-                <p className="font-medium">
-                  {user.organization}
-                </p>
-
-              </div>
-
-            </td>
-
-            <td className="px-6 py-5 text-center">
-
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${getRoleColor(
-                  user.role
-                )}`}
+          <div className="flex gap-2">
+            {currentPage > 1 && (
+              <Link
+                href={buildUrl(
+                  currentPage - 1
+                )}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                {user.role}
-              </span>
+                Previous
+              </Link>
+            )}
 
-            </td>
-
-            <td className="px-6 py-5 text-center">
-
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(
-                  user.status
-                )}`}
+            {currentPage <
+              totalPages && (
+              <Link
+                href={buildUrl(
+                  currentPage + 1
+                )}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
               >
-                {user.status}
-              </span>
-
-            </td>
-
-            <td className="px-6 py-5 text-center text-slate-600">
-
-              {user.lastLogin}
-
-            </td>
-
-            <td className="px-6 py-5 text-center text-slate-600">
-
-              {user.createdAt}
-
-            </td>
-
-            <td className="px-6 py-5">
-
-              <div className="flex justify-end gap-2">
-
-                <Link
-                  href={`/admin/users/${user.id}`}
-                  className="rounded-lg border p-2 transition hover:bg-slate-100"
-                  title="View User"
-                >
-                  <Eye className="h-4 w-4" />
-                </Link>
-
-                <button
-             onClick={() =>
-              loginAsUser(user)
-                     }
-           className="rounded-lg border p-2 transition hover:bg-blue-50">
-            <LogIn className="h-4 w-4 text-blue-600" />
-            </button>
-
-                <button
-  onClick={() =>
-    resetPassword(user)
-  }
-  className="rounded-lg border p-2 transition hover:bg-amber-50"
->
-  <KeyRound className="h-4 w-4 text-amber-600" />
-</button>
-
-                <button
-  onClick={() =>
-    suspendUser(user)
-  }
-  className="rounded-lg border p-2 transition hover:bg-red-50"
->
-  <Ban className="h-4 w-4 text-red-600" />
-</button>
-                
-
-
-                <button
-  onClick={() => {
-    setSelectedUser(user);
-    setShowActions(true);
-  }}
-  className="rounded-lg border p-2 transition hover:bg-slate-100"
->
-  <MoreHorizontal className="h-4 w-4" />
-</button>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        ))}
-
-        {filteredUsers.length === 0 && (
-
-          <tr>
-
-            <td
-              colSpan={7}
-              className="px-6 py-16 text-center"
-            >
-
-              <Users className="mx-auto mb-4 h-12 w-12 text-slate-300" />
-
-              <h3 className="text-lg font-semibold">
-                No users found
-              </h3>
-
-              <p className="mt-2 text-slate-500">
-                Try adjusting your search or filters.
-              </p>
-
-            </td>
-
-          </tr>
-
-        )}
-
-      </tbody>
-
-    </table>
-
-
-
-    {selectedUser &&
-  showActions && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-
-        <div className="border-b p-6">
-
-          <h2 className="text-xl font-bold">
-            {selectedUser.name}
-          </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Testing Actions
-          </p>
-
+                Next
+              </Link>
+            )}
+          </div>
         </div>
-
-        <div className="space-y-3 p-6">
-
-          <button
-            onClick={() =>
-              loginAsUser(selectedUser)
-            }
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700"
-          >
-            Login As User
-          </button>
-
-          <button
-            onClick={() =>
-              resetPassword(
-                selectedUser
-              )
-            }
-            className="w-full rounded-xl bg-amber-500 px-4 py-3 font-medium text-white hover:bg-amber-600"
-          >
-            Reset Password
-          </button>
-
-          <button
-            onClick={() =>
-              activateUser(
-                selectedUser
-              )
-            }
-            className="w-full rounded-xl bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
-          >
-            Activate
-          </button>
-
-          <button
-            onClick={() =>
-              suspendUser(
-                selectedUser
-              )
-            }
-            className="w-full rounded-xl bg-red-600 px-4 py-3 font-medium text-white hover:bg-red-700"
-          >
-            Suspend
-          </button>
-
-          <button
-            onClick={() =>
-              resendInvitation(
-                selectedUser
-              )
-            }
-            className="w-full rounded-xl border px-4 py-3"
-          >
-            Resend Invitation
-          </button>
-
-          <button
-            onClick={() => {
-              setShowActions(false);
-              setShowDeleteModal(true);
-            }}
-            className="w-full rounded-xl border border-red-200 px-4 py-3 text-red-600 hover:bg-red-50"
-          >
-            Delete User
-          </button>
-
-        </div>
-
-        <div className="border-t p-6">
-
-          <button
-            onClick={() =>
-              setShowActions(false)
-            }
-            className="w-full rounded-xl border px-4 py-3"
-          >
-            Close
-          </button>
-
-        </div>
-
       </div>
-
     </div>
-)}
-
-
-{showDeleteModal &&
-  selectedUser && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-
-        <div className="border-b p-6">
-
-          <h2 className="text-xl font-bold text-red-600">
-            Delete User
-          </h2>
-
-          <p className="mt-3 text-slate-600">
-            Delete
-
-            <strong>
-
-              {" "}
-
-              {selectedUser.name}
-
-            </strong>
-
-            ?
-
-          </p>
-
-        </div>
-
-        <div className="flex justify-end gap-3 p-6">
-
-          <button
-            onClick={() =>
-              setShowDeleteModal(
-                false
-              )
-            }
-            className="rounded-xl border px-4 py-2"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={() => {
-              deleteUser(
-                selectedUser
-              );
-
-              setShowDeleteModal(
-                false
-              );
-
-              setShowActions(
-                false
-              );
-            }}
-            className="rounded-xl bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-          >
-            Delete
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-)}
-
-
-<section className="flex items-center justify-between rounded-2xl border bg-white p-5">
-
-  <p className="text-sm text-slate-500">
-
-    Showing
-
-    {" "}
-
-    {paginatedUsers.length}
-
-    {" "}
-
-    of
-
-    {" "}
-
-    {filteredUsers.length}
-
-    users
-
-  </p>
-
-  <div className="flex gap-2">
-
-    <button
-      disabled={currentPage === 1}
-      onClick={() =>
-        setCurrentPage((page) =>
-          Math.max(
-            1,
-            page - 1
-          )
-        )
-      }
-      className="rounded-lg border px-4 py-2 disabled:opacity-50"
-    >
-      Previous
-    </button>
-
-    <span className="rounded-lg border bg-slate-50 px-4 py-2">
-
-      {currentPage}
-
-      /
-
-      {totalPages}
-
-    </span>
-
-    <button
-      disabled={
-        currentPage ===
-        totalPages
-      }
-      onClick={() =>
-        setCurrentPage((page) =>
-          Math.min(
-            totalPages,
-            page + 1
-          )
-        )
-      }
-      className="rounded-lg border px-4 py-2 disabled:opacity-50"
-    >
-      Next
-    </button>
-
-  </div>
-
-</section>
-
-  </div>
-
-         </section>
-
-
-
-
-
-
-
-         </div>
-
-         );
-         }
-
-  function getStatusColor(
-    status: UserStatus
-  ) {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-700";
-
-      case "Invited":
-        return "bg-blue-100 text-blue-700";
-
-      case "Suspended":
-        return "bg-red-100 text-red-700";
-
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  }
+  );
+}

@@ -1,5 +1,7 @@
-import { UserRole } from "@prisma/client";
+// shared/lib/validators/user.ts
+
 import { z } from "zod";
+import { SubscriptionPlan, UserRole } from "@prisma/client";
 
 export const createUserSchema = z.object({
   orgId: z
@@ -9,33 +11,33 @@ export const createUserSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(2, "Name is required.")
-    .max(100),
+    .min(2, "Name must contain at least 2 characters.")
+    .max(100, "Name is too long."),
 
   email: z
     .string()
     .trim()
-    .toLowerCase()
-    .email("Invalid email address."),
+    .email("Enter a valid email address.")
+    .max(255, "Email is too long.")
+    .transform((value) => value.toLowerCase()),
 
   password: z
     .string()
-    .min(
-      8,
-      "Password must be at least 8 characters."
-    )
-    .max(100),
+    .min(8, "Password must contain at least 8 characters.")
+    .max(100, "Password is too long."),
 
   phone: z
     .string()
     .trim()
+    .max(30, "Phone number is too long.")
     .optional()
-    .nullable(),
+    .or(z.literal("")),
 
   role: z.nativeEnum(UserRole),
+
+  plan: z.nativeEnum(SubscriptionPlan),
 });
 
-export type CreateUserInput =
-  z.infer<
-    typeof createUserSchema
-  >;
+export type CreateUserInput = z.infer<
+  typeof createUserSchema
+>;

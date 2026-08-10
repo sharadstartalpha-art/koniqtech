@@ -1,115 +1,85 @@
-import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
+import prisma from "@/shared/lib/prisma";
+import Link from "next/link";
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic";
 
-export default async function Page({
+type PageProps = {
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+  }>;
+};
 
-searchParams
+export default async function OrganizationsPage({
+  searchParams,
+}: PageProps) {
+  const params = await searchParams;
 
-}:any){
+  const q =
+    typeof params.q === "string"
+      ? params.q.trim()
+      : "";
 
-const q=
+  const rawPage = Number(
+    params.page ?? "1"
+  );
 
-searchParams?.q||
+  const page =
+    Number.isFinite(rawPage) &&
+    rawPage > 0
+      ? Math.floor(rawPage)
+      : 1;
 
-""
+  const limit = 10;
 
-const page=
+  const where = q
+    ? {
+        OR: [
+          {
+            name: {
+              contains: q,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            email: {
+              contains: q,
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      }
+    : {};
 
-Number(
+  const [
+    organizations,
+    total,
+  ] = await Promise.all([
+    prisma.organization.findMany({
+      where,
 
-searchParams?.page||
+      include: {
+        users: true,
+      },
 
-1
+      skip: (page - 1) * limit,
 
-)
+      take: limit,
 
-const limit=10
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
 
-const skip=
+    prisma.organization.count({
+      where,
+    }),
+  ]);
 
-(page-1)*limit
-
-const organizations=
-
-await prisma.organization.findMany({
-
-where:{
-
-OR:[
-
-{
-
-name:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-},
-
-{
-
-email:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-}
-
-]
-
-},
-
-include:{
-
-users:true
-
-},
-
-skip,
-
-take:limit,
-
-orderBy:{
-
-createdAt:"desc"
-
-}
-
-})
-
-const total=
-
-await prisma.organization.count({
-
-where:{
-
-name:{
-
-contains:q,
-
-mode:"insensitive"
-
-}
-
-}
-
-})
-
-const pages=
-
-Math.ceil(
-
-total/limit
-
-)
+  const pages = Math.max(
+    1,
+    Math.ceil(total / limit)
+  );
 
 return(
 

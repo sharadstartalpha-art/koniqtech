@@ -403,22 +403,22 @@ async function generateModule(
     setError("");
     setSuccess("");
 
-    const [selectedIndustry, setSelectedIndustry] =
-  useState("roofing");
-
     const response = await fetch(
       "/api/admin/developer-tools/demo-data/generate",
       {
         method: "POST",
+
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           organizationId:
             selectedOrganization,
+
           industry:
-            selectedIndustry,
+            selectedTemplate,
+
           module,
           count,
         }),
@@ -430,7 +430,7 @@ async function generateModule(
 
     if (!response.ok) {
       throw new Error(
-        data.message ||
+        data?.message ||
           "Generation failed."
       );
     }
@@ -439,6 +439,11 @@ async function generateModule(
       `${module} generated successfully.`
     );
   } catch (error) {
+    console.error(
+      "Demo module generation error:",
+      error
+    );
+
     setError(
       error instanceof Error
         ? error.message
@@ -463,22 +468,14 @@ async function refreshActivity() {
 
 async function deleteDemoData() {
   try {
-    const response = await fetch(
-      "/api/admin/developer-tools/demo-data",
-      {
-        method: "DELETE",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          organizationId:
-            selectedOrganization,
-        }),
-      }
-    );
+   const response = await fetch(
+  `/api/admin/developer-tools/demo-data?orgId=${encodeURIComponent(
+    selectedOrganization
+  )}`,
+  {
+    method: "DELETE",
+  }
+);
 
     if (!response.ok) {
       throw new Error(
@@ -554,13 +551,87 @@ async function deleteDemoData() {
 
           <div className="flex gap-3">
 
-            <button className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700">
+           <button
+  type="button"
+  onClick={async () => {
+    try {
+      setIsGenerating(true);
+      setProgress(10);
+      setCompletedModules(0);
+      setQueueLength(1);
+      setError("");
+      setSuccess("");
 
-              <Play className="h-5 w-5" />
+      const response =
+        await fetch(
+          "/api/admin/developer-tools/demo-data",
+          {
+            method: "POST",
 
-              Generate Everything
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-            </button>
+            body: JSON.stringify({
+              orgId:
+                selectedOrganization,
+
+              template:
+                selectedTemplate,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+            "Demo data generation failed."
+        );
+      }
+
+      setProgress(100);
+      setCompletedModules(
+        Object.keys(
+          data?.data?.generated ?? {}
+        ).length
+      );
+      setQueueLength(0);
+
+      setSuccess(
+        data?.message ||
+          "Demo data generated successfully."
+      );
+    } catch (error) {
+      console.error(
+        "Generate Everything Error:",
+        error
+      );
+
+      setProgress(0);
+      setQueueLength(0);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Demo data generation failed."
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  }}
+  disabled={isGenerating}
+  className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  <Play className="h-5 w-5" />
+
+  {isGenerating
+    ? "Generating..."
+    : "Generate Everything"}
+</button>
 
             <button className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-3 font-semibold transition hover:bg-white/20">
 
@@ -806,20 +877,28 @@ async function deleteDemoData() {
 
         </button>
 
-        <button className="rounded-2xl border bg-orange-500 p-6 text-left text-white shadow transition hover:bg-orange-600">
+        <button
+  type="button"
+  onClick={() =>
+    openConfirmation(
+      "Reset Demo Data",
+      "Delete all demo records for the selected organization?",
+      deleteDemoData
+    )
+  }
+  className="rounded-2xl border bg-orange-500 p-6 text-left text-white shadow transition hover:bg-orange-600"
+>
+  <RotateCcw className="mb-4 h-8 w-8" />
 
-          <RotateCcw className="mb-4 h-8 w-8" />
+  <h3 className="text-lg font-semibold">
+    Reset Tenant
+  </h3>
 
-          <h3 className="text-lg font-semibold">
-            Reset Tenant
-          </h3>
-
-          <p className="mt-2 text-sm text-orange-100">
-            Remove generated demo data while preserving
-            configuration.
-          </p>
-
-        </button>
+  <p className="mt-2 text-sm text-orange-100">
+    Remove generated demo data while preserving
+    configuration.
+  </p>
+</button>
 
       </section>
 

@@ -1,496 +1,826 @@
-import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
-import { notFound } from "next/navigation"
-import { revalidatePath } from "next/cache"
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import {
+  Prisma,
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from "@prisma/client";
 
-export const dynamic = "force-dynamic"
+import prisma from "@/shared/lib/prisma";
 
-async function extendSubscription(
+export const dynamic = "force-dynamic";
+
+/* =========================================================
+   PLAN CONFIGURATION
+   ========================================================= */
+
+const PLAN_CONFIG: Record<
+  SubscriptionPlan,
+  {
+    label: string;
+    amount: number;
+    userLimit: number;
+    storageLimit: number;
+    aiCredits: number;
+  }
+> = {
+  starter: {
+    label: "Starter",
+    amount: 99,
+    userLimit: 5,
+    storageLimit: 20,
+    aiCredits: 1000,
+  },
+
+  professional: {
+    label: "Professional",
+    amount: 199,
+    userLimit: 15,
+    storageLimit: 100,
+    aiCredits: 5000,
+  },
+
+  enterprise: {
+    label: "Enterprise",
+    amount: 499,
+    userLimit: 50,
+    storageLimit: 500,
+    aiCredits: 20000,
+  },
+};
+
+/* =========================================================
+   SERVER ACTION
+   ========================================================= */
+
+async function grantSubscription(
   formData: FormData
 ) {
-
-  "use server"
+  "use server";
 
   const orgId =
     String(
-      formData.get("orgId")
-    )
+      formData.get("orgId") ?? ""
+    ).trim();
+
+  const planValue =
+    String(
+      formData.get("plan") ?? ""
+    ).trim();
 
   const months =
     Number(
-      formData.get("months")
-    )
+      formData.get("months") ?? "1"
+    );
 
-  if (!orgId) return
-
-  const org =
-    await prisma.organization.findUnique({
-
-      where: {
-        id: orgId
-      }
-
-    })
-
-  if (!org) return
-
-  const baseDate =
-
-    org.subscriptionEndsAt &&
-      org.subscriptionEndsAt > new Date()
-
-      ? org.subscriptionEndsAt
-
-      : new Date()
-
-  const expires =
-    new Date(baseDate)
-
-  expires.setMonth(
-
-    expires.getMonth() + months
-
-  )
-
-  await prisma.organization.update({
-
-    where: {
-      id: orgId
-    },
-
-    data: {
-
-      subscriptionEndsAt:
-        expires,
-
-      active: true
-
-    }
-
-  })
-
-  revalidatePath(
-
-    `/admin/organizations/${orgId}`
-
-  )
-
-}
-
-type Props = {
-
-  params: Promise<{
-    id: string
-  }>
-
-}
-
-export default async function Page({
-
-  params
-
-}: Props) {
-
-  const { id } =
-    await params
-
-  if (!id) {
-
-    notFound()
-
+  if (!orgId) {
+    throw new Error(
+      "Organization ID is required."
+    );
   }
 
-  const org =
-    await prisma.organization.findUnique({
+  if (
+    !Object.values(
+      SubscriptionPlan
+    ).includes(
+      planValue as SubscriptionPlan
+    )
+  ) {
+    throw new Error(
+      "Invalid subscription plan."
+    );
+  }
 
+  if (
+    !Number.isInteger(months) ||
+    months < 1 ||
+    months > 24
+  ) {
+    throw new Error(
+      "Invalid subscription duration."
+    );
+  }
+
+  const plan =
+    planValue as SubscriptionPlan;
+
+  const planConfig =
+    PLAN_CONFIG[plan];
+
+  /*
+   * Confirm organization exists.
+   */
+  const organization =
+    await prisma.organization.findUnique({
       where: {
-        id
+        id: orgId,
+      },
+
+      select: {
+        id: true,
+        active: true,
+        subscriptionEndsAt: true,
+      },
+    });
+
+  if (!organization) {
+    throw new Error(
+      "Organization not found."
+    );
+  }
+
+  /*
+   * If the existing subscription is still active,
+   * extend from its current expiry.
+   *
+   * If it is expired / missing, start from now.
+   */
+  const now = new Date();
+
+  const existingEnd =
+    organization.subscriptionEndsAt;
+
+  const baseDate =
+    existingEnd &&
+    existingEnd > now
+      ? new Date(existingEnd)
+      : new Date(now);
+
+  const expiresAt =
+    new Date(baseDate);
+
+  expiresAt.setMonth(
+    expiresAt.getMonth() + months
+  );
+
+  /*
+   * Keep User / Subscription / Organization
+   * synchronized in ONE transaction.
+   */
+  await prisma.$transaction(
+    async (tx) => {
+      /*
+       * Create or update subscription.
+       */
+      await tx.subscription.upsert({
+        where: {
+          orgId,
+        },
+
+        create: {
+          orgId,
+
+          provider: "admin",
+
+          externalId: null,
+
+          customerId: null,
+
+          plan,
+
+          status:
+            SubscriptionStatus.active,
+
+          billingCycle: "monthly",
+
+          amount:
+            new Prisma.Decimal(
+              planConfig.amount
+            ),
+
+          currency: "USD",
+
+          renewAt: expiresAt,
+
+          nextInvoiceDate:
+            expiresAt,
+
+          trialStart: null,
+
+          trialEnd: null,
+
+          interval: "month",
+
+          cancelAtPeriodEnd: false,
+
+          userLimit:
+            planConfig.userLimit,
+
+          storageLimit:
+            planConfig.storageLimit,
+
+          aiCredits:
+            planConfig.aiCredits,
+        },
+
+        update: {
+          plan,
+
+          status:
+            SubscriptionStatus.active,
+
+          amount:
+            new Prisma.Decimal(
+              planConfig.amount
+            ),
+
+          currency: "USD",
+
+          renewAt: expiresAt,
+
+          nextInvoiceDate:
+            expiresAt,
+
+          billingCycle: "monthly",
+
+          interval: "month",
+
+          cancelAtPeriodEnd: false,
+
+          userLimit:
+            planConfig.userLimit,
+
+          storageLimit:
+            planConfig.storageLimit,
+
+          aiCredits:
+            planConfig.aiCredits,
+        },
+      });
+
+      /*
+       * Keep Organization synchronized
+       * with Subscription.
+       */
+      await tx.organization.update({
+        where: {
+          id: orgId,
+        },
+
+        data: {
+          plan,
+
+          active: true,
+
+          usersLimit:
+            planConfig.userLimit,
+
+          subscriptionEndsAt:
+            expiresAt,
+        },
+      });
+    }
+  );
+
+  /*
+   * Refresh organization pages.
+   */
+  revalidatePath(
+    `/admin/organizations/${orgId}`
+  );
+
+  revalidatePath(
+    `/admin/organizations/${orgId}/users`
+  );
+
+  revalidatePath(
+    "/admin/organizations"
+  );
+
+  revalidatePath(
+    "/admin/subscriptions"
+  );
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+
+function formatPlan(
+  plan: SubscriptionPlan
+) {
+  return PLAN_CONFIG[plan]?.label ??
+    String(plan);
+}
+
+function formatDate(
+  date: Date | null
+) {
+  if (!date) {
+    return "No subscription";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }
+  ).format(date);
+}
+
+function formatMoney(
+  amount: Prisma.Decimal | null
+) {
+  if (!amount) {
+    return "$0.00";
+  }
+
+  return `$${Number(amount).toFixed(2)}`;
+}
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+type Props = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export default async function OrganizationPage({
+  params,
+}: Props) {
+  const { id } =
+    await params;
+
+  if (!id) {
+    notFound();
+  }
+
+  /*
+   * IMPORTANT:
+   *
+   * The relation in your schema is called
+   * `subscriptions`, not `subscription`.
+   */
+  const organization =
+    await prisma.organization.findUnique({
+      where: {
+        id,
       },
 
       include: {
+        users: {
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
 
-        users: true
+        subscriptions: true,
+      },
+    });
 
-      }
-
-    })
-
-  if (!org) {
-
-    notFound()
-
+  if (!organization) {
+    notFound();
   }
 
+  /*
+   * Your schema has a singular Subscription
+   * relation named `subscriptions`.
+   *
+   * It is nullable, not an array.
+   */
+  const subscription =
+    organization.subscriptions;
+
+  /*
+   * Use the REAL subscription expiry as
+   * the primary source.
+   *
+   * Fall back to organization.subscriptionEndsAt
+   * only for legacy records.
+   */
+  const expiryDate =
+    subscription?.renewAt ??
+    organization.subscriptionEndsAt ??
+    null;
+
+  const now = new Date();
+
   const subscriptionActive =
-
-    org.subscriptionEndsAt &&
-
-    org.subscriptionEndsAt >
-
-    new Date()
+    Boolean(
+      subscription &&
+        subscription.status ===
+          SubscriptionStatus.active &&
+        expiryDate &&
+        expiryDate > now
+    );
 
   return (
+    <div className="mx-auto max-w-7xl space-y-8 p-10">
+      {/* ================================================= */}
+      {/* HEADER */}
+      {/* ================================================= */}
 
-    <div className="max-w-7xl mx-auto p-10 space-y-8">
-
-      <div className="flex justify-between items-start">
-
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
         <div>
+          <div className="mb-3 text-sm text-slate-500">
+            Admin / Organizations /{" "}
+            {organization.name}
+          </div>
 
-          <h1 className="text-5xl font-bold">
-
-            {org.name}
-
+          <h1 className="text-5xl font-bold text-slate-900">
+            {organization.name}
           </h1>
 
-          <p className="text-slate-500 mt-2">
-
-            {org.email}
-
+          <p className="mt-2 text-slate-500">
+            {organization.email}
           </p>
-
         </div>
 
-        <div className="flex gap-4">
-
+        <div className="flex gap-3">
           <Link
-
             href={`/admin/organizations/${id}/users`}
-
-            className="
-            border
-            px-6
-            py-3
-            rounded-xl
-            "
-
+            className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
-
             Users
-
           </Link>
 
           <Link
-
             href={`/admin/organizations/${id}/billing`}
-
-            className="
-            border
-            px-6
-            py-3
-            rounded-xl
-            "
-
+            className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
-
             Billing
-
           </Link>
-
         </div>
-
       </div>
 
-      <div className="grid grid-cols-5 gap-6">
+      {/* ================================================= */}
+      {/* SUMMARY CARDS */}
+      {/* ================================================= */}
 
-        <div className="bg-white border rounded-3xl p-8">
-
-          <p className="text-slate-500">
-
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-5">
+        {/* CRM */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">
             CRM
-
           </p>
 
-          <h2 className="text-2xl font-bold">
-
-            {org.crmType}
-
+          <h2 className="mt-2 text-2xl font-bold capitalize text-slate-900">
+            {String(
+              organization.crmType
+            )}
           </h2>
-
         </div>
 
-        <div className="bg-white border rounded-3xl p-8">
-
-          <p className="text-slate-500">
-
+        {/* PLAN */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">
             Plan
-
           </p>
 
-          <h2 className="text-2xl font-bold">
-
-            {org.plan}
-
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">
+            {subscription
+              ? formatPlan(
+                  subscription.plan
+                )
+              : formatPlan(
+                  organization.plan
+                )}
           </h2>
 
+          {subscription && (
+            <p className="mt-2 text-sm text-slate-500">
+              {formatMoney(
+                subscription.amount
+              )}
+              /month
+            </p>
+          )}
         </div>
 
-        <div className="bg-white border rounded-3xl p-8">
-
-          <p className="text-slate-500">
-
+        {/* USERS */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">
             Users
-
           </p>
 
-          <h2 className="text-2xl font-bold">
-
-            {org.users.length}
-
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">
+            {organization.users.length}
           </h2>
 
+          <p className="mt-2 text-sm text-slate-500">
+            Limit:{" "}
+            {subscription?.userLimit ??
+              organization.usersLimit}
+          </p>
         </div>
 
-        <div className="bg-white border rounded-3xl p-8">
-
-          <p className="text-slate-500">
-
+        {/* EXPIRES */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">
             Expires
-
           </p>
 
-          <h2 className="font-bold">
-
-            {
-
-              org.subscriptionEndsAt
-
-                ?
-
-                org.subscriptionEndsAt
-                  .toDateString()
-
-                :
-
-                "No subscription"
-
-            }
-
+          <h2 className="mt-2 font-bold text-slate-900">
+            {formatDate(expiryDate)}
           </h2>
 
+          {expiryDate &&
+            expiryDate > now && (
+              <p className="mt-2 text-sm text-green-600">
+                Active until expiry
+              </p>
+            )}
         </div>
 
-        <div className="bg-white border rounded-3xl p-8">
-
-          <p className="text-slate-500">
-
+        {/* STATUS */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <p className="text-sm text-slate-500">
             Status
-
           </p>
 
-          <h2 className={
-
-            subscriptionActive
-
-              ?
-
-              "font-bold text-green-600"
-
-              :
-
-              "font-bold text-red-600"
-
-          }>
-
-            {
-
+          <h2
+            className={
               subscriptionActive
-
-                ?
-
-                "ACTIVE"
-
-                :
-
-                "EXPIRED"
-
+                ? "mt-2 font-bold text-green-600"
+                : "mt-2 font-bold text-red-600"
             }
-
+          >
+            {subscriptionActive
+              ? "ACTIVE"
+              : "EXPIRED"}
           </h2>
 
+          {subscription && (
+            <p className="mt-2 text-xs capitalize text-slate-500">
+              {String(
+                subscription.status
+              )}
+            </p>
+          )}
         </div>
-
       </div>
 
-      <div className="bg-white border rounded-3xl p-8">
+      {/* ================================================= */}
+      {/* GRANT / CHANGE SUBSCRIPTION */}
+      {/* ================================================= */}
 
-        <h2 className="text-3xl font-bold mb-6">
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold text-slate-900">
+            {subscription
+              ? "Change Subscription"
+              : "Grant Subscription"}
+          </h2>
 
-          Grant Subscription
-
-        </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Select a plan and duration. This
+            updates the organization's real
+            subscription record.
+          </p>
+        </div>
 
         <form
-
-          action={extendSubscription}
-
-          className="flex gap-4"
-
+          action={grantSubscription}
+          className="grid gap-4 md:grid-cols-[1fr_1fr_auto]"
         >
-
           <input
-
-            hidden
-
+            type="hidden"
             name="orgId"
-
-            value={org.id}
-
-            readOnly
-
+            value={organization.id}
           />
 
-          <select
+          {/* PLAN */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Subscription Plan
+            </label>
 
-            name="months"
+            <select
+              name="plan"
+              defaultValue={
+                subscription?.plan ??
+                organization.plan
+              }
+              required
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="starter">
+                Starter — $99/month
+              </option>
 
-            className="
-            border
-            p-4
-            rounded-xl
-            "
+              <option value="professional">
+                Professional — $199/month
+              </option>
 
-          >
+              <option value="enterprise">
+                Enterprise — $499/month
+              </option>
+            </select>
+          </div>
 
-            <option value="1">
+          {/* DURATION */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Duration
+            </label>
 
-              1 month
+            <select
+              name="months"
+              defaultValue="1"
+              required
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="1">
+                1 month
+              </option>
 
-            </option>
+              <option value="3">
+                3 months
+              </option>
 
-            <option value="3">
+              <option value="6">
+                6 months
+              </option>
 
-              3 months
+              <option value="12">
+                12 months
+              </option>
 
-            </option>
+              <option value="24">
+                24 months
+              </option>
+            </select>
+          </div>
 
-            <option value="6">
-
-              6 months
-
-            </option>
-
-            <option value="12">
-
-              12 months
-
-            </option>
-
-            <option value="24">
-
-              24 months
-
-            </option>
-
-          </select>
-
-          <button
-
-            type="submit"
-
-            className="
-            bg-black
-            text-white
-            px-8
-            rounded-xl
-            "
-
-          >
-
-            Grant Access
-
-          </button>
-
+          {/* ACTION */}
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-green-600 px-8 py-3 font-semibold text-white transition hover:bg-green-700"
+            >
+              {subscription
+                ? "Change Plan"
+                : "Grant Access"}
+            </button>
+          </div>
         </form>
 
+        {/* Current subscription information */}
+        {subscription && (
+          <div className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-4">
+            <div>
+              <p className="text-xs text-slate-500">
+                Current Plan
+              </p>
+
+              <p className="mt-1 font-semibold text-slate-900">
+                {formatPlan(
+                  subscription.plan
+                )}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Price
+              </p>
+
+              <p className="mt-1 font-semibold text-slate-900">
+                {formatMoney(
+                  subscription.amount
+                )}
+                /month
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Status
+              </p>
+
+              <p className="mt-1 font-semibold capitalize text-slate-900">
+                {String(
+                  subscription.status
+                )}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500">
+                Renewal / Expiry
+              </p>
+
+              <p className="mt-1 font-semibold text-slate-900">
+                {formatDate(
+                  subscription.renewAt
+                )}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="bg-white border rounded-3xl overflow-hidden">
+      {/* ================================================= */}
+      {/* USERS */}
+      {/* ================================================= */}
 
-        <div className="p-8 border-b">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900">
+                Users
+              </h2>
 
-          <h2 className="text-3xl font-bold">
+              <p className="mt-1 text-sm text-slate-500">
+                Users belonging only to this
+                organization.
+              </p>
+            </div>
 
-            Users
-
-          </h2>
-
+            <Link
+              href={`/admin/organizations/${id}/users`}
+              className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              View All Users
+            </Link>
+          </div>
         </div>
 
-        <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[700px]">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Name
+                </th>
 
-          <thead className="bg-slate-100">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Email
+                </th>
 
-            <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Role
+                </th>
 
-              <th className="p-5 text-left">
+                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+                  Status
+                </th>
+              </tr>
+            </thead>
 
-                Name
-
-              </th>
-
-              <th>
-
-                Email
-
-              </th>
-
-              <th>
-
-                Role
-
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            {
-
-              org.users.map(user => (
-
-                <tr
-
-                  key={user.id}
-
-                  className="border-t"
-
-                >
-
-                  <td className="p-5">
-
-                    {user.name}
-
+            <tbody>
+              {organization.users.length ===
+              0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-12 text-center text-sm text-slate-500"
+                  >
+                    No users assigned to this
+                    organization.
                   </td>
-
-                  <td>
-
-                    {user.email}
-
-                  </td>
-
-                  <td>
-
-                    {user.role}
-
-                  </td>
-
                 </tr>
+              ) : (
+                organization.users.map(
+                  (user) => (
+                    <tr
+                      key={user.id}
+                      className="border-t border-slate-100"
+                    >
+                      <td className="px-6 py-5 font-medium text-slate-900">
+                        {user.name}
+                      </td>
 
-              ))
+                      <td className="px-6 py-5 text-sm text-slate-600">
+                        {user.email}
+                      </td>
 
-            }
+                      <td className="px-6 py-5">
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
+                          {user.role.replaceAll(
+                            "_",
+                            " "
+                          )}
+                        </span>
+                      </td>
 
-          </tbody>
-
-        </table>
-
+                      <td className="px-6 py-5">
+                        {user.status ===
+                        "active" ? (
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                            {user.status}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
     </div>
-
-  )
-
+  );
 }

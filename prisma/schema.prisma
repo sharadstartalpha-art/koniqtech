@@ -538,6 +538,36 @@ model Customer {
   UserEquipment  UserEquipment[]
 }
 
+model Plan {
+  id String @id @default(uuid())
+
+  code SubscriptionPlan @unique
+
+  name String
+
+  description String?
+
+  price Decimal @db.Decimal(10, 2)
+
+  currency String @default("USD")
+
+  billingCycle String @default("monthly")
+
+  userLimit Int @default(5)
+
+  storageLimit Int @default(20)
+
+  aiCredits Int @default(1000)
+
+  active Boolean @default(true)
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+}
+
 model Pipeline {
   id           String          @id @default(uuid())
   orgId        String

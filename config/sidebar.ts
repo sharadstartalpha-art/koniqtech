@@ -658,15 +658,25 @@ export const MENU: MenuSection[] = [
             icon: CreditCard,
           },
           {
-            label: "Integrations",
-            href: "/settings/integrations",
-            icon: Plug,
-          },
+  label: "Integrations",
+  href: "/settings/integrations",
+  icon: Plug,
+
+  plans: [
+    SubscriptionPlan.professional,
+    SubscriptionPlan.enterprise,
+  ],
+},
           {
-            label: "AI Settings",
-            href: "/settings/ai",
-            icon: Brain,
-          },
+  label: "AI Settings",
+  href: "/settings/ai",
+  icon: Brain,
+
+  plans: [
+    SubscriptionPlan.professional,
+    SubscriptionPlan.enterprise,
+  ],
+},
           {
             label: "Email Templates",
             href: "/settings/email-templates",

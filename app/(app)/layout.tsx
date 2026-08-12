@@ -36,11 +36,12 @@ User
 
 } from "lucide-react"
 
-import { MENU } from "@/config/sidebar"
-
-
+import { getMenuForPlan } from "@/shared/lib/get-menu";
+import { SubscriptionPlan } from "@prisma/client";
 
 export default function Layout({
+
+
 
 children
 
@@ -51,11 +52,16 @@ children:React.ReactNode
 }){
 
 
+
+  
 const [role,setRole] =
 useState("")
 
-const [subscriptionPlan, setSubscriptionPlan] = useState("")
+const [subscriptionPlan, setSubscriptionPlan] =
+  useState<SubscriptionPlan>(SubscriptionPlan.starter);
 const [industry, setIndustry] = useState("")
+
+const menu = getMenuForPlan(subscriptionPlan);
 
 const pathname=
 usePathname()
@@ -94,13 +100,17 @@ const ref=
 useRef<HTMLDivElement>(null)
 
 
+
 const sidebarRef = useRef<HTMLDivElement>(null)
 const headerRef = useRef<HTMLDivElement>(null)
 
 async function loadNotifications() {
 
-  try {
 
+  try {
+    
+
+    
     const res =
       await fetch("/api/notifications")
 
@@ -254,7 +264,7 @@ Koniqtech
   "
 >
 
-  {MENU.map(section=>(
+  {menu.map(section=>(
 
     <div
       key={section.title}

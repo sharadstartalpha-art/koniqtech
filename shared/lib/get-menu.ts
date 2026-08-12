@@ -13,27 +13,39 @@ export function getMenuForPlan(
       ...section,
       items: section.items.filter((item) => {
         switch (item.href) {
-          case "/crew":
-            return features.crew;
+  case "/crew":
+    return features.crew;
 
-          case "/jobs/dispatch":
-            return features.dispatch;
+  case "/jobs/dispatch":
+    return features.dispatch;
 
-          case "/inventory":
-            return features.inventory;
+  case "/inventory":
+    return features.inventory;
 
-          case "/reports":
-            return features.reports;
+  case "/fleet":
+    return features.fleet;
 
-          case "/ai":
-            return features.automation;
+  case "/ai":
+    return features.ai;
 
-          case "/developer":
-            return features.api;
+  case "/developer":
+    return features.api;
 
-          default:
-            return true;
-        }
+  case "/settings/ai":
+    return features.ai;
+
+  case "/settings/sso":
+    return features.sso;
+
+  case "/settings/branches":
+    return features.branches;
+
+  case "/settings/white-label":
+    return features.whiteLabel;
+
+  default:
+    return true;
+}
       }),
     }))
     .filter((section) => section.items.length > 0);

@@ -1,6 +1,6 @@
 import prisma from "@/shared/lib/prisma"
 import GettingStarted from "@/components/dashboard/GettingStarted";
-
+import NextAction from "@/components/dashboard/NextAction";
 import { auth } from "@/auth"
 
 import Link from "next/link"
@@ -232,6 +232,65 @@ const onboarding = {
     invoice: invoices > 0,
 };
 
+const nextAction =
+    !onboarding.company
+        ? {
+              title: "Setup Company",
+              description:
+                  "Add your business information so customers know who you are.",
+              href: "/settings/company",
+          }
+        : !onboarding.organization
+        ? {
+              title: "Complete Organization Settings",
+              description:
+                  "Configure your timezone, currency and business settings.",
+              href: "/settings/organization",
+          }
+        : !onboarding.branding
+        ? {
+              title: "Upload Company Logo",
+              description:
+                  "Your logo will appear on Quotes, Invoices and customer documents.",
+              href: "/settings/branding",
+          }
+        : !onboarding.team
+        ? {
+              title: "Invite Your Team",
+              description:
+                  "Invite employees so they can access your CRM.",
+              href: "/team",
+          }
+        : !onboarding.lead
+        ? {
+              title: "Create Your First Lead",
+              description:
+                  "Leads are potential customers waiting to become clients.",
+              href: "/leads/new",
+          }
+        : !onboarding.customer
+        ? {
+              title: "Create Your First Customer",
+              description:
+                  "Convert a lead or create a customer manually.",
+              href: "/customers/new",
+          }
+        : !onboarding.job
+        ? {
+              title: "Create Your First Job",
+              description:
+                  "Jobs help you schedule and manage work for customers.",
+              href: "/jobs/new",
+          }
+        : !onboarding.invoice
+        ? {
+              title: "Generate Your First Invoice",
+              description:
+                  "Invoices help you bill customers and track payments.",
+              href: "/invoices/new",
+          }
+        : null;
+
 
 const completedSteps =
 Object.values(onboarding).filter(Boolean).length;
@@ -327,10 +386,19 @@ dbUser.name ||
 </div>
 
 
-<GettingStarted
-    progress={progress}
-    steps={onboardingSteps}
-/>
+{progress < 25 ? (
+    <GettingStarted
+        progress={progress}
+        steps={onboardingSteps}
+    />
+) : progress < 100 && nextAction ? (
+    <NextAction
+        title={nextAction.title}
+        description={nextAction.description}
+        href={nextAction.href}
+        progress={progress}
+    />
+) : null}
 
 
 <div className="

@@ -1,4 +1,5 @@
 import prisma from "@/shared/lib/prisma"
+import GettingStarted from "@/components/dashboard/GettingStarted";
 
 import { auth } from "@/auth"
 
@@ -222,6 +223,53 @@ daysLeft!==null
 
 daysLeft<0
 
+
+const onboardingSteps = [
+  {
+    title: "Setup Company",
+    completed: false,
+    href: "/settings/company",
+  },
+  {
+    title: "Organization Settings",
+    completed: false,
+    href: "/settings/organization",
+  },
+  {
+    title: "Upload Company Logo",
+    completed: false,
+    href: "/settings/branding",
+  },
+  {
+    title: "Invite Team",
+    completed: false,
+    href: "/team",
+  },
+  {
+    title: "Create First Lead",
+    completed: false,
+    href: "/leads/new",
+  },
+  {
+    title: "Create First Customer",
+    completed: false,
+    href: "/customers/new",
+  },
+  {
+    title: "Create First Job",
+    completed: false,
+    href: "/jobs/new",
+  },
+  {
+    title: "Generate First Invoice",
+    completed: false,
+    href: "/invoices/new",
+  },
+];
+
+const progress = 0;
+
+
 return(
 
 <div className="space-y-6">
@@ -257,6 +305,13 @@ dbUser.name ||
 </p>
 
 </div>
+
+
+<GettingStarted
+    progress={progress}
+    steps={onboardingSteps}
+/>
+
 
 <div className="
 grid

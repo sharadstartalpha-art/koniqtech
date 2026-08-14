@@ -11,7 +11,7 @@ import {
   BadgeCheck,
   Building2,
   Star,
-   Home,
+  Home,
   Thermometer,
   Droplets,
   Trees,

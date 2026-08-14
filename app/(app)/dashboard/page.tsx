@@ -87,86 +87,75 @@ User not found
 }
 
 const [
+    leads,
+    customers,
+    jobs,
+    teamMembers,
+    invoices,
+    recentLeads,
+    recentCustomers,
+    recentJobs,
+] = await Promise.all([
+    prisma.lead.count({
+        where: {
+            orgId: dbUser.orgId,
+        },
+    }),
 
-leads,
-customers,
-jobs,
+    prisma.customer.count({
+        where: {
+            orgId: dbUser.orgId,
+        },
+    }),
 
-recentLeads,
+    prisma.job.count({
+        where: {
+            orgId: dbUser.orgId,
+        },
+    }),
 
-recentCustomers,
+    prisma.user.count({
+        where: {
+            orgId: dbUser.orgId,
+        },
+    }),
 
-recentJobs
+    prisma.invoice.count({
+        where: {
+            orgId: dbUser.orgId,
+        },
+    }),
 
-]=await Promise.all([
+    prisma.lead.findMany({
+        where: {
+            orgId: dbUser.orgId,
+        },
+        take: 3,
+        orderBy: {
+            createdAt: "desc",
+        },
+    }),
 
-prisma.lead.count({
+    prisma.customer.findMany({
+        where: {
+            orgId: dbUser.orgId,
+        },
+        take: 3,
+        orderBy: {
+            createdAt: "desc",
+        },
+    }),
 
-where:{
-orgId:dbUser.orgId
-}
-
-}),
-
-prisma.customer.count({
-
-where:{
-orgId:dbUser.orgId
-}
-
-}),
-
-prisma.job.count({
-
-where:{
-orgId:dbUser.orgId
-}
-
-}),
-
-prisma.lead.findMany({
-
-where:{
-orgId:dbUser.orgId
-},
-
-take:3,
-
-orderBy:{
-createdAt:"desc"
-}
-
-}),
-
-prisma.customer.findMany({
-
-where:{
-orgId:dbUser.orgId
-},
-
-take:3,
-
-orderBy:{
-createdAt:"desc"
-}
-
-}),
-
-prisma.job.findMany({
-
-where:{
-orgId:dbUser.orgId
-},
-
-take:3,
-
-orderBy:{
-id:"desc"
-}
-
-})
-
-])
+    prisma.job.findMany({
+        where: {
+            orgId: dbUser.orgId,
+        },
+        take: 3,
+        orderBy: {
+            id: "desc",
+        },
+    }),
+]);
 
 const subscriptionEnds=
 
@@ -223,51 +212,82 @@ daysLeft!==null
 
 daysLeft<0
 
+const onboarding = {
+    company: Boolean(dbUser.organization?.name),
+
+    organization:
+        Boolean(dbUser.organization?.timezone) &&
+        Boolean(dbUser.organization?.currency),
+
+    branding: Boolean(dbUser.organization?.logo),
+
+    team: teamMembers > 1,
+
+    lead: leads > 0,
+
+    customer: customers > 0,
+
+    job: jobs > 0,
+
+    invoice: invoices > 0,
+};
+
+
+const completedSteps =
+Object.values(onboarding).filter(Boolean).length;
+
+const totalSteps =
+Object.keys(onboarding).length;
+
+const progress =
+Math.round((completedSteps / totalSteps) * 100);
+
+
 
 const onboardingSteps = [
-  {
-    title: "Setup Company",
-    completed: false,
-    href: "/settings/company",
-  },
-  {
-    title: "Organization Settings",
-    completed: false,
-    href: "/settings/organization",
-  },
-  {
-    title: "Upload Company Logo",
-    completed: false,
-    href: "/settings/branding",
-  },
-  {
-    title: "Invite Team",
-    completed: false,
-    href: "/team",
-  },
-  {
-    title: "Create First Lead",
-    completed: false,
-    href: "/leads/new",
-  },
-  {
-    title: "Create First Customer",
-    completed: false,
-    href: "/customers/new",
-  },
-  {
-    title: "Create First Job",
-    completed: false,
-    href: "/jobs/new",
-  },
-  {
-    title: "Generate First Invoice",
-    completed: false,
-    href: "/invoices/new",
-  },
+    {
+        title: "Setup Company",
+        completed: onboarding.company,
+        href: "/settings/company",
+    },
+    {
+        title: "Organization Settings",
+        completed: onboarding.organization,
+        href: "/settings/organization",
+    },
+    {
+        title: "Upload Company Logo",
+        completed: onboarding.branding,
+        href: "/settings/branding",
+    },
+    {
+        title: "Invite Team",
+        completed: onboarding.team,
+        href: "/team",
+    },
+    {
+        title: "Create First Lead",
+        completed: onboarding.lead,
+        href: "/leads/new",
+    },
+    {
+        title: "Create First Customer",
+        completed: onboarding.customer,
+        href: "/customers/new",
+    },
+    {
+        title: "Create First Job",
+        completed: onboarding.job,
+        href: "/jobs/new",
+    },
+    {
+        title: "Generate First Invoice",
+        completed: onboarding.invoice,
+        href: "/invoices/new",
+    },
 ];
 
-const progress = 0;
+
 
 
 return(

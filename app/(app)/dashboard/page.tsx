@@ -301,54 +301,82 @@ Object.keys(onboarding).length;
 const progress =
 Math.round((completedSteps / totalSteps) * 100);
 
+const companyCompleted =
+  !!dbUser.organization?.name &&
+  !!dbUser.organization?.email &&
+  !!dbUser.organization?.phone;
+
+const organizationCompleted =
+  !!dbUser.organization?.timezone &&
+  !!dbUser.organization?.currency &&
+  !!dbUser.organization?.language;
+
+const brandingCompleted =
+  !!dbUser.organization?.logo;
+
+const teamCompleted =
+  (
+    await prisma.user.count({
+      where: {
+        orgId: dbUser.orgId,
+      },
+    })
+  ) > 1;
 
 
 const onboardingSteps = [
-    {
-        title: "Setup Company",
-        completed: onboarding.company,
-        href: "/settings/company",
-    },
-    {
-        title: "Organization Settings",
-        completed: onboarding.organization,
-        href: "/settings/organization",
-    },
-    {
-        title: "Upload Company Logo",
-        completed: onboarding.branding,
-        href: "/settings/branding",
-    },
-    {
-        title: "Invite Team",
-        completed: onboarding.team,
-        href: "/team",
-    },
-    {
-        title: "Create First Lead",
-        completed: onboarding.lead,
-        href: "/leads/new",
-    },
-    {
-        title: "Create First Customer",
-        completed: onboarding.customer,
-        href: "/customers/new",
-    },
-    {
-        title: "Create First Job",
-        completed: onboarding.job,
-        href: "/jobs/new",
-    },
-    {
-        title: "Generate First Invoice",
-        completed: onboarding.invoice,
-        href: "/invoices/new",
-    },
+  {
+    title: "Company Information",
+    completed: companyCompleted,
+    href: "/settings/company",
+    description: "Complete your business profile.",
+  },
+  {
+    title: "Organization Settings",
+    completed: organizationCompleted,
+    href: "/settings/organization",
+    description: "Configure your organization.",
+  },
+  {
+    title: "Upload Company Logo",
+    completed: brandingCompleted,
+    href: "/settings/branding",
+    description: "Your logo appears on invoices and quotes.",
+  },
+  {
+    title: "Invite Team",
+    completed: teamCompleted,
+    href: "/settings/invitations",
+    description: "Invite employees to collaborate.",
+  },
+  {
+    title: "Create First Lead",
+    completed: leads > 0,
+    href: "/leads/new",
+    description: "Start capturing new opportunities.",
+  },
+  {
+    title: "Create First Customer",
+    completed: customers > 0,
+    href: "/customers/new",
+    description: "Add your first customer.",
+  },
+  {
+    title: "Create First Job",
+    completed: jobs > 0,
+    href: "/jobs/new",
+    description: "Schedule your first job.",
+  },
+  {
+    title: "Create First Invoice",
+    completed: invoices > 0,
+    href: "/invoices/new",
+    description: "Send your first invoice.",
+  },
 ];
 
-
-
-
+const nextStep =
+  onboardingSteps.find((step) => !step.completed) ?? null;
 return(
 
 <div className="space-y-6">
@@ -387,10 +415,10 @@ dbUser.name ||
 
 
 {progress < 25 ? (
-    <GettingStarted
-        progress={progress}
-        steps={onboardingSteps}
-    />
+  <GettingStarted
+  progress={progress}
+  steps={onboardingSteps}
+/>
 ) : progress < 100 && nextAction ? (
     <NextAction
         title={nextAction.title}

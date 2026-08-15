@@ -7,10 +7,10 @@ type Step = {
   href: string;
 };
 
-interface Props {
+type Props = {
   progress: number;
   steps: Step[];
-}
+};
 
 export default function GettingStarted({
   progress,

@@ -446,6 +446,9 @@ model User {
 
   targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
 
+   welcomeSeen Boolean @default(false)
+
+
   @@index([orgId])
   @@index([status])
 }

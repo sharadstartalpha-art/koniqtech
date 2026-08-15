@@ -2,7 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import GettingStarted from "@/components/dashboard/GettingStarted";
 import NextAction from "@/components/dashboard/NextAction";
 import { auth } from "@/auth"
-
+import WelcomeModal from "@/components/dashboard/WelcomeModal";
 import Link from "next/link"
 
 import { redirect } from "next/navigation"
@@ -352,7 +352,7 @@ const onboardingSteps = [
 return(
 
 <div className="space-y-6">
-
+   {!dbUser.welcomeSeen && <WelcomeModal />}
 <div>
 
 <h1 className="

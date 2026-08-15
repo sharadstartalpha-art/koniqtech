@@ -651,57 +651,33 @@ gap-4
 ">
 
 <ActivityCard
-
-title="Recent Leads"
-
-items={
-
-recentLeads.map(
-
-x=>
-
-`${x.firstName} ${x.lastName}`
-
-)
-
-}
-
+    title="Recent Leads"
+    items={recentLeads.map(
+        x => `${x.firstName} ${x.lastName}`
+    )}
+    href="/leads/new"
+    action="Create First Lead"
+    description="You haven't created any leads yet."
 />
 
 <ActivityCard
-
-title="Recent Customers"
-
-items={
-
-recentCustomers.map(
-
-x=>
-
-`${x.firstName} ${x.lastName}`
-
-)
-
-}
-
+    title="Recent Customers"
+    items={recentCustomers.map(
+        x => `${x.firstName} ${x.lastName}`
+    )}
+    href="/customers/new"
+    action="Create First Customer"
+    description="No customers yet."
 />
 
 <ActivityCard
-
-title="Recent Jobs"
-
-items={
-
-recentJobs.map(
-
-x=>
-
-x.title
-
-)
-
-}
-
+    title="Recent Jobs"
+    items={recentJobs.map(
+        x => x.title
+    )}
+    href="/jobs/new"
+    action="Create First Job"
+    description="No jobs have been created."
 />
 
 </div>
@@ -776,11 +752,12 @@ mt-4
 }
 
 function ActivityCard({
-
-title,
-items
-
-}:any){
+    title,
+    items,
+    href,
+    action,
+    description
+}: any){
 
 return(
 
@@ -810,12 +787,18 @@ items.length===0
 
 ?
 
-<div className="
-text-sm
-text-slate-400
-">
+<div className="rounded-2xl border border-dashed p-6 text-center">
 
-No activity
+    <p className="text-sm font-medium">
+        {description}
+    </p>
+
+    <Link
+        href={href}
+        className="inline-flex mt-4 rounded-xl bg-orange-500 px-4 py-2 text-white hover:bg-orange-600 transition"
+    >
+        {action}
+    </Link>
 
 </div>
 

@@ -91,16 +91,14 @@ export default async function NewTeamMemberPage() {
 
   const orgId = session.user.orgId as string;
 console.log("Session orgId:", orgId);
-  const roles =
-    await prisma.organizationRole.findMany({
-      where: {
-        orgId,
-        active: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
+  const roles = await prisma.organizationRole.findMany({
+  where: {
+    orgId,
+  },
+});
+
+console.log("ORG ROLES");
+console.log(roles);
 console.log("Roles:", roles);
   const teams =
     await prisma.team.findMany({

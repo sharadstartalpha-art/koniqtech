@@ -13,46 +13,36 @@ async function sendInvitation(formData: FormData) {
     throw new Error("Unauthorized");
   }
 
+  const orgId = session.user.orgId!;
+  const invitedById = session.user.id!;
 
-console.log("SESSION");
-console.log(session.user);
-
-
-
-  const orgId = session.user.orgId as string;
-  const invitedById = session.user.id as string;
-  console.log("ORG ID =", orgId);
-
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
+  const name = (formData.get("name") as string).trim();
+  const email = (formData.get("email") as string).trim().toLowerCase();
   const roleId = formData.get("roleId") as string;
-  const teamId = formData.get("teamId") as string;
+  const teamId = (formData.get("teamId") as string) || null;
 
   if (!name || !email || !roleId) {
-    throw new Error("Please fill all required fields.");
+    throw new Error("Please complete all required fields.");
   }
 
   const existingUser = await prisma.user.findUnique({
-    where: {
-      email,
-    },
+    where: { email },
   });
 
   if (existingUser) {
-    throw new Error("A user with this email already exists.");
+    throw new Error("User already exists.");
   }
 
-  const existingInvite =
-    await prisma.teamInvitation.findFirst({
-      where: {
-        email,
-        orgId,
-        status: "pending",
-      },
-    });
+  const existingInvitation = await prisma.teamInvitation.findFirst({
+    where: {
+      orgId,
+      email,
+      status: "pending",
+    },
+  });
 
-  if (existingInvite) {
-    throw new Error("An invitation has already been sent.");
+  if (existingInvitation) {
+    throw new Error("Invitation already sent.");
   }
 
   const token = crypto.randomUUID();
@@ -64,20 +54,14 @@ console.log(session.user);
       name,
       email,
       roleId,
-      teamId: teamId || null,
+      teamId,
       token,
-      expiresAt: new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
   });
 
   // TODO:
-  // Send email here
-  //
-  // Invitation URL:
-  //
-  // https://koniqtech.com/invitation/${token}
+  // await sendInvitationEmail(email, token)
 
   redirect("/settings/invitations");
 }
@@ -89,32 +73,29 @@ export default async function NewTeamMemberPage() {
     redirect("/login");
   }
 
-  const orgId = session.user.orgId as string;
-console.log("Session orgId:", orgId);
-  const roles = await prisma.organizationRole.findMany({
-  where: {
-    orgId,
-  },
-});
+  const orgId = session.user.orgId!;
 
-console.log("ORG ROLES");
-console.log(roles);
-console.log("Roles:", roles);
-  const teams =
-    await prisma.team.findMany({
+  const [roles, teams] = await Promise.all([
+    prisma.organizationRole.findMany({
+      where: {
+        orgId,
+        active: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    }),
+
+    prisma.team.findMany({
       where: {
         orgId,
       },
       orderBy: {
         name: "asc",
       },
-    });
+    }),
+  ]);
 
-
-
-
-
-    
   return (
     <div className="max-w-4xl mx-auto">
 
@@ -126,21 +107,21 @@ console.log("Roles:", roles);
           ← Back to Team
         </Link>
 
-        <h1 className="text-4xl font-bold mt-4">
+        <h1 className="mt-4 text-4xl font-bold">
           Invite Team Member
         </h1>
 
-        <p className="text-slate-500 mt-2">
+        <p className="mt-2 text-slate-500">
           Send an invitation email to join your organization.
         </p>
       </div>
 
       <form
         action={sendInvitation}
-        className="bg-white border rounded-3xl p-8 space-y-6"
+        className="space-y-6 rounded-3xl border bg-white p-8"
       >
         <div>
-          <label className="block mb-2 font-medium">
+          <label className="mb-2 block font-medium">
             Full Name
           </label>
 
@@ -148,12 +129,12 @@ console.log("Roles:", roles);
             name="name"
             required
             placeholder="John Smith"
-            className="w-full h-12 px-4 rounded-xl border"
+            className="h-12 w-full rounded-xl border px-4"
           />
         </div>
 
         <div>
-          <label className="block mb-2 font-medium">
+          <label className="mb-2 block font-medium">
             Email Address
           </label>
 
@@ -162,41 +143,47 @@ console.log("Roles:", roles);
             name="email"
             required
             placeholder="john@company.com"
-            className="w-full h-12 px-4 rounded-xl border"
+            className="h-12 w-full rounded-xl border px-4"
           />
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 md:grid-cols-2">
 
           <div>
-            <label className="block mb-2 font-medium">
+            <label className="mb-2 block font-medium">
               Role
             </label>
 
             <select
               name="roleId"
               required
-              className="w-full h-12 px-4 rounded-xl border"
+              className="h-12 w-full rounded-xl border px-4"
             >
-              {roles.map((role) => (
-                <option
-                  key={role.id}
-                  value={role.id}
-                >
-                  {role.name}
+              {roles.length === 0 ? (
+                <option value="">
+                  No roles available
                 </option>
-              ))}
+              ) : (
+                roles.map((role) => (
+                  <option
+                    key={role.id}
+                    value={role.id}
+                  >
+                    {role.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
           <div>
-            <label className="block mb-2 font-medium">
+            <label className="mb-2 block font-medium">
               Team
             </label>
 
             <select
               name="teamId"
-              className="w-full h-12 px-4 rounded-xl border"
+              className="h-12 w-full rounded-xl border px-4"
             >
               <option value="">
                 No Team
@@ -215,24 +202,31 @@ console.log("Roles:", roles);
 
         </div>
 
-        <div className="pt-4 flex gap-3">
+        <div className="flex gap-3 pt-4">
 
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
+            disabled={roles.length === 0}
+            className="rounded-xl bg-orange-600 px-6 py-3 font-medium text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
           >
             Send Invitation
           </button>
 
           <Link
             href="/settings/team"
-            className="px-6 py-3 border rounded-xl"
+            className="rounded-xl border px-6 py-3 font-medium"
           >
             Cancel
           </Link>
 
         </div>
 
+        {roles.length === 0 && (
+          <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+            No active roles exist for this organization. Create organization
+            roles before inviting team members.
+          </div>
+        )}
       </form>
 
     </div>

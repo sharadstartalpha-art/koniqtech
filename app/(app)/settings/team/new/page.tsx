@@ -21,7 +21,8 @@ console.log(session.user);
 
   const orgId = session.user.orgId as string;
   const invitedById = session.user.id as string;
-console.log("ORG ID =", orgId);
+  console.log("ORG ID =", orgId);
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const roleId = formData.get("roleId") as string;

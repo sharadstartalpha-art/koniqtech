@@ -1,127 +1,138 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { auth } from "@/auth";
-import prisma from "@/shared/lib/prisma";
-import crypto from "crypto";
+import Link from "next/link"
+import prisma from "@/shared/lib/prisma"
+import bcrypt from "bcryptjs"
+import { redirect } from "next/navigation"
+import { auth } from "@/auth"
 
-async function sendInvitation(formData: FormData) {
-  "use server";
+async function createUser(
+  formData: FormData
+) {
+  "use server"
 
-  const session = await auth();
+  const name =
+    formData.get("name") as string
 
-  if (!session?.user) {
-    throw new Error("Unauthorized");
+  const email =
+    formData.get("email") as string
+
+  const password =
+    formData.get("password") as string
+
+  const role =
+    formData.get("role") as string
+
+  const status =
+    formData.get("status") as string
+
+  
+  if (
+    !name ||
+    !email ||
+    !password
+  ) {
+    throw new Error(
+      "Missing required fields"
+    )
   }
 
-  const orgId = session.user.orgId!;
-  const invitedById = session.user.id!;
+  const existing =
+    await prisma.user.findUnique({
+      where: {
+        email
+      }
+    })
 
-  const name = (formData.get("name") as string).trim();
-  const email = (formData.get("email") as string).trim().toLowerCase();
-  const roleId = formData.get("roleId") as string;
-  const teamId = (formData.get("teamId") as string) || null;
-
-  if (!name || !email || !roleId) {
-    throw new Error("Please complete all required fields.");
+  if (existing) {
+    throw new Error(
+      "Email already exists"
+    )
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
+  const passwordHash =
+    await bcrypt.hash(
+      password,
+      10
+    )
 
-  if (existingUser) {
-    throw new Error("User already exists.");
-  }
+const session = await auth()
 
-  const existingInvitation = await prisma.teamInvitation.findFirst({
-    where: {
-      orgId,
-      email,
-      status: "pending",
-    },
-  });
+const orgId =
+  session?.user?.orgId
 
-  if (existingInvitation) {
-    throw new Error("Invitation already sent.");
-  }
-
-  const token = crypto.randomUUID();
-
-  await prisma.teamInvitation.create({
-    data: {
-      orgId,
-      invitedById,
-      name,
-      email,
-      roleId,
-      teamId,
-      token,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    },
-  });
-
-  // TODO:
-  // await sendInvitationEmail(email, token)
-
-  redirect("/settings/invitations");
+if (!orgId) {
+  throw new Error(
+    "Organization not found"
+  )
 }
 
-export default async function NewTeamMemberPage() {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
+await prisma.user.create({
+  data: {
+    orgId,
+    name,
+    email,
+    passwordHash,
+    role: role as any,
+    status
   }
+})
 
-  const orgId = session.user.orgId!;
+const users =
+    await prisma.user.findMany({
+      where:{
+        orgId
+      },
+      orderBy:{
+        createdAt:"desc"
+      }
+    })
+ 
 
-  const [roles, teams] = await Promise.all([
-    prisma.organizationRole.findMany({
-      where: {
-        orgId,
-        active: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    }),
+  redirect("/settings/team")
+}
 
-    prisma.team.findMany({
-      where: {
-        orgId,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    }),
-  ]);
+export default function NewTeamMemberPage() {
 
   return (
+
     <div className="max-w-4xl mx-auto">
 
       <div className="mb-8">
+
         <Link
           href="/settings/team"
-          className="text-sm text-slate-500 hover:text-slate-900"
+          className="
+          text-sm
+          text-slate-500
+          hover:text-slate-900
+          "
         >
           ← Back to Team
         </Link>
 
-        <h1 className="mt-4 text-4xl font-bold">
-          Invite Team Member
+        <h1 className="text-4xl font-bold mt-4">
+          Add Team Member
         </h1>
 
-        <p className="mt-2 text-slate-500">
-          Send an invitation email to join your organization.
+        <p className="text-slate-500 mt-2">
+          Create a new user account
         </p>
+
       </div>
 
       <form
-        action={sendInvitation}
-        className="space-y-6 rounded-3xl border bg-white p-8"
+        action={createUser}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-8
+        space-y-6
+        "
       >
+
         <div>
-          <label className="mb-2 block font-medium">
+
+          <label className="block mb-2 font-medium">
             Full Name
           </label>
 
@@ -129,12 +140,20 @@ export default async function NewTeamMemberPage() {
             name="name"
             required
             placeholder="John Smith"
-            className="h-12 w-full rounded-xl border px-4"
+            className="
+            w-full
+            h-12
+            px-4
+            rounded-xl
+            border
+            "
           />
+
         </div>
 
         <div>
-          <label className="mb-2 block font-medium">
+
+          <label className="block mb-2 font-medium">
             Email Address
           </label>
 
@@ -143,92 +162,156 @@ export default async function NewTeamMemberPage() {
             name="email"
             required
             placeholder="john@company.com"
-            className="h-12 w-full rounded-xl border px-4"
+            className="
+            w-full
+            h-12
+            px-4
+            rounded-xl
+            border
+            "
           />
+
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div>
+
+          <label className="block mb-2 font-medium">
+            Password
+          </label>
+
+          <input
+            type="password"
+            name="password"
+            required
+            placeholder="Minimum 8 characters"
+            className="
+            w-full
+            h-12
+            px-4
+            rounded-xl
+            border
+            "
+          />
+
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
 
           <div>
-            <label className="mb-2 block font-medium">
+
+            <label className="block mb-2 font-medium">
               Role
             </label>
 
             <select
-              name="roleId"
-              required
-              className="h-12 w-full rounded-xl border px-4"
+              name="role"
+              className="
+              w-full
+              h-12
+              px-4
+              rounded-xl
+              border
+              "
             >
-              {roles.length === 0 ? (
-                <option value="">
-                  No roles available
-                </option>
-              ) : (
-                roles.map((role) => (
-                  <option
-                    key={role.id}
-                    value={role.id}
-                  >
-                    {role.name}
-                  </option>
-                ))
-              )}
+
+              <option value="owner">
+                Owner
+              </option>
+
+              <option value="admin">
+                Admin
+              </option>
+
+              <option value="manager">
+                Manager
+              </option>
+
+              <option value="sales">
+                Sales
+              </option>
+
+              <option value="support">
+                Support
+              </option>
+
+              <option value="accountant">
+                Accountant
+              </option>
+
+              <option value="technician">
+                Technician
+              </option>
+
             </select>
+
           </div>
 
           <div>
-            <label className="mb-2 block font-medium">
-              Team
+
+            <label className="block mb-2 font-medium">
+              Status
             </label>
 
             <select
-              name="teamId"
-              className="h-12 w-full rounded-xl border px-4"
+              name="status"
+              className="
+              w-full
+              h-12
+              px-4
+              rounded-xl
+              border
+              "
             >
-              <option value="">
-                No Team
+
+              <option value="active">
+                Active
               </option>
 
-              {teams.map((team) => (
-                <option
-                  key={team.id}
-                  value={team.id}
-                >
-                  {team.name}
-                </option>
-              ))}
+              <option value="inactive">
+                Inactive
+              </option>
+
             </select>
+
           </div>
 
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="pt-4 flex gap-3">
 
           <button
             type="submit"
-            disabled={roles.length === 0}
-            className="rounded-xl bg-orange-600 px-6 py-3 font-medium text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="
+            px-6
+            py-3
+            bg-orange-600
+            text-white
+            rounded-xl
+            font-medium
+            hover:bg-orange-700
+            "
           >
-            Send Invitation
+            Create User
           </button>
 
           <Link
             href="/settings/team"
-            className="rounded-xl border px-6 py-3 font-medium"
+            className="
+            px-6
+            py-3
+            border
+            rounded-xl
+            font-medium
+            "
           >
             Cancel
           </Link>
 
         </div>
 
-        {roles.length === 0 && (
-          <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
-            No active roles exist for this organization. Create organization
-            roles before inviting team members.
-          </div>
-        )}
       </form>
 
     </div>
-  );
+
+  )
 }

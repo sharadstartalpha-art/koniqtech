@@ -1,137 +1,87 @@
-import Link from "next/link"
-import prisma from "@/shared/lib/prisma"
-import bcrypt from "bcryptjs"
-import { redirect } from "next/navigation"
-import { auth } from "@/auth"
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import prisma from "@/shared/lib/prisma";
 
-async function createUser(
-  formData: FormData
-) {
-  "use server"
+async function sendInvitation(formData: FormData) {
+  "use server";
 
-  const name =
-    formData.get("name") as string
+  const session = await auth();
 
-  const email =
-    formData.get("email") as string
-
-  const password =
-    formData.get("password") as string
-
-  const role =
-    formData.get("role") as string
-
-  const status =
-    formData.get("status") as string
-
-  
-  if (
-    !name ||
-    !email ||
-    !password
-  ) {
-    throw new Error(
-      "Missing required fields"
-    )
+  if (!session?.user?.orgId) {
+    throw new Error("Unauthorized");
   }
 
-  const existing =
-    await prisma.user.findUnique({
-      where: {
-        email
-      }
-    })
+  const orgId = session.user.orgId;
+
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const role = formData.get("role") as string;
+  const status = formData.get("status") as string;
+
+  if (!name || !email) {
+    throw new Error("Missing required fields");
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
 
   if (existing) {
-    throw new Error(
-      "Email already exists"
-    )
+    throw new Error("Email already exists");
   }
 
-  const passwordHash =
-    await bcrypt.hash(
-      password,
-      10
-    )
+  // For now create inactive user.
+  // Later this will become Invitation.create()
 
-const session = await auth()
+  await prisma.user.create({
+    data: {
+      orgId,
+      name,
+      email,
+      role: role as any,
+      status,
+      passwordHash: "", // user sets password after accepting invitation
+    },
+  });
 
-const orgId =
-  session?.user?.orgId
+  // TODO:
+  // Generate invite token
+  // Save token
+  // Send email
 
-if (!orgId) {
-  throw new Error(
-    "Organization not found"
-  )
-}
-
-await prisma.user.create({
-  data: {
-    orgId,
-    name,
-    email,
-    passwordHash,
-    role: role as any,
-    status
-  }
-})
-
-const users =
-    await prisma.user.findMany({
-      where:{
-        orgId
-      },
-      orderBy:{
-        createdAt:"desc"
-      }
-    })
- 
-
-  redirect("/settings/team")
+  redirect("/settings/team");
 }
 
 export default function NewTeamMemberPage() {
-
   return (
-
     <div className="max-w-4xl mx-auto">
 
       <div className="mb-8">
-
         <Link
           href="/settings/team"
-          className="
-          text-sm
-          text-slate-500
-          hover:text-slate-900
-          "
+          className="text-sm text-slate-500 hover:text-slate-900"
         >
           ← Back to Team
         </Link>
 
         <h1 className="text-4xl font-bold mt-4">
-          Add Team Member
+          Send Invitation
         </h1>
 
         <p className="text-slate-500 mt-2">
-          Create a new user account
+          Invite a new team member to join your organization.
         </p>
-
       </div>
 
       <form
-        action={createUser}
-        className="
-        bg-white
-        border
-        rounded-3xl
-        p-8
-        space-y-6
-        "
+        action={sendInvitation}
+        className="bg-white border rounded-3xl p-8 space-y-6"
       >
 
         <div>
-
           <label className="block mb-2 font-medium">
             Full Name
           </label>
@@ -140,19 +90,11 @@ export default function NewTeamMemberPage() {
             name="name"
             required
             placeholder="John Smith"
-            className="
-            w-full
-            h-12
-            px-4
-            rounded-xl
-            border
-            "
+            className="w-full h-12 px-4 rounded-xl border"
           />
-
         </div>
 
         <div>
-
           <label className="block mb-2 font-medium">
             Email Address
           </label>
@@ -162,156 +104,69 @@ export default function NewTeamMemberPage() {
             name="email"
             required
             placeholder="john@company.com"
-            className="
-            w-full
-            h-12
-            px-4
-            rounded-xl
-            border
-            "
+            className="w-full h-12 px-4 rounded-xl border"
           />
-
-        </div>
-
-        <div>
-
-          <label className="block mb-2 font-medium">
-            Password
-          </label>
-
-          <input
-            type="password"
-            name="password"
-            required
-            placeholder="Minimum 8 characters"
-            className="
-            w-full
-            h-12
-            px-4
-            rounded-xl
-            border
-            "
-          />
-
         </div>
 
         <div className="grid grid-cols-2 gap-6">
 
           <div>
-
             <label className="block mb-2 font-medium">
               Role
             </label>
 
             <select
               name="role"
-              className="
-              w-full
-              h-12
-              px-4
-              rounded-xl
-              border
-              "
+              className="w-full h-12 px-4 rounded-xl border"
             >
-
-              <option value="owner">
-                Owner
-              </option>
-
-              <option value="admin">
-                Admin
-              </option>
-
-              <option value="manager">
-                Manager
-              </option>
-
-              <option value="sales">
-                Sales
-              </option>
-
-              <option value="support">
-                Support
-              </option>
-
-              <option value="accountant">
-                Accountant
-              </option>
-
-              <option value="technician">
-                Technician
-              </option>
-
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+              <option value="manager">Manager</option>
+              <option value="sales">Sales</option>
+              <option value="support">Support</option>
+              <option value="accountant">Accountant</option>
+              <option value="technician">Technician</option>
             </select>
-
           </div>
 
           <div>
-
             <label className="block mb-2 font-medium">
               Status
             </label>
 
             <select
               name="status"
-              className="
-              w-full
-              h-12
-              px-4
-              rounded-xl
-              border
-              "
+              className="w-full h-12 px-4 rounded-xl border"
             >
-
-              <option value="active">
-                Active
-              </option>
-
-              <option value="inactive">
-                Inactive
-              </option>
-
+              <option value="pending">Pending Invitation</option>
+              <option value="active">Active</option>
             </select>
-
           </div>
 
         </div>
 
-        <div className="pt-4 flex gap-3">
+        <div className="bg-slate-50 rounded-xl border p-4 text-sm text-slate-600">
+          The invited user will receive an email with a secure link to
+          create their password and join your organization.
+        </div>
 
+        <div className="flex gap-3 pt-2">
           <button
             type="submit"
-            className="
-            px-6
-            py-3
-            bg-orange-600
-            text-white
-            rounded-xl
-            font-medium
-            hover:bg-orange-700
-            "
+            className="px-6 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
           >
-            Create User
+            Send Invitation
           </button>
 
           <Link
             href="/settings/team"
-            className="
-            px-6
-            py-3
-            border
-            rounded-xl
-            font-medium
-            "
+            className="px-6 py-3 border rounded-xl"
           >
             Cancel
           </Link>
-
         </div>
 
       </form>
-
     </div>
-
-  )
+  );
 }

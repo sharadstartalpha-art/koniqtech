@@ -259,7 +259,7 @@ const nextAction =
               title: "Invite Your Team",
               description:
                   "Invite employees so they can access your CRM.",
-              href: "/team",
+              href: "/settings/team",
           }
         : !onboarding.lead
         ? {

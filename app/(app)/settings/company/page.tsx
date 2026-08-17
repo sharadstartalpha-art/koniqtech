@@ -45,10 +45,17 @@ export default async function CompanyPage() {
             </label>
 
             <input
-              name="name"
-              defaultValue={organization.name}
-              className="w-full rounded-xl border p-4"
-            />
+    defaultValue={organization.email ?? ""}
+    readOnly
+    className="
+        w-full
+        rounded-xl
+        border
+        bg-slate-50
+        text-slate-500
+        p-4
+    "
+/>
           </div>
 
           <div>

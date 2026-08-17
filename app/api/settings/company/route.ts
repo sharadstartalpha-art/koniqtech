@@ -17,7 +17,6 @@ export async function POST(req: Request) {
 
     const {
       name,
-      email,
       phone,
       website,
       address,
@@ -33,7 +32,6 @@ export async function POST(req: Request) {
       },
       data: {
         name,
-        email,
         phone,
         website,
         address,

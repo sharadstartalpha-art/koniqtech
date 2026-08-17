@@ -15,16 +15,16 @@ export async function POST(req: Request) {
 
     const orgId = (session.user as any).orgId;
 
-    const {
-      name,
-      phone,
-      website,
-      address,
-      city,
-      state,
-      country,
-      postalCode,
-    } = await req.json();
+    const form = await req.formData();
+
+    const name = String(form.get("name") ?? "");
+    const phone = String(form.get("phone") ?? "");
+    const website = String(form.get("website") ?? "");
+    const address = String(form.get("address") ?? "");
+    const city = String(form.get("city") ?? "");
+    const state = String(form.get("state") ?? "");
+    const country = String(form.get("country") ?? "");
+    const postalCode = String(form.get("postalCode") ?? "");
 
     const organization = await prisma.organization.update({
       where: {
@@ -42,12 +42,11 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      organization,
-    });
-  } catch (error) {
-    console.error(error);
+    return NextResponse.redirect(
+      new URL("/settings/company?saved=true", req.url)
+    );
+  } catch (err) {
+    console.error(err);
 
     return NextResponse.json(
       { error: "Failed to update company." },

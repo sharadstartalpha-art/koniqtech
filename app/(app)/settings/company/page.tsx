@@ -57,16 +57,10 @@ export default async function CompanyPage() {
             </label>
 
             <input
-    defaultValue={organization.email ?? ""}
-    readOnly
-    className="
-        w-full
-        rounded-xl
-        border
-        bg-slate-50
-        text-slate-500
-        p-4
-    "
+  value={organization.email ?? ""}
+  readOnly
+  disabled
+  className="w-full rounded-xl border bg-slate-100 text-slate-500 p-4 cursor-not-allowed"
 />
           </div>
 

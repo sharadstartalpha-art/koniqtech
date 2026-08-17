@@ -3,47 +3,57 @@ import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
 
 export async function POST(req: Request) {
-  const session = await auth();
+  try {
+    const session = await auth();
 
-  if (!session?.user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-  const orgId = (session.user as any).orgId;
+    const orgId = (session.user as any).orgId;
 
-  const body = await req.json();
-
-  const {
-    name,
-    email,
-    phone,
-    address,
-    website,
-    city,
-    state,
-    country,
-    postalCode,
-  } = body;
-
-  const organization = await prisma.organization.update({
-    where: {
-      id: orgId,
-    },
-    data: {
+    const {
       name,
       email,
       phone,
-      address,
       website,
+      address,
       city,
       state,
       country,
       postalCode,
-    },
-  });
+    } = await req.json();
 
-  return NextResponse.json(organization);
+    const organization = await prisma.organization.update({
+      where: {
+        id: orgId,
+      },
+      data: {
+        name,
+        email,
+        phone,
+        website,
+        address,
+        city,
+        state,
+        country,
+        postalCode,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      organization,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { error: "Failed to update company." },
+      { status: 500 }
+    );
+  }
 }

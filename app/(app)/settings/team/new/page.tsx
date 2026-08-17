@@ -2,60 +2,109 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
+import crypto from "crypto";
 
 async function sendInvitation(formData: FormData) {
   "use server";
 
   const session = await auth();
 
-  if (!session?.user?.orgId) {
+  if (!session?.user) {
     throw new Error("Unauthorized");
   }
 
-  const orgId = session.user.orgId;
+  const orgId = session.user.orgId as string;
+  const invitedById = session.user.id as string;
 
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
-  const role = formData.get("role") as string;
-  const status = formData.get("status") as string;
+  const roleId = formData.get("roleId") as string;
+  const teamId = formData.get("teamId") as string;
 
-  if (!name || !email) {
-    throw new Error("Missing required fields");
+  if (!name || !email || !roleId) {
+    throw new Error("Please fill all required fields.");
   }
 
-  const existing = await prisma.user.findUnique({
+  const existingUser = await prisma.user.findUnique({
     where: {
       email,
     },
   });
 
-  if (existing) {
-    throw new Error("Email already exists");
+  if (existingUser) {
+    throw new Error("A user with this email already exists.");
   }
 
-  // For now create inactive user.
-  // Later this will become Invitation.create()
+  const existingInvite =
+    await prisma.teamInvitation.findFirst({
+      where: {
+        email,
+        orgId,
+        status: "pending",
+      },
+    });
 
-  await prisma.user.create({
+  if (existingInvite) {
+    throw new Error("An invitation has already been sent.");
+  }
+
+  const token = crypto.randomUUID();
+
+  await prisma.teamInvitation.create({
     data: {
       orgId,
+      invitedById,
       name,
       email,
-      role: role as any,
-      status,
-      passwordHash: "", // user sets password after accepting invitation
+      roleId,
+      teamId: teamId || null,
+      token,
+      expiresAt: new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ),
     },
   });
 
   // TODO:
-  // Generate invite token
-  // Save token
-  // Send email
+  // Send email here
+  //
+  // Invitation URL:
+  //
+  // https://koniqtech.com/invitation/${token}
 
-  redirect("/settings/team");
+  redirect("/settings/invitations");
 }
 
-export default function NewTeamMemberPage() {
+export default async function NewTeamMemberPage() {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const orgId = session.user.orgId as string;
+
+  const roles =
+    await prisma.organizationRole.findMany({
+      where: {
+        orgId,
+        active: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
+  const teams =
+    await prisma.team.findMany({
+      where: {
+        orgId,
+      },
+      orderBy: {
+        name: "asc",
+      },
+    });
+
   return (
     <div className="max-w-4xl mx-auto">
 
@@ -68,11 +117,11 @@ export default function NewTeamMemberPage() {
         </Link>
 
         <h1 className="text-4xl font-bold mt-4">
-          Send Invitation
+          Invite Team Member
         </h1>
 
         <p className="text-slate-500 mt-2">
-          Invite a new team member to join your organization.
+          Send an invitation email to join your organization.
         </p>
       </div>
 
@@ -80,7 +129,6 @@ export default function NewTeamMemberPage() {
         action={sendInvitation}
         className="bg-white border rounded-3xl p-8 space-y-6"
       >
-
         <div>
           <label className="block mb-2 font-medium">
             Full Name
@@ -108,7 +156,7 @@ export default function NewTeamMemberPage() {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6">
 
           <div>
             <label className="block mb-2 font-medium">
@@ -116,41 +164,49 @@ export default function NewTeamMemberPage() {
             </label>
 
             <select
-              name="role"
+              name="roleId"
+              required
               className="w-full h-12 px-4 rounded-xl border"
             >
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-              <option value="manager">Manager</option>
-              <option value="sales">Sales</option>
-              <option value="support">Support</option>
-              <option value="accountant">Accountant</option>
-              <option value="technician">Technician</option>
+              {roles.map((role) => (
+                <option
+                  key={role.id}
+                  value={role.id}
+                >
+                  {role.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
             <label className="block mb-2 font-medium">
-              Status
+              Team
             </label>
 
             <select
-              name="status"
+              name="teamId"
               className="w-full h-12 px-4 rounded-xl border"
             >
-              <option value="pending">Pending Invitation</option>
-              <option value="active">Active</option>
+              <option value="">
+                No Team
+              </option>
+
+              {teams.map((team) => (
+                <option
+                  key={team.id}
+                  value={team.id}
+                >
+                  {team.name}
+                </option>
+              ))}
             </select>
           </div>
 
         </div>
 
-        <div className="bg-slate-50 rounded-xl border p-4 text-sm text-slate-600">
-          The invited user will receive an email with a secure link to
-          create their password and join your organization.
-        </div>
+        <div className="pt-4 flex gap-3">
 
-        <div className="flex gap-3 pt-2">
           <button
             type="submit"
             className="px-6 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
@@ -164,9 +220,11 @@ export default function NewTeamMemberPage() {
           >
             Cancel
           </Link>
+
         </div>
 
       </form>
+
     </div>
   );
 }

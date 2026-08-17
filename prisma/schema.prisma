@@ -453,6 +453,8 @@ model User {
   @@index([status])
 }
 
+
+
 model Session {
   id        String   @id @default(uuid())
   userId    String

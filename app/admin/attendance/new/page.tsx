@@ -10,9 +10,7 @@ import {
   Info
 } from "lucide-react"
 
-import {
-  UserRole
-} from "@prisma/client"
+
 
 import { auth } from "@/auth"
 
@@ -31,11 +29,10 @@ import {
 // ACCESS ROLES
 // ============================================================
 
-const CREATE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const CREATE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // PAGE
@@ -47,20 +44,17 @@ export default async function NewAttendancePage() {
   // AUTHORIZATION
   // ----------------------------------------------------------
 
-  const session =
-    await auth()
+  const session = await auth()
 
+if (
+  !session?.user?.id ||
+  !session.user.employeeRole
+) {
+  redirect("/login")
+}
 
-  if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    redirect("/login")
-  }
-
-
-  const currentRole =
-    session.user.role as UserRole
+const currentRole =
+  session.user.employeeRole
 
 
   if (

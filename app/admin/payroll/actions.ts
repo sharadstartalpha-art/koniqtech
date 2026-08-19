@@ -3,8 +3,7 @@
 import {
   Prisma,
   SalaryStatus,
-  SalaryType,
-  UserRole
+  SalaryType
 } from "@prisma/client"
 
 import {
@@ -40,11 +39,10 @@ export type PayrollActionState = {
 // ACCESS ROLES
 // ============================================================
 
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // CONSTANTS
@@ -74,26 +72,21 @@ async function requirePayrollManager() {
 
   if (
     !session?.user?.id ||
-    !session.user.role
+    !session.user.organizationRole
   ) {
     redirect("/login")
   }
 
 
-  const role =
-    session.user.role as UserRole
+  const currentRole =
+  session.user.organizationRole?.toLowerCase() ?? ""
 
 
-  if (
-    !MANAGE_ROLES.includes(
-      role
-    )
-  ) {
-    throw new Error(
-      "You are not authorized to manage payroll."
-    )
-  }
-
+ if (!MANAGE_ROLES.includes(currentRole)) {
+  throw new Error(
+    "You are not authorized to manage payroll."
+  )
+}
 
   return session
 }

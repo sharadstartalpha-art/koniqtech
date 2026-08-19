@@ -86,7 +86,12 @@ async function getAuthenticatedUser() {
       select: {
         id: true,
         orgId: true,
-        role: true
+        organizationRole: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
       }
     })
 

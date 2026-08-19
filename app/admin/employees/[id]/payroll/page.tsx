@@ -73,7 +73,7 @@ export default async function EmployeePayrollPage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   if (

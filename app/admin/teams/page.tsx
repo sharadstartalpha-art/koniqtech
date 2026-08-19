@@ -40,7 +40,7 @@ export default async function TeamsPage() {
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (!ALLOWED_ROLES.has(currentRole)) {

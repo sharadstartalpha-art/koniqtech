@@ -23,8 +23,7 @@ import {
 
 import {
   LeaveStatus,
-  LeaveType,
-  UserRole
+  LeaveType
 } from "@prisma/client"
 
 import { auth } from "@/auth"
@@ -49,22 +48,21 @@ type LeaveDetailsPageProps = {
 // ACCESS ROLES
 // ============================================================
 
-const VIEW_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const VIEW_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const APPROVE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const APPROVE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
+
 
 
 // ============================================================
@@ -322,14 +320,14 @@ export default async function LeaveDetailsPage({
 
   if (
     !session?.user?.id ||
-    !session.user.role
+    !session.user.organizationRole
   ) {
     redirect("/login")
   }
 
 
-  const currentRole =
-    session.user.role as UserRole
+ const currentRole =
+  session.user.organizationRole?.toLowerCase() ?? ""
 
 
   if (

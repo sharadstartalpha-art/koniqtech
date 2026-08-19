@@ -6,8 +6,7 @@ import {
 } from "next/navigation"
 
 import {
-  AttendanceStatus,
-  UserRole
+  AttendanceStatus
 } from "@prisma/client"
 
 import {
@@ -49,29 +48,25 @@ type AttendanceDetailPageProps = {
 // ACCESS ROLES
 // ============================================================
 
-const VIEW_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const VIEW_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const EDIT_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const EDIT_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const DELETE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const DELETE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const APPROVE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const APPROVE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // STATUS LABELS
@@ -237,16 +232,15 @@ export default async function AttendanceDetailPage({
     await auth()
 
 
-  if (
+ if (
     !session?.user?.id ||
-    !session.user.role
-  ) {
+    !session.user.employeeRole
+) {
     redirect("/login")
-  }
+}
 
-
-  const currentRole =
-    session.user.role as UserRole
+const currentRole =
+    session.user.employeeRole
 
 
   if (

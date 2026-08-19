@@ -68,7 +68,8 @@ mode:"insensitive"
 
 include:{
 
-organization:true
+organization:true,
+ organizationRole: true,
 
 },
 
@@ -190,7 +191,7 @@ className="border-t"
 
 <td>
 
-{user.role}
+{user.organizationRole?.name}
 
 </td>
 

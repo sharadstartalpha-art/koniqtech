@@ -10,9 +10,7 @@ import {
   Users
 } from "lucide-react"
 
-import {
-  UserRole
-} from "@prisma/client"
+
 
 import { auth } from "@/auth"
 
@@ -31,9 +29,9 @@ import LeaveForm, {
 // ACCESS ROLES
 // ============================================================
 
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
 
@@ -53,14 +51,14 @@ export default async function NewLeavePage() {
 
   if (
     !session?.user?.id ||
-    !session.user.role
+    !session.user.organizationRole
   ) {
     redirect("/login")
   }
 
 
   const currentRole =
-    session.user.role as UserRole
+  session.user.organizationRole.toLowerCase()
 
 
   if (

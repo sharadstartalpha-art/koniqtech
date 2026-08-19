@@ -4,18 +4,16 @@ export const dynamic="force-dynamic"
 
 export default async function Page(){
 
-const techs=
-await prisma.user.findMany({
-
-where:{
-role:"technician"
-},
-
-include:{
-jobs:true
-}
-
-})
+const techs = await prisma.user.findMany({
+  where: {
+    organizationRole: {
+      name: "Technician",
+    },
+  },
+  include: {
+    jobs: true,
+  },
+});
 
 return(
 

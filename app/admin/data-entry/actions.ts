@@ -64,17 +64,11 @@ async function getAuthContext() {
 
 
   return {
-
-    userId:
-      session.user.id,
-
-    orgId:
-      session.user.orgId,
-
-    role:
-      session.user.role
-
-  }
+    userId: session.user.id,
+    orgId: session.user.orgId,
+    organizationRole: session.user.organizationRole,
+    employeeRole: session.user.employeeRole,
+}
 }
 
 

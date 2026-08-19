@@ -54,7 +54,7 @@ export default async function EditDepartmentPage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.employeeRole ?? ""
   )
 
   if (

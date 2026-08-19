@@ -4,8 +4,7 @@ import { redirect } from "next/navigation"
 
 import {
   AttendanceStatus,
-  Prisma,
-  UserRole
+  Prisma
 } from "@prisma/client"
 
 import {
@@ -46,15 +45,14 @@ type AttendancePageProps = {
 const PAGE_SIZE = 20
 
 
-const VIEW_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const VIEW_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
 
@@ -252,23 +250,21 @@ export default async function AttendancePage({
 
   const session = await auth()
 
-  if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    redirect("/login")
-  }
+if (
+  !session?.user?.id ||
+  !session.user.employeeRole
+) {
+  redirect("/login")
+}
 
+const currentRole =
+  session.user.employeeRole
 
-  const currentRole =
-    session.user.role as UserRole
-
-
-  if (
-    !VIEW_ROLES.includes(currentRole)
-  ) {
-    redirect("/admin/dashboard")
-  }
+if (
+  !VIEW_ROLES.includes(currentRole))
+{
+  redirect("/admin/dashboard")
+}
 
 
   const canManage =

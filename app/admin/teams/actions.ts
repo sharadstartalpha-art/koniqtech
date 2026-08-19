@@ -64,7 +64,7 @@ async function getTeamAdminContext(): Promise<TeamAdminContext> {
   )
 
   const role = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (!userId) {

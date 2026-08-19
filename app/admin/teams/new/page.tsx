@@ -51,7 +51,7 @@ export default async function NewTeamPage() {
   )
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (!orgId) {

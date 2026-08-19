@@ -1,89 +1,87 @@
 import bcrypt from "bcryptjs"
+import { NextResponse } from "next/server"
 
 import prisma from "@/shared/lib/prisma"
 
-import { NextResponse }
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
 
-from "next/server"
+    const otp = await prisma.otpCode.findFirst({
+      where: {
+        email: body.email,
+        code: body.code,
+        verified: false,
+      },
+    })
 
-export async function POST(
-req:Request
-){
+    if (!otp) {
+      return NextResponse.json(
+        { error: "Invalid OTP" },
+        { status: 400 }
+      )
+    }
 
-const body=await req.json()
+    // Find the Owner role for this organization
+    const ownerRole = await prisma.organizationRole.findFirst({
+      where: {
+        orgId: body.organizationId,
+        name: "Owner",
+      },
+    })
 
-const otp=
+    if (!ownerRole) {
+      return NextResponse.json(
+        { error: "Owner role not found." },
+        { status: 400 }
+      )
+    }
 
-await prisma.otpCode.findFirst({
+    const passwordHash = await bcrypt.hash(body.password, 10)
 
-where:{
+    const user = await prisma.user.create({
+  data: {
+  name: body.name,
+  email: body.email,
+  passwordHash,
 
-email:body.email,
+  organization: {
+    connect: {
+      id: body.organizationId,
+    },
+  },
 
-code:body.code,
-
-verified:false
-
-}
-
-})
-
-if(!otp){
-
-return NextResponse.json(
-{error:"invalid"},
-{status:400}
-)
-
-}
-
-const hash=
-
-await bcrypt.hash(
-body.password,
-10
-)
-
-const user=
-
-await prisma.user.create({
-
-data:{
-
-name:body.name,
-
-organization:
-
-body.organization,
-
-email:body.email,
-
-passwordHash:hash,
-
-role:"owner"
-
-}
-
-})
-
-await prisma.otpCode.update({
-
-where:{
-id:otp.id
+  organizationRole: {
+    connect: {
+      id: ownerRole.id,
+    },
+  },
 },
-
-data:{
-verified:true
-}
-
 })
 
-return NextResponse.json({
+    await prisma.otpCode.update({
+      where: {
+        id: otp.id,
+      },
+      data: {
+        verified: true,
+      },
+    })
 
-ok:true,
+    return NextResponse.json({
+      success: true,
+      user,
+    })
+  } catch (error) {
+    console.error(error)
 
-user
-
-})
-
+    return NextResponse.json(
+      {
+        error: "Something went wrong.",
+      },
+      {
+        status: 500,
+      }
+    )
+  }
 }

@@ -3,10 +3,16 @@
 import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
+import { createDefaultRoles } from "@/lib/create-default-roles"
+import {
+  CRMType,
+  Industry,
+  Prisma,
+  SubscriptionPlan,
+  SubscriptionStatus
+} from "@prisma/client"
 
 
-
-import { CRMType, Industry, Prisma, SubscriptionPlan, SubscriptionStatus, UserRole } from "@prisma/client"
 
 function makeSlug(
 text:string
@@ -62,7 +68,7 @@ data.password,
 
 )
 
-const org=
+const organization=
 
 await prisma.organization.create({
 
@@ -102,13 +108,15 @@ data.email
 
 })
 
+await createDefaultRoles(organization.id);
+
 await prisma.organizationSettings.create({
 
 data:{
 
 orgId:
 
-org.id,
+organization.id,
 
 timezone:
 
@@ -128,7 +136,7 @@ data:{
 
 orgId:
 
-org.id,
+organization.id,
 
 provider:
 
@@ -158,30 +166,25 @@ interval:
 
 })
 
-await prisma.user.create({
+const ownerRole = await prisma.organizationRole.findFirst({
+  where: {
+    orgId: organization.id,
+    name: "Owner",
+  },
+})
 
-data:{
-
-orgId:
-
-org.id,
-
-name:
-
-data.name,
-
-email:
-
-data.email,
-
-passwordHash:
-
-hash,
-
-role: UserRole.owner,
-
+if (!ownerRole) {
+  throw new Error("Owner role not found")
 }
 
+await prisma.user.create({
+  data: {
+    orgId: organization.id,
+    name: data.name,
+    email: data.email,
+    passwordHash: hash,
+    organizationRoleId: ownerRole.id,
+  },
 })
 
 return{

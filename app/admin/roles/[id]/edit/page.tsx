@@ -66,7 +66,7 @@ export default async function EditRolePage({
   ======================================================= */
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (

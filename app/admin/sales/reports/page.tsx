@@ -335,8 +335,12 @@ export default async function SalesReportsPage() {
     prisma.user.findMany({
 
       where: {
-        role: "platform_sales",
+        
         status: "active",
+        organizationRole: {
+    name: "platform_sales",
+  },
+
       },
 
       select: {

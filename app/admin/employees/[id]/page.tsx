@@ -74,7 +74,7 @@ export default async function EmployeeProfilePage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   const allowedRoles = [

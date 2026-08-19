@@ -70,7 +70,7 @@ export default async function EditTeamPage({
   )
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (!orgId) {

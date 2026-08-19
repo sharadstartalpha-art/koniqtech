@@ -47,18 +47,15 @@ export default async function ProfilePage() {
     redirect("/login")
   }
 
-  const user =
-    await prisma.user.findUnique({
-
-      where: {
-        id: session.user.id
-      },
-
-      include: {
-        organization: true
-      }
-
-    })
+ const user = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organization: true,
+    organizationRole: true,
+  },
+})
 
   if (!user) {
     redirect("/login")
@@ -133,7 +130,7 @@ export default async function ProfilePage() {
               capitalize
               "
             >
-              {user.role}
+              {user.organizationRole?.name ?? "No Role"}
             </span>
 
           </div>
@@ -236,7 +233,7 @@ export default async function ProfilePage() {
                 </label>
 
                 <input
-                  value={user.role}
+                  value={user.organizationRole?.name ?? ""}
                   disabled
                   className="
                   w-full
@@ -377,7 +374,7 @@ export default async function ProfilePage() {
           </p>
 
           <h3 className="text-xl font-bold mt-2 capitalize">
-            {user.role}
+            {user.organizationRole?.name ?? "No Role"}
           </h3>
 
         </div>

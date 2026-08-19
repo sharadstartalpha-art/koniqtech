@@ -24,7 +24,7 @@ import LeadForm, {
 import {
   updateLeadAction
 } from "../../actions"
-import { UserRole } from "@prisma/client"
+
 
 
 // ============================================================
@@ -161,26 +161,12 @@ export default async function EditLeadPage({
  const users =
   await prisma.user.findMany({
     where: {
-      orgId,
-
-      OR: [
-        {
-          status: "active",
-
-          role:
-            UserRole.platform_sales,
-        },
-
-        ...(lead.assignedTo
-          ? [
-              {
-                id:
-                  lead.assignedTo,
-              },
-            ]
-          : []),
-      ],
-    },
+    orgId,
+    status: "active",
+    organizationRole: {
+        name: "platform_sales"
+    }
+},
 
     orderBy: [
       {

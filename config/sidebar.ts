@@ -1,7 +1,7 @@
 import {
   Industry,
   SubscriptionPlan,
-  UserRole,
+  
 } from "@prisma/client";
 
 import {
@@ -37,7 +37,7 @@ export interface MenuChild {
   href: string;
   icon: LucideIcon;
 
-  roles?: UserRole[];
+  roles?: string[];
   plans?: SubscriptionPlan[];
   industries?: Industry[];
 }
@@ -47,7 +47,7 @@ export interface MenuItem {
   href: string;
   icon: LucideIcon;
 
-  roles?: UserRole[];
+  roles?: string[];
   plans?: SubscriptionPlan[];
   industries?: Industry[];
 
@@ -70,13 +70,13 @@ export const MENU: MenuSection[] = [
         icon: LayoutDashboard,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
+          "accountant",
         ],
 
         plans: [
@@ -100,9 +100,9 @@ export const MENU: MenuSection[] = [
         icon: Users,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
+          "owner",
+          "manager",
+          "sales",
         ],
 
         plans: [
@@ -126,9 +126,9 @@ export const MENU: MenuSection[] = [
         icon: Users,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
+          "owner",
+          "manager",
+          "sales",
         ],
 
         plans: [
@@ -151,9 +151,9 @@ export const MENU: MenuSection[] = [
         icon: GitBranch,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
+          "owner",
+          "manager",
+          "sales",
         ],
 
         plans: [
@@ -176,9 +176,9 @@ export const MENU: MenuSection[] = [
         icon: FileText,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
+          "owner",
+          "manager",
+          "sales",
         ],
 
         plans: [
@@ -208,11 +208,11 @@ export const MENU: MenuSection[] = [
         icon: Briefcase,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
+          "owner",
+          "manager",
+          "dispatcher",
+          "technician",
+          "crew",
         ],
 
         plans: [
@@ -236,8 +236,8 @@ export const MENU: MenuSection[] = [
         icon: Users,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
+          "owner",
+          "manager",
         ],
 
         plans: [
@@ -260,9 +260,9 @@ export const MENU: MenuSection[] = [
         icon: Truck,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.dispatcher,
+          "owner",
+          "manager",
+          "dispatcher",
         ],
 
         plans: [
@@ -285,12 +285,12 @@ export const MENU: MenuSection[] = [
         icon: Calendar,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
         ],
 
         plans: [
@@ -314,8 +314,8 @@ export const MENU: MenuSection[] = [
         icon: Package,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
+          "owner",
+          "manager",
         ],
 
         plans: [
@@ -343,8 +343,8 @@ export const MENU: MenuSection[] = [
         icon: CreditCard,
 
         roles: [
-          UserRole.owner,
-          UserRole.accountant,
+          "owner",
+          "accountant",
         ],
 
         plans: [
@@ -368,9 +368,9 @@ export const MENU: MenuSection[] = [
         icon: FileText,
 
         roles: [
-          UserRole.owner,
-          UserRole.accountant,
-          UserRole.manager,
+          "owner",
+          "accountant",
+          "manager",
         ],
 
         plans: [
@@ -394,9 +394,9 @@ export const MENU: MenuSection[] = [
         icon: BarChart3,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "accountant",
         ],
 
         plans: [
@@ -425,13 +425,13 @@ export const MENU: MenuSection[] = [
         icon: MessageSquare,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
+          "accountant",
         ],
 
         plans: [
@@ -454,13 +454,13 @@ export const MENU: MenuSection[] = [
         icon: Bell,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
+          "accountant",
         ],
 
         plans: [
@@ -490,8 +490,8 @@ export const MENU: MenuSection[] = [
         icon: Brain,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
+          "owner",
+          "manager",
         ],
 
         plans: [
@@ -519,13 +519,13 @@ export const MENU: MenuSection[] = [
         icon: UserCog,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
+          "accountant",
         ],
 
         plans: [
@@ -549,13 +549,13 @@ export const MENU: MenuSection[] = [
         icon: Settings,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
-          UserRole.sales,
-          UserRole.dispatcher,
-          UserRole.technician,
-          UserRole.crew,
-          UserRole.accountant,
+          "owner",
+          "manager",
+          "sales",
+          "dispatcher",
+          "technician",
+          "crew",
+          "accountant",
         ],
 
         plans: [
@@ -585,8 +585,8 @@ export const MENU: MenuSection[] = [
         icon: UserCog,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
+          "owner",
+          "manager",
         ],
 
         plans: [
@@ -609,8 +609,8 @@ export const MENU: MenuSection[] = [
         icon: Settings,
 
         roles: [
-          UserRole.owner,
-          UserRole.manager,
+          "owner",
+          "manager",
         ],
 
         plans: [

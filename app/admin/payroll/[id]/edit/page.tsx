@@ -12,9 +12,6 @@ import {
   PencilLine
 } from "lucide-react"
 
-import {
-  UserRole
-} from "@prisma/client"
 
 import { auth } from "@/auth"
 
@@ -45,11 +42,10 @@ type EditPayrollPageProps = {
 // ACCESS ROLES
 // ============================================================
 
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // DATE INPUT FORMATTER
@@ -107,15 +103,14 @@ export default async function EditPayrollPage({
 
 
   if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    redirect("/login")
-  }
+  !session?.user?.id ||
+  !session.user.organizationRole
+) {
+  return null
+}
 
-
-  const currentRole =
-    session.user.role as UserRole
+const currentRole =
+  session.user.organizationRole?.toLowerCase() ?? ""
 
 
   if (

@@ -18,8 +18,8 @@ async function createUser(
   const password =
     formData.get("password") as string
 
-  const role =
-    formData.get("role") as string
+ const organizationRoleId =
+  formData.get("organizationRoleId") as string
 
   const status =
     formData.get("status") as string
@@ -71,9 +71,9 @@ await prisma.user.create({
     name,
     email,
     passwordHash,
-    role: role as any,
-    status
-  }
+    organizationRoleId,
+    status,
+  },
 })
 
 const users =
@@ -90,8 +90,31 @@ const users =
   redirect("/settings/team")
 }
 
-export default function NewTeamMemberPage() {
 
+
+
+
+
+export default async function NewTeamMemberPage() {
+
+const session = await auth()
+
+const orgId = session?.user?.orgId
+
+if (!orgId) {
+  redirect("/login")
+}
+
+const roles = await prisma.organizationRole.findMany({
+  where: {
+    orgId,
+    active: true,
+  },
+  orderBy: {
+    name: "asc",
+  },
+})
+  
   return (
 
     <div className="max-w-4xl mx-auto">
@@ -202,47 +225,25 @@ export default function NewTeamMemberPage() {
             <label className="block mb-2 font-medium">
               Role
             </label>
-
-            <select
-              name="role"
-              className="
-              w-full
-              h-12
-              px-4
-              rounded-xl
-              border
-              "
-            >
-
-              <option value="owner">
-                Owner
-              </option>
-
-              <option value="admin">
-                Admin
-              </option>
-
-              <option value="manager">
-                Manager
-              </option>
-
-              <option value="sales">
-                Sales
-              </option>
-
-              <option value="support">
-                Support
-              </option>
-
-              <option value="accountant">
-                Accountant
-              </option>
-
-              <option value="technician">
-                Technician
-              </option>
-
-            </select>
+<select
+  name="organizationRoleId"
+  className="
+    w-full
+    h-12
+    px-4
+    rounded-xl
+    border
+  "
+>
+  {roles.map((role) => (
+    <option
+      key={role.id}
+      value={role.id}
+    >
+      {role.name}
+    </option>
+  ))}
+</select>
 
           </div>
 

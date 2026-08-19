@@ -24,56 +24,25 @@ export default async function RolesPage({
 ]
 
 
-
-  const users =
-  await prisma.user.findMany({
-
-    where:{
-      orgId
-    }
-
-  })
+const users = await prisma.user.findMany({
+  where: {
+    orgId
+  },
+  include: {
+    organizationRole: true,
+  },
+})
 
 const permissions =
   await prisma.rolePermission.findMany()
 
-  const roles = [
-    {
-      key:"owner",
-      title:"Owner",
-      description:"Full Access"
-    },
-    {
-      key:"admin",
-      title:"Admin",
-      description:"Organization Admin"
-    },
-    {
-      key:"manager",
-      title:"Manager",
-      description:"Operations Manager"
-    },
-    {
-      key:"sales",
-      title:"Sales",
-      description:"CRM Sales"
-    },
-    {
-      key:"technician",
-      title:"Technician",
-      description:"Field User"
-    },
-    {
-      key:"support",
-      title:"Support",
-      description:"Customer Support"
-    },
-    {
-      key:"accountant",
-      title:"Accountant",
-      description:"Finance Access"
-    }
-  ]
+ const roles = await prisma.organizationRole.findMany({
+  where: { orgId },
+  include: {
+    users: true,
+    permissions: true,
+  },
+})
 
   const totalRoles =
     roles.length
@@ -81,13 +50,9 @@ const permissions =
   const activePermissions =
     permissions.length
 
-    const protectedRoles =
-  roles.filter(
-    r =>
-      PROTECTED_ROLES.includes(
-        r.key
-      )
-  ).length
+   const protectedRoles = roles.filter(
+  r => PROTECTED_ROLES.includes(r.name.toLowerCase())
+).length
 
   return (
 
@@ -169,15 +134,12 @@ const permissions =
 
         {roles.map(role => {
 
-          const count =
-            users.filter(
-              u => u.role === role.key
-            ).length
+        const count = role.users.length
 
           return (
 
             <div
-              key={role.key}
+              key={role.id}
               className="
               bg-white
               border
@@ -187,7 +149,7 @@ const permissions =
             >
 
               <h3 className="text-xl font-bold">
-                {role.title}
+                {role.name}
               </h3>
 
               <p className="text-slate-500 mt-2">
@@ -199,7 +161,7 @@ const permissions =
               </p>
 
               <Link
-                href={`/settings/roles/edit?role=${role.key}`}
+                href={`/settings/roles/edit?role=${role.id}`}
                 className="
                 inline-block
                 mt-4

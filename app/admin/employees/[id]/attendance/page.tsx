@@ -129,7 +129,7 @@ export default async function EmployeeAttendancePage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   const allowedRoles = [

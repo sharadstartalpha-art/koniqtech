@@ -27,6 +27,9 @@ export async function loginAction(
     where: {
       email,
     },
+    include: {
+    organizationRole: true,
+  },
   })
 
   if (!user) {
@@ -46,13 +49,14 @@ export async function loginAction(
     }
   }
 
-  await setSession({
-    id: user.id,
-    orgId: user.orgId,
-    role: user.role,
-  })
+ await setSession({
+  id: user.id,
+  orgId: user.orgId,
+  role: user.organizationRole?.name ?? "",
+})
 
-  const role = String(user.role).toLowerCase()
+  const role =
+  user.organizationRole?.name.toLowerCase() ?? ""
 
   if (INTERNAL_PLATFORM_ROLES.has(role)) {
     redirect("/admin/dashboard")

@@ -15,18 +15,29 @@ export default async function EditTeamMemberPage({
 
   const { id } = await params
 
-  const user =
-    await prisma.user.findUnique({
-
-      where: {
-        id
-      }
-
-    })
+  const user = await prisma.user.findUnique({
+  where: {
+    id,
+  },
+  include: {
+    organizationRole: true,
+  },
+})
 
   if (!user) {
     notFound()
   }
+
+const roles = await prisma.organizationRole.findMany({
+  where: {
+    orgId: user.orgId,
+    active: true,
+  },
+  orderBy: {
+    name: "asc",
+  },
+})
+
 
   async function updateUser(
     formData: FormData
@@ -42,26 +53,23 @@ export default async function EditTeamMemberPage({
     const email =
       formData.get("email") as string
 
-    const role =
-      formData.get("role") as any
+    const organizationRoleId =
+  formData.get("organizationRoleId") as string
 
     const status =
       formData.get("status") as string
 
-    await prisma.user.update({
-
-      where: {
-        id
-      },
-
-      data: {
-        name,
-        email,
-        role,
-        status
-      }
-
-    })
+   await prisma.user.update({
+  where: {
+    id,
+  },
+  data: {
+    name,
+    email,
+    organizationRoleId,
+    status,
+  },
+})
 
     revalidatePath(
       "/settings/team"
@@ -167,48 +175,20 @@ export default async function EditTeamMemberPage({
               Role
             </label>
 
-            <select
-              name="role"
-              defaultValue={user.role}
-              className="
-              w-full
-              h-12
-              px-4
-              rounded-xl
-              border
-              "
-            >
-
-              <option value="owner">
-                Owner
-              </option>
-
-              <option value="admin">
-                Admin
-              </option>
-
-              <option value="manager">
-                Manager
-              </option>
-
-              <option value="sales">
-                Sales
-              </option>
-
-              <option value="support">
-                Support
-              </option>
-
-              <option value="accountant">
-                Accountant
-              </option>
-
-              <option value="technician">
-                Technician
-              </option>
-
-            </select>
-
+           <select
+  name="organizationRoleId"
+  defaultValue={user.organizationRoleId ?? ""}
+  className="w-full h-12 px-4 rounded-xl border"
+>
+  {roles.map((role) => (
+    <option
+      key={role.id}
+      value={role.id}
+    >
+      {role.name}
+    </option>
+  ))}
+</select>
           </div>
 
           <div>

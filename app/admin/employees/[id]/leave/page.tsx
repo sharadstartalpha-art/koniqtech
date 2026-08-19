@@ -56,7 +56,7 @@ export default async function EmployeeLeavePage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   if (

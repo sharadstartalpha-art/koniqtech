@@ -64,7 +64,7 @@ model Organization {
 
   teams Team[]
 
-  roles UserRole[]
+  organizationRoles OrganizationRole[]
 
   users User[]
 
@@ -221,8 +221,8 @@ model Organization {
   marketingTemplates MarketingTemplate[]
   marketingCampaigns MarketingCampaign[]
 
-  routeOptimizations  RouteOptimization[]
-  OrganizationRole    OrganizationRole[]
+  routeOptimizations RouteOptimization[]
+
   MarketingNewsletter MarketingNewsletter[]
   CompanyLead         CompanyLead[]
 }
@@ -432,11 +432,13 @@ model User {
 
   routeOptimizations   RouteOptimization[]
   createdDemoSchedules DemoSchedule[]      @relation("DemoScheduleCreator")
-  role                 UserRole
-  OrganizationRole     OrganizationRole?   @relation(fields: [organizationRoleId], references: [id])
-  organizationRoleId   String?
-  UserPayroll          UserPayroll[]
-  DispatchBoard        DispatchBoard[]
+
+  organizationRoleId String?
+
+  organizationRole OrganizationRole? @relation(fields: [organizationRoleId], references: [id])
+
+  UserPayroll   UserPayroll[]
+  DispatchBoard DispatchBoard[]
 
   createdMarketingCampaigns   MarketingCampaign[]   @relation("MarketingCampaignCreator")
   createdMarketingNewsletters MarketingNewsletter[] @relation("MarketingNewsletterCreator")
@@ -446,14 +448,34 @@ model User {
 
   targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
 
-   welcomeSeen Boolean @default(false)
-
+  welcomeSeen Boolean @default(false)
 
   @@index([orgId])
   @@index([status])
 }
 
+model OrganizationRole {
+  id          String  @id @default(uuid())
+  orgId       String
+  name        String
+  description String?
+  isSystem    Boolean @default(false)
+  active      Boolean @default(true)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  users User[]
+
+  permissions RolePermission[]
+
+  invitations TeamInvitation[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
 
 model Session {
   id        String   @id @default(uuid())
@@ -767,29 +789,6 @@ enum Industry {
   hvac
   plumbing
   landscaping
-}
-
-enum UserRole {
-  // Customer CRM
-  owner
-  manager
-  sales
-  dispatcher
-  technician
-  crew
-  accountant
-
-  // KoniqTech Platform
-  super_admin
-  platform_manager
-  platform_sales
-  support
-  finance
-  developer
-  qa
-  customer_success
-  marketing
-  data_entry
 }
 
 enum CRMType {
@@ -1214,7 +1213,7 @@ model Notification {
 model RolePermission {
   id String @id @default(uuid())
 
-  role String
+  roleId String
 
   module String
 
@@ -1234,11 +1233,11 @@ model RolePermission {
 
   canDelete Boolean @default(false)
 
-  createdAt          DateTime          @default(now())
-  OrganizationRole   OrganizationRole? @relation(fields: [organizationRoleId], references: [id])
-  organizationRoleId String?
+  createdAt DateTime @default(now())
 
-  @@unique([role, module])
+  role OrganizationRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, module])
 }
 
 model UserPreference {
@@ -2795,34 +2794,6 @@ model Team {
 
   members        User[]           @relation("UserTeam")
   TeamInvitation TeamInvitation[]
-
-  @@unique([orgId, name])
-  @@index([orgId])
-}
-
-model OrganizationRole {
-  id String @id @default(uuid())
-
-  orgId String
-
-  name String
-
-  description String?
-
-  isSystem Boolean @default(false)
-
-  active Boolean @default(true)
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  users User[]
-
-  permissions RolePermission[]
-  invitations TeamInvitation[] // ← ADD
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -5302,3 +5273,5 @@ model ImpersonationSession {
   revokedAt    DateTime?
   createdAt    DateTime  @default(now())
 }
+
+

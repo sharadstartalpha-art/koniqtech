@@ -13,7 +13,7 @@ import {
 
 import {
   LeaveStatus,
-  UserRole
+  
 } from "@prisma/client"
 
 import { auth } from "@/auth"
@@ -45,11 +45,10 @@ type EditLeavePageProps = {
 // ACCESS ROLES
 // ============================================================
 
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // DATE HELPER
@@ -103,15 +102,15 @@ export default async function EditLeavePage({
 
   if (
     !session?.user?.id ||
-    !session.user.role
+    !session.user.organizationRole
   ) {
     redirect("/login")
   }
 
 
-  const currentRole =
-    session.user.role as UserRole
-
+ const currentRole = String(
+  session.user.organizationRole ?? ""
+).toLowerCase()
 
   if (
     !MANAGE_ROLES.includes(

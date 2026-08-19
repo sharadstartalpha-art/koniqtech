@@ -1,187 +1,156 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
-import bcrypt from "bcryptjs"
-
 export const {
+  handlers,
+  auth,
+  signIn,
+  signOut,
+} = NextAuth({
+  secret: process.env.AUTH_SECRET,
 
-handlers,
-auth,
-signIn,
-signOut
+  trustHost: true,
 
-}=NextAuth({
+  session: {
+    strategy: "jwt",
+  },
 
-secret:
-process.env.AUTH_SECRET,
+  providers: [
+    Credentials({
+      credentials: {
+        email: {},
+        password: {},
+      },
 
-trustHost:true,
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
 
-session:{
-strategy:"jwt"
-},
+        const user = await prisma.user.findUnique({
+          where: {
+            email: String(credentials.email),
+          },
 
-providers:[
+          include: {
+            organization: {
+              include: {
+                subscriptions: true,
+              },
+            },
 
-Credentials({
+            organizationRole: true,
 
-credentials:{
+            employee: {
+              include: {
+                role: true,
+              },
+            },
+          },
+        })
 
-email:{},
-password:{}
+        if (!user) {
+          return null
+        }
 
-},
+        const ok = await bcrypt.compare(
+          String(credentials.password),
+          user.passwordHash
+        )
 
-async authorize(credentials){
+        if (!ok) {
+          return null
+        }
 
-if(
+        return {
+          id: user.id,
 
-!credentials?.email ||
+          email: user.email,
 
-!credentials?.password
+          name: user.name,
 
-){
+          orgId: user.orgId,
 
-return null
+          organizationRole:
+            user.organizationRole?.name ?? null,
 
-}
+          employeeRole:
+            user.employee?.role.name ?? null,
 
-const user=
+          employeeId:
+            user.employee?.id ?? null,
 
-await prisma.user.findUnique({
+          subscriptionPlan:
+            user.organization.subscriptions &&
+            user.organization.subscriptions.status === "active"
+              ? user.organization.subscriptions.plan
+              : user.organization.plan,
 
-where:{
+          industry:
+            user.organization.industry,
+        }
+      },
+    }),
+  ],
 
-email:String(
-credentials.email
-)
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
 
-},
+        token.orgId = user.orgId
 
-include: {
-  organization: {
-    include: {
-      subscriptions: true,
+        token.organizationRole =
+          user.organizationRole
+
+        token.employeeRole =
+          user.employeeRole
+
+        token.employeeId =
+          user.employeeId
+
+        token.subscriptionPlan =
+          user.subscriptionPlan
+
+        token.industry =
+          user.industry
+      }
+
+      return token
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id =
+          token.id as string
+
+        session.user.orgId =
+          token.orgId as string
+
+        session.user.organizationRole =
+          token.organizationRole as string | null
+
+        session.user.employeeRole =
+          token.employeeRole as string | null
+
+        session.user.employeeId =
+          token.employeeId as string | null
+
+        session.user.subscriptionPlan =
+          token.subscriptionPlan as any
+
+        session.user.industry =
+          token.industry as any
+      }
+
+      return session
     },
   },
-}
 
-})
-
-if(!user){
-
-return null
-
-}
-
-const ok=
-
-await bcrypt.compare(
-
-String(
-credentials.password
-),
-
-user.passwordHash
-
-)
-
-if(!ok){
-
-return null
-
-}
-
-return {
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: user.role,
-  orgId: user.orgId,
-
-  subscriptionPlan:
-  user.organization.subscriptions &&
-  user.organization.subscriptions.status === "active"
-    ? user.organization.subscriptions.plan
-    : user.organization.plan,
-
-  industry:
-    user.organization.industry,
-}
-
-}
-
-})
-
-],
-
-callbacks:{
-
-async jwt({
-
-token,
-user
-
-}){
-
-if(user){
-
-token.id=
-(user as any).id
-
-token.role=
-(user as any).role
-
-token.orgId=
-(user as any).orgId
-
-token.subscriptionPlan = (user as any).subscriptionPlan;
-token.industry = (user as any).industry;
-
-}
-
-return token
-
-},
-
-async session({
-
-session,
-token
-
-}){
-
-if(session.user){
-
-(session.user as any).id=
-token.id as string
-
-(session.user as any).role=
-token.role as string
-
-(session.user as any).orgId=
-token.orgId as string
-
-(session.user as any).subscriptionPlan =
-  token.subscriptionPlan;
-
-(session.user as any).industry =
-  token.industry;
-
-}
-
-return session
-
-}
-
-},
-
-pages:{
-
-signIn:"/login"
-
-}
-
+  pages: {
+    signIn: "/login",
+  },
 })

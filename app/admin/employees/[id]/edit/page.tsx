@@ -78,7 +78,7 @@ export default async function EditEmployeePage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (
@@ -158,7 +158,8 @@ export default async function EditEmployeePage({
         user: {
           select: {
             id: true,
-            role: true,
+            organizationRole: true,
+            
             status: true
           }
         }
@@ -257,7 +258,7 @@ export default async function EditEmployeePage({
       employee.phone,
 
     userRole:
-      employee.user?.role ?? null,
+  employee.user?.organizationRole?.name ?? null,
 
     departmentId:
       employee.departmentId,

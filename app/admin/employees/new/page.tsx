@@ -25,7 +25,7 @@ export default async function NewEmployeePage() {
   }
 
   const role = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   if (role !== "super_admin") {

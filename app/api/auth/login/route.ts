@@ -17,7 +17,10 @@ export async function POST(req:Request){
 
         email:body.email.toLowerCase()
 
-      }
+      },
+      include: {
+    organizationRole: true,
+  },
 
     })
 
@@ -99,7 +102,7 @@ export async function POST(req:Request){
 
       user.email,
 
-      user.role
+      user.organizationRole?.name
 
     )
 
@@ -107,7 +110,7 @@ export async function POST(req:Request){
 
     if(
 
-      user.role==="super_admin"
+      user.organizationRole?.name==="super_admin"
 
     ){
 
@@ -119,7 +122,7 @@ export async function POST(req:Request){
 
       success:true,
 
-      role:user.role,
+      role:user.organizationRole?.name,
 
       redirect
 

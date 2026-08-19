@@ -5,9 +5,7 @@ import {
   redirect
 } from "next/navigation"
 
-import {
-  UserRole
-} from "@prisma/client"
+
 
 import {
   ArrowLeft,
@@ -43,11 +41,6 @@ type EditAttendancePageProps = {
 // ============================================================
 // ACCESS ROLES
 // ============================================================
-
-const EDIT_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
-]
 
 
 // ============================================================
@@ -125,29 +118,31 @@ export default async function EditAttendancePage({
   // AUTHORIZATION
   // ----------------------------------------------------------
 
-  const session =
-    await auth()
+  const session = await auth()
 
+if (!session?.user?.id) {
+  redirect("/login")
+}
 
-  if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    redirect("/login")
-  }
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: true,
+  },
+})
 
+const role =
+  currentUser?.organizationRole?.name.toLowerCase()
 
-  const currentRole =
-    session.user.role as UserRole
+if (
+  role !== "super_admin" &&
+  role !== "platform_manager"
+) {
+  redirect("/admin/attendance")
+}
 
-
-  if (
-    !EDIT_ROLES.includes(
-      currentRole
-    )
-  ) {
-    redirect("/admin/attendance")
-  }
 
 
   // ----------------------------------------------------------

@@ -1,7 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
-import { UserRole } from "@prisma/client"
+
 
 export default async function Page({
   params
@@ -56,29 +56,7 @@ export default async function Page({
       )
 
 
-     const roleMap: Record<string, UserRole> = {
-  // Customer CRM
-  owner: UserRole.owner,
-  manager: UserRole.manager,
-  sales: UserRole.sales,
-  dispatcher: UserRole.dispatcher,
-  technician: UserRole.technician,
-  crew: UserRole.crew,
-  accountant: UserRole.accountant,
-
-  // KoniqTech Platform
-  super_admin: UserRole.super_admin,
-  platform_manager: UserRole.platform_manager,
-  platform_sales: UserRole.platform_sales,
-  support: UserRole.support,
-  finance: UserRole.finance,
-  developer: UserRole.developer,
-  qa: UserRole.qa,
-  customer_success: UserRole.customer_success,
-  marketing: UserRole.marketing,
-  data_entry: UserRole.data_entry,
-}
-
+     
 const orgRole = await prisma.organizationRole.findUnique({
   where: {
     id: validInvitation.roleId,
@@ -90,19 +68,13 @@ if (!orgRole) {
 }
 
    await prisma.user.create({
-  data: {
-    orgId: validInvitation.orgId,
-
-    name,
-
-    email: validInvitation.email,
-
-    passwordHash: hash,
-
-    role: roleMap[orgRole.name] ?? UserRole.sales,
-
-    organizationRoleId: validInvitation.roleId,
-  },
+    data: {
+        orgId: validInvitation.orgId,
+        name,
+        email: validInvitation.email,
+        passwordHash: hash,
+        organizationRoleId: validInvitation.roleId,
+    }
 })
 
 

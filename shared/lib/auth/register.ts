@@ -5,7 +5,7 @@ import {
   Prisma,
   SubscriptionPlan,
   SubscriptionStatus,
-  UserRole,
+  
 } from "@prisma/client";
 
 import { prisma } from "@/shared/lib/prisma";
@@ -266,7 +266,7 @@ async function createRegistration(
 
         organizationRoleId: ownerRole.id,
 
-        role: UserRole.owner,
+       
 
         name: ctx.prepared.fullName,
 

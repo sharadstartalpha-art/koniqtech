@@ -25,8 +25,7 @@ import {
 import {
   Prisma,
   SalaryStatus,
-  SalaryType,
-  UserRole
+  SalaryType
 } from "@prisma/client"
 
 import { auth } from "@/auth"
@@ -51,17 +50,15 @@ type PayrollDetailsPageProps = {
 // ACCESS ROLES
 // ============================================================
 
-const VIEW_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const VIEW_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
-
 
 // ============================================================
 // MONTHS
@@ -278,15 +275,15 @@ export default async function PayrollDetailsPage({
 
 
   if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    redirect("/login")
-  }
+  !session?.user?.id ||
+  !session.user.organizationRole
+) {
+  return null
+}
 
+const currentRole =
+  session.user.organizationRole?.toLowerCase() ?? ""
 
-  const currentRole =
-    session.user.role as UserRole
 
 
   if (

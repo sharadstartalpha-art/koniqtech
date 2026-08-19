@@ -794,10 +794,7 @@ export default async function OrganizationPage({
 
                       <td className="px-6 py-5">
                         <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
-                          {user.role.replaceAll(
-                            "_",
-                            " "
-                          )}
+                         user.organizationRole?.name.replaceAll("_", " ") ?? "No Role"
                         </span>
                       </td>
 

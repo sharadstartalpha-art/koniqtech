@@ -24,7 +24,7 @@ export default async function AdminEmployeesPage() {
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   const allowedRoles = [

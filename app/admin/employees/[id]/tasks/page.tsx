@@ -65,7 +65,7 @@ export default async function EmployeeTasksPage({
   }
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   ).toLowerCase()
 
   if (

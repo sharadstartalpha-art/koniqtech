@@ -2,8 +2,7 @@
 
 import {
   LeaveStatus,
-  LeaveType,
-  UserRole
+  LeaveType
 } from "@prisma/client"
 
 import { revalidatePath } from "next/cache"
@@ -59,16 +58,16 @@ type ParsedLeaveData = {
 // ACCESS ROLES
 // ============================================================
 
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const APPROVE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const APPROVE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
+
 
 
 // ============================================================
@@ -98,7 +97,7 @@ async function getAuthenticatedUser() {
 
   if (
     !session?.user?.id ||
-    !session.user.role
+    !session.user.organizationRole
   ) {
     return null
   }
@@ -108,8 +107,7 @@ async function getAuthenticatedUser() {
     id:
       session.user.id,
 
-    role:
-      session.user.role as UserRole
+   organizationRole: session.user.organizationRole,
   }
 }
 
@@ -123,7 +121,7 @@ async function requireManageAccess() {
   if (
     !user ||
     !MANAGE_ROLES.includes(
-      user.role
+      user.organizationRole
     )
   ) {
     return null
@@ -143,7 +141,7 @@ async function requireApprovalAccess() {
   if (
     !user ||
     !APPROVE_ROLES.includes(
-      user.role
+      user.organizationRole
     )
   ) {
     return null

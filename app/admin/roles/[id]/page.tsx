@@ -71,7 +71,7 @@ export default async function RoleDetailPage({
   ======================================================= */
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (!ROLE_VIEW_ROLES.has(currentRole)) {

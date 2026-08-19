@@ -32,50 +32,47 @@ async function savePermissions(
   const role =
     formData.get("role") as string
 
+    const roleName =
+  formData.get("role") as string
+
+const organizationRole =
+  await prisma.organizationRole.findFirst({
+    where: {
+      name: roleName
+    }
+  })
+
+if (!organizationRole) {
+  throw new Error("Role not found")
+}
+
   for (const module of MODULES) {
 
     await prisma.rolePermission.upsert({
+  where: {
+    roleId_module: {
+      roleId: organizationRole.id,
+      module
+    }
+  },
 
-      where: {
-        role_module: {
-          role,
-          module
-        }
-      },
+  update: {
+    canView: formData.get(`${module}-view`) === "on",
+    canCreate: formData.get(`${module}-create`) === "on",
+    canEdit: formData.get(`${module}-edit`) === "on",
+    canDelete: formData.get(`${module}-delete`) === "on",
+  },
 
-      update: {
+  create: {
+    roleId: organizationRole.id,
+    module,
 
-        canView:
-          formData.get(`${module}-view`) === "on",
-
-        canCreate:
-          formData.get(`${module}-create`) === "on",
-
-        canEdit:
-          formData.get(`${module}-edit`) === "on",
-
-        canDelete:
-          formData.get(`${module}-delete`) === "on"
-      },
-
-      create: {
-
-        role,
-        module,
-
-        canView:
-          formData.get(`${module}-view`) === "on",
-
-        canCreate:
-          formData.get(`${module}-create`) === "on",
-
-        canEdit:
-          formData.get(`${module}-edit`) === "on",
-
-        canDelete:
-          formData.get(`${module}-delete`) === "on"
-      }
-    })
+    canView: formData.get(`${module}-view`) === "on",
+    canCreate: formData.get(`${module}-create`) === "on",
+    canEdit: formData.get(`${module}-edit`) === "on",
+    canDelete: formData.get(`${module}-delete`) === "on",
+  }
+})
   }
 
   revalidatePath("/settings/roles")
@@ -101,14 +98,23 @@ export default async function EditRolePage({
 
 console.log("ROLE:", role)
 
-  const permissions =
-    await prisma.rolePermission.findMany({
+ const organizationRole =
+  await prisma.organizationRole.findFirst({
+    where: {
+      name: role
+    }
+  })
 
-      where: {
-        role
-      }
+if (!organizationRole) {
+  redirect("/settings/roles")
+}
 
-    })
+const permissions =
+  await prisma.rolePermission.findMany({
+    where: {
+      roleId: organizationRole.id
+    }
+  })
 
   const getPermission = (
     module: string

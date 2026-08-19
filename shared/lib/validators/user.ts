@@ -1,7 +1,7 @@
 // shared/lib/validators/user.ts
 
 import { z } from "zod";
-import { SubscriptionPlan, UserRole } from "@prisma/client";
+import { SubscriptionPlan } from "@prisma/client";
 
 export const createUserSchema = z.object({
   orgId: z
@@ -33,7 +33,7 @@ export const createUserSchema = z.object({
     .optional()
     .or(z.literal("")),
 
-  role: z.nativeEnum(UserRole),
+ role: z.string().min(1, "Role is required"),
 
   plan: z.nativeEnum(SubscriptionPlan),
 });

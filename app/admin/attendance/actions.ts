@@ -1,8 +1,7 @@
 "use server"
 
 import {
-  AttendanceStatus,
-  UserRole
+  AttendanceStatus
 } from "@prisma/client"
 
 import { revalidatePath } from "next/cache"
@@ -75,24 +74,35 @@ type ParsedAttendanceData = {
 // ROLE ACCESS
 // ============================================================
 
-const VIEW_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const VIEW_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const MANAGE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const MANAGE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
-
-const APPROVE_ROLES: UserRole[] = [
-  UserRole.super_admin,
-  UserRole.platform_manager
+const CREATE_ROLES = [
+  "super_admin",
+  "platform_manager",
 ]
 
+const EDIT_ROLES = [
+  "super_admin",
+  "platform_manager",
+]
 
+const DELETE_ROLES = [
+  "super_admin",
+  "platform_manager",
+]
+
+const APPROVE_ROLES = [
+  "super_admin",
+  "platform_manager",
+]
 // ============================================================
 // VALID ATTENDANCE STATUSES
 // ============================================================
@@ -114,20 +124,19 @@ const VALID_ATTENDANCE_STATUSES: AttendanceStatus[] = [
 // ============================================================
 
 async function getAuthenticatedUser() {
+    const session = await auth()
 
-  const session = await auth()
+    if (
+        !session?.user?.id ||
+        !session.user.employeeRole
+    ) {
+        return null
+    }
 
-  if (
-    !session?.user?.id ||
-    !session.user.role
-  ) {
-    return null
-  }
-
-  return {
-    id: session.user.id,
-    role: session.user.role as UserRole
-  }
+    return {
+        id: session.user.id,
+        role: session.user.employeeRole
+    }
 }
 
 
@@ -150,14 +159,14 @@ async function requireManageAccess() {
 
   const user = await getAuthenticatedUser()
 
-  if (
+if (
     !user ||
     !MANAGE_ROLES.includes(user.role)
-  ) {
+) {
     return null
-  }
+}
 
-  return user
+return user
 }
 
 

@@ -16,13 +16,16 @@ export default async function TeamPage() {
   const orgId = session.user.orgId
 
   const users = await prisma.user.findMany({
-    where: {
-      orgId
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
-  })
+  where: {
+    orgId,
+  },
+  include: {
+    organizationRole: true,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+})
 
 async function toggleUserStatus(
   formData: FormData
@@ -60,20 +63,20 @@ async function deleteUser(
   const id =
     formData.get("id") as string
 
-  const user =
-    await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
+  where: {
+    id,
+  },
+  include: {
+    organizationRole: true,
+  },
+})
 
-      where:{ id }
-
-    })
-
-  if(
-    user?.role === "owner"
-  ){
-    throw new Error(
-      "Owner cannot be deleted"
-    )
-  }
+ if (
+  user?.organizationRole?.name.toLowerCase() === "owner"
+) {
+  throw new Error("Owner cannot be deleted")
+}
 
   await prisma.user.delete({
 
@@ -95,14 +98,17 @@ async function deleteUser(
     user => user.status === "active"
   ).length
 
-  const admins = users.filter(user =>
-  user.role === "owner" ||
-  user.role === "manager"
-).length
+ const admins = users.filter(user => {
+  const role =
+    user.organizationRole?.name.toLowerCase()
 
-  const salesReps = users.filter(
-    user => user.role === "sales"
-  ).length
+  return role === "owner" || role === "manager"
+}).length
+
+const salesReps = users.filter(
+  user =>
+    user.organizationRole?.name.toLowerCase() === "sales"
+).length
 
   return (
 
@@ -262,7 +268,7 @@ async function deleteUser(
                     capitalize
                     "
                   >
-                    {user.role}
+                   {user.organizationRole?.name ?? "No Role"}
                   </span>
 
                 </td>
@@ -356,7 +362,7 @@ async function deleteUser(
 
     </form>
 
-    {user.role !== "owner" && (
+    {user.organizationRole?.name?.toLowerCase() !== "owner" && (
 
       <form action={deleteUser}>
 

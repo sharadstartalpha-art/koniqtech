@@ -45,7 +45,7 @@ export default async function NewRolePage() {
   ======================================================= */
 
   const currentRole = String(
-    session.user.role ?? ""
+    session.user.organizationRole ?? ""
   )
 
   if (

@@ -54,8 +54,7 @@ children:React.ReactNode
 
 
   
-const [role,setRole] =
-useState("")
+const [organizationRole, setOrganizationRole] = useState("")
 
 const [subscriptionPlan, setSubscriptionPlan] =
   useState<SubscriptionPlan>(SubscriptionPlan.starter);

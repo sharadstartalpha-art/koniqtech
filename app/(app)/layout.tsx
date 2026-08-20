@@ -197,7 +197,11 @@ async function load() {
 
 
 setRole(
-  (session?.user as any)?.role ?? "sales"
+  (
+    (session?.user as any)?.organizationRole ??
+    (session?.user as any)?.employeeRole ??
+    "owner"
+  ).toLowerCase()
 )
 
 setSubscriptionPlan(

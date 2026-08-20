@@ -56,12 +56,12 @@ export const {
           return null
         }
 
-        const ok = await bcrypt.compare(
+        const validPassword = await bcrypt.compare(
           String(credentials.password),
           user.passwordHash
         )
 
-        if (!ok) {
+        if (!validPassword) {
           return null
         }
 
@@ -72,13 +72,15 @@ export const {
 
           name: user.name,
 
+          role: user.role,
+
           orgId: user.orgId,
 
           organizationRole:
             user.organizationRole?.name ?? null,
 
           employeeRole:
-            user.employee?.role.name ?? null,
+            user.employee?.role?.name ?? null,
 
           employeeId:
             user.employee?.id ?? null,
@@ -100,6 +102,8 @@ export const {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+
+        token.role = user.role
 
         token.orgId = user.orgId
 
@@ -126,6 +130,9 @@ export const {
       if (session.user) {
         session.user.id =
           token.id as string
+
+        session.user.role =
+          token.role as "super_admin" | "user"
 
         session.user.orgId =
           token.orgId as string

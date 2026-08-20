@@ -3,6 +3,7 @@ import {
   PrismaClient,
   SubscriptionPlan,
   CRMType,
+  PlatformRole,
 } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -16,8 +17,7 @@ async function main() {
     {
       code: SubscriptionPlan.starter,
       name: "Starter",
-      description:
-        "For small teams getting started with KoniqTech CRM.",
+      description: "For small teams getting started with KoniqTech CRM.",
       price: 99,
       currency: "USD",
       billingCycle: "monthly",
@@ -30,8 +30,7 @@ async function main() {
     {
       code: SubscriptionPlan.professional,
       name: "Professional",
-      description:
-        "For growing businesses with automation.",
+      description: "For growing businesses with automation.",
       price: 199,
       currency: "USD",
       billingCycle: "monthly",
@@ -44,8 +43,7 @@ async function main() {
     {
       code: SubscriptionPlan.enterprise,
       name: "Enterprise",
-      description:
-        "For large organizations.",
+      description: "For large organizations.",
       price: 499,
       currency: "USD",
       billingCycle: "monthly",
@@ -62,88 +60,68 @@ async function main() {
       where: {
         code: plan.code,
       },
-      update: {
-        ...plan,
-      },
+      update: plan,
       create: plan,
     })
   }
 
   // ==========================================================
-  // KONIQTECH ORGANIZATION
+  // PLATFORM ORGANIZATION
   // ==========================================================
 
-  const organization =
-    await prisma.organization.upsert({
-      where: {
-        slug: "koniqtech",
-      },
-      update: {},
-      create: {
-        name: "KoniqTech",
-        slug: "koniqtech",
-        crmType: CRMType.roofing,
-        plan: SubscriptionPlan.enterprise,
-        active: true,
-      },
-    })
+  const platform = await prisma.organization.upsert({
+    where: {
+      slug: "platform",
+    },
+    update: {},
+    create: {
+      name: "KoniqTech Platform",
+      slug: "platform",
+      crmType: CRMType.roofing,
+      plan: SubscriptionPlan.enterprise,
+      active: true,
+    },
+  })
 
   // ==========================================================
-  // SUPER ADMIN ROLE
+  // PLATFORM SUPER ADMIN
   // ==========================================================
 
-  const superAdminRole =
-    await prisma.organizationRole.upsert({
-      where: {
-        orgId_name: {
-          orgId: organization.id,
-          name: "super_admin",
-        },
-      },
-      update: {},
-      create: {
-        orgId: organization.id,
-        name: "super_admin",
-        description:
-          "Platform Super Administrator",
-        isSystem: true,
-        active: true,
-      },
-    })
-
-  // ==========================================================
-  // SUPER ADMIN USER
-  // ==========================================================
-
-  const passwordHash =
-    await bcrypt.hash("Admin@123", 10)
+  const passwordHash = await bcrypt.hash("Admin@123", 10)
 
   await prisma.user.upsert({
     where: {
-      email: "admin@koniqtech.com",
+      email: "super_admin@koniqtech.com",
     },
     update: {
-      name: "Super Admin",
+      name: "Platform Super Admin",
       passwordHash,
-      organizationRoleId: superAdminRole.id,
+      role: PlatformRole.super_admin,
+      orgId: platform.id,
+      organizationRoleId: null,
       status: "active",
+      emailVerified: true,
     },
     create: {
-      orgId: organization.id,
-      name: "Super Admin",
-      email: "admin@koniqtech.com",
+      name: "Platform Super Admin",
+      email: "super_admin@koniqtech.com",
       passwordHash,
+      role: PlatformRole.super_admin,
+      orgId: platform.id,
+      organizationRoleId: null,
       status: "active",
-      organizationRoleId: superAdminRole.id,
       emailVerified: true,
     },
   })
 
-  console.log("✅ Database seeded successfully.")
-  console.log("--------------------------------")
-  console.log("Email    : admin@koniqtech.com")
+  console.log("====================================")
+  console.log("KoniqTech Platform Seeded")
+  console.log("------------------------------------")
+  console.log("Email    : super_admin@koniqtech.com")
   console.log("Password : Admin@123")
-  console.log("--------------------------------")
+  console.log("Role     : super_admin")
+  console.log("Organization : KoniqTech Platform")
+  console.log("====================================")
 }
 
 main()

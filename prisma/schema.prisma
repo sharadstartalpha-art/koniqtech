@@ -230,6 +230,8 @@ model Organization {
 model User {
   id String @id @default(uuid())
 
+  // Every user belongs to an organization.
+  // Super admins belong to the "KoniqTech Platform" organization.
   orgId String
 
   name String
@@ -241,6 +243,12 @@ model User {
   avatar String?
 
   phone String?
+
+  role PlatformRole @default(user)
+
+  organizationRoleId String?
+
+  organizationRole OrganizationRole? @relation(fields: [organizationRoleId], references: [id])
 
   employee Employee?
 
@@ -261,6 +269,8 @@ model User {
   lockedUntil DateTime?
 
   status String @default("active")
+
+  welcomeSeen Boolean @default(false)
 
   createdAt DateTime @default(now())
 
@@ -294,7 +304,8 @@ model User {
 
   webhooks Webhook[]
 
-  fleetVehicles    FleetVehicle[]
+  fleetVehicles FleetVehicle[]
+
   ActivityTimeline ActivityTimeline[]
 
   documents UserDocument[]
@@ -401,7 +412,7 @@ model User {
 
   workOrders UserWorkOrder[]
 
-  inspections UserInspection[] @relation()
+  inspections UserInspection[]
 
   uploadedJobPhotos UserJobPhoto[]
 
@@ -419,7 +430,8 @@ model User {
 
   inventoryCounts InventoryCount[]
 
-  toolCheckouts    UserToolCheckout[]
+  toolCheckouts UserToolCheckout[]
+
   fleetAssignments FleetAssignment[]
 
   fleetTrips FleetTrip[]
@@ -430,29 +442,31 @@ model User {
 
   dispatchJobs DispatchJob[]
 
-  routeOptimizations   RouteOptimization[]
-  createdDemoSchedules DemoSchedule[]      @relation("DemoScheduleCreator")
+  routeOptimizations RouteOptimization[]
 
-  organizationRoleId String?
+  createdDemoSchedules DemoSchedule[] @relation("DemoScheduleCreator")
 
-  organizationRole OrganizationRole? @relation(fields: [organizationRoleId], references: [id])
+  UserPayroll UserPayroll[]
 
-  UserPayroll   UserPayroll[]
   DispatchBoard DispatchBoard[]
 
-  createdMarketingCampaigns   MarketingCampaign[]   @relation("MarketingCampaignCreator")
+  createdMarketingCampaigns MarketingCampaign[] @relation("MarketingCampaignCreator")
+
   createdMarketingNewsletters MarketingNewsletter[] @relation("MarketingNewsletterCreator")
 
-  createdMarketingTemplates MarketingTemplate[]    @relation("MarketingTemplateCreator")
-  adminImpersonations       ImpersonationSession[] @relation("AdminImpersonations")
+  createdMarketingTemplates MarketingTemplate[] @relation("MarketingTemplateCreator")
+
+  adminImpersonations ImpersonationSession[] @relation("AdminImpersonations")
 
   targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
 
-  welcomeSeen Boolean @default(false)
-
   @@index([orgId])
+
+  @@index([role])
+
   @@index([status])
 }
+
 
 model OrganizationRole {
   id          String  @id @default(uuid())
@@ -5275,3 +5289,9 @@ model ImpersonationSession {
 }
 
 
+
+
+enum PlatformRole {
+  super_admin
+  user
+}

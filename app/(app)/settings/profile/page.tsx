@@ -1,69 +1,161 @@
-"use client"
+import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
-import { useState } from "react"
+export default async function Page() {
 
-export default function Page(){
+  const session = await auth()
 
-const [name,setName]=
-useState("Koniq Admin")
+  if (!session?.user) {
+    redirect("/signin")
+  }
 
-const [email,setEmail]=
-useState("admin@company.com")
+  const user = await prisma.user.findUnique({
+    where: {
+      id: session.user.id!,
+    },
+  })
 
-return(
+  if (!user) {
+    redirect("/signin")
+  }
 
-<div className="max-w-4xl">
+  async function saveProfile(formData: FormData) {
+    "use server"
 
-<h1 className="text-5xl font-bold mb-8">
+    const session = await auth()
 
-Profile Settings
+    if (!session?.user) {
+      redirect("/signin")
+    }
 
-</h1>
+    const name = String(formData.get("name"))
+    const email = String(formData.get("email"))
 
-<div className="bg-white rounded-3xl p-10 space-y-6">
+    await prisma.user.update({
+      where: {
+        id: session.user.id!,
+      },
+      data: {
+        name,
+        email,
+      },
+    })
 
-<input
+    revalidatePath("/profile")
+  }
 
-value={name}
+  return (
 
-onChange={e=>
-setName(
-e.target.value
-)
-}
+    <div className="max-w-4xl space-y-8">
 
-className="w-full border p-5 rounded-xl"
+      <div>
 
-/>
+        <h1 className="text-4xl font-bold">
+          Profile Settings
+        </h1>
 
-<input
+        <p className="text-slate-500 mt-2">
+          Update your personal information.
+        </p>
 
-value={email}
+      </div>
 
-onChange={e=>
-setEmail(
-e.target.value
-)
-}
+      <form
+        action={saveProfile}
+        className="
+        bg-white
+        border
+        rounded-3xl
+        p-8
+        space-y-6
+        "
+      >
 
-className="w-full border p-5 rounded-xl"
+        <div>
 
-/>
+          <label className="block text-sm mb-2">
+            Full Name
+          </label>
 
-<input
-type="file"
-/>
+          <input
+            name="name"
+            defaultValue={user.name ?? ""}
+            className="
+            w-full
+            h-12
+            border
+            rounded-xl
+            px-4
+            "
+          />
 
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
+        </div>
 
-Save Profile
+        <div>
 
-</button>
+          <label className="block text-sm mb-2">
+            Email Address
+          </label>
 
-</div>
+          <input
+            name="email"
+            type="email"
+            defaultValue={user.email ?? ""}
+            className="
+            w-full
+            h-12
+            border
+            rounded-xl
+            px-4
+            "
+          />
 
-</div>
+        </div>
 
-)
+        <div>
+
+          <label className="block text-sm mb-2">
+            Profile Photo
+          </label>
+
+          <input
+            type="file"
+            disabled
+            className="
+            w-full
+            h-12
+            border
+            rounded-xl
+            px-3
+            py-2
+            bg-slate-50
+            "
+          />
+
+          <p className="text-sm text-slate-500 mt-2">
+            Profile photo upload coming soon.
+          </p>
+
+        </div>
+
+        <button
+          className="
+          h-12
+          px-8
+          bg-orange-600
+          text-white
+          rounded-xl
+          "
+        >
+          Save Profile
+        </button>
+
+      </form>
+
+    </div>
+
+  )
 
 }

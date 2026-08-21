@@ -62,19 +62,6 @@ const permissions =
 
       <div className="flex items-center justify-between">
 
-        <div>
-
-          <h1 className="text-4xl font-bold">
-            Roles & Permissions
-          </h1>
-
-          <p className="text-slate-500 mt-2">
-            Manage CRM access and permissions
-          </p>
-
-        </div>
-
-
 
         <div>
     <h1 className="text-4xl font-bold">

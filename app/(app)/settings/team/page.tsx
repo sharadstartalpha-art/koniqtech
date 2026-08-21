@@ -5,7 +5,16 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import DeleteUserButton from "./DeleteUserButton"
 
-export default async function TeamPage() {
+export default async function TeamPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    created?: string
+    updated?: string
+  }>
+}) {
+
+  const params = await searchParams
 
   const session = await auth()
 
@@ -50,9 +59,8 @@ async function toggleUserStatus(
 
   })
 
-  revalidatePath(
-    "/settings/team"
-  )
+ redirect("/settings/team?created=1")
+  
 }
 
 async function deleteUser(
@@ -145,6 +153,39 @@ const salesReps = users.filter(
         </Link>
 
       </div>
+
+{params.created && (
+
+  <div
+    className="
+    p-4
+    rounded-xl
+    bg-green-100
+    text-green-700
+    border
+    "
+  >
+    Team member created successfully.
+  </div>
+
+)}
+
+{params.updated && (
+
+  <div
+    className="
+    p-4
+    rounded-xl
+    bg-green-100
+    text-green-700
+    border
+    "
+  >
+    Team member updated successfully.
+  </div>
+
+)}
+
 
       {/* KPI Cards */}
 

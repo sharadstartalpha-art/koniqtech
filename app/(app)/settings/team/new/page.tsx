@@ -115,6 +115,40 @@ const roles = await prisma.organizationRole.findMany({
   },
 })
   
+if (roles.length === 0) {
+  return (
+    <div className="max-w-2xl mx-auto bg-white border rounded-3xl p-8">
+
+      <h1 className="text-3xl font-bold">
+        No Roles Found
+      </h1>
+
+      <p className="mt-3 text-slate-500">
+        Create at least one role before inviting team members.
+      </p>
+
+      <Link
+        href="/settings/roles/new"
+        className="
+        inline-block
+        mt-6
+        px-6
+        py-3
+        bg-orange-600
+        text-white
+        rounded-xl
+        hover:bg-orange-700
+        "
+      >
+        + Create Role
+      </Link>
+
+    </div>
+  )
+}
+
+
+
   return (
 
     <div className="max-w-4xl mx-auto">
@@ -225,6 +259,10 @@ const roles = await prisma.organizationRole.findMany({
             <label className="block mb-2 font-medium">
               Role
             </label>
+
+            <p className="text-sm text-slate-500 mb-2">
+  Select the role that determines this user's permissions.
+</p>
 <select
   name="organizationRoleId"
   className="
@@ -244,6 +282,22 @@ const roles = await prisma.organizationRole.findMany({
     </option>
   ))}
 </select>
+
+
+<div className="mt-2">
+
+  <Link
+    href="/settings/roles/new"
+    className="
+    text-sm
+    text-orange-600
+    hover:underline
+    "
+  >
+    + Create another role
+  </Link>
+
+</div>
 
           </div>
 

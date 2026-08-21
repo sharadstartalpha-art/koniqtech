@@ -76,8 +76,8 @@ const roles = await prisma.organizationRole.findMany({
     )
 
     redirect(
-      "/settings/team"
-    )
+  "/settings/team?updated=1"
+)
   }
 
   return (
@@ -175,9 +175,12 @@ const roles = await prisma.organizationRole.findMany({
               Role
             </label>
 
-           <select
+      <select
   name="organizationRoleId"
   defaultValue={user.organizationRoleId ?? ""}
+  disabled={
+    user.organizationRole?.name.toLowerCase() === "owner"
+  }
   className="w-full h-12 px-4 rounded-xl border"
 >
   {roles.map((role) => (
@@ -189,6 +192,14 @@ const roles = await prisma.organizationRole.findMany({
     </option>
   ))}
 </select>
+
+{user.organizationRole?.name.toLowerCase() === "owner" && (
+
+  <p className="mt-2 text-sm text-slate-500">
+    Owner role cannot be changed.
+  </p>
+
+)}
           </div>
 
           <div>

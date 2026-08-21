@@ -14,6 +14,19 @@ export default function AISettingsPage() {
           Configure AI assistants and automations.
         </p>
 
+
+        <div className="mt-8 rounded-2xl border border-orange-200 bg-orange-50 p-5">
+  <h3 className="font-semibold text-orange-700">
+    AI Configuration
+  </h3>
+
+  <p className="mt-2 text-sm text-slate-600">
+    AI features are managed by your KoniqTech subscription and cannot
+    be modified from the dashboard. Contact support if you need to
+    enable additional AI capabilities.
+  </p>
+</div>
+
       </div>
 
       <div className="bg-white border rounded-3xl p-8">
@@ -26,7 +39,12 @@ export default function AISettingsPage() {
               Enable AI Assistant
             </span>
 
-            <input type="checkbox" defaultChecked />
+           <input
+  type="checkbox"
+  checked
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 
@@ -56,7 +74,11 @@ export default function AISettingsPage() {
               AI Dispatch Suggestions
             </span>
 
-            <input type="checkbox" />
+            <input
+  type="checkbox"
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 

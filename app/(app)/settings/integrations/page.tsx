@@ -87,17 +87,21 @@ export default function IntegrationsPage() {
 
               </div>
 
-              <button
-                className="
-                px-4
-                py-2
-                rounded-xl
-                border
-                hover:bg-slate-50
-                "
-              >
-                Configure
-              </button>
+             <button
+  type="button"
+  disabled
+  className="
+  px-4
+  py-2
+  rounded-xl
+  border
+  bg-slate-100
+  text-slate-500
+  cursor-not-allowed
+  "
+>
+  Coming Soon
+</button>
 
             </div>
 

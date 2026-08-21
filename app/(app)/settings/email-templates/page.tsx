@@ -14,6 +14,18 @@ export default function EmailTemplatesPage() {
           Customize customer communications.
         </p>
 
+       <div className="mt-6 rounded-2xl border border-orange-200 bg-orange-50 p-5">
+  <h3 className="font-semibold text-orange-700">
+    Email Template Management
+  </h3>
+
+  <p className="mt-2 text-sm text-slate-600">
+    Custom email templates will be available in a future release.
+    Standard KoniqTech email templates are currently used for all
+    customer communications.
+  </p>
+</div>
+
       </div>
 
       <div className="grid gap-6">
@@ -72,15 +84,20 @@ function TemplateCard({
         </div>
 
         <button
-          className="
-          px-4
-          py-2
-          border
-          rounded-xl
-          "
-        >
-          Edit
-        </button>
+  type="button"
+  disabled
+  className="
+  px-4
+  py-2
+  rounded-xl
+  border
+  bg-slate-100
+  text-slate-500
+  cursor-not-allowed
+  "
+>
+  Coming Soon
+</button>
 
       </div>
 

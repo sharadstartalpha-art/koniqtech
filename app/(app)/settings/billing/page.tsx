@@ -1,9 +1,27 @@
 import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
 export default async function BillingPage() {
 
-  const organization =
-    await prisma.organization.findFirst()
+ const session = await auth()
+
+if (!session?.user) {
+  redirect("/signin")
+}
+
+const orgId = (session.user as any).orgId
+
+const organization =
+  await prisma.organization.findUnique({
+    where: {
+      id: orgId,
+    },
+  })
+
+if (!organization) {
+  redirect("/welcome")
+}
 
   return (
 
@@ -28,8 +46,7 @@ export default async function BillingPage() {
       p-8
       ">
 
-        <div className="grid md:grid-cols-3 gap-6">
-
+         <div className="grid md:grid-cols-3 gap-6">
           <div className="
           border
           rounded-2xl
@@ -46,7 +63,7 @@ export default async function BillingPage() {
             mt-2
             capitalize
             ">
-              {organization?.plan}
+              {organization.plan}
             </div>
 
           </div>
@@ -66,7 +83,7 @@ export default async function BillingPage() {
             font-bold
             mt-2
             ">
-              {organization?.usersLimit}
+             {organization.usersLimit}
             </div>
 
           </div>

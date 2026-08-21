@@ -74,6 +74,31 @@ const permissions =
 
         </div>
 
+
+
+        <div>
+    <h1 className="text-4xl font-bold">
+      Roles & Permissions
+    </h1>
+
+    <p className="text-slate-500 mt-2">
+      Manage CRM access and permissions
+    </p>
+  </div>
+
+  <Link
+    href="/settings/roles/new"
+    className="
+      px-5
+      py-3
+      rounded-xl
+      bg-orange-600
+      text-white
+      font-medium
+    "
+  >
+    + Create Role
+  </Link>
       </div>
 
 

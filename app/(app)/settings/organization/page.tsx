@@ -1,8 +1,17 @@
 import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 
 export default async function OrganizationPage(){
 
-  const orgId = "CURRENT_ORG_ID"
+  const session = await auth()
+
+if (!session?.user?.orgId) {
+  redirect("/login")
+}
+
+const orgId = session.user.orgId
+
 
   const organization =
     await prisma.organization.findUnique({

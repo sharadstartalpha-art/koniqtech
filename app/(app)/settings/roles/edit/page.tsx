@@ -2,7 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import RoleSelector from "./RoleSelector"
+
 
 const MODULES = [
   "Leads",
@@ -14,44 +14,28 @@ const MODULES = [
   "Reports"
 ]
 
-const ROLES = [
-  "owner",
-  "admin",
-  "manager",
-  "sales",
-  "technician",
-  "support",
-  "accountant"
-]
+
 
 async function savePermissions(
   formData: FormData
 ) {
   "use server"
 
-  const role =
-    formData.get("role") as string
 
-    const roleName =
-  formData.get("role") as string
+   const roleId =
+  formData.get("roleId") as string
 
-const organizationRole =
-  await prisma.organizationRole.findFirst({
-    where: {
-      name: roleName
-    }
-  })
-
-if (!organizationRole) {
+if (!roleId) {
   throw new Error("Role not found")
 }
+
 
   for (const module of MODULES) {
 
     await prisma.rolePermission.upsert({
   where: {
     roleId_module: {
-      roleId: organizationRole.id,
+      roleId,
       module
     }
   },
@@ -64,7 +48,7 @@ if (!organizationRole) {
   },
 
   create: {
-    roleId: organizationRole.id,
+    roleId,
     module,
 
     canView: formData.get(`${module}-view`) === "on",
@@ -96,13 +80,13 @@ export default async function EditRolePage({
   const role =
     params.role || "sales"
 
-console.log("ROLE:", role)
+
 
  const organizationRole =
-  await prisma.organizationRole.findFirst({
+  await prisma.organizationRole.findUnique({
     where: {
-      name: role
-    }
+      id: role,
+    },
   })
 
 if (!organizationRole) {
@@ -173,8 +157,8 @@ const permissions =
 
 <input
   type="hidden"
-  name="role"
-  value={role}
+  name="roleId"
+  value={organizationRole.id}
 />
         <div className="p-6 border-b">
 
@@ -182,7 +166,27 @@ const permissions =
             Role
           </label>
 
-      <RoleSelector role={role} />
+     <div className="rounded-xl border bg-slate-50 px-4 py-3">
+  
+<div className="rounded-2xl border bg-slate-50 p-5">
+
+  <p className="text-sm text-slate-500">
+    Editing Role
+  </p>
+
+  <h2 className="text-2xl font-bold mt-1">
+    {organizationRole.name}
+  </h2>
+
+  {organizationRole.description && (
+    <p className="text-slate-500 mt-2">
+      {organizationRole.description}
+    </p>
+  )}
+
+</div>
+
+</div>
 
         </div>
 
@@ -308,24 +312,38 @@ const permissions =
 
         </table>
 
-        <div className="p-6 border-t">
+       <div className="p-6 border-t flex gap-3">
 
-          <button
-            type="submit"
-            className="
-            px-6
-            py-3
-            bg-orange-600
-            text-white
-            rounded-xl
-            font-medium
-            hover:bg-orange-700
-            "
-          >
-            Save Permissions
-          </button>
+  <button
+    type="submit"
+    className="
+    px-6
+    py-3
+    bg-orange-600
+    text-white
+    rounded-xl
+    font-medium
+    hover:bg-orange-700
+    "
+  >
+    Save Permissions
+  </button>
 
-        </div>
+  <Link
+    href="/settings/roles"
+    className="
+    px-6
+    py-3
+    border
+    rounded-xl
+    font-medium
+    hover:bg-slate-50
+    "
+  >
+    Cancel
+  </Link>
+
+</div>
 
       </form>
 

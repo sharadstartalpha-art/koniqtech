@@ -2,35 +2,44 @@
 
 import { useRouter } from "next/navigation"
 
-export default function RoleSelector({
-  role
-}:{
-  role:string
-}) {
+interface Role {
+  id: string
+  name: string
+}
 
+export default function RoleSelector({
+  roleId,
+  roles,
+}: {
+  roleId: string
+  roles: Role[]
+}) {
   const router = useRouter()
 
   return (
-
- <form action="/settings/roles/edit">
-
-  <select
-    name="role"
-    defaultValue={role}
-    onChange={(e)=>{
-      e.currentTarget.form?.submit()
-    }}
-  >
-    <option value="owner">Owner</option>
-    <option value="admin">Admin</option>
-    <option value="manager">Manager</option>
-    <option value="sales">Sales</option>
-    <option value="technician">Technician</option>
-    <option value="support">Support</option>
-    <option value="accountant">Accountant</option>
-  </select>
-
-</form>
-
+    <select
+      value={roleId}
+      onChange={(e) => {
+        router.push(
+          `/settings/roles/edit?role=${e.target.value}`
+        )
+      }}
+      className="
+        w-full
+        h-12
+        px-4
+        rounded-xl
+        border
+      "
+    >
+      {roles.map((role) => (
+        <option
+          key={role.id}
+          value={role.id}
+        >
+          {role.name}
+        </option>
+      ))}
+    </select>
   )
 }

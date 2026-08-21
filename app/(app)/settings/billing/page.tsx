@@ -78,13 +78,17 @@ if (!organization) {
               User Limit
             </div>
 
-            <div className="
-            text-2xl
-            font-bold
-            mt-2
-            ">
-             {organization.usersLimit}
-            </div>
+           <div
+    className="
+    text-2xl
+    font-bold
+    mt-2
+    "
+  >
+    {organization.plan === "starter"
+      ? organization.usersLimit
+      : "Unlimited"}
+  </div>
 
           </div>
 

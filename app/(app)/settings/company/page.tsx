@@ -1,8 +1,17 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/shared/lib/prisma";
+import { revalidatePath } from "next/cache";
 
-export default async function CompanyPage() {
+export default async function CompanyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    saved?: string
+  }>
+}) {
+
+  const params = await searchParams
   const session = await auth();
 
   if (!session?.user) {
@@ -21,6 +30,33 @@ export default async function CompanyPage() {
     redirect("/welcome");
   }
 
+async function saveCompany(
+  formData: FormData
+) {
+  "use server"
+
+  await prisma.organization.update({
+    where: {
+      id: orgId,
+    },
+    data: {
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string,
+      website: formData.get("website") as string,
+      address: formData.get("address") as string,
+      city: formData.get("city") as string,
+      state: formData.get("state") as string,
+      country: formData.get("country") as string,
+      postalCode: formData.get("postalCode") as string,
+    },
+  })
+
+  revalidatePath("/settings/company")
+
+  redirect("/settings/company?saved=1")
+}
+
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
@@ -33,11 +69,28 @@ export default async function CompanyPage() {
         </p>
       </div>
 
-      <form
-        action="/api/settings/company"
-        method="POST"
-        className="bg-white border rounded-3xl p-8 space-y-6"
-      >
+
+{params.saved && (
+
+  <div
+    className="
+    p-4
+    rounded-xl
+    bg-green-100
+    text-green-700
+    border
+    "
+  >
+    Company information updated successfully.
+  </div>
+
+)}
+
+
+     <form
+  action={saveCompany}
+  className="bg-white border rounded-3xl p-8 space-y-6"
+>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm text-slate-500 mb-2">

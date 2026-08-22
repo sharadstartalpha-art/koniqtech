@@ -146,15 +146,15 @@ const [
         },
     }),
 
-    prisma.job.findMany({
-        where: {
-            orgId: dbUser.orgId,
-        },
-        take: 3,
-        orderBy: {
-            id: "desc",
-        },
-    }),
+   prisma.job.findMany({
+    where: {
+        orgId: dbUser.orgId,
+    },
+    take: 3,
+    orderBy: {
+        createdAt: "desc",
+    },
+}),
 ]);
 
 const subscriptionEnds=
@@ -315,13 +315,7 @@ const brandingCompleted =
   !!dbUser.organization?.logo;
 
 const teamCompleted =
-  (
-    await prisma.user.count({
-      where: {
-        orgId: dbUser.orgId,
-      },
-    })
-  ) > 1;
+  teamMembers > 1;
 
 
 const onboardingSteps = [
@@ -716,14 +710,19 @@ gap-4
 
 }
 
+interface MetricCardProps{
+  title:string
+  value:number
+  href:string
+  icon:React.ReactNode
+}
+
 function MetricCard({
-
-title,
-value,
-href,
-icon
-
-}:any){
+  title,
+  value,
+  href,
+  icon
+}:MetricCardProps){
 
 return(
 
@@ -779,13 +778,21 @@ mt-4
 
 }
 
+interface ActivityCardProps{
+    title:string
+    items:string[]
+    href:string
+    action:string
+    description:string
+}
+
 function ActivityCard({
     title,
     items,
     href,
     action,
     description
-}: any){
+}:ActivityCardProps){
 
 return(
 

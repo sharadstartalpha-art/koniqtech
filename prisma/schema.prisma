@@ -235,6 +235,7 @@ model Organization {
   MarketingNewsletter MarketingNewsletter[]
   CompanyLead         CompanyLead[]
   CustomerNote        CustomerNote[]
+  CustomerFile        CustomerFile[]
 }
 
 model User {
@@ -551,7 +552,8 @@ model Lead {
 
   activities LeadActivity[]
 
-  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  CustomerFile CustomerFile[]
+  organization Organization   @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   assignedTo User? @relation(fields: [assignedToId], references: [id])
 
@@ -559,6 +561,26 @@ model Lead {
   @@index([orgId, status])
   @@index([assignedToId])
   @@index([createdAt])
+}
+
+model CustomerFile {
+  id String @id @default(uuid())
+
+  customerId String
+
+  orgId String
+
+  fileName String
+
+  url String
+
+  createdAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  Lead         Lead?        @relation(fields: [leadId], references: [id])
+  leadId       String?
 }
 
 model Customer {
@@ -590,6 +612,7 @@ model Customer {
   quotes         Quote[]
   UserRouteStop  UserRouteStop[]
   UserEquipment  UserEquipment[]
+  CustomerFile   CustomerFile[]
 }
 
 model CustomerNote {

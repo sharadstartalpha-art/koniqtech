@@ -2,8 +2,8 @@ import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { auth } from "@/auth"
 import {
-  redirect,
-  notFound
+  notFound,
+  redirect
 } from "next/navigation"
 
 export const dynamic = "force-dynamic"
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic"
 export default async function Page({
   params
 }:{
-  params: Promise<{
+  params:Promise<{
     id:string
   }>
 }){
@@ -87,11 +87,8 @@ export default async function Page({
           Customer History
         </h1>
 
-        <p className="
-        text-slate-500
-        mt-2
-        ">
-          Timeline of customer activities.
+        <p className="text-slate-500 mt-2">
+          Complete activity timeline for this customer.
         </p>
 
       </div>
@@ -106,79 +103,75 @@ export default async function Page({
       p-8
       ">
 
-        {
-          customer.activities.length===0 ? (
+        {customer.activities.length===0 ?(
 
-            <div className="
-            py-12
-            text-center
-            text-slate-500
-            ">
-              No history available.
-            </div>
+          <div className="
+          py-16
+          text-center
+          text-slate-500
+          ">
+            No customer activity yet.
+          </div>
 
-          ) : (
+        ):(
+          <div className="space-y-8">
 
-            <div className="space-y-8">
+            {customer.activities.map(activity=>(
 
-              {
-                customer.activities.map(activity=>(
+              <div
+                key={activity.id}
+                className="
+                relative
+                pl-8
+                border-l-2
+                border-orange-200
+                "
+              >
 
-                  <div
-                    key={activity.id}
-                    className="
-                    relative
-                    pl-8
-                    border-l-2
-                    border-blue-200
-                    "
-                  >
+                <div
+                  className="
+                  absolute
+                  -left-[9px]
+                  top-1
+                  w-4
+                  h-4
+                  rounded-full
+                  bg-orange-600
+                  "
+                />
 
-                    <div className="
-                    absolute
-                    left-[-9px]
-                    top-1
-                    w-4
-                    h-4
-                    rounded-full
-                    bg-blue-600
-                    " />
+                <h3 className="
+                font-semibold
+                text-slate-900
+                ">
+                  {activity.title}
+                </h3>
 
-                    <h3 className="
-                    font-semibold
-                    text-slate-900
-                    ">
-                      {activity.title}
-                    </h3>
+                {activity.description &&(
 
-                    {activity.description && (
+                  <p className="
+                  text-slate-600
+                  mt-2
+                  ">
+                    {activity.description}
+                  </p>
 
-                      <p className="
-                      text-slate-600
-                      mt-1
-                      ">
-                        {activity.description}
-                      </p>
+                )}
 
-                    )}
+                <p className="
+                text-sm
+                text-slate-500
+                mt-3
+                ">
+                  {activity.createdAt.toLocaleString()}
+                </p>
 
-                    <p className="
-                    text-sm
-                    text-slate-500
-                    mt-2
-                    ">
-                      {activity.createdAt.toLocaleString()}
-                    </p>
+              </div>
 
-                  </div>
+            ))}
 
-                ))
-              }
-
-            </div>
-
-          )
-        }
+          </div>
+        )}
 
       </div>
 

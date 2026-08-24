@@ -48,6 +48,14 @@ const lead = await prisma.lead.findFirst({
   }
 })
 
+const activities = await prisma.leadActivity.findMany({
+  where: {
+    leadId: lead.id,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+})
 const leadAge =
   Math.floor(
     (Date.now() - lead.createdAt.getTime()) /
@@ -465,24 +473,60 @@ return (
     </div>
 
 
-<div className="
-bg-white
-border
-rounded-3xl
-p-7
-shadow-sm
-">
+<div className="bg-white border rounded-3xl p-7 shadow-sm">
 
-  <h2 className="text-lg font-semibold mb-5">
+  <h2 className="text-lg font-semibold mb-6">
     Timeline
   </h2>
 
-  <p className="text-slate-500">
-    Activity timeline will appear here.
-  </p>
+  {
+    activities.length === 0 ? (
+
+      <p className="text-slate-500">
+        No activity recorded.
+      </p>
+
+    ) : (
+
+      <div className="space-y-5">
+
+        {activities.map(activity => (
+
+          <div
+            key={activity.id}
+            className="border-l-2 border-orange-500 pl-5"
+          >
+
+            <div className="font-medium">
+              {activity.title}
+            </div>
+
+            <div className="text-sm text-slate-500 mt-1">
+              {activity.createdAt.toLocaleString()}
+            </div>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    )
+  }
 
 </div>
 
+<div>
+
+<p className="text-xs text-slate-500">
+Lead ID
+</p>
+
+<p className="font-mono text-sm">
+{lead.id}
+</p>
+
+</div>
   </div>
 )
 

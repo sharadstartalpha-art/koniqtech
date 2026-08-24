@@ -10,14 +10,32 @@ type Customer = {
   companyName: string | null
 }
 
+
+
 type QuoteItem = {
   itemName: string
   qty: number
   price: number
 }
 
+type ExistingQuote = {
+  id: string
+  customerId: string
+  quoteNumber: string
+  status: string
+  validUntil: string
+  items: QuoteItem[]
+}
+
+
 type Props = {
-  customers: Customer[]
+  customers: {
+    id: string
+    firstName: string
+    lastName: string | null
+    companyName: string | null
+  }[]
+  quote?: ExistingQuote
   quoteNumber: string
   statuses: string[]
 }
@@ -25,6 +43,7 @@ type Props = {
 export default function QuoteForm({
   customers,
   quoteNumber,
+  quote: existingQuote,
   statuses
 }: Props) {
 
@@ -182,12 +201,12 @@ export default function QuoteForm({
     setLoading(true)
         try {
 
-      const response =
-        await fetch(
-          "/api/quotes",
-          {
-
-            method: "POST",
+      const response = await fetch(
+  existingQuote
+    ? `/api/quotes/${existingQuote.id}`
+    : "/api/quotes",
+  {
+    method: existingQuote ? "PUT" : "POST",
 
             headers: {
               "Content-Type":
@@ -229,12 +248,10 @@ export default function QuoteForm({
 
       }
 
-      const quote =
-        await response.json()
+      const savedQuote =
+  await response.json()
 
-      router.push(
-        `/quotes/${quote.id}`
-      )
+router.push(`/quotes/${savedQuote.id}`)
 
       router.refresh()
 

@@ -1,49 +1,194 @@
-import prisma from "@/shared/lib/prisma"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
-import { NextResponse } from "next/server"
+import prisma from "@/shared/lib/prisma"
 
 export async function POST(
-  req:Request
-){
+  request: NextRequest
+) {
 
-  const session=
-    await auth()
+  try {
 
-  const orgId=
-    (session?.user as any)
-    ?.orgId
+    const session =
+      await auth()
 
-  const body=
-    await req.json()
+    if (!session?.user) {
 
-  const quote=
-    await prisma.quote.create({
+      return NextResponse.json(
+        {
+          message: "Unauthorized"
+        },
+        {
+          status: 401
+        }
+      )
 
-      data:{
+    }
 
-        orgId,
+    const orgId =
+      session.user.orgId
 
-        customerId:
-          body.customerId,
+    if (!orgId) {
 
-        quoteNumber:
-          `QT-${Date.now()}`,
+      return NextResponse.json(
+        {
+          message: "Organization not found."
+        },
+        {
+          status: 400
+        }
+      )
 
-        subtotal:
-          body.subtotal,
+    }
 
-        tax:
-          body.tax,
+    const body =
+      await request.json()
 
-        total:
-          body.total
+    const {
 
+      customerId,
+      quoteNumber,
+      status,
+      validUntil,
+      subtotal,
+      tax,
+      total,
+      items
+
+    } = body
+
+    if (
+      !customerId ||
+      !quoteNumber ||
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
+
+      return NextResponse.json(
+        {
+          message: "Missing required fields."
+        },
+        {
+          status: 400
+        }
+      )
+
+    }
+
+    const customer =
+      await prisma.customer.findFirst({
+
+        where: {
+          id: customerId,
+          orgId
+        }
+
+      })
+
+    if (!customer) {
+
+      return NextResponse.json(
+        {
+          message: "Customer not found."
+        },
+        {
+          status: 404
+        }
+      )
+
+    }
+
+    const quote =
+      await prisma.$transaction(
+
+        async (tx) => {
+
+          const createdQuote =
+            await tx.quote.create({
+
+              data: {
+
+                orgId,
+
+                customerId,
+
+                quoteNumber,
+
+                status,
+
+                validUntil:
+                  validUntil
+                    ? new Date(validUntil)
+                    : null,
+
+                subtotal,
+
+                tax,
+
+                total
+
+              }
+
+            })
+
+          await tx.quoteItem.createMany({
+
+            data:
+
+              items.map(
+
+                (item: any) => ({
+
+                  quoteId:
+                    createdQuote.id,
+
+                  itemName:
+                    item.itemName,
+
+                  qty:
+                    Number(item.qty),
+
+                  price:
+                    Number(item.price),
+
+                  total:
+                    Number(item.qty) *
+                    Number(item.price)
+
+                })
+
+              )
+
+          })
+
+          return createdQuote
+
+        }
+
+      )
+
+    return NextResponse.json(
+      quote
+    )
+
+  }
+
+  catch (error) {
+
+    console.error(error)
+
+    return NextResponse.json(
+
+      {
+        message:
+          "Failed to create quote."
+      },
+
+      {
+        status: 500
       }
 
-    })
+    )
 
-  return NextResponse.json(
-    quote
-  )
+  }
 
 }

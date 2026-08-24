@@ -1,58 +1,261 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+import Link from "next/link"
 
-return(
+export const dynamic = "force-dynamic"
 
-<div className="space-y-8">
+export default async function CreateInvoicePage() {
+  const session = await auth()
 
-<h1 className="text-5xl font-bold">
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-Create Invoice
+  const orgId = session.user.orgId
 
-</h1>
+  if (!orgId) {
+    redirect("/welcome")
+  }
 
-<div className="bg-white rounded-3xl p-10 space-y-5">
+  const [customers, jobs] = await Promise.all([
+    prisma.customer.findMany({
+      where: {
+        orgId,
+      },
+      orderBy: {
+        firstName: "asc",
+      },
+    }),
 
-<input
-placeholder="Customer"
-className="w-full border p-5 rounded-xl"
-/>
+    prisma.job.findMany({
+      where: {
+        orgId,
+      },
+      include: {
+        customer: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+  ])
 
-<input
-placeholder="Amount"
-className="w-full border p-5 rounded-xl"
-/>
+  const invoiceNumber = `INV-${Date.now()}`
 
-<input
-type="date"
-className="w-full border p-5 rounded-xl"
-/>
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-5xl font-bold">
+            Create Invoice
+          </h1>
 
-<select className="w-full border p-5 rounded-xl">
+          <p className="text-slate-500 mt-2">
+            Generate a new customer invoice.
+          </p>
+        </div>
 
-<option>
+        <Link
+          href="/invoices"
+          className="border px-5 py-3 rounded-xl hover:bg-slate-100"
+        >
+          Back
+        </Link>
+      </div>
 
-Pending
+      <form
+        action="/api/invoices"
+        method="POST"
+        className="bg-white border rounded-3xl p-8 space-y-6"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block font-medium mb-2">
+              Invoice Number
+            </label>
 
-</option>
+            <input
+              name="invoiceNumber"
+              defaultValue={invoiceNumber}
+              required
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
 
-<option>
+          <div>
+            <label className="block font-medium mb-2">
+              Status
+            </label>
 
-Paid
+            <select
+              name="status"
+              defaultValue="draft"
+              className="w-full border rounded-xl p-4"
+            >
+              <option value="draft">
+                Draft
+              </option>
 
-</option>
+              <option value="sent">
+                Sent
+              </option>
 
-</select>
+              <option value="paid">
+                Paid
+              </option>
 
-<button className="bg-blue-600 text-white px-8 py-4 rounded-xl">
+              <option value="overdue">
+                Overdue
+              </option>
 
-Save Invoice
+              <option value="cancelled">
+                Cancelled
+              </option>
+            </select>
+          </div>
 
-</button>
+          <div>
+            <label className="block font-medium mb-2">
+              Customer
+            </label>
 
-</div>
+            <select
+              name="customerId"
+              required
+              className="w-full border rounded-xl p-4"
+            >
+              <option value="">
+                Select Customer
+              </option>
 
-</div>
+              {customers.map((customer) => (
+                <option
+                  key={customer.id}
+                  value={customer.id}
+                >
+                  {customer.firstName} {customer.lastName}
+                  {customer.companyName
+                    ? ` (${customer.companyName})`
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </div>
 
-)
+          <div>
+            <label className="block font-medium mb-2">
+              Job
+            </label>
 
+            <select
+              name="jobId"
+              required
+              className="w-full border rounded-xl p-4"
+            >
+              <option value="">
+                Select Job
+              </option>
+
+              {jobs.map((job) => (
+                <option
+                  key={job.id}
+                  value={job.id}
+                >
+                  {job.title} —{" "}
+                  {job.customer.firstName}{" "}
+                  {job.customer.lastName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-2">
+              Subtotal
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              name="subtotal"
+              defaultValue="0"
+              required
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-2">
+              Tax
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              name="tax"
+              defaultValue="0"
+              required
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-2">
+              Total
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              name="total"
+              defaultValue="0"
+              required
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-2">
+              Due Date
+            </label>
+
+            <input
+              type="date"
+              name="dueDate"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-4 pt-4">
+          <button
+            className="
+              bg-blue-600
+              hover:bg-blue-700
+              text-white
+              px-8
+              py-4
+              rounded-2xl
+            "
+          >
+            Create Invoice
+          </button>
+
+          <Link
+            href="/invoices"
+            className="
+              border
+              px-8
+              py-4
+              rounded-2xl
+              hover:bg-slate-100
+            "
+          >
+            Cancel
+          </Link>
+        </div>
+      </form>
+    </div>
+  )
 }

@@ -93,6 +93,7 @@ model Organization {
 
   invoices Invoice[]
 
+  payments  Payment[]
   pipelines Pipeline[]
 
   conversations Conversation[]
@@ -622,6 +623,7 @@ model Customer {
   CustomerFile   CustomerFile[]
   contracts      Contract[]
   Opportunity    Opportunity[]
+  payments       Payment[]
 }
 
 model CustomerNote {
@@ -1298,7 +1300,7 @@ model Invoice {
   customerId String
   jobId      String
 
-  invoiceNumber String
+  invoiceNumber String @unique
 
   subtotal Decimal @db.Decimal(12, 2)
   tax      Decimal @db.Decimal(12, 2)
@@ -1310,8 +1312,9 @@ model Invoice {
   sentAt DateTime?
   paidAt DateTime?
 
-  createdAt DateTime @default(now())
-
+  payments     Payment[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   organization Organization @relation(fields: [orgId], references: [id])
 
   customer Customer @relation(fields: [customerId], references: [id])
@@ -1937,6 +1940,14 @@ enum CampaignChannel {
   webinar
 }
 
+enum InvoiceStatus {
+  draft
+  sent
+  paid
+  overdue
+  cancelled
+}
+
 enum CampaignStatus {
   draft
   running
@@ -2194,24 +2205,43 @@ enum BillingCycle {
 
 enum PaymentMethod {
   cash
-
   cheque
-
   bank_transfer
-
   ach
-
   paypal
-
   stripe
-
   credit_card
-
   debit_card
-
   wire
-
   other
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  orgId      String
+  customerId String
+  invoiceId  String
+
+  amount Decimal @db.Decimal(12, 2)
+
+  method PaymentMethod
+
+  reference String?
+
+  notes String?
+
+  paidAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id])
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 enum PaymentStatus {

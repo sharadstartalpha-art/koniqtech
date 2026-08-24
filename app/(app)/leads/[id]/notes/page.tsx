@@ -24,21 +24,37 @@ export default function LeadNotesPage() {
   const [loading,setLoading] =
     useState(false)
 
- async function loadNotes(){
+
+    async function loadNotes(){
 
   if(!leadId) return
 
-  const res =
-    await fetch(
-      `/api/leads/${leadId}/notes`
-    )
+  try{
 
-  const data =
-    await res.json()
+    const res =
+      await fetch(
+        `/api/leads/${leadId}/notes`
+      )
 
-  setNotes(data)
+    if(!res.ok){
+      setNotes([])
+      return
+    }
+
+    const data =
+      await res.json()
+
+    setNotes(data.notes ?? [])
+
+  }catch{
+
+    setNotes([])
+
+  }
 
 }
+
+
 
   async function saveNote(){
 
@@ -48,18 +64,24 @@ export default function LeadNotesPage() {
 
   setLoading(true)
 
-  await fetch(
-    `/api/leads/${leadId}/notes`,
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        content
-      })
-    }
-  )
+ const res = await fetch(
+  `/api/leads/${leadId}/notes`,
+  {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      content
+    })
+  }
+)
+
+if(!res.ok){
+  alert("Unable to save note")
+  setLoading(false)
+  return
+}
 
   setContent("")
 

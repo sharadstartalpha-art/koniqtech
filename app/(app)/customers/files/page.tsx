@@ -179,7 +179,7 @@ export default async function Page({
                 ">
 
                   <Link
-                    href={file.url}
+                    href={file.fileUrl}
                     target="_blank"
                     className="
                     px-4

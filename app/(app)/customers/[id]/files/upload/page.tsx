@@ -75,7 +75,7 @@ async function uploadFile(
 
   )
 
-  const url =
+  const fileUrl  =
     `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
 
   await prisma.customerFile.create({
@@ -89,12 +89,12 @@ async function uploadFile(
       fileName:
         file.name,
 
-      url,
+      fileUrl,
 
-      size:
+      fileSize:
         file.size,
 
-      mimeType:
+      fileType:
         file.type
 
     }

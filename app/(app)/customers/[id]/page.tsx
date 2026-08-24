@@ -366,6 +366,37 @@ No jobs yet.
         </div>
 
 
+
+<div className="bg-white border rounded-3xl p-6">
+
+  <h3 className="text-xl font-semibold">
+    Customer Files
+  </h3>
+
+  <p className="text-slate-500 mt-2">
+    Upload contracts, photos, invoices and documents.
+  </p>
+
+  <div className="mt-6 flex gap-3">
+
+    <Link
+      href={`/customers/${customer.id}/files`}
+      className="px-5 py-3 rounded-xl border hover:bg-slate-50"
+    >
+      View Files
+    </Link>
+
+    <Link
+      href={`/customers/${customer.id}/files/upload`}
+      className="px-5 py-3 rounded-xl bg-orange-600 text-white"
+    >
+      Upload File
+    </Link>
+
+  </div>
+
+</div>
+
 <div className="bg-white border rounded-3xl p-6">
 
 <h2 className="font-bold mb-5">

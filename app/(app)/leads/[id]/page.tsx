@@ -47,6 +47,12 @@ const lead = await prisma.lead.findFirst({
     orgId
   }
 })
+
+const leadAge =
+  Math.floor(
+    (Date.now() - lead.createdAt.getTime()) /
+    (1000 * 60 * 60 * 24)
+  )
   
 return (
   <div className="space-y-8">
@@ -79,12 +85,17 @@ return (
           {lead.firstName} {lead.lastName}
         </h1>
 
-        <p className="
-        text-slate-500
-        mt-1
-        ">
-          {lead.email}
-        </p>
+        <div className="mt-2 space-y-1">
+
+  <p className="text-slate-500">
+    {lead.companyName || "No Company"}
+  </p>
+
+  <p className="text-slate-500">
+    {lead.email || "-"}
+  </p>
+
+</div>
 
       </div>
 
@@ -103,6 +114,23 @@ return (
         >
           Edit
         </Link>
+
+
+<Link
+  href={`/leads/${lead.id}/delete`}
+  className="
+  px-5
+  py-3
+  rounded-2xl
+  border
+  border-red-200
+  text-red-600
+  hover:bg-red-50
+  "
+>
+  Delete
+</Link>
+
 
         {customer ? (
 
@@ -176,96 +204,139 @@ return (
           Lead Profile
         </h2>
 
-        <div className="space-y-4">
-
-          <div>
-
-            <p className="text-xs text-slate-500">
-              Phone
-            </p>
-
-            <p className="font-medium">
-             {lead.phone || "-"}
-            </p>
-
-          </div>
-
-          <div>
-
-            <p className="text-xs text-slate-500">
-              Email
-            </p>
-
-            <p className="font-medium">
-             {lead.email || "-"}
-            </p>
-
-          </div>
-
-          <div>
+<div>
 
   <p className="text-xs text-slate-500">
-    Status
+    Created
   </p>
 
   <p className="font-medium">
-    {lead.status}
+    {lead.createdAt.toLocaleDateString()}
   </p>
 
 </div>
+
+       <div className="space-y-4">
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Company
+    </p>
+
+    <p className="font-medium">
+      {lead.companyName || "-"}
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Phone
+    </p>
+
+    <p className="font-medium">
+      {lead.phone || "-"}
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Email
+    </p>
+
+    <p className="font-medium">
+      {lead.email || "-"}
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Source
+    </p>
+
+    <p className="font-medium">
+      {lead.source || "-"}
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Priority
+    </p>
+
+    <p className="font-medium">
+      {lead.priority || "-"}
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Budget
+    </p>
+
+    <p className="font-medium">
+      {lead.budget
+        ? `₹${lead.budget.toLocaleString()}`
+        : "-"
+      }
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Lead Age
+    </p>
+
+    <p className="font-medium">
+      {leadAge} days
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Status
+    </p>
+
+    <p className="font-medium capitalize">
+     <span
+  className="
+  inline-flex
+  rounded-full
+  bg-blue-100
+  px-3
+  py-1
+  text-blue-700
+  text-sm
+  font-medium
+  capitalize
+  "
+>
+  {lead.status}
+</span>
+    </p>
+  </div>
+
+  <div>
+    <p className="text-xs text-slate-500">
+      Assigned Rep
+    </p>
+
+    <p className="font-medium">
+      {lead.assignedTo?.name || "-"}
+    </p>
+  </div>
 
 <div>
 
   <p className="text-xs text-slate-500">
-    Assigned Rep
+    Address
   </p>
 
-<p className="font-medium">
-  {lead.assignedTo?.name || "-"}
-</p>
+  <p className="font-medium">
+    {lead.address || "-"}
+  </p>
 
 </div>
-          <div>
-
-            {customer ? (
-
-              <span
-                className="
-                inline-flex
-                px-4
-                py-2
-                rounded-full
-                bg-green-100
-                text-green-700
-                text-sm
-                font-medium
-                "
-              >
-                ✓ Converted To Customer
-              </span>
-
-            ) : (
-
-              <span
-                className="
-                inline-flex
-                px-4
-                py-2
-                rounded-full
-                bg-orange-100
-                text-orange-700
-                text-sm
-                font-medium
-                "
-              >
-                Lead
-              </span>
-
-            )}
-
-          </div>
-
-        </div>
+</div>
 
       </div>
 
@@ -364,11 +435,53 @@ return (
             </div>
           </Link>
 
+
+          <Link
+  href={`tel:${lead.phone}`}
+  className="
+  p-5
+  rounded-2xl
+  border
+  hover:border-purple-300
+  hover:bg-purple-50
+  transition
+  "
+>
+
+  <div className="font-semibold">
+    Call Customer
+  </div>
+
+  <div className="text-sm text-slate-500 mt-1">
+    Start phone call
+  </div>
+
+</Link>
+
         </div>
 
       </div>
 
     </div>
+
+
+<div className="
+bg-white
+border
+rounded-3xl
+p-7
+shadow-sm
+">
+
+  <h2 className="text-lg font-semibold mb-5">
+    Timeline
+  </h2>
+
+  <p className="text-slate-500">
+    Activity timeline will appear here.
+  </p>
+
+</div>
 
   </div>
 )

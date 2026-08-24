@@ -593,26 +593,23 @@ async function validateAssignee(
 // ============================================================
 // VERIFY LEAD OWNERSHIP
 // ============================================================
-
 async function getLeadForOrganization(
   leadId: string,
   orgId: string
 ) {
-
   return prisma.lead.findFirst({
-
     where: {
-
-      id:
-        leadId,
-
+      id: leadId,
       orgId
-
+    },
+    select: {
+      id: true,
+      orgId: true,
+      status: true,
+      assignedToId: true
     }
-
   })
 }
-
 
 // ============================================================
 // CREATE LEAD
@@ -703,52 +700,35 @@ export async function createLeadAction(
     // the LeadForm should submit exact enum values.
     // --------------------------------------------------------
 
-    const createData:
-      Prisma.LeadUncheckedCreateInput = {
+   const createData: Prisma.LeadUncheckedCreateInput = {
+  orgId,
 
-      orgId,
+  source: parsed.data.source,
 
-      source:
-        parsed.data.source,
+  firstName: parsed.data.firstName,
 
-      firstName:
-        parsed.data.firstName,
+  lastName: parsed.data.lastName,
 
-      lastName:
-        parsed.data.lastName,
+  phone: parsed.data.phone,
 
-      phone:
-        parsed.data.phone,
+  email: parsed.data.email,
 
-      email:
-        parsed.data.email,
+  companyName: parsed.data.companyName,
 
-      companyName:
-        parsed.data.companyName,
+  address: parsed.data.address,
 
-      address:
-        parsed.data.address,
+  budget: parsed.data.budget,
 
-      budget:
-        parsed.data.budget,
+  priority: parsed.data.priority,
 
-      priority:
-        parsed.data.priority,
+  tags: parsed.data.tags,
 
-      tags:
-        parsed.data.tags,
+  attachment: parsed.data.attachment,
 
-      attachment:
-        parsed.data.attachment,
+  status: parsed.data.status,
 
-      status:
-        parsed.data.status,
-
-      assignedTo:
-        parsed.data.assignedTo
-
-    }
-
+  assignedToId: parsed.data.assignedTo || null,
+}
 
     /*
       Industry is optional.
@@ -993,57 +973,37 @@ export async function updateLeadAction(
     // --------------------------------------------------------
     // UPDATE DATA
     // --------------------------------------------------------
+const updateData: Prisma.LeadUncheckedUpdateInput = {
+  source: parsed.data.source,
 
-    const updateData:
-      Prisma.LeadUncheckedUpdateInput = {
+  firstName: parsed.data.firstName,
 
-      source:
-        parsed.data.source,
+  lastName: parsed.data.lastName,
 
-      firstName:
-        parsed.data.firstName,
+  phone: parsed.data.phone,
 
-      lastName:
-        parsed.data.lastName,
+  email: parsed.data.email,
 
-      phone:
-        parsed.data.phone,
+  companyName: parsed.data.companyName,
 
-      email:
-        parsed.data.email,
+  address: parsed.data.address,
 
-      companyName:
-        parsed.data.companyName,
+  budget: parsed.data.budget,
 
-      address:
-        parsed.data.address,
+  priority: parsed.data.priority,
 
-      budget:
-        parsed.data.budget,
+  tags: parsed.data.tags,
 
-      priority:
-        parsed.data.priority,
+  attachment: parsed.data.attachment,
 
-      tags:
-        parsed.data.tags,
+  status: parsed.data.status,
 
-      attachment:
-        parsed.data.attachment,
+  assignedToId: parsed.data.assignedTo || null,
 
-      status:
-        parsed.data.status,
-
-      assignedTo:
-        parsed.data.assignedTo,
-
-      industry:
-        parsed.data.industry
-          ? parsed.data.industry as
-              Prisma.LeadUncheckedUpdateInput["industry"]
-          : null
-
-    }
-
+  industry: parsed.data.industry
+    ? (parsed.data.industry as Prisma.LeadUncheckedUpdateInput["industry"])
+    : null,
+}
 
     // --------------------------------------------------------
     // DETERMINE ACTIVITY
@@ -1055,8 +1015,8 @@ export async function updateLeadAction(
 
 
     const assigneeChanged =
-      existingLead.assignedTo !==
-      parsed.data.assignedTo
+  existingLead.assignedToId !==
+  parsed.data.assignedTo
 
 
     // --------------------------------------------------------
@@ -1266,13 +1226,11 @@ export async function deleteLeadAction(
     await prisma.$transaction(
       async (tx) => {
 
-        await tx.leadActivity.deleteMany({
-
-          where: {
-             id: leadId
-          }
-
-        })
+       await tx.leadActivity.deleteMany({
+  where: {
+    leadId
+  }
+})
 
 
         await tx.lead.delete({

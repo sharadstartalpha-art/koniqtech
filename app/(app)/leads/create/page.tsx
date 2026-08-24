@@ -1,6 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 
 async function createLead(
   formData: FormData
@@ -13,9 +14,17 @@ async function createLead(
   const orgId =
     (session?.user as any)?.orgId
 
-  if(!orgId){
-    return
-  }
+ if (!orgId) {
+  redirect("/welcome")
+}
+
+const firstName =
+  String(formData.get("firstName")).trim()
+
+if (!firstName) {
+  throw new Error("First name is required")
+}
+
 
   await prisma.lead.create({
 
@@ -27,9 +36,7 @@ async function createLead(
         formData.get("source")
       ),
 
-      firstName:String(
-        formData.get("firstName")
-      ),
+     firstName,
 
       lastName:String(
         formData.get("lastName")
@@ -59,27 +66,51 @@ async function createLead(
         formData.get("priority")
       ),
 
-      tags:String(
-        formData.get("tags")
-      )
+      tags: String(
+  formData.get("tags")
+),
 
+assignedToId:
+  String(
+    formData.get("assignedTo")
+  ) || null
+
+  
     }
 
   })
 
+  revalidatePath("/leads")
   redirect("/leads")
 }
 
 export default async function Page(){
 
-  const users =
-    await prisma.user.findMany({
+const session = await auth()
 
-      orderBy:{
-        name:"asc"
-      }
+if (!session?.user) {
+  redirect("/login")
+}
 
-    })
+const orgId =
+  (session.user as any).orgId
+
+if (!orgId) {
+  redirect("/welcome")
+}
+
+const users =
+  await prisma.user.findMany({
+
+    where: {
+      orgId
+    },
+
+    orderBy: {
+      name: "asc"
+    }
+
+  })
 
   return(
 
@@ -185,6 +216,7 @@ export default async function Page(){
               </label>
 
               <input
+               type="tel"
                 name="phone"
                 className="
                 w-full
@@ -237,10 +269,15 @@ export default async function Page(){
                 "
               >
                 <option>Website</option>
-                <option>Facebook</option>
-                <option>Google Ads</option>
-                <option>Referral</option>
-                <option>Walk-in</option>
+<option>Google</option>
+<option>Facebook</option>
+<option>Instagram</option>
+<option>Referral</option>
+<option>Walk-in</option>
+<option>Phone Call</option>
+<option>Email</option>
+<option>Trade Show</option>
+<option>Other</option>
               </select>
 
             </div>
@@ -276,6 +313,8 @@ export default async function Page(){
 
               <input
                 type="number"
+                 min="0"
+                 step="1"
                 name="budget"
                 placeholder="5000"
                 className="
@@ -295,23 +334,29 @@ export default async function Page(){
                 Priority
               </label>
 
-              <select
-                name="priority"
-                className="
-                w-full
-                h-14
-                border
-                rounded-2xl
-                px-4
-                "
-              >
-                <option>Low</option>
-                <option selected>
-                  Medium
-                </option>
-                <option>High</option>
-              </select>
+             <select
+  name="priority"
+  defaultValue="Medium"
+  className="
+  w-full
+  h-14
+  border
+  rounded-2xl
+  px-4
+  "
+>
+  <option value="Low">
+    Low
+  </option>
 
+  <option value="Medium">
+    Medium
+  </option>
+
+  <option value="High">
+    High
+  </option>
+</select>
             </div>
 
             <div>
@@ -335,16 +380,18 @@ export default async function Page(){
                   Select Rep
                 </option>
 
-                {users.map(user=>(
+                {users
+  .filter(user => user.role !== "super_admin")
+  .map(user => (
 
-                  <option
-                    key={user.id}
-                    value={user.id}
-                  >
-                    {user.name}
-                  </option>
+    <option
+      key={user.id}
+      value={user.id}
+    >
+      {user.name}
+    </option>
 
-                ))}
+))}
 
               </select>
 
@@ -391,23 +438,7 @@ export default async function Page(){
 
           </div>
 
-          <div>
-
-            <label className="font-medium block mb-2">
-              Attachment
-            </label>
-
-            <input
-              type="file"
-              className="
-              w-full
-              border
-              rounded-2xl
-              p-3
-              "
-            />
-
-          </div>
+         
 
           <div className="flex gap-4">
 

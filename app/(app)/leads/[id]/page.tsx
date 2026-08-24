@@ -1,27 +1,50 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 
+import { auth } from "@/auth"
+import { redirect, notFound } from "next/navigation"
+
+export const dynamic = "force-dynamic"
+
 export default async function Page({
   params
 }:{
   params:Promise<{id:string}>
 }){
 
+  const session = await auth()
+
+if (!session?.user) {
+  redirect("/login")
+}
+
+const orgId = (session.user as any).orgId
+
+if (!orgId) {
+  redirect("/welcome")
+}
+
   const {id}=await params
 
   
-
-  const lead=await prisma.lead.findUnique({
-    where:{id}
-  })
-
-  if(!lead){
-    return <div>Lead not found</div>
-  }
-
-  const customer = await prisma.customer.findFirst({
+const lead = await prisma.lead.findFirst({
   where: {
-    leadId: lead.id
+    id,
+    orgId
+  },
+  include: {
+  assignedTo: true
+}
+})
+
+  if (!lead) {
+  notFound()
+}
+
+ const customer = await prisma.customer.findFirst({
+  where: {
+    leadId: lead.id,
+    orgId
   }
 })
   
@@ -162,7 +185,7 @@ return (
             </p>
 
             <p className="font-medium">
-              {lead.phone}
+             {lead.phone || "-"}
             </p>
 
           </div>
@@ -174,11 +197,34 @@ return (
             </p>
 
             <p className="font-medium">
-              {lead.email}
+             {lead.email || "-"}
             </p>
 
           </div>
 
+          <div>
+
+  <p className="text-xs text-slate-500">
+    Status
+  </p>
+
+  <p className="font-medium">
+    {lead.status}
+  </p>
+
+</div>
+
+<div>
+
+  <p className="text-xs text-slate-500">
+    Assigned Rep
+  </p>
+
+<p className="font-medium">
+  {lead.assignedTo?.name || "-"}
+</p>
+
+</div>
           <div>
 
             {customer ? (
@@ -295,7 +341,7 @@ return (
           </Link>
 
           <Link
-            href="/messages"
+           href={`mailto:${lead.email}`}
             className="
             p-5
             rounded-2xl

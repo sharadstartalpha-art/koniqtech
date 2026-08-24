@@ -2,6 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 
 import DataTable from "@/components/DataTable"
+import { redirect } from "next/navigation"
 
 export const dynamic="force-dynamic"
 
@@ -10,22 +11,36 @@ export default async function Page(){
 const session=
 await auth()
 
-const orgId=
+if (!session?.user) {
+  redirect("/login")
+}
 
-(session?.user as any)
-?.orgId
+const orgId =
+session.user.orgId
 
-const leads=
+if (!orgId) {
+  redirect("/welcome")
+}
 
+const leads =
 await prisma.lead.findMany({
 
-where:{
-orgId
-},
+  where:{
+    orgId
+  },
 
-orderBy:{
-createdAt:"desc"
-}
+  select:{
+    id:true,
+    firstName:true,
+    lastName:true,
+    email:true,
+    phone:true,
+    status:true
+  },
+
+  orderBy:{
+    createdAt:"desc"
+  }
 
 })
 

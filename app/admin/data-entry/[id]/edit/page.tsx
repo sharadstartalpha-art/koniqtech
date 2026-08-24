@@ -137,7 +137,14 @@ export default async function EditLeadPage({
 
         status: true,
 
-        assignedTo: true
+        assignedToId: true,
+
+assignedTo: {
+  select: {
+    id: true,
+    name: true
+  }
+}
 
       }
 
@@ -282,7 +289,7 @@ export default async function EditLeadPage({
       lead.status,
 
     assignedTo:
-      lead.assignedTo ??
+      lead.assignedToId ??
       ""
 
   }

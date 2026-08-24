@@ -225,7 +225,7 @@ export default async function SalesLeadsPage({
 
   const where = {
 
-    assignedTo:
+    assignedToId:
       userId,
 
     ...(status
@@ -310,7 +310,7 @@ export default async function SalesLeadsPage({
 
     prisma.lead.count({
       where: {
-        assignedTo:
+        assignedToId:
           userId,
       },
     }),
@@ -318,7 +318,7 @@ export default async function SalesLeadsPage({
 
     prisma.lead.count({
       where: {
-        assignedTo:
+        assignedToId:
           userId,
 
         status:
@@ -329,7 +329,7 @@ export default async function SalesLeadsPage({
 
     prisma.lead.count({
       where: {
-        assignedTo:
+        assignedToId:
           userId,
 
         status:
@@ -340,7 +340,7 @@ export default async function SalesLeadsPage({
 
     prisma.lead.count({
       where: {
-        assignedTo:
+        assignedToId:
           userId,
 
         status: {

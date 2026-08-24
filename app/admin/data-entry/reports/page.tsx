@@ -537,7 +537,7 @@ export default async function DataEntryReportsPage({
           createdAt:
             true,
 
-          assignee: {
+          assignedTo: {
 
             select: {
 
@@ -1907,10 +1907,10 @@ export default async function DataEntryReportsPage({
                               text-sm
                             "
                           >
-                            {lead.assignee ? (
+                            {lead.assignedTo ? (
 
                               <span className="text-slate-700">
-                                {lead.assignee.name}
+                                {lead.assignedTo.name}
                               </span>
 
                             ) : (

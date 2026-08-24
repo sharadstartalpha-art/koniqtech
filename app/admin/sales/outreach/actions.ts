@@ -101,7 +101,7 @@ export async function getSalesOutreachLeads() {
     await prisma.lead.findMany({
 
       where: {
-        assignedTo:
+        assignedToId:
           userId,
 
         status: {
@@ -248,7 +248,7 @@ export async function sendOutreachEmailAction(
           id:
             leadId,
 
-          assignedTo:
+          assignedToId:
             userId,
         },
 
@@ -539,7 +539,7 @@ export async function recordOutreachAction(
           id:
             leadId,
 
-          assignedTo:
+          assignedToId:
             userId,
         },
 
@@ -718,7 +718,7 @@ export async function addSalesNoteAction(
           id:
             leadId,
 
-          assignedTo:
+          assignedToId:
             userId,
         },
 
@@ -819,7 +819,7 @@ export async function markLeadInterestedAction(
         id:
           leadId,
 
-        assignedTo:
+        assignedToId:
           userId,
       },
 
@@ -932,7 +932,7 @@ export async function markLeadLostAction(
         id:
           leadId,
 
-        assignedTo:
+        assignedToId:
           userId,
       },
 
@@ -1104,7 +1104,7 @@ export async function sendBulkOutreachAction(
               selectedLeadIds,
           },
 
-          assignedTo:
+          assignedToId:
             userId,
 
           email: {
@@ -1350,7 +1350,7 @@ export async function proceedToDemoRequestAction(
         id:
           leadId,
 
-        assignedTo:
+        assignedToId:
           userId,
       },
 

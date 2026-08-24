@@ -232,7 +232,7 @@ export default async function SalesLeadDetailPage({
       where: {
         id,
 
-        assignedTo:
+       assignedToId:
           userId,
       },
 
@@ -268,7 +268,7 @@ export default async function SalesLeadDetailPage({
 
         createdAt: true,
 
-        assignee: {
+        assignedTo: {
           select: {
             id: true,
             name: true,
@@ -1172,7 +1172,7 @@ export default async function SalesLeadDetailPage({
 
             <div className="p-5">
 
-              {lead.assignee ? (
+              {lead.assignedTo ? (
 
                 <div
                   className="
@@ -1195,7 +1195,7 @@ export default async function SalesLeadDetailPage({
                       text-blue-700
                     "
                   >
-                    {lead.assignee.name
+                    {lead.assignedTo?.name
                       .slice(0, 1)
                       .toUpperCase()}
                   </div>
@@ -1210,8 +1210,7 @@ export default async function SalesLeadDetailPage({
                       "
                     >
                       {
-                        lead.assignee
-                          .name
+                        lead.assignedTo?.name
                       }
                     </p>
 
@@ -1224,8 +1223,7 @@ export default async function SalesLeadDetailPage({
                       "
                     >
                       {
-                        lead.assignee
-                          .email
+                        lead.assignedTo?.email
                       }
                     </p>
 

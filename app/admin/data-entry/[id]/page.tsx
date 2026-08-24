@@ -179,139 +179,74 @@ export default async function LeadDetailPage({
   // tenant-isolation condition.
   // ----------------------------------------------------------
 
-  const lead =
-    await prisma.lead.findFirst({
-
-      where: {
-
-        id,
-
-        orgId
-
-      },
-
-      select: {
-
-        id: true,
-
-        source: true,
-
-        firstName: true,
-
-        lastName: true,
-
-        phone: true,
-
-        email: true,
-
-        companyName: true,
-
-        address: true,
-
-        budget: true,
-
-        priority: true,
-
-        tags: true,
-
-        attachment: true,
-
-        industry: true,
-
-        status: true,
-
-        assignedTo: true,
-
-        createdAt: true,
-
-
-        assignee: {
-
-          select: {
-
-            id: true,
-
-            name: true,
-
-            email: true,
-
-            phone: true,
-
-            avatar: true,
-
-            status: true
-
-          }
-
-        },
-
-
-        notes: {
-
-  orderBy: {
-    createdAt:
-      "desc"
+const lead = await prisma.lead.findFirst({
+  where: {
+    id,
+    orgId,
   },
-
   select: {
-
     id: true,
-
-    content: true,
-
+    source: true,
+    firstName: true,
+    lastName: true,
+    phone: true,
+    email: true,
+    companyName: true,
+    address: true,
+    budget: true,
+    priority: true,
+    tags: true,
+    attachment: true,
+    industry: true,
+    status: true,
     createdAt: true,
 
-    author: {
-
+    assignedTo: {
       select: {
-
         id: true,
-
         name: true,
+        email: true,
+        phone: true,
+        avatar: true,
+        status: true,
+      },
+    },
 
-        email: true
-
-      }
-
-    }
-
-  }
-
-},
-
-
-        activities: {
-
-          orderBy: {
-
-            createdAt:
-              "desc"
-
-          },
-
+    notes: {
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        author: {
           select: {
-
             id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    },
 
-            type: true,
+    activities: {
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        createdAt: true,
+      },
+    },
+  },
+})
 
-            title: true,
-
-            createdAt: true
-
-          }
-
-        }
-
-      }
-
-    })
-
-
-  if (!lead) {
-    notFound()
-  }
-
+if (!lead) {
+  notFound()
+}
 
   // ----------------------------------------------------------
   // DISPLAY VALUES
@@ -999,7 +934,7 @@ export default async function LeadDetailPage({
             icon={Users}
           >
 
-            {lead.assignee ? (
+            {lead.assignedTo? (
 
               <div
                 className="
@@ -1019,7 +954,7 @@ export default async function LeadDetailPage({
                   "
                 >
                   {getInitials(
-                    lead.assignee.name
+                    lead.assignedTo?.name
                   )}
                 </div>
 
@@ -1032,7 +967,7 @@ export default async function LeadDetailPage({
                       text-slate-900
                     "
                   >
-                    {lead.assignee.name}
+                    {lead.assignedTo?.name}
                   </p>
 
 
@@ -1044,11 +979,11 @@ export default async function LeadDetailPage({
                       text-slate-500
                     "
                   >
-                    {lead.assignee.email}
+                    {lead.assignedTo?.email}
                   </p>
 
 
-                  {lead.assignee.phone && (
+                  {lead.assignedTo?.phone && (
 
                     <p
                       className="
@@ -1057,7 +992,7 @@ export default async function LeadDetailPage({
                         text-slate-500
                       "
                     >
-                      {lead.assignee.phone}
+                      {lead.assignedTo?.phone}
                     </p>
 
                   )}
@@ -1072,7 +1007,7 @@ export default async function LeadDetailPage({
                       px-2 py-0.5
                       text-xs font-medium
                       ${
-                        lead.assignee.status ===
+                        lead.assignedTo?.status ===
                         "active"
                           ? "border-green-200 bg-green-50 text-green-700"
                           : "border-orange-200 bg-orange-50 text-orange-700"
@@ -1080,7 +1015,7 @@ export default async function LeadDetailPage({
                     `}
                   >
                     {formatLabel(
-                      lead.assignee.status
+                      lead.assignedTo?.status
                     )}
                   </span>
 

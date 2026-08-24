@@ -1,3 +1,5 @@
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 
@@ -9,11 +11,27 @@ export default async function Page({
   params:Promise<{id:string}>
 }) {
 
+
+  const session = await auth()
+
+if (!session?.user) {
+  redirect("/login")
+}
+
+const orgId =
+  (session.user as any).orgId
+
+if (!orgId) {
+  redirect("/welcome")
+}
   const { id } = await params
 
-  const lead = await prisma.lead.findUnique({
-    where:{ id }
-  })
+ const lead = await prisma.lead.findFirst({
+  where: {
+    id,
+    orgId
+  }
+})
 
   if(!lead){
     return(
@@ -129,6 +147,7 @@ export default async function Page({
               </label>
 
               <input
+                required
                 name="firstName"
                 defaultValue={lead.firstName ?? ""}
                 placeholder="John"
@@ -230,6 +249,7 @@ export default async function Page({
               </label>
 
               <input
+              type="tel"
                 name="phone"
                 defaultValue={lead.phone ?? ""}
                 placeholder="+1 (555) 000-0000"

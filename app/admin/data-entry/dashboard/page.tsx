@@ -247,81 +247,44 @@ export default async function DataEntryDashboardPage() {
 
           orgId,
 
-          assignedTo:
+          assignedToId:
             null
 
         }
 
       }),
 
+prisma.lead.findMany({
+  where: {
+    orgId
+  },
 
-      prisma.lead.findMany({
+  orderBy: {
+    createdAt: "desc"
+  },
 
-        where: {
+  take: 6,
 
-          orgId
+  select: {
+    id: true,
+    firstName: true,
+    lastName: true,
+    companyName: true,
+    email: true,
+    source: true,
+    priority: true,
+    status: true,
+    createdAt: true,
 
-        },
-
-        orderBy: {
-
-          createdAt:
-            "desc"
-
-        },
-
-        take:
-          6,
-
-        select: {
-
-          id:
-            true,
-
-          firstName:
-            true,
-
-          lastName:
-            true,
-
-          companyName:
-            true,
-
-          email:
-            true,
-
-          source:
-            true,
-
-          priority:
-            true,
-
-          status:
-            true,
-
-          createdAt:
-            true,
-
-          assignee: {
-
-            select: {
-
-              id:
-                true,
-
-              name:
-                true
-
-            }
-
-          }
-
-        }
-
-      })
-
-    ])
-
+    assignedTo: {
+      select: {
+        id: true,
+        name: true
+      }
+    }
+  }
+})
+]);  
 
   // ----------------------------------------------------------
   // CONVERSION RATE
@@ -843,10 +806,10 @@ export default async function DataEntryDashboardPage() {
                               text-sm
                             "
                           >
-                            {lead.assignee ? (
+                            {lead.assignedTo ? (
 
                               <span className="text-slate-700">
-                                {lead.assignee.name}
+                                {lead.assignedTo.name}
                               </span>
 
                             ) : (

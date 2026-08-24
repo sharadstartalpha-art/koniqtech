@@ -491,7 +491,7 @@ export default async function DataEntryPage({
           createdAt: true,
 
 
-          assignee: {
+          assignedTo: {
 
             select: {
 
@@ -1456,7 +1456,7 @@ export default async function DataEntryPage({
                           "
                         >
 
-                          {lead.assignee ? (
+                          {lead.assignedTo ? (
 
                             <div>
 
@@ -1467,7 +1467,7 @@ export default async function DataEntryPage({
                                 "
                               >
                                 {
-                                  lead.assignee.name ||
+                                  lead.assignedTo?.name ||
                                   "Unnamed user"
                                 }
                               </p>
@@ -1481,7 +1481,7 @@ export default async function DataEntryPage({
                                   text-slate-400
                                 "
                               >
-                                {lead.assignee.email}
+                               lead.assignedTo?.email
                               </p>
 
                             </div>

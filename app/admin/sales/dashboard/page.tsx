@@ -236,7 +236,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+        assignedToId: userId,
       },
     }),
 
@@ -245,7 +245,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+       assignedToId: userId,
 
         status: "new",
       },
@@ -256,7 +256,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+        assignedToId: userId,
 
         status: "contacted",
       },
@@ -267,7 +267,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+       assignedToId: userId,
 
         status: "estimate",
       },
@@ -278,7 +278,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+       assignedToId: userId,
 
         status: "converted",
       },
@@ -289,7 +289,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+        assignedToId: userId,
 
         status: "won",
       },
@@ -300,7 +300,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+       assignedToId: userId,
 
         createdAt: {
           gte: today,
@@ -313,7 +313,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.count({
       where: {
-        assignedTo: userId,
+        assignedToId: userId,
 
         createdAt: {
           gte: weekStart,
@@ -327,7 +327,7 @@ export default async function SalesDashboardPage() {
     prisma.leadActivity.count({
       where: {
         lead: {
-          assignedTo: userId,
+          assignedToId: userId,
         },
 
         type: {
@@ -343,7 +343,7 @@ export default async function SalesDashboardPage() {
     prisma.leadActivity.count({
       where: {
         lead: {
-          assignedTo: userId,
+         assignedToId: userId,
         },
 
         type: {
@@ -358,7 +358,7 @@ export default async function SalesDashboardPage() {
 
     prisma.lead.findMany({
       where: {
-        assignedTo: userId,
+        assignedToId: userId,
       },
 
       orderBy: {
@@ -396,7 +396,7 @@ export default async function SalesDashboardPage() {
     prisma.leadActivity.findMany({
       where: {
         lead: {
-          assignedTo: userId,
+         assignedToId: userId,
         },
       },
 

@@ -1,10 +1,15 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+
+export const dynamic = "force-dynamic"
+
 const stages = [
   "new",
-  "contacted",
-  "estimate",
+  "qualified",
+  "proposal",
+  "negotiation",
   "won",
   "lost"
 ]
@@ -13,24 +18,38 @@ export default async function PipelinePage() {
 
   const session = await auth()
 
-  const orgId =
-(session?.user as any)?.orgId
-
- const leads =
-await prisma.lead.findMany({
-
-  where:{
-    orgId,
-    status:{
-      not:"converted"
-    }
-  },
-
-  orderBy:{
-    createdAt:"desc"
+  if (!session?.user) {
+    redirect("/login")
   }
 
-})
+  const orgId = session.user.orgId
+
+  if (!orgId) {
+    redirect("/welcome")
+  }
+
+  const opportunities =
+    await prisma.opportunity.findMany({
+
+      where: {
+        orgId
+      },
+
+      include: {
+        customer: true
+      },
+
+      orderBy: {
+        createdAt: "desc"
+      }
+
+    })
+
+  const pipelineValue =
+    opportunities.reduce(
+      (sum, item) => sum + (item.value ?? 0),
+      0
+    )
 
   return (
 
@@ -45,41 +64,99 @@ await prisma.lead.findMany({
           </h1>
 
           <p className="text-slate-500 mt-2">
-            Track opportunities through your sales process
+            Track sales opportunities through every stage.
           </p>
 
         </div>
 
         <Link
-          href="/leads/create"
+          href="/pipeline/create"
           className="
-          px-5
+          bg-orange-600
+          hover:bg-orange-700
+          text-white
+          px-6
           py-3
           rounded-xl
-          bg-blue-600
-          text-white
-          hover:bg-blue-700
           "
         >
-          New Lead
+          New Opportunity
         </Link>
 
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="bg-white border rounded-3xl p-6">
+
+        <div className="grid grid-cols-4 gap-6">
+
+          <div>
+
+            <p className="text-slate-500 text-sm">
+              Opportunities
+            </p>
+
+            <h2 className="text-3xl font-bold">
+              {opportunities.length}
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p className="text-slate-500 text-sm">
+              Pipeline Value
+            </p>
+
+            <h2 className="text-3xl font-bold text-green-600">
+              ${pipelineValue.toLocaleString()}
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p className="text-slate-500 text-sm">
+              Won
+            </p>
+
+            <h2 className="text-3xl font-bold">
+              {
+                opportunities.filter(
+                  o => o.stage === "won"
+                ).length
+              }
+            </h2>
+
+          </div>
+
+          <div>
+
+            <p className="text-slate-500 text-sm">
+              Lost
+            </p>
+
+            <h2 className="text-3xl font-bold">
+              {
+                opportunities.filter(
+                  o => o.stage === "lost"
+                ).length
+              }
+            </h2>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-6 gap-6">
 
         {stages.map(stage => {
 
-          const items = leads.filter(lead => {
-
-            const status =
-              (lead.status || "new")
-                .toString()
-                .toLowerCase()
-
-            return status === stage
-
-          })
+          const items =
+            opportunities.filter(
+              o => (o.stage ?? "new") === stage
+            )
 
           return (
 
@@ -94,7 +171,7 @@ await prisma.lead.findMany({
               "
             >
 
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex justify-between items-center mb-5">
 
                 <h2 className="font-bold capitalize">
                   {stage}
@@ -103,9 +180,9 @@ await prisma.lead.findMany({
                 <span
                   className="
                   bg-slate-100
+                  rounded-full
                   px-3
                   py-1
-                  rounded-full
                   text-sm
                   "
                 >
@@ -120,66 +197,72 @@ await prisma.lead.findMany({
 
                   <div
                     className="
-                    text-sm
-                    text-slate-400
                     border
                     border-dashed
                     rounded-xl
                     p-4
                     text-center
+                    text-slate-400
+                    text-sm
                     "
                   >
-                    No leads
+                    No Opportunities
                   </div>
 
                 )}
 
-                {items.map(lead => (
+                {items.map(opportunity => (
 
                   <Link
-                    key={lead.id}
-                    href={`/leads/${lead.id}`}
+                    key={opportunity.id}
+                    href={`/pipeline/${opportunity.id}`}
                     className="
                     block
                     border
                     rounded-2xl
                     p-4
-                    hover:shadow-md
+                    hover:shadow-lg
                     transition
                     "
                   >
 
-                    <div className="font-semibold">
-
-                      {lead.firstName} {lead.lastName}
-
+                    <div className="font-semibold text-lg">
+                      {opportunity.title}
                     </div>
 
                     <div className="text-sm text-slate-500 mt-1">
-
-                      {lead.email}
-
+                      {opportunity.customer
+                        ? `${opportunity.customer.firstName} ${opportunity.customer.lastName ?? ""}`
+                        : "No Customer"}
                     </div>
 
-                    <div className="text-sm text-slate-500">
+                    <div className="mt-3 font-bold text-green-600">
+                      $
+                      {(opportunity.value ?? 0).toLocaleString()}
+                    </div>
 
-                      {lead.phone}
-
+                    <div className="text-xs text-slate-400 mt-2">
+                      Close:
+                      {" "}
+                      {opportunity.expectedCloseDate
+                        ? opportunity.expectedCloseDate.toLocaleDateString()
+                        : "-"}
                     </div>
 
                     <div className="mt-3">
 
                       <span
                         className="
-                        text-xs
-                        px-2
-                        py-1
-                        rounded-full
+                        inline-flex
                         bg-blue-100
                         text-blue-700
+                        rounded-full
+                        px-2
+                        py-1
+                        text-xs
                         "
                       >
-                        {lead.status || "new"}
+                        {opportunity.stage}
                       </span>
 
                     </div>

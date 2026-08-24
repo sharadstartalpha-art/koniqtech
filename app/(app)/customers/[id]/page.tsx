@@ -439,6 +439,34 @@ p-3
 </div>
 
 
+
+<div className="bg-white border rounded-3xl p-6">
+
+<h2 className="font-bold mb-5">
+Recent Invoices
+</h2>
+
+<div className="space-y-3">
+
+<Link
+  href={`/customers/${customer.id}/contracts`}
+>
+  View Contracts
+</Link>
+
+<Link
+  href={`/customers/${customer.id}/contracts/create`}
+>
+  New Contract
+</Link>
+
+</div>
+
+</div>
+
+
+
+
       </div>
 
     </div>

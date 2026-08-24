@@ -573,6 +573,8 @@ model CustomerFile {
   fileName String
 
   url String
+  mimeType   String?
+  size        Int?
 
   createdAt DateTime @default(now())
 
@@ -581,6 +583,8 @@ model CustomerFile {
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   Lead         Lead?        @relation(fields: [leadId], references: [id])
   leadId       String?
+  @@index([customerId])
+  @@index([orgId])
 }
 
 model Customer {

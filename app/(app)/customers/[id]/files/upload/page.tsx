@@ -1,7 +1,20 @@
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
+import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+
+import {
+  S3Client,
+  PutObjectCommand
+} from "@aws-sdk/client-s3"
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!
+  }
+})
 
 export const dynamic = "force-dynamic"
 
@@ -26,15 +39,44 @@ async function uploadFile(
   const customerId =
     String(formData.get("customerId"))
 
-  const fileName =
-    String(formData.get("fileName"))
+  const file =
+    formData.get("file") as File
+
+  if (!file || file.size === 0) {
+    throw new Error("Please select a file.")
+  }
+
+  const bytes =
+    await file.arrayBuffer()
+
+  const buffer =
+    Buffer.from(bytes)
+
+  const key =
+    `customers/${customerId}/${Date.now()}-${file.name}`
+
+  await s3.send(
+
+    new PutObjectCommand({
+
+      Bucket:
+        process.env.AWS_BUCKET_NAME,
+
+      Key:
+        key,
+
+      Body:
+        buffer,
+
+      ContentType:
+        file.type
+
+    })
+
+  )
 
   const url =
-    String(formData.get("url"))
-
-  if (!fileName || !url) {
-    throw new Error("File name and URL are required.")
-  }
+    `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
 
   await prisma.customerFile.create({
 
@@ -44,9 +86,16 @@ async function uploadFile(
 
       customerId,
 
-      fileName,
+      fileName:
+        file.name,
 
-      url
+      url,
+
+      size:
+        file.size,
+
+      mimeType:
+        file.type
 
     }
 
@@ -63,9 +112,7 @@ export default async function Page({
 }:{
 
   params:Promise<{
-
     id:string
-
   }>
 
 }){
@@ -105,11 +152,7 @@ export default async function Page({
 
     <form
       action={uploadFile}
-      className="
-      max-w-2xl
-      mx-auto
-      space-y-8
-      "
+      className="max-w-2xl mx-auto space-y-8"
     >
 
       <input
@@ -122,84 +165,36 @@ export default async function Page({
 
         <Link
           href={`/customers/${customer.id}/files`}
-          className="
-          text-slate-500
-          hover:text-orange-600
-          "
+          className="text-slate-500 hover:text-orange-600"
         >
           ← Back to Files
         </Link>
 
-        <h1 className="
-        text-4xl
-        font-bold
-        mt-4
-        ">
+        <h1 className="text-4xl font-bold mt-4">
           Upload Customer File
         </h1>
 
       </div>
 
-      <div className="
-      bg-white
-      border
-      rounded-3xl
-      p-8
-      space-y-6
-      ">
+      <div className="bg-white border rounded-3xl p-8">
 
-        <div>
+        <label className="block mb-3 font-medium">
+          Select File
+        </label>
 
-          <label className="block mb-2 font-medium">
-            File Name
-          </label>
-
-          <input
-            name="fileName"
-            required
-            className="
-            w-full
-            border
-            rounded-xl
-            p-4
-            "
-          />
-
-        </div>
-
-        <div>
-
-          <label className="block mb-2 font-medium">
-            File URL
-          </label>
-
-          <input
-            name="url"
-            required
-            placeholder="https://..."
-            className="
-            w-full
-            border
-            rounded-xl
-            p-4
-            "
-          />
-
-        </div>
+        <input
+          type="file"
+          name="file"
+          required
+          className="w-full border rounded-xl p-4"
+        />
 
       </div>
 
       <button
-        className="
-        bg-orange-600
-        hover:bg-orange-700
-        text-white
-        px-8
-        py-4
-        rounded-2xl
-        "
+        className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-2xl"
       >
-        Save File
+        Upload File
       </button>
 
     </form>

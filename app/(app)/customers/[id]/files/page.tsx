@@ -177,21 +177,18 @@ export default async function Page({
 
                   <td className="p-5 text-right space-x-3">
 
-                    <a
-                      href={file.fileUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </a>
+                    <Link
+    href={`/api/customer-files/${file.id}`}
+    target="_blank"
+>
+    View
+</Link>
 
-                    <a
-                      href={file.fileUrl}
-                      download
-                      className="text-green-600 hover:underline"
-                    >
-                      Download
-                    </a>
+<Link
+    href={`/api/customer-files/${file.id}?download=1`}
+>
+    Download
+</Link>
 
                   </td>
 

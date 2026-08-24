@@ -25,6 +25,35 @@ async function createCustomer(formData: FormData) {
   }
 
   
+await prisma.customer.create({
+  data: {
+    orgId,
+
+    firstName,
+
+    lastName: lastName || null,
+
+    email:
+      String(formData.get("email") || "").trim() || null,
+
+    phone:
+      String(formData.get("phone") || "").trim() || null,
+
+    companyName:
+      String(formData.get("companyName") || "").trim() || null,
+
+    address:
+      String(formData.get("address") || "").trim() || null,
+
+    status:
+      String(formData.get("status") || "active"),
+
+    source:
+      String(formData.get("source") || "").trim() || null
+  }
+})
+
+
 
   redirect("/customers")
 }

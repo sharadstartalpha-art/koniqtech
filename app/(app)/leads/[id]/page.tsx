@@ -470,17 +470,7 @@ return (
 
       </div>
 
-<div>
 
-<p className="text-xs text-slate-500">
-Last Updated
-</p>
-
-<p className="font-medium">
-{lead.updatedAt.toLocaleDateString()}
-</p>
-
-</div>
 
 <Link
 href={`/leads/${lead.id}/notes`}

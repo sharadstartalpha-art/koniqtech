@@ -1,190 +1,103 @@
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
+import { QuoteStatus } from "@prisma/client"
 import { redirect } from "next/navigation"
+import QuoteForm from "./QuoteForm"
 
-async function createQuote(formData: FormData) {
+export const dynamic = "force-dynamic"
 
-  "use server"
+function generateQuoteNumber() {
+  const now = new Date()
 
-  const session = await auth()
+  const year = now.getFullYear()
 
-  const orgId =
-    (session?.user as any)?.orgId
+  const month = String(
+    now.getMonth() + 1
+  ).padStart(2, "0")
 
-  const customerId =
-    String(formData.get("customerId"))
+  const day = String(
+    now.getDate()
+  ).padStart(2, "0")
 
-  const title =
-    String(formData.get("title"))
+  const random = Math.floor(
+    1000 + Math.random() * 9000
+  )
 
-  const description =
-    String(formData.get("description"))
-
-  if (!orgId || !customerId)
-    return
-
-  const quote =
-    await prisma.quote.create({
-
-      data: {
-
-        orgId,
-
-        customerId,
-
-        quoteNumber:
-          `QT-${Date.now()}`,
-
-        subtotal: 0,
-
-        tax: 0,
-
-        total: 0
-
-      }
-
-    })
-
-  redirect(`/quotes/${quote.id}`)
+  return `QT-${year}${month}${day}-${random}`
 }
 
-export default async function Page({
-  searchParams
-}:{
-  searchParams: Promise<{
-    customerId?: string
-  }>
-}) {
+export default async function CreateQuotePage() {
 
-  const params =
-    await searchParams
+  const session =
+    await auth()
 
-  const customerId =
-    params.customerId
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-  if (!customerId)
-    return <div>No customer selected</div>
+  const orgId =
+    session.user.orgId
 
-  const customer =
-    await prisma.customer.findUnique({
+  if (!orgId) {
+    redirect("/welcome")
+  }
 
-      where:{
-        id: customerId
+  const customers =
+    await prisma.customer.findMany({
+
+      where: {
+        orgId
+      },
+
+      orderBy: {
+        firstName: "asc"
+      },
+
+      select: {
+
+        id: true,
+
+        firstName: true,
+
+        lastName: true,
+
+        companyName: true
+
       }
 
     })
 
-  if (!customer)
-    return <div>Customer not found</div>
+  const quoteNumber =
+    generateQuoteNumber()
 
   return (
 
-    <div className="space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
 
-      <h1 className="text-5xl font-bold">
-        Create Quote
-      </h1>
+      <div>
 
-      <form
-        action={createQuote}
-        className="
-        bg-white
-        rounded-3xl
-        p-8
-        space-y-6
-        "
-      >
-
-        <input
-          type="hidden"
-          name="customerId"
-          value={customer.id}
-        />
-
-        <div>
-
-          <label className="text-sm text-slate-500">
-
-            Customer
-
-          </label>
-
-          <div
-            className="
-            mt-2
-            border
-            rounded-xl
-            p-4
-            bg-slate-50
-            "
-          >
-
-            <div className="font-semibold">
-
-              {customer.firstName}
-              {" "}
-              {customer.lastName}
-
-            </div>
-
-            <div className="text-sm text-slate-500">
-
-              {customer.email}
-
-            </div>
-
-            <div className="text-sm text-slate-500">
-
-              {customer.phone}
-
-            </div>
-
-          </div>
-
-        </div>
-
-        <input
-          name="title"
-          placeholder="Quote Title"
-          required
-          className="
-          w-full
-          border
-          p-4
-          rounded-xl
-          "
-        />
-
-        <textarea
-          name="description"
-          placeholder="Scope of work"
-          rows={6}
-          className="
-          w-full
-          border
-          p-4
-          rounded-xl
-          "
-        />
-
-        <button
-          type="submit"
-          className="
-          bg-blue-600
-          text-white
-          px-8
-          py-4
-          rounded-xl
-          "
-        >
-
+        <h1 className="text-5xl font-bold">
           Create Quote
+        </h1>
 
-        </button>
+        <p className="text-slate-500 mt-2">
+          Create a professional customer quotation.
+        </p>
 
-      </form>
+      </div>
+
+      <QuoteForm
+
+        customers={customers}
+
+        quoteNumber={quoteNumber}
+
+        statuses={Object.values(QuoteStatus)}
+
+      />
 
     </div>
 
   )
+
 }

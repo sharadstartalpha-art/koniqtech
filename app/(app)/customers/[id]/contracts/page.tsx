@@ -1,102 +1,133 @@
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import {
+  redirect,
+  notFound
+} from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
-export default async function Page() {
+export default async function Page({
+  params
+}:{
+  params:Promise<{
+    id:string
+  }>
+}){
 
   const session =
     await auth()
 
-  if (!session?.user) {
+  if(!session?.user){
     redirect("/login")
   }
 
   const orgId =
     session.user.orgId
 
-  if (!orgId) {
+  if(!orgId){
     redirect("/welcome")
   }
 
-  const contracts =
-    await prisma.contract.findMany({
+  const { id } =
+    await params
 
-      where: {
+  const customer =
+    await prisma.customer.findFirst({
+
+      where:{
+        id,
         orgId
       },
 
-      include: {
+      include:{
 
-        customer: {
+        contracts:{
 
-          select: {
-
-            id: true,
-
-            firstName: true,
-
-            lastName: true
-
+          orderBy:{
+            createdAt:"desc"
           }
 
         }
-
-      },
-
-      orderBy: {
-
-        createdAt: "desc"
 
       }
 
     })
 
-  return (
+  if(!customer){
+    notFound()
+  }
+
+  return(
 
     <div className="space-y-8">
 
-      {/* Header */}
-
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
 
         <div>
 
-          <h1 className="text-5xl font-bold">
+          <Link
+            href={`/customers/${customer.id}`}
+            className="text-slate-500 hover:text-orange-600"
+          >
+            ← Back to Customer
+          </Link>
 
-            Contracts
-
+          <h1 className="text-5xl font-bold mt-4">
+            Customer Contracts
           </h1>
 
           <p className="text-slate-500 mt-2">
-
-            Manage all customer contracts.
-
+            Manage agreements and service contracts.
           </p>
 
         </div>
 
+        <Link
+          href={`/customers/${customer.id}/contracts/create`}
+          className="
+          bg-orange-600
+          hover:bg-orange-700
+          text-white
+          px-6
+          py-3
+          rounded-xl
+          "
+        >
+          New Contract
+        </Link>
+
       </div>
 
-      {/* Table */}
+      <div className="bg-white border rounded-3xl overflow-hidden">
 
-      <div className="bg-white border rounded-3xl overflow-hidden shadow-sm">
-
-        {contracts.length === 0 ? (
+        {customer.contracts.length===0 ?(
 
           <div className="text-center py-20">
 
             <p className="text-slate-500">
-
               No contracts found.
-
             </p>
+
+            <Link
+              href={`/customers/${customer.id}/contracts/create`}
+              className="
+              inline-block
+              mt-6
+              bg-orange-600
+              text-white
+              px-6
+              py-3
+              rounded-xl
+              "
+            >
+              Create First Contract
+            </Link>
 
           </div>
 
-        ) : (
+        ):(
 
           <table className="w-full">
 
@@ -106,10 +137,6 @@ export default async function Page() {
 
                 <th className="p-5">
                   Contract
-                </th>
-
-                <th className="p-5">
-                  Customer
                 </th>
 
                 <th className="p-5">
@@ -138,46 +165,22 @@ export default async function Page() {
 
             <tbody>
 
-              {contracts.map(contract => (
+              {customer.contracts.map(contract=>(
 
                 <tr
                   key={contract.id}
-                  className="border-t hover:bg-slate-50"
+                  className="border-t"
                 >
 
-                  <td className="p-5">
+                  <td className="p-5 font-medium">
 
-                    <div className="font-semibold">
-
-                      {contract.title}
-
-                    </div>
-
-                    <div className="text-sm text-slate-500">
-
-                      {contract.contractNumber || "-"}
-
-                    </div>
+                    {contract.title}
 
                   </td>
 
                   <td className="p-5">
 
-                    <Link
-                      href={`/customers/${contract.customer.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-
-                      {contract.customer.firstName}{" "}
-                      {contract.customer.lastName}
-
-                    </Link>
-
-                  </td>
-
-                  <td className="p-5">
-
-                    {contract.contractType || "-"}
+                   {contract.contractType ?? "-"}
 
                   </td>
 
@@ -202,18 +205,15 @@ export default async function Page() {
                     <span
                       className="
                       inline-flex
-                      px-3
-                      py-1
                       rounded-full
                       bg-green-100
                       text-green-700
+                      px-3
+                      py-1
                       text-sm
-                      capitalize
                       "
                     >
-
                       {contract.status}
-
                     </span>
 
                   </td>
@@ -223,14 +223,14 @@ export default async function Page() {
                     <div className="flex justify-end gap-5">
 
                       <Link
-                        href={`/customers/${contract.customer.id}/contracts/${contract.id}`}
+                        href={`/customers/${customer.id}/contracts/${contract.id}`}
                         className="text-blue-600 hover:underline"
                       >
                         View
                       </Link>
 
                       <Link
-                        href={`/customers/${contract.customer.id}/contracts/${contract.id}/edit`}
+                       href={`/customers/${customer.id}/contracts/${contract.id}/edit`}
                         className="text-orange-600 hover:underline"
                       >
                         Edit

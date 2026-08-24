@@ -236,6 +236,7 @@ model Organization {
   CompanyLead         CompanyLead[]
   CustomerNote        CustomerNote[]
   CustomerFile        CustomerFile[]
+  Contract            Contract[]
 }
 
 model User {
@@ -618,6 +619,7 @@ model Customer {
   UserRouteStop  UserRouteStop[]
   UserEquipment  UserEquipment[]
   CustomerFile   CustomerFile[]
+  contracts      Contract[]
 }
 
 model CustomerNote {
@@ -5369,4 +5371,30 @@ model ImpersonationSession {
 enum PlatformRole {
   super_admin
   user
+}
+
+model Contract {
+  id String @id @default(uuid())
+
+  orgId      String
+  customerId String
+
+  contractNumber String? @unique
+  title          String
+  description    String?
+
+  status       String  @default("draft")
+  contractType String?
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  renewalDate DateTime?
+  value       Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }

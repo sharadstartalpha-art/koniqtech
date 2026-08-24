@@ -443,7 +443,7 @@ p-3
 <div className="bg-white border rounded-3xl p-6">
 
 <h2 className="font-bold mb-5">
-Recent Invoices
+Recent Contracts
 </h2>
 
 <div className="space-y-3">
@@ -454,11 +454,7 @@ Recent Invoices
   View Contracts
 </Link>
 
-<Link
-  href={`/customers/${customer.id}/contracts/create`}
->
-  New Contract
-</Link>
+
 
 </div>
 

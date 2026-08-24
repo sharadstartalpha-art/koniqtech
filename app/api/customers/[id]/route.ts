@@ -1,200 +1,148 @@
 import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(
+  req: NextRequest,
+  {
+    params
+  }: {
+    params: Promise<{ id: string }>
+  }
+) {
 
-req:NextRequest,
+  try {
 
-{
-params
-}:{
-params:Promise<{id:string}>
-}
+    const session = await auth()
 
-){
+    if (!session?.user?.orgId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized"
+        },
+        {
+          status: 401
+        }
+      )
+    }
 
-try{
+    const orgId = session.user.orgId
 
-const { id }=
+    const { id } = await params
 
-await params
+    const form = await req.formData()
 
-const form=
+    await prisma.customer.update({
 
-await req.formData()
+      where: {
+        id
+      },
 
-await prisma.customer.update({
+      data: {
 
-where:{
-id
-},
+        orgId,
 
-data:{
+        firstName:
+          String(form.get("firstName") || ""),
 
-firstName:
+        lastName:
+          String(form.get("lastName") || ""),
 
-String(
+        email:
+          String(form.get("email") || "") || null,
 
-form.get(
+        phone:
+          String(form.get("phone") || "") || null,
 
-"firstName"
+        companyName:
+          String(form.get("companyName") || "") || null,
 
-) || ""
+        address:
+          String(form.get("address") || "") || null,
 
-),
+        status:
+          String(form.get("status") || "active"),
 
-lastName:
+        source:
+          String(form.get("source") || "manual")
 
-String(
+      }
 
-form.get(
+    })
 
-"lastName"
+    return NextResponse.redirect(
+      new URL(`/customers/${id}`, req.url)
+    )
 
-) || ""
+  } catch (error) {
 
-),
+    console.log(error)
 
-email:
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Customer update failed"
+      },
+      {
+        status: 500
+      }
+    )
 
-String(
-
-form.get(
-
-"email"
-
-) || ""
-
-) || null,
-
-phone:
-
-String(
-
-form.get(
-
-"phone"
-
-) || ""
-
-) || null,
-
-companyName:
-
-String(
-
-form.get(
-
-"companyName"
-
-) || ""
-
-)
-
-}
-
-})
-
-return NextResponse.redirect(
-
-new URL(
-
-"/customers",
-
-req.url
-
-)
-
-)
+  }
 
 }
-
-catch(error){
-
-console.log(error)
-
-return NextResponse.json(
-
-{
-
-success:false,
-
-message:
-
-"Customer update failed"
-
-},
-
-{
-
-status:500
-
-}
-
-)
-
-}
-
-}
-
-
 
 export async function DELETE(
+  req: NextRequest,
+  {
+    params
+  }: {
+    params: Promise<{ id: string }>
+  }
+) {
 
-req:NextRequest,
+  try {
 
-{
-params
-}:{
-params:Promise<{id:string}>
-}
+    const session = await auth()
 
-){
+    if (!session?.user?.orgId) {
+      return NextResponse.json(
+        {
+          success: false
+        },
+        {
+          status: 401
+        }
+      )
+    }
 
-try{
+    const { id } = await params
 
-const { id }=
+    await prisma.customer.delete({
 
-await params
+      where: {
+        id
+      }
 
-await prisma.customer.delete({
+    })
 
-where:{
-id
-}
+    return NextResponse.json({
+      success: true
+    })
 
-})
+  } catch {
 
-return NextResponse.json({
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Customer delete failed"
+      },
+      {
+        status: 500
+      }
+    )
 
-success:true
-
-})
-
-}
-
-catch{
-
-return NextResponse.json(
-
-{
-
-success:false,
-
-message:
-
-"Customer delete failed"
-
-},
-
-{
-
-status:500
-
-}
-
-)
-
-}
+  }
 
 }

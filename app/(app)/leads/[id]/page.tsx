@@ -470,6 +470,39 @@ return (
 
       </div>
 
+<div>
+
+<p className="text-xs text-slate-500">
+Last Updated
+</p>
+
+<p className="font-medium">
+{lead.updatedAt.toLocaleDateString()}
+</p>
+
+</div>
+
+<Link
+href={`/leads/${lead.id}/notes`}
+className="
+p-5
+rounded-2xl
+border
+hover:border-orange-300
+hover:bg-orange-50
+transition
+"
+>
+
+<div className="font-semibold">
+Lead Notes
+</div>
+
+<div className="text-sm text-slate-500 mt-1">
+View all conversations
+</div>
+
+</Link>
     </div>
 
 

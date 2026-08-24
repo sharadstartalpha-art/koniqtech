@@ -1,99 +1,101 @@
 import prisma from "@/shared/lib/prisma"
-
 import { auth } from "@/auth"
-
 import DataTable from "@/components/DataTable"
+import { redirect } from "next/navigation"
 
-export const dynamic="force-dynamic"
+export const dynamic = "force-dynamic"
 
-export default async function Page(){
+export default async function Page() {
 
-const session=
-await auth()
+  const session = await auth()
 
-const orgId=
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-(session?.user as any)
-?.orgId
+  const orgId = session.user.orgId
 
-const customers=
+  if (!orgId) {
+    redirect("/welcome")
+  }
 
-await prisma.customer.findMany({
+  const customers = await prisma.customer.findMany({
 
-where:{
-orgId
-}
+    where: {
+      orgId
+    },
 
-})
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      createdAt: true
+    },
 
-return(
+    orderBy: {
+      createdAt: "desc"
+    }
 
-<DataTable
+  })
 
-title="Customers"
+  return (
 
-buttonLabel="Add Customer"
+    <DataTable
 
-buttonHref="/customers/create"
+      title="Customers"
 
-editPath="/customers/edit"
+      buttonLabel="Add Customer"
 
-onDeletePath="/api/customers"
+      buttonHref="/customers/create"
 
-columns={[
+      editPath="/customers/edit"
 
-{
+      rowHref="/customers"
 
-key:"name",
+      onDeletePath="/api/customers"
 
-label:"Name"
+      columns={[
 
-},
+        {
+          key: "name",
+          label: "Name"
+        },
 
-{
+        {
+          key: "email",
+          label: "Email"
+        },
 
-key:"email",
+        {
+          key: "phone",
+          label: "Phone"
+        }
 
-label:"Email"
+      ]}
 
-},
+      rows={
 
-{
+        customers.map(customer => ({
 
-key:"phone",
+          id: customer.id,
 
-label:"Phone"
+          name:
+            `${customer.firstName} ${customer.lastName ?? ""}`.trim(),
 
-}
+          email:
+            customer.email || "-",
 
-]}
+          phone:
+            customer.phone || "-"
 
-rows={
+        }))
 
-customers.map(
+      }
 
-x=>({
+    />
 
-id:x.id,
-
-name:
-
-`${x.firstName}
-
-${x.lastName}`,
-
-email:x.email,
-
-phone:x.phone
-
-})
-
-)
-
-}
-
-/>
-
-)
+  )
 
 }

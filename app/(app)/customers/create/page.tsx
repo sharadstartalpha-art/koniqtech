@@ -2,108 +2,174 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 
-async function createCustomer(
-  formData: FormData
-) {
-
+async function createCustomer(formData: FormData) {
   "use server"
 
   const session = await auth()
 
-  const orgId =
-    (session?.user as any)?.orgId
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-  if (!orgId) return
+  const orgId = session.user.orgId
 
-  await prisma.customer.create({
+  if (!orgId) {
+    redirect("/welcome")
+  }
 
-    data: {
+  const firstName = String(formData.get("firstName") || "").trim()
+  const lastName = String(formData.get("lastName") || "").trim()
 
-      orgId,
+  if (!firstName) {
+    throw new Error("First name is required.")
+  }
 
-      firstName:
-        String(
-          formData.get(
-            "firstName"
-          )
-        ),
-
-      lastName:
-        String(
-          formData.get(
-            "lastName"
-          )
-        ),
-
-      email:
-        String(
-          formData.get(
-            "email"
-          )
-        ),
-
-      phone:
-        String(
-          formData.get(
-            "phone"
-          )
-        )
-
-    }
-
-  })
+  
 
   redirect("/customers")
-
 }
 
 export default function Page() {
-
   return (
-
     <form
       action={createCustomer}
-      className="space-y-4 max-w-xl"
+      className="max-w-3xl space-y-8"
     >
+      <div>
+        <h1 className="text-4xl font-bold">
+          Create Customer
+        </h1>
 
-      <h1 className="text-5xl font-bold">
+        <p className="text-slate-500 mt-2">
+          Add a new customer to your CRM.
+        </p>
+      </div>
 
-        Create Customer
+      <div className="bg-white border rounded-3xl p-8 space-y-6">
 
-      </h1>
+        <div className="grid md:grid-cols-2 gap-5">
 
-      <input
-        name="firstName"
-        placeholder="First name"
-        className="border p-4 w-full rounded-xl"
-      />
+          <div>
+            <label className="block mb-2 font-medium">
+              First Name *
+            </label>
 
-      <input
-        name="lastName"
-        placeholder="Last name"
-        className="border p-4 w-full rounded-xl"
-      />
+            <input
+              name="firstName"
+              required
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
 
-      <input
-        name="email"
-        placeholder="Email"
-        className="border p-4 w-full rounded-xl"
-      />
+          <div>
+            <label className="block mb-2 font-medium">
+              Last Name
+            </label>
 
-      <input
-        name="phone"
-        placeholder="Phone"
-        className="border p-4 w-full rounded-xl"
-      />
+            <input
+              name="lastName"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
 
-      <button className="bg-black text-white px-8 py-4 rounded-xl">
+          <div>
+            <label className="block mb-2 font-medium">
+              Email
+            </label>
 
-        Save
+            <input
+              type="email"
+              name="email"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
 
-      </button>
+          <div>
+            <label className="block mb-2 font-medium">
+              Phone
+            </label>
+
+            <input
+              name="phone"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Company
+            </label>
+
+            <input
+              name="companyName"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Status
+            </label>
+
+            <select
+              name="status"
+              className="w-full border rounded-xl p-4"
+              defaultValue="active"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Source
+            </label>
+
+            <input
+              name="source"
+              defaultValue="manual"
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+        </div>
+
+        <div>
+          <label className="block mb-2 font-medium">
+            Address
+          </label>
+
+          <textarea
+            name="address"
+            rows={3}
+            className="w-full border rounded-xl p-4"
+          />
+        </div>
+
+       
+
+      </div>
+
+      <div className="flex gap-4">
+
+        <button
+          type="submit"
+          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-2xl"
+        >
+          Create Customer
+        </button>
+
+        <a
+          href="/customers"
+          className="border px-8 py-4 rounded-2xl hover:bg-slate-50"
+        >
+          Cancel
+        </a>
+
+      </div>
 
     </form>
-
   )
-
 }

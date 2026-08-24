@@ -1,55 +1,189 @@
-export default function Page(){
+import prisma from "@/shared/lib/prisma"
+import Link from "next/link"
+import { auth } from "@/auth"
+import {
+  redirect,
+  notFound
+} from "next/navigation"
 
-const history=[
+export const dynamic = "force-dynamic"
 
-"Lead created",
+export default async function Page({
+  params
+}:{
+  params: Promise<{
+    id:string
+  }>
+}){
 
-"Estimate sent",
+  const session =
+    await auth()
 
-"Quote approved",
+  if(!session?.user){
+    redirect("/login")
+  }
 
-"Job completed",
+  const orgId =
+    session.user.orgId
 
-"Invoice paid"
+  if(!orgId){
+    redirect("/welcome")
+  }
 
-]
+  const { id } =
+    await params
 
-return(
+  const customer =
+    await prisma.customer.findFirst({
 
-<div className="space-y-8">
+      where:{
+        id,
+        orgId
+      },
 
-<h1 className="text-5xl font-bold">
+      include:{
 
-Customer History
+        activities:{
+          orderBy:{
+            createdAt:"desc"
+          }
+        }
 
-</h1>
+      }
 
-<div className="bg-white rounded-3xl p-8">
+    })
 
-{
+  if(!customer){
+    notFound()
+  }
 
-history.map((x,i)=>(
+  return(
 
-<div
+    <div className="space-y-8">
 
-key={i}
+      {/* Header */}
 
-className="border-l-4 border-blue-600 pl-5 py-4"
+      <div>
 
->
+        <Link
+          href={`/customers/${customer.id}`}
+          className="
+          inline-flex
+          items-center
+          gap-2
+          text-slate-500
+          hover:text-orange-600
+          mb-5
+          "
+        >
+          ← Back to Customer
+        </Link>
 
-{x}
+        <h1 className="
+        text-4xl
+        font-bold
+        text-slate-900
+        ">
+          Customer History
+        </h1>
 
-</div>
+        <p className="
+        text-slate-500
+        mt-2
+        ">
+          Timeline of customer activities.
+        </p>
 
-))
+      </div>
 
-}
+      {/* Timeline */}
 
-</div>
+      <div className="
+      bg-white
+      border
+      rounded-3xl
+      shadow-sm
+      p-8
+      ">
 
-</div>
+        {
+          customer.activities.length===0 ? (
 
-)
+            <div className="
+            py-12
+            text-center
+            text-slate-500
+            ">
+              No history available.
+            </div>
+
+          ) : (
+
+            <div className="space-y-8">
+
+              {
+                customer.activities.map(activity=>(
+
+                  <div
+                    key={activity.id}
+                    className="
+                    relative
+                    pl-8
+                    border-l-2
+                    border-blue-200
+                    "
+                  >
+
+                    <div className="
+                    absolute
+                    left-[-9px]
+                    top-1
+                    w-4
+                    h-4
+                    rounded-full
+                    bg-blue-600
+                    " />
+
+                    <h3 className="
+                    font-semibold
+                    text-slate-900
+                    ">
+                      {activity.title}
+                    </h3>
+
+                    {activity.description && (
+
+                      <p className="
+                      text-slate-600
+                      mt-1
+                      ">
+                        {activity.description}
+                      </p>
+
+                    )}
+
+                    <p className="
+                    text-sm
+                    text-slate-500
+                    mt-2
+                    ">
+                      {activity.createdAt.toLocaleString()}
+                    </p>
+
+                  </div>
+
+                ))
+              }
+
+            </div>
+
+          )
+        }
+
+      </div>
+
+    </div>
+
+  )
 
 }

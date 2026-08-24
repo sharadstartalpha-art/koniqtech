@@ -1,6 +1,8 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { auth } from "@/auth"
+import { redirect, notFound } from "next/navigation"
+
 
 export const dynamic = "force-dynamic"
 
@@ -10,38 +12,53 @@ export default async function Page({
   params: Promise<{ id: string }>
 }) {
 
+  const session = await auth()
+
+if (!session?.user) {
+  redirect("/login")
+}
+
+const orgId = session.user.orgId
+
+if (!orgId) {
+  redirect("/welcome")
+}
   const { id } = await params
 
-  const customer =
-    await prisma.customer.findUnique({
+const customer =
+await prisma.customer.findFirst({
 
-      where: {
-        id
+  where:{
+    id,
+    orgId
+  },
+
+  include:{
+
+    quotes:{
+      orderBy:{
+        createdAt:"desc"
       },
+      take:5
+    },
 
-      include: {
+    jobs:{
+      orderBy:{
+        createdAt:"desc"
+      },
+      take:5
+    },
 
-        quotes: {
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 5
-        },
+    invoices:{
+      orderBy:{
+        createdAt:"desc"
+      },
+      take:5
+    }
 
-        jobs: {
-          orderBy: {
-            createdAt: "desc"
-          },
-          take: 5
-        },
+  }
 
-        invoices: {
-          take: 5
-        }
-
-      }
-
-    })
+})
 
   if (!customer) {
     notFound()
@@ -55,6 +72,19 @@ export default async function Page({
 
         <div>
 
+         <Link
+href="/customers"
+className="
+inline-flex
+items-center
+gap-2
+text-slate-500
+hover:text-orange-600
+mb-5
+"
+>
+← Back to Customers
+</Link>
           <h1 className="text-5xl font-bold">
 
             {customer.firstName} {customer.lastName}
@@ -67,9 +97,44 @@ export default async function Page({
 
           </p>
 
+<p className="text-slate-500">
+{customer.companyName || "No Company"}
+</p>
         </div>
 
+
+
+
         <div className="flex gap-3">
+
+          <Link
+href={`/customers/edit/${customer.id}`}
+className="
+border
+px-5
+py-3
+rounded-xl
+bg-white
+hover:bg-slate-50
+"
+>
+Edit
+</Link>
+
+<Link
+href={`/customers/${customer.id}/delete`}
+className="
+border
+border-red-200
+text-red-600
+px-5
+py-3
+rounded-xl
+hover:bg-red-50
+"
+>
+Delete
+</Link>
 
           <Link
             href={`/quotes/create?customerId=${customer.id}`}
@@ -153,13 +218,28 @@ export default async function Page({
         <div className="bg-white border rounded-3xl p-6">
 
           <p className="text-slate-500 text-sm">
-            Phone
+            Customer Since
           </p>
 
           <h2 className="text-xl font-bold mt-2">
-            {customer.phone || "-"}
+           {customer.createdAt.toLocaleDateString()}
           </h2>
 
+
+         <p>
+<strong>Status:</strong>{" "}
+{customer.status}
+</p>
+
+<p>
+<strong>Source:</strong>{" "}
+{customer.source}
+</p>
+
+<p>
+<strong>Customer ID:</strong>{" "}
+{customer.id.slice(0,8)}
+</p>
         </div>
 
       </div>
@@ -215,25 +295,32 @@ export default async function Page({
 
           <div className="space-y-3">
 
-            {customer.quotes?.map(q => (
+{customer.quotes.length === 0 ? (
 
-              <Link
-                key={q.id}
-                href={`/quotes/${q.id}`}
-                className="
-                block
-                border
-                rounded-xl
-                p-3
-                "
-              >
+  <p className="text-slate-500">
+    No quotes yet.
+  </p>
 
-                {q.quoteNumber}
+) : (
 
-              </Link>
+  customer.quotes.map((q) => (
 
-            ))}
+    <Link
+      key={q.id}
+      href={`/quotes/${q.id}`}
+      className="
+      block
+      border
+      rounded-xl
+      p-3
+      "
+    >
+      {q.quoteNumber}
+    </Link>
 
+  ))
+
+)}
           </div>
 
         </div>
@@ -248,28 +335,78 @@ export default async function Page({
 
           <div className="space-y-3">
 
-            {customer.jobs?.map(job => (
+{customer.jobs.length===0 ? (
 
-              <Link
-                key={job.id}
-                href={`/jobs/${job.id}`}
-                className="
-                block
-                border
-                rounded-xl
-                p-3
-                "
-              >
+<p className="text-slate-500">
+No jobs yet.
+</p>
 
-                {job.title}
+) : (
 
-              </Link>
+  customer.jobs.map((job) => (
 
-            ))}
+    <Link
+      key={job.id}
+      href={`/jobs/${job.id}`}
+      className="
+      block
+      border
+      rounded-xl
+      p-3
+      "
+    >
+      {job.title}
+    </Link>
 
+  ))
+
+)}
           </div>
 
         </div>
+
+
+<div className="bg-white border rounded-3xl p-6">
+
+<h2 className="font-bold mb-5">
+Recent Invoices
+</h2>
+
+<div className="space-y-3">
+
+{customer.invoices.length===0 ? (
+
+<p className="text-slate-500">
+No invoices yet.
+</p>
+
+):(
+
+customer.invoices.map(invoice=>(
+
+<Link
+key={invoice.id}
+href={`/invoices/${invoice.id}`}
+className="
+block
+border
+rounded-xl
+p-3
+"
+>
+
+{invoice.invoiceNumber}
+
+</Link>
+
+))
+
+)}
+
+</div>
+
+</div>
+
 
       </div>
 

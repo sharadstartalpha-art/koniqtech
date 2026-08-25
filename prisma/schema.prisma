@@ -239,6 +239,7 @@ model Organization {
   CustomerFile        CustomerFile[]
   Contract            Contract[]
   Opportunity         Opportunity[]
+  UserJobDocument     UserJobDocument[]
 }
 
 model User {
@@ -474,6 +475,8 @@ model User {
   adminImpersonations ImpersonationSession[] @relation("AdminImpersonations")
 
   targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
+  JobNote              JobNote[]
+  UserJobDocument      UserJobDocument[]
 
   @@index([orgId])
   @@index([role])
@@ -985,7 +988,6 @@ model PunchItem {
   job Job @relation(fields: [jobId], references: [id])
 }
 
-
 model Job {
   id String @id @default(uuid())
 
@@ -1049,8 +1051,9 @@ model Job {
   UserJobSignature     UserJobSignature?
   UserEquipment        UserEquipment[]
   UserEquipmentService UserEquipmentService[]
+  JobNote              JobNote[]
+  UserJobDocument      UserJobDocument[]
 }
-
 
 model JobTask {
   id String @id @default(uuid())
@@ -1095,7 +1098,6 @@ model MaterialRequest {
 
   job Job @relation(fields: [jobId], references: [id])
 }
-
 
 model InventoryItem {
   id String @id @default(uuid())
@@ -1323,6 +1325,17 @@ model Invoice {
   customer Customer @relation(fields: [customerId], references: [id])
 
   job Job @relation(fields: [jobId], references: [id])
+}
+
+model JobNote {
+  id        String   @id @default(uuid())
+  jobId     String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  job       Job      @relation(fields: [jobId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
 }
 
 model Notification {
@@ -4297,21 +4310,100 @@ model UserJobPhoto {
 
   uploadedById String
 
+  /// Display title
   title String?
 
+  /// Optional description
+  description String?
+
+  /// Image URL (Cloudinary/S3/etc.)
   imageUrl String
 
+  /// before | during | after | completed | damage | receipt | other
   category String?
+
+  /// Display order
+  sortOrder Int @default(0)
+
+  /// Cover image for the job
+  isPrimary Boolean @default(false)
+
+  /// When the photo was taken
+  takenAt DateTime?
+
+  /// GPS (optional)
+  latitude Float?
+
+  longitude Float?
 
   createdAt DateTime @default(now())
 
+  updatedAt DateTime @updatedAt
+
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  job Job @relation(fields: [jobId], references: [id])
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   uploadedBy User @relation(fields: [uploadedById], references: [id])
 
   @@index([orgId])
+  @@index([jobId])
+  @@index([uploadedById])
+  @@index([category])
+  @@index([isPrimary])
+}
+
+model UserJobDocument {
+  id String @id @default(uuid())
+
+  orgId String
+
+  jobId String
+
+  uploadedById String
+
+  /// Display title
+  title String
+
+  /// Optional description
+  description String?
+
+  /// Original file name
+  fileName String
+
+  /// File URL (S3, Cloudinary, Supabase Storage, etc.)
+  fileUrl String
+
+  /// MIME type
+  mimeType String
+
+  /// File size in bytes
+  fileSize Int
+
+  /// invoice | contract | permit | warranty | manual | receipt | report | inspection | other
+  category String?
+
+  /// Display order
+  sortOrder Int @default(0)
+
+  /// Optional expiry date (permits, warranties, etc.)
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([orgId])
+  @@index([jobId])
+  @@index([uploadedById])
+  @@index([category])
+  @@index([expiresAt])
 }
 
 model UserJobSignature {

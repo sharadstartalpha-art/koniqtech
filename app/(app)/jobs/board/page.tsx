@@ -1,56 +1,112 @@
-import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
-import Link from "next/link"
+import prisma from "@/shared/lib/prisma"
+import { redirect } from "next/navigation"
+import Board from "./Board"
 
 export const dynamic = "force-dynamic"
 
-export default async function Page() {
+export default async function JobBoardPage() {
 
   const session = await auth()
 
-  const orgId =
-    (session?.user as any)?.orgId
+  if (!session?.user) {
+    redirect("/login")
+  }
 
-  const jobs =
-    await prisma.job.findMany({
+  const orgId = (session.user as any).orgId
 
-      where: {
-        orgId
+  if (!orgId) {
+    redirect("/login")
+  }
+
+  const jobs = await prisma.job.findMany({
+
+    where: {
+      orgId
+    },
+
+    include: {
+
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          companyName: true
+        }
       },
 
-      include: {
-        customer: true
+      technician: {
+        select: {
+          id: true,
+          name: true
+        }
       },
 
-      orderBy: {
-        createdAt: "desc"
+      quote: {
+        select: {
+          id: true,
+          quoteNumber: true
+        }
+      },
+
+      invoices: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          status: true
+        }
       }
 
-    })
-
-  const columns = [
-
-    {
-      key: "scheduled",
-      label: "Scheduled"
     },
 
-    {
-      key: "in_progress",
-      label: "In Progress"
+    orderBy: [
+      {
+        scheduledDate: "asc"
+      },
+      {
+        createdAt: "desc"
+      }
+    ]
+
+  })
+
+  const technicians = await prisma.user.findMany({
+
+    where: {
+      orgId,
+      status: "active"
     },
 
-    {
-      key: "completed",
-      label: "Completed"
+    select: {
+      id: true,
+      name: true
     },
 
-    {
-      key: "cancelled",
-      label: "Cancelled"
+    orderBy: {
+      name: "asc"
     }
 
-  ]
+  })
+
+  const customers = await prisma.customer.findMany({
+
+    where: {
+      orgId
+    },
+
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      companyName: true
+    },
+
+    orderBy: {
+      firstName: "asc"
+    }
+
+  })
 
   return (
 
@@ -58,144 +114,25 @@ export default async function Page() {
 
       <div className="flex items-center justify-between">
 
-        <h1 className="text-5xl font-bold">
-          Job Board
-        </h1>
+        <div>
 
-        <Link
-          href="/jobs/create"
-          className="
-          bg-green-600
-          text-white
-          px-5
-          py-3
-          rounded-xl
-          "
-        >
-          New Job
-        </Link>
+          <h1 className="text-4xl font-bold">
+            Job Board
+          </h1>
+
+          <p className="mt-2 text-slate-500">
+            Drag jobs between stages to update their status.
+          </p>
+
+        </div>
 
       </div>
 
-      <div className="grid grid-cols-4 gap-6">
-
-        {columns.map(column => {
-
-          const columnJobs =
-            jobs.filter(
-              job => job.status === column.key
-            )
-
-          return (
-
-            <div
-              key={column.key}
-              className="
-              bg-white
-              border
-              rounded-3xl
-              p-5
-              "
-            >
-
-              <div className="flex items-center justify-between mb-5">
-
-                <h2 className="font-bold text-lg">
-                  {column.label}
-                </h2>
-
-                <span
-                  className="
-                  bg-slate-100
-                  px-3
-                  py-1
-                  rounded-full
-                  text-sm
-                  "
-                >
-                  {columnJobs.length}
-                </span>
-
-              </div>
-
-              <div className="space-y-3">
-
-                {columnJobs.length === 0 && (
-
-                  <div
-                    className="
-                    border
-                    border-dashed
-                    rounded-xl
-                    p-4
-                    text-center
-                    text-slate-400
-                    "
-                  >
-                    No jobs
-                  </div>
-
-                )}
-
-                {columnJobs.map(job => (
-
-                  <Link
-                    key={job.id}
-                    href={`/jobs/${job.id}`}
-                    className="
-                    block
-                    border
-                    rounded-xl
-                    p-4
-                    hover:bg-slate-50
-                    "
-                  >
-
-                    <div className="font-medium">
-                      {job.title}
-                    </div>
-
-                    <div
-                      className="
-                      text-sm
-                      text-slate-500
-                      mt-1
-                      "
-                    >
-                      {job.customer.firstName}
-                      {" "}
-                      {job.customer.lastName}
-                    </div>
-
-                    {job.scheduledDate && (
-
-                      <div
-                        className="
-                        text-xs
-                        text-slate-400
-                        mt-2
-                        "
-                      >
-                        {new Date(
-                          job.scheduledDate
-                        ).toLocaleDateString()}
-                      </div>
-
-                    )}
-
-                  </Link>
-
-                ))}
-
-              </div>
-
-            </div>
-
-          )
-
-        })}
-
-      </div>
+      <Board
+        jobs={jobs}
+        technicians={technicians}
+        customers={customers}
+      />
 
     </div>
 

@@ -985,49 +985,6 @@ model PunchItem {
   job Job @relation(fields: [jobId], references: [id])
 }
 
-model JobTask {
-  id String @id @default(uuid())
-
-  jobId String
-
-  title String
-
-  status String @default("todo")
-
-  dependsOnId String?
-  createdAt   DateTime @default(now())
-  job         Job      @relation(fields: [jobId], references: [id])
-}
-
-model JobMilestone {
-  id String @id @default(uuid())
-
-  jobId String
-
-  title String
-
-  completed Boolean @default(false)
-
-  dueDate   DateTime?
-  status    String    @default("pending")
-  createdAt DateTime  @default(now())
-
-  job Job @relation(fields: [jobId], references: [id])
-}
-
-model MaterialRequest {
-  id String @id @default(uuid())
-
-  jobId String
-
-  name String
-
-  quantity Decimal @db.Decimal(10, 2)
-
-  status String @default("requested")
-
-  job Job @relation(fields: [jobId], references: [id])
-}
 
 model Job {
   id String @id @default(uuid())
@@ -1093,6 +1050,52 @@ model Job {
   UserEquipment        UserEquipment[]
   UserEquipmentService UserEquipmentService[]
 }
+
+
+model JobTask {
+  id String @id @default(uuid())
+
+  jobId String
+
+  title String
+
+  status String @default("todo")
+
+  dependsOnId String?
+  createdAt   DateTime @default(now())
+  job         Job      @relation(fields: [jobId], references: [id])
+}
+
+model JobMilestone {
+  id String @id @default(uuid())
+
+  jobId String
+
+  title String
+
+  completed Boolean @default(false)
+
+  dueDate   DateTime?
+  status    String    @default("pending")
+  createdAt DateTime  @default(now())
+
+  job Job @relation(fields: [jobId], references: [id])
+}
+
+model MaterialRequest {
+  id String @id @default(uuid())
+
+  jobId String
+
+  name String
+
+  quantity Decimal @db.Decimal(10, 2)
+
+  status String @default("requested")
+
+  job Job @relation(fields: [jobId], references: [id])
+}
+
 
 model InventoryItem {
   id String @id @default(uuid())

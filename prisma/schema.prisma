@@ -233,13 +233,14 @@ model Organization {
 
   routeOptimizations RouteOptimization[]
 
-  MarketingNewsletter MarketingNewsletter[]
-  CompanyLead         CompanyLead[]
-  CustomerNote        CustomerNote[]
-  CustomerFile        CustomerFile[]
-  Contract            Contract[]
-  Opportunity         Opportunity[]
-  UserJobDocument     UserJobDocument[]
+  MarketingNewsletter  MarketingNewsletter[]
+  CompanyLead          CompanyLead[]
+  CustomerNote         CustomerNote[]
+  CustomerFile         CustomerFile[]
+  Contract             Contract[]
+  Opportunity          Opportunity[]
+  UserJobDocument      UserJobDocument[]
+  WarehouseTransaction WarehouseTransaction[]
 }
 
 model User {
@@ -477,6 +478,7 @@ model User {
   targetImpersonations ImpersonationSession[] @relation("TargetImpersonations")
   JobNote              JobNote[]
   UserJobDocument      UserJobDocument[]
+  WarehouseTransaction WarehouseTransaction[]
 
   @@index([orgId])
   @@index([role])
@@ -1167,14 +1169,69 @@ model Payroll {
 model WarehouseTransaction {
   id String @id @default(uuid())
 
-  itemId String
+  orgId String
 
-  qty  Int
-  type String
+  inventoryItemId String
+
+  warehouseId String
+
+  transactionType InventoryTransactionType
+
+  quantity Float
+
+  previousQty Float
+
+  resultingQty Float
+
+  referenceType InventoryReferenceType?
+
+  referenceId String?
+
+  notes String?
+
+  performedById String
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  item InventoryItem @relation(fields: [itemId], references: [id])
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  performedBy User @relation(fields: [performedById], references: [id])
+
+  @@index([orgId])
+  @@index([inventoryItemId])
+  @@index([warehouseId])
+  @@index([transactionType])
+  @@index([createdAt])
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  SALE
+  TRANSFER_IN
+  TRANSFER_OUT
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
+  RETURN_IN
+  RETURN_OUT
+  PRODUCTION_IN
+  PRODUCTION_OUT
+  OPENING_STOCK
+  STOCK_COUNT
+}
+
+enum InventoryReferenceType {
+  PURCHASE_ORDER
+  SALES_ORDER
+  STOCK_TRANSFER
+  INVENTORY_ADJUSTMENT
+  INVENTORY_COUNT
+  PRODUCTION_ORDER
+  MANUAL
 }
 
 model RoutePlan {
@@ -4915,8 +4972,9 @@ model Warehouse {
   transfersFrom InventoryTransfer[] @relation("TransferFrom")
   transfersTo   InventoryTransfer[] @relation("TransferTo")
 
-  adjustments InventoryAdjustment[]
-  counts      InventoryCount[]
+  adjustments          InventoryAdjustment[]
+  counts               InventoryCount[]
+  WarehouseTransaction WarehouseTransaction[]
 
   @@index([orgId])
 }

@@ -4987,8 +4987,8 @@ model InventoryAdjustment {
   reason String?
 
   adjustedById String
-
-  createdAt DateTime @default(now())
+  notes        String?
+  createdAt    DateTime @default(now())
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 

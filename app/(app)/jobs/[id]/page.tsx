@@ -811,7 +811,7 @@ export default async function JobDetailsPage({
               {latestInvoice ? (
 
                 <Link
-                  href={`/invoices/${latestInvoice.id}`}
+                  href={`/jobs/${job.id}/invoices/${latestInvoice.id}`}
                   className="text-sm text-blue-600 hover:underline"
                 >
                   View Invoice
@@ -1224,7 +1224,7 @@ export default async function JobDetailsPage({
             </h2>
 
             <Link
-              href="/purchase-orders"
+              href="/jobs/${job.id}/purchase-orders"
               className="text-sm text-blue-600 hover:underline"
             >
               View All
@@ -1471,7 +1471,7 @@ export default async function JobDetailsPage({
             </h2>
 
             <Link
-              href={`/jobs/${job.id}/punch-list`}
+              href={`/jobs/${job.id}/punch`}
               className="text-sm text-blue-600 hover:underline"
             >
               Manage Punch List
@@ -1864,7 +1864,7 @@ export default async function JobDetailsPage({
               </Link>
 
               <Link
-                href={`/purchase-orders/create?jobId=${job.id}`}
+                href={`/jobs/${job.id}/purchase-orders/create`}
                 className="rounded-xl border p-4 hover:bg-slate-50"
               >
                 Create Purchase Order

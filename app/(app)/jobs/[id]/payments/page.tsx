@@ -16,7 +16,7 @@ interface PageProps {
   }>
 }
 
-export default async function EquipmentPage({
+export default async function JobPaymentsPage({
   params,
 }: PageProps) {
 
@@ -52,37 +52,53 @@ export default async function EquipmentPage({
     notFound()
   }
 
-  const equipment =
-    await prisma.userEquipment.findMany({
+  const payments =
+    await prisma.payment.findMany({
 
       where: {
+
         orgId,
-        jobId: job.id,
+
+        invoice: {
+          jobId: job.id,
+        },
+
       },
 
       include: {
 
-       customer: {
-  select: {
-    companyName: true,
+        customer: {
+
+          select: {
+            id: true,
+            companyName: true,
     firstName: true,
     lastName: true,
-    email: true,
-    phone: true,
-  },
-},
+          },
+
+        },
+
+        invoice: {
+
+          select: {
+            id: true,
+            invoiceNumber: true,
+            status: true,
+          },
+
+        },
 
       },
 
       orderBy: {
-        createdAt: "desc",
+        paidAt: "desc",
       },
 
     })
 
   return (
 
-    <div className="space-y-8">
+    <div className="mx-auto max-w-7xl space-y-8">
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
@@ -96,22 +112,21 @@ export default async function EquipmentPage({
           </Link>
 
           <h1 className="mt-3 text-4xl font-bold">
-            Equipment
+            Payments
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Manage equipment assigned to this
-            job.
+            Manage payments received for this job.
           </p>
 
         </div>
 
         <Link
-          href={`/jobs/${job.id}/equipment/create`}
+          href={`/jobs/${job.id}/payments/create`}
           className="
           rounded-xl
           bg-blue-600
-          px-5
+          px-6
           py-3
           font-medium
           text-white
@@ -119,7 +134,7 @@ export default async function EquipmentPage({
           hover:bg-blue-700
           "
         >
-          Add Equipment
+          Record Payment
         </Link>
 
       </div>
@@ -128,28 +143,32 @@ export default async function EquipmentPage({
 
         <table className="min-w-full">
 
-          <thead className="bg-slate-100">
+          <thead className="border-b bg-slate-50">
 
-            <tr>
+            <tr className="text-left text-sm font-semibold text-slate-600">
 
-              <th className="px-6 py-4 text-left">
-                Equipment
+              <th className="px-6 py-4">
+                Invoice
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4">
                 Customer
               </th>
 
-              <th className="px-6 py-4 text-left">
-                Status
+              <th className="px-6 py-4">
+                Method
               </th>
 
-              <th className="px-6 py-4 text-left">
-                Serial Number
+              <th className="px-6 py-4">
+                Reference
               </th>
 
-              <th className="px-6 py-4 text-left">
-                Warranty
+              <th className="px-6 py-4">
+                Amount
+              </th>
+
+              <th className="px-6 py-4">
+                Paid Date
               </th>
 
               <th className="px-6 py-4 text-right">
@@ -160,23 +179,23 @@ export default async function EquipmentPage({
 
           </thead>
 
-          <tbody>
-                      {equipment.length === 0 ? (
+          <tbody className="divide-y">
+                      {payments.length === 0 ? (
 
             <tr>
 
               <td
-                colSpan={6}
+                colSpan={7}
                 className="px-6 py-16 text-center text-slate-500"
               >
 
                 <p className="text-lg font-medium">
-                  No equipment found.
+                  No payments found.
                 </p>
 
                 <p className="mt-2">
-                  Add the first equipment
-                  assigned to this job.
+                  Record the first payment for this
+                  job.
                 </p>
 
               </td>
@@ -185,24 +204,24 @@ export default async function EquipmentPage({
 
           ) : (
 
-            equipment.map((item) => (
+            payments.map((payment) => (
 
               <tr
-                key={item.id}
-                className="border-t hover:bg-slate-50"
+                key={payment.id}
+                className="hover:bg-slate-50"
               >
 
                 <td className="px-6 py-5">
 
                   <div className="font-semibold">
-                    {item.equipmentName}
+
+                    {payment.invoice.invoiceNumber}
+
                   </div>
 
                   <div className="mt-1 text-sm text-slate-500">
 
-                    {[item.manufacturer, item.model]
-                      .filter(Boolean)
-                      .join(" • ") || "-"}
+                    {payment.invoice.status}
 
                   </div>
 
@@ -212,21 +231,19 @@ export default async function EquipmentPage({
 
                   <div className="font-medium">
 
-                    {item.customer
-                      ?.companyName ?? "-"}
+                    {payment.customer.companyName}
 
                   </div>
 
                   <div className="mt-1 text-sm text-slate-500">
 
                    
-  {[
-    item.customer?.firstName,
-    item.customer?.lastName,
+                      {[
+    payment.customer?.firstName,
+    payment.customer?.lastName,
   ]
     .filter(Boolean)
     .join(" ") || "-"}
-
 
                   </div>
 
@@ -238,17 +255,17 @@ export default async function EquipmentPage({
                     className="
                     inline-flex
                     rounded-full
-                    bg-green-100
+                    bg-slate-100
                     px-3
                     py-1
                     text-sm
                     font-medium
-                    text-green-700
                     capitalize
                     "
                   >
 
-                    {item.status}
+                    {payment.method
+                      .replaceAll("_", " ")}
 
                   </span>
 
@@ -256,16 +273,30 @@ export default async function EquipmentPage({
 
                 <td className="px-6 py-5">
 
-                  {item.serialNumber ??
+                  {payment.reference ??
                     "-"}
+
+                </td>
+
+                <td className="px-6 py-5 font-semibold">
+
+                  ₹
+
+                  {Number(
+                    payment.amount
+                  ).toLocaleString(
+                    undefined,
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
 
                 </td>
 
                 <td className="px-6 py-5">
 
-                  {item.warrantyExpiry
-                    ? item.warrantyExpiry.toLocaleDateString()
-                    : "-"}
+                  {payment.paidAt.toLocaleDateString()}
 
                 </td>
 
@@ -274,7 +305,7 @@ export default async function EquipmentPage({
                   <div className="flex justify-end gap-2">
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}`}
+                      href={`/jobs/${job.id}/payments/${payment.id}`}
                       className="
                       rounded-lg
                       border
@@ -288,7 +319,7 @@ export default async function EquipmentPage({
                     </Link>
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}/edit`}
+                      href={`/jobs/${job.id}/payments/${payment.id}/edit`}
                       className="
                       rounded-lg
                       border
@@ -302,7 +333,7 @@ export default async function EquipmentPage({
                     </Link>
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}/delete`}
+                      href={`/jobs/${job.id}/payments/${payment.id}/delete`}
                       className="
                       rounded-lg
                       border
@@ -337,11 +368,11 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Total Equipment
+            Total Payments
           </p>
 
           <p className="mt-2 text-3xl font-bold">
-            {equipment.length}
+            {payments.length}
           </p>
 
         </div>
@@ -349,16 +380,47 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Active
+            Amount Received
+          </p>
+
+          <p className="mt-2 text-3xl font-bold">
+
+            ₹
+
+            {payments
+              .reduce(
+                (
+                  total,
+                  payment
+                ) =>
+                  total +
+                  Number(payment.amount),
+                0
+              )
+              .toLocaleString(
+                undefined,
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )}
+
+          </p>
+
+        </div>
+
+        <div className="rounded-3xl border bg-white p-6">
+
+          <p className="text-sm text-slate-500">
+            Cash Payments
           </p>
 
           <p className="mt-2 text-3xl font-bold">
 
             {
-              equipment.filter(
-                (item) =>
-                  item.status.toLowerCase() ===
-                  "active"
+              payments.filter(
+                (payment) =>
+                  payment.method === "cash"
               ).length
             }
 
@@ -369,38 +431,18 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Under Warranty
+            Card Payments
           </p>
 
           <p className="mt-2 text-3xl font-bold">
 
             {
-              equipment.filter(
-                (item) =>
-                  item.warrantyExpiry &&
-                  item.warrantyExpiry >
-                    new Date()
-              ).length
-            }
-
-          </p>
-
-        </div>
-
-        <div className="rounded-3xl border bg-white p-6">
-
-          <p className="text-sm text-slate-500">
-            Expired Warranty
-          </p>
-
-          <p className="mt-2 text-3xl font-bold">
-
-            {
-              equipment.filter(
-                (item) =>
-                  item.warrantyExpiry &&
-                  item.warrantyExpiry <=
-                    new Date()
+              payments.filter(
+                (payment) =>
+                  payment.method ===
+                    "credit_card" ||
+                  payment.method ===
+                    "debit_card"
               ).length
             }
 
@@ -413,36 +455,34 @@ export default async function EquipmentPage({
       <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8">
 
         <h2 className="text-xl font-semibold text-blue-900">
-          Equipment Overview
+          Payment Overview
         </h2>
 
         <div className="mt-6 space-y-4 text-sm leading-7 text-blue-800">
 
           <p>
 
-            This page lists all equipment
-            associated with the current job,
-            including manufacturer, model,
-            serial number and warranty
-            information.
+            This page displays all payments
+            received for invoices associated
+            with this job.
 
           </p>
 
           <p>
 
-            Equipment records help track
-            installed assets, maintenance,
-            warranty coverage and future
-            service requirements throughout
-            the lifecycle of the job.
+            Each payment is linked to both an
+            invoice and a customer, making it
+            easy to reconcile billing and
+            received amounts.
 
           </p>
 
           <p>
 
-            Use the View, Edit and Delete
-            actions to manage individual
-            equipment records.
+            Payment methods, references and
+            payment dates are recorded to
+            maintain a complete financial audit
+            trail.
 
           </p>
 

@@ -16,7 +16,33 @@ interface PageProps {
   }>
 }
 
-export default async function EquipmentPage({
+function badgeColor(status: string) {
+
+  switch (status.toLowerCase()) {
+
+    case "draft":
+      return "bg-slate-100 text-slate-700"
+
+    case "sent":
+      return "bg-blue-100 text-blue-700"
+
+    case "paid":
+      return "bg-green-100 text-green-700"
+
+    case "overdue":
+      return "bg-red-100 text-red-700"
+
+    case "cancelled":
+      return "bg-gray-200 text-gray-700"
+
+    default:
+      return "bg-amber-100 text-amber-700"
+
+  }
+
+}
+
+export default async function JobInvoicesPage({
   params,
 }: PageProps) {
 
@@ -52,8 +78,8 @@ export default async function EquipmentPage({
     notFound()
   }
 
-  const equipment =
-    await prisma.userEquipment.findMany({
+  const invoices =
+    await prisma.invoice.findMany({
 
       where: {
         orgId,
@@ -62,15 +88,18 @@ export default async function EquipmentPage({
 
       include: {
 
-       customer: {
-  select: {
-    companyName: true,
+        customer: {
+
+          select: {
+            id: true,
+            companyName: true,
     firstName: true,
     lastName: true,
     email: true,
     phone: true,
-  },
-},
+          },
+
+        },
 
       },
 
@@ -82,7 +111,7 @@ export default async function EquipmentPage({
 
   return (
 
-    <div className="space-y-8">
+    <div className="mx-auto max-w-7xl space-y-8">
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
@@ -96,22 +125,21 @@ export default async function EquipmentPage({
           </Link>
 
           <h1 className="mt-3 text-4xl font-bold">
-            Equipment
+            Invoices
           </h1>
 
           <p className="mt-2 text-slate-500">
-            Manage equipment assigned to this
-            job.
+            Manage invoices for this job.
           </p>
 
         </div>
 
         <Link
-          href={`/jobs/${job.id}/equipment/create`}
+          href={`/jobs/${job.id}/invoices/create`}
           className="
           rounded-xl
           bg-blue-600
-          px-5
+          px-6
           py-3
           font-medium
           text-white
@@ -119,7 +147,7 @@ export default async function EquipmentPage({
           hover:bg-blue-700
           "
         >
-          Add Equipment
+          New Invoice
         </Link>
 
       </div>
@@ -128,28 +156,36 @@ export default async function EquipmentPage({
 
         <table className="min-w-full">
 
-          <thead className="bg-slate-100">
+          <thead className="border-b bg-slate-50">
 
-            <tr>
+            <tr className="text-left text-sm font-semibold text-slate-600">
 
-              <th className="px-6 py-4 text-left">
-                Equipment
+              <th className="px-6 py-4">
+                Invoice #
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4">
                 Customer
               </th>
 
-              <th className="px-6 py-4 text-left">
+              <th className="px-6 py-4">
                 Status
               </th>
 
-              <th className="px-6 py-4 text-left">
-                Serial Number
+              <th className="px-6 py-4">
+                Due Date
               </th>
 
-              <th className="px-6 py-4 text-left">
-                Warranty
+              <th className="px-6 py-4">
+                Total
+              </th>
+
+              <th className="px-6 py-4">
+                Sent
+              </th>
+
+              <th className="px-6 py-4">
+                Paid
               </th>
 
               <th className="px-6 py-4 text-right">
@@ -160,23 +196,23 @@ export default async function EquipmentPage({
 
           </thead>
 
-          <tbody>
-                      {equipment.length === 0 ? (
+          <tbody className="divide-y">
+                      {invoices.length === 0 ? (
 
             <tr>
 
               <td
-                colSpan={6}
+                colSpan={8}
                 className="px-6 py-16 text-center text-slate-500"
               >
 
                 <p className="text-lg font-medium">
-                  No equipment found.
+                  No invoices found.
                 </p>
 
                 <p className="mt-2">
-                  Add the first equipment
-                  assigned to this job.
+                  Create your first invoice for
+                  this job.
                 </p>
 
               </td>
@@ -185,24 +221,24 @@ export default async function EquipmentPage({
 
           ) : (
 
-            equipment.map((item) => (
+            invoices.map((invoice) => (
 
               <tr
-                key={item.id}
-                className="border-t hover:bg-slate-50"
+                key={invoice.id}
+                className="hover:bg-slate-50"
               >
 
                 <td className="px-6 py-5">
 
                   <div className="font-semibold">
-                    {item.equipmentName}
+                    {invoice.invoiceNumber}
                   </div>
 
                   <div className="mt-1 text-sm text-slate-500">
 
-                    {[item.manufacturer, item.model]
-                      .filter(Boolean)
-                      .join(" • ") || "-"}
+                    Created{" "}
+
+                    {invoice.createdAt.toLocaleDateString()}
 
                   </div>
 
@@ -212,21 +248,25 @@ export default async function EquipmentPage({
 
                   <div className="font-medium">
 
-                    {item.customer
-                      ?.companyName ?? "-"}
+                    {invoice.customer.companyName}
 
                   </div>
 
                   <div className="mt-1 text-sm text-slate-500">
 
-                   
-  {[
-    item.customer?.firstName,
-    item.customer?.lastName,
+                    
+                {[
+    invoice.customer?.firstName,
+    invoice.customer?.lastName,
   ]
     .filter(Boolean)
     .join(" ") || "-"}
 
+                  </div>
+
+                  <div className="text-sm text-slate-500">
+
+                    {invoice.customer.email ?? "-"}
 
                   </div>
 
@@ -235,20 +275,20 @@ export default async function EquipmentPage({
                 <td className="px-6 py-5">
 
                   <span
-                    className="
-                    inline-flex
-                    rounded-full
-                    bg-green-100
-                    px-3
-                    py-1
-                    text-sm
-                    font-medium
-                    text-green-700
-                    capitalize
-                    "
+                    className={`
+                      inline-flex
+                      rounded-full
+                      px-3
+                      py-1
+                      text-xs
+                      font-semibold
+                      ${badgeColor(
+                        invoice.status
+                      )}
+                    `}
                   >
 
-                    {item.status}
+                    {invoice.status}
 
                   </span>
 
@@ -256,15 +296,39 @@ export default async function EquipmentPage({
 
                 <td className="px-6 py-5">
 
-                  {item.serialNumber ??
-                    "-"}
+                  {invoice.dueDate
+                    ? invoice.dueDate.toLocaleDateString()
+                    : "-"}
+
+                </td>
+
+                <td className="px-6 py-5 font-semibold">
+
+                  ₹
+                  {Number(
+                    invoice.total
+                  ).toLocaleString(
+                    undefined,
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
 
                 </td>
 
                 <td className="px-6 py-5">
 
-                  {item.warrantyExpiry
-                    ? item.warrantyExpiry.toLocaleDateString()
+                  {invoice.sentAt
+                    ? invoice.sentAt.toLocaleDateString()
+                    : "-"}
+
+                </td>
+
+                <td className="px-6 py-5">
+
+                  {invoice.paidAt
+                    ? invoice.paidAt.toLocaleDateString()
                     : "-"}
 
                 </td>
@@ -274,7 +338,7 @@ export default async function EquipmentPage({
                   <div className="flex justify-end gap-2">
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}`}
+                      href={`/jobs/${job.id}/invoices/${invoice.id}`}
                       className="
                       rounded-lg
                       border
@@ -288,7 +352,7 @@ export default async function EquipmentPage({
                     </Link>
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}/edit`}
+                      href={`/jobs/${job.id}/invoices/${invoice.id}/edit`}
                       className="
                       rounded-lg
                       border
@@ -302,7 +366,7 @@ export default async function EquipmentPage({
                     </Link>
 
                     <Link
-                      href={`/jobs/${job.id}/equipment/${item.id}/delete`}
+                      href={`/jobs/${job.id}/invoices/${invoice.id}/delete`}
                       className="
                       rounded-lg
                       border
@@ -337,11 +401,11 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Total Equipment
+            Total Invoices
           </p>
 
           <p className="mt-2 text-3xl font-bold">
-            {equipment.length}
+            {invoices.length}
           </p>
 
         </div>
@@ -349,16 +413,50 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Active
+            Total Invoice Value
+          </p>
+
+          <p className="mt-2 text-3xl font-bold">
+
+            ₹
+
+            {invoices
+              .reduce(
+                (
+                  total,
+                  invoice,
+                ) =>
+                  total +
+                  Number(invoice.total),
+                0
+              )
+              .toLocaleString(
+                undefined,
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )}
+
+          </p>
+
+        </div>
+
+        <div className="rounded-3xl border bg-white p-6">
+
+          <p className="text-sm text-slate-500">
+            Draft
           </p>
 
           <p className="mt-2 text-3xl font-bold">
 
             {
-              equipment.filter(
-                (item) =>
-                  item.status.toLowerCase() ===
-                  "active"
+              invoices.filter(
+                (
+                  invoice
+                ) =>
+                  invoice.status.toLowerCase() ===
+                  "draft"
               ).length
             }
 
@@ -369,38 +467,18 @@ export default async function EquipmentPage({
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-sm text-slate-500">
-            Under Warranty
+            Paid
           </p>
 
           <p className="mt-2 text-3xl font-bold">
 
             {
-              equipment.filter(
-                (item) =>
-                  item.warrantyExpiry &&
-                  item.warrantyExpiry >
-                    new Date()
-              ).length
-            }
-
-          </p>
-
-        </div>
-
-        <div className="rounded-3xl border bg-white p-6">
-
-          <p className="text-sm text-slate-500">
-            Expired Warranty
-          </p>
-
-          <p className="mt-2 text-3xl font-bold">
-
-            {
-              equipment.filter(
-                (item) =>
-                  item.warrantyExpiry &&
-                  item.warrantyExpiry <=
-                    new Date()
+              invoices.filter(
+                (
+                  invoice
+                ) =>
+                  invoice.status.toLowerCase() ===
+                  "paid"
               ).length
             }
 
@@ -413,36 +491,35 @@ export default async function EquipmentPage({
       <div className="rounded-3xl border border-blue-100 bg-blue-50 p-8">
 
         <h2 className="text-xl font-semibold text-blue-900">
-          Equipment Overview
+          Invoice Overview
         </h2>
 
         <div className="mt-6 space-y-4 text-sm leading-7 text-blue-800">
 
           <p>
 
-            This page lists all equipment
-            associated with the current job,
-            including manufacturer, model,
-            serial number and warranty
-            information.
+            Invoices issued for this job are
+            tracked here along with their billing
+            status and payment progress.
 
           </p>
 
           <p>
 
-            Equipment records help track
-            installed assets, maintenance,
-            warranty coverage and future
-            service requirements throughout
-            the lifecycle of the job.
+            Each invoice records the customer,
+            invoice number, subtotal, tax,
+            total amount and important billing
+            dates including due, sent and paid
+            dates.
 
           </p>
 
           <p>
 
-            Use the View, Edit and Delete
-            actions to manage individual
-            equipment records.
+            Payments associated with an invoice
+            can be viewed from the invoice details
+            page, providing a complete financial
+            history for the job.
 
           </p>
 

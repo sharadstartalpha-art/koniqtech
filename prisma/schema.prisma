@@ -1107,7 +1107,7 @@ model InventoryItem {
   sku   String?
   qty   Int     @default(0)
 
-  unitCost Decimal?
+  unitPrice Decimal?
 
   transactions WarehouseTransaction[]
 
@@ -4877,8 +4877,8 @@ model PurchaseOrderItem {
 
   tax Float @default(0)
 
-  total Float
-
+  total         Float
+  createdAt     DateTime      @default(now())
   purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
 
   inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id])

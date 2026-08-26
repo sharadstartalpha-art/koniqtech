@@ -36,12 +36,12 @@ qty:Number(
 body.qty
 ),
 
-unitCost:body.unitCost
+unitPrice:body.unitPrice
 
 ?
 
 Number(
-body.unitCost
+body.unitPrice
 )
 
 :

@@ -277,7 +277,7 @@ export default async function JobDetailsPage({
           </Link>
 
           <Link
-            href={`/invoices/create?jobId=${job.id}`}
+            href={`/jobs/${job.id}/invoices/create`}
             className="rounded-xl bg-emerald-600 px-5 py-3 font-medium text-white hover:bg-emerald-700"
           >
             Generate Invoice
@@ -820,7 +820,7 @@ export default async function JobDetailsPage({
               ) : (
 
                 <Link
-                  href={`/invoices/create?jobId=${job.id}`}
+                  href={`/jobs/${job.id}/invoices/create`}
                   className="text-sm text-emerald-600 hover:underline"
                 >
                   Create Invoice
@@ -1857,7 +1857,7 @@ export default async function JobDetailsPage({
               </Link>
 
               <Link
-                href={`/invoices/create?jobId=${job.id}`}
+                href={`/jobs/${job.id}/invoices/create`}
                 className="rounded-xl bg-emerald-600 p-4 text-center font-medium text-white hover:bg-emerald-700"
               >
                 Generate Invoice
@@ -2013,7 +2013,7 @@ export default async function JobDetailsPage({
         </Link>
 
         <Link
-          href={`/invoices/create?jobId=${job.id}`}
+          href={`/jobs/${job.id}/invoices/create`}
           className="rounded-xl bg-emerald-600 px-5 py-3 font-medium text-white hover:bg-emerald-700"
         >
           Generate Invoice

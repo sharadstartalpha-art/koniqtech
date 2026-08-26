@@ -233,7 +233,7 @@ export const MENU: MenuSection[] = [
 
       {
         label: "Vendors",
-        href: "/settings/vendors",
+        href: "/vendors",
         icon: Truck,
 
         roles: [

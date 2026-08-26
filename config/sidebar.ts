@@ -28,6 +28,7 @@ import {
   Plug,
   ShieldCheck,
   LucideIcon,
+  ShoppingCart,
 } from "lucide-react";
 
 
@@ -229,6 +230,55 @@ export const MENU: MenuSection[] = [
           Industry.landscaping,
         ],
       },
+
+      {
+        label: "Vendors",
+        href: "/settings/vendors",
+        icon: Truck,
+
+        roles: [
+          "owner",
+          "manager",
+        ],
+
+        plans: [
+          SubscriptionPlan.starter,
+          SubscriptionPlan.professional,
+          SubscriptionPlan.enterprise,
+        ],
+
+        industries: [
+          Industry.roofing,
+          Industry.hvac,
+          Industry.plumbing,
+          Industry.landscaping,
+        ],
+      },
+
+      {
+        label: "Purchase Orders",
+         href: "/purchase-orders",
+         icon: ShoppingCart,
+
+        roles: [
+          "owner",
+          "manager",
+        ],
+
+        plans: [
+          SubscriptionPlan.starter,
+          SubscriptionPlan.professional,
+          SubscriptionPlan.enterprise,
+        ],
+
+        industries: [
+          Industry.roofing,
+          Industry.hvac,
+          Industry.plumbing,
+          Industry.landscaping,
+        ],
+      },
+
 
       {
         label: "Crew",
@@ -637,11 +687,7 @@ export const MENU: MenuSection[] = [
             href: "/settings/organization",
             icon: Building,
           },
-          {
-            label: "Vendors",
-            href: "/settings/vendors",
-            icon: Truck,
-          },
+          
           {
             label: "Branding",
             href: "/settings/branding",

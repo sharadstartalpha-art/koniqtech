@@ -638,6 +638,11 @@ export const MENU: MenuSection[] = [
             icon: Building,
           },
           {
+            label: "Vendors",
+            href: "/settings/vendors",
+            icon: Truck,
+          },
+          {
             label: "Branding",
             href: "/settings/branding",
             icon: Palette,

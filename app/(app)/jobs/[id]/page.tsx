@@ -1224,7 +1224,7 @@ export default async function JobDetailsPage({
             </h2>
 
             <Link
-              href="/jobs/${job.id}/purchase-orders"
+              href={`/jobs/${job.id}/purchase-orders`}
               className="text-sm text-blue-600 hover:underline"
             >
               View All

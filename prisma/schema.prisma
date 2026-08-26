@@ -1102,12 +1102,14 @@ model MaterialRequest {
 model InventoryItem {
   id String @id @default(uuid())
 
-  orgId String
-  name  String
-  sku   String?
-  qty   Int     @default(0)
-
-  unitPrice Decimal?
+  orgId        String
+  name         String
+  sku          String?
+  qty          Int      @default(0)
+  description  String?
+  unit         String?
+  unitPrice    Decimal?
+  reorderLevel Int?
 
   transactions WarehouseTransaction[]
 

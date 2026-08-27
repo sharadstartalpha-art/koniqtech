@@ -111,7 +111,7 @@ const where: Prisma.QuoteWhereInput = {
 
           select: {
             id: true,
-            orgId,
+           orgId: true,
            companyName: true,
       firstName: true,
       lastName: true,

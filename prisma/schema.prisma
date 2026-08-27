@@ -1363,17 +1363,15 @@ model CrewMember {
 
   orgId String
 
-  name String
-
+  name  String
   phone String?
-
   email String?
-
-  role String
+  role  String
 
   active Boolean @default(true)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   organization Organization @relation(fields: [orgId], references: [id])
 

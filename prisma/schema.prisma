@@ -5352,6 +5352,9 @@ model DispatchBoard {
   createdBy User @relation(fields: [createdById], references: [id])
 
   jobs DispatchJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model DispatchJob {
@@ -5370,6 +5373,10 @@ model DispatchJob {
   estimatedArrival DateTime?
 
   status String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  notes     String?
 
   dispatchBoard DispatchBoard @relation(fields: [dispatchBoardId], references: [id])
 

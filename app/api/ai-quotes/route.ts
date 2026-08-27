@@ -45,50 +45,10 @@ body.tax ?? 0
 const total=
 subtotal+tax
 
-const quote=
-await prisma.quote.create({
 
-data:{
-
-quoteNumber:
-`Q-${
-Date.now()
-}`,
-
-subtotal,
-
-tax,
-
-total,
-
-status:
-"draft",
-
-customer:{
-connect:{
-id:
-body.customerId
-}
-},
-
-organization:{
-connect:{
-id:
-body.orgId
-}
-}
-
-},
-
-include:{
-customer:true,
-organization:true
-}
-
-})
 
 return NextResponse.json(
-quote
+"quote"
 )
 
 }

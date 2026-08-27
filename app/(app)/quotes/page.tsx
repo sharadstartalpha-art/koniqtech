@@ -1,106 +1,172 @@
-import prisma from "@/shared/lib/prisma"
-import { auth } from "@/auth"
-import Link from "next/link"
-import { redirect } from "next/navigation"
-import { QuoteStatus } from "@prisma/client"
+import { auth } from "@/auth";
+import prisma from "@/shared/lib/prisma";
+import { Prisma, QuoteStatus } from "@prisma/client";
+import Link from "next/link";
 
-export const dynamic = "force-dynamic"
+import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+interface PageProps {
+  searchParams: Promise<{
+    search?: string;
+    status?: string;
+  }>;
+}
 
 export default async function QuotesPage({
-  searchParams
-}: {
-  searchParams: Promise<{
-    search?: string
-    status?: string
-  }>
-}) {
-
-  const session = await auth()
-
-  if (!session?.user) {
-    redirect("/login")
-  }
-
-  const orgId = session.user.orgId
-
-  if (!orgId) {
-    redirect("/welcome")
-  }
+  searchParams,
+}: PageProps) {
 
   const {
     search = "",
-    status = ""
-  } = await searchParams
+    status = "",
+  } = await searchParams;
 
-  const quotes = await prisma.quote.findMany({
+  const session =
+    await auth();
 
-    where:{
+  if (!session?.user) {
+    redirect("/login");
+  }
 
-      orgId,
+  const orgId =
+    (session.user as any).orgId;
 
-      ...(status
-        ? {  status: status as QuoteStatus }
-        : {}),
+const where: Prisma.QuoteWhereInput = {
 
-      ...(search
-  ? {
-      OR: [
-        {
-          quoteNumber: {
-            contains: search,
-            mode: "insensitive"
-          }
+  orgId,
+
+  ...(search && {
+
+    OR: [
+
+      {
+        quoteNumber: {
+          contains: search,
+          mode: "insensitive",
         },
-        {
-          customer: {
-            firstName: {
-              contains: search,
-              mode: "insensitive"
-            }
-          }
+      },
+
+      {
+        customer: {
+          is: {
+            OR: [
+
+              {
+                companyName: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+
+              {
+                firstName: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+
+              {
+                lastName: {
+                  contains: search,
+                  mode: "insensitive",
+                },
+              },
+
+            ],
+          },
         },
-        {
-          customer: {
-            lastName: {
-              contains: search,
-              mode: "insensitive"
-            }
-          }
+      },
+
+    ],
+
+  }),
+
+  ...(status && {
+    status: status as any,
+  }),
+
+};
+
+  const [
+
+    quotes,
+
+    totalQuotes,
+
+    totals,
+
+    approvedCount,
+
+  ] = await Promise.all([
+
+    prisma.quote.findMany({
+
+      where,
+
+      include: {
+
+        customer: {
+
+          select: {
+            id: true,
+            orgId,
+           companyName: true,
+      firstName: true,
+      lastName: true,
+          },
+
         },
-        {
-          customer: {
-            companyName: {
-              contains: search,
-              mode: "insensitive"
-            }
-          }
-        }
-      ]
-    }
-  : {})
-    },
 
-    include:{
-      customer:true
-    },
+      },
 
-    orderBy:{
-      createdAt:"desc"
-    }
+      orderBy: {
+        createdAt: "desc",
+      },
 
-  })
+    }),
+
+    prisma.quote.count({
+
+      where,
+
+    }),
+
+    prisma.quote.aggregate({
+
+      where,
+
+      _sum: {
+        total: true,
+      },
+
+    }),
+
+    prisma.quote.count({
+
+      where: {
+
+        ...where,
+
+        status: "approved",
+
+      },
+
+    }),
+
+  ]);
 
   const totalValue =
-    quotes.reduce(
-      (sum, quote) =>sum + Number(quote.total),
-      0
-    )
+    Number(
+      totals._sum.total ?? 0
+    );
 
   return (
 
     <div className="space-y-8">
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
 
         <div>
 
@@ -108,7 +174,7 @@ export default async function QuotesPage({
             Quotes
           </h1>
 
-          <p className="text-slate-500 mt-2">
+          <p className="mt-2 text-slate-600">
             Manage customer quotations.
           </p>
 
@@ -116,92 +182,69 @@ export default async function QuotesPage({
 
         <Link
           href="/quotes/create"
-          className="
-          bg-orange-600
-          hover:bg-orange-700
-          text-white
-          px-6
-          py-3
-          rounded-xl
-          "
+          className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
         >
           New Quote
         </Link>
 
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid gap-6 md:grid-cols-3">
 
-        <div className="bg-white border rounded-3xl p-6">
+        <div className="rounded-3xl border bg-white p-7">
 
           <p className="text-slate-500">
             Total Quotes
           </p>
 
-          <h2 className="text-4xl font-bold mt-2">
-            {quotes.length}
+          <h2 className="mt-3 text-5xl font-bold">
+            {totalQuotes}
           </h2>
 
         </div>
 
-        <div className="bg-white border rounded-3xl p-6">
+        <div className="rounded-3xl border bg-white p-7">
 
           <p className="text-slate-500">
             Total Value
           </p>
 
-          <h2 className="text-4xl font-bold mt-2">
+          <h2 className="mt-3 text-5xl font-bold">
             $
             {totalValue.toLocaleString()}
           </h2>
 
         </div>
 
-        <div className="bg-white border rounded-3xl p-6">
+        <div className="rounded-3xl border bg-white p-7">
 
           <p className="text-slate-500">
-            Accepted
+            Approved
           </p>
 
-          <h2 className="text-4xl font-bold mt-2">
-
-            {
-          quotes.filter(
-    q => q.status === QuoteStatus.approved
-).length
-            }
-
+          <h2 className="mt-3 text-5xl font-bold">
+            {approvedCount}
           </h2>
 
         </div>
 
       </div>
-
-      <form
-        className="flex gap-4"
+            <form
+        className="flex flex-col gap-4 lg:flex-row"
       >
 
         <input
+          type="text"
           name="search"
-          defaultValue={search}
           placeholder="Search quote..."
-          className="
-          flex-1
-          border
-          rounded-xl
-          px-5
-          py-3
-          "
+          defaultValue={search}
+          className="flex-1 rounded-xl border px-5 py-3"
         />
 
         <select
           name="status"
           defaultValue={status}
-          className="
-          border
-          rounded-xl
-          px-5
-          "
+          className="rounded-xl border px-5 py-3"
         >
 
           <option value="">
@@ -216,190 +259,191 @@ export default async function QuotesPage({
             Sent
           </option>
 
-         <option value="approved">
-    Approved
-</option>
-
-<option value="expired">
-    Expired
+          <option value="approved">
+  Approved
 </option>
 
           <option value="rejected">
             Rejected
           </option>
 
+          <option value="expired">
+            Expired
+          </option>
+
         </select>
 
         <button
-          className="
-          bg-slate-900
-          text-white
-          px-6
-          rounded-xl
-          "
+          type="submit"
+          className="rounded-xl bg-slate-900 px-6 py-3 text-white hover:bg-slate-800"
         >
           Search
         </button>
 
       </form>
 
-      <div className="bg-white border rounded-3xl overflow-hidden">
+      <div className="overflow-hidden rounded-3xl border bg-white">
 
-        {quotes.length === 0 ? (
+        <table className="min-w-full">
 
-          <div className="py-24 text-center">
+          <thead className="border-b bg-slate-50">
 
-            <h2 className="text-2xl font-semibold">
-              No quotes found
-            </h2>
+            <tr>
 
-            <p className="text-slate-500 mt-3">
-              Create your first customer quote.
-            </p>
+              <th className="px-6 py-4 text-left">
+                Quote
+              </th>
 
-            <Link
-              href="/quotes/create"
-              className="
-              inline-block
-              mt-6
-              bg-orange-600
-              text-white
-              px-6
-              py-3
-              rounded-xl
-              "
-            >
-              Create Quote
-            </Link>
+              <th className="px-6 py-4 text-left">
+                Customer
+              </th>
 
-          </div>
+              <th className="px-6 py-4 text-left">
+                Status
+              </th>
 
-        ) : (
+              <th className="px-6 py-4 text-left">
+                Value
+              </th>
 
-          <table className="w-full">
+              <th className="px-6 py-4 text-left">
+                Valid Until
+              </th>
 
-            <thead className="bg-slate-50">
+              <th className="px-6 py-4 text-left">
+                Created
+              </th>
 
-              <tr className="text-left">
+              <th className="px-6 py-4 text-right">
+                Actions
+              </th>
 
-                <th className="p-5">
-                  Quote
-                </th>
+            </tr>
 
-                <th className="p-5">
-                  Customer
-                </th>
+          </thead>
 
-                <th className="p-5">
-                  Status
-                </th>
+          <tbody>
 
-                <th className="p-5">
-                  Value
-                </th>
+            {quotes.length === 0 && (
 
-                <th className="p-5">
-                  Created
-                </th>
+              <tr>
 
-                <th className="p-5 text-right">
-                  Actions
-                </th>
+                <td
+                  colSpan={7}
+                  className="px-6 py-12 text-center text-slate-500"
+                >
+                  No quotes found.
+                </td>
 
               </tr>
 
-            </thead>
+            )}
 
-            <tbody>
+            {quotes.map((quote) => (
 
-              {quotes.map((quote)=>(
+              <tr
+                key={quote.id}
+                className="border-b last:border-b-0 hover:bg-slate-50"
+              >
 
-                <tr
-                  key={quote.id}
-                  className="border-t"
-                >
+                <td className="px-6 py-4">
 
-                  <td className="p-5 font-medium">
-
+                  <Link
+                    href={`/quotes/${quote.id}`}
+                    className="font-medium text-blue-600 hover:underline"
+                  >
                     {quote.quoteNumber}
+                  </Link>
 
-                  </td>
+                </td>
 
-                  <td className="p-5">
+               <td className="px-6 py-4">
+  {quote.customer.companyName ??
+    [quote.customer.firstName, quote.customer.lastName]
+      .filter(Boolean)
+      .join(" ")}
+</td>
 
-                    {quote.customer?.companyName ||
-                     `${quote.customer?.firstName ?? ""} ${quote.customer?.lastName ?? ""}`}
+                <td className="px-6 py-4">
 
-                  </td>
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-sm font-medium
+                    ${
+                      quote.status === "approved"
+                        ? "bg-green-100 text-green-700"
+                        : quote.status === "sent"
+                        ? "bg-blue-100 text-blue-700"
+                        : quote.status === "rejected"
+                        ? "bg-red-100 text-red-700"
+                        : quote.status === "expired"
+                        ? "bg-gray-100 text-gray-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {quote.status}
+                  </span>
 
-                  <td className="p-5">
+                </td>
 
-                    <span
-                      className="
-                      px-3
-                      py-1
-                      rounded-full
-                      bg-blue-100
-                      text-blue-700
-                      text-sm
-                      "
+                <td className="px-6 py-4">
+                  $
+                  {Number(
+                    quote.total
+                  ).toLocaleString()}
+                </td>
+
+                <td className="px-6 py-4">
+
+                  {quote.validUntil
+                    ? quote.validUntil.toLocaleDateString()
+                    : "-"}
+
+                </td>
+
+                <td className="px-6 py-4">
+                  {quote.createdAt.toLocaleDateString()}
+                </td>
+
+                <td className="px-6 py-4 text-right">
+                                    <div className="flex items-center justify-end gap-4">
+
+                    <Link
+                      href={`/quotes/${quote.id}`}
+                      className="font-medium text-blue-600 hover:underline"
                     >
-                      {quote.status}
-                    </span>
+                      View
+                    </Link>
 
-                  </td>
+                    <Link
+                      href={`/quotes/${quote.id}/edit`}
+                      className="font-medium text-orange-600 hover:underline"
+                    >
+                      Edit
+                    </Link>
 
-                  <td className="p-5">
+                    <Link
+                      href={`/quotes/${quote.id}/delete`}
+                      className="font-medium text-red-600 hover:underline"
+                    >
+                      Delete
+                    </Link>
 
-                    $
+                  </div>
 
-                    {(Number(quote.total).toLocaleString())}
+                </td>
 
-                  </td>
+              </tr>
 
-                  <td className="p-5">
+            ))}
 
-                    {quote.createdAt
-                      .toLocaleDateString()}
+          </tbody>
 
-                  </td>
-
-                  <td className="p-5">
-
-                    <div className="flex justify-end gap-5">
-
-                      <Link
-                        href={`/quotes/${quote.id}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        View
-                      </Link>
-
-                      <Link
-                        href={`/quotes/${quote.id}/edit`}
-                        className="text-orange-600 hover:underline"
-                      >
-                        Edit
-                      </Link>
-
-                    </div>
-
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        )}
+        </table>
 
       </div>
 
     </div>
 
-  )
+  );
 
 }

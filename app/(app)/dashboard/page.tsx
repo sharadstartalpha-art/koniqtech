@@ -266,28 +266,28 @@ const nextAction =
               title: "Create Your First Lead",
               description:
                   "Leads are potential customers waiting to become clients.",
-              href: "/leads/new",
+              href: "/leads",
           }
         : !onboarding.customer
         ? {
               title: "Create Your First Customer",
               description:
                   "Convert a lead or create a customer manually.",
-              href: "/customers/new",
+              href: "/customers",
           }
         : !onboarding.job
         ? {
               title: "Create Your First Job",
               description:
                   "Jobs help you schedule and manage work for customers.",
-              href: "/jobs/new",
+              href: "/jobs",
           }
         : !onboarding.invoice
         ? {
               title: "Generate Your First Invoice",
               description:
                   "Invoices help you bill customers and track payments.",
-              href: "/invoices/new",
+              href: "/invoices",
           }
         : null;
 
@@ -346,25 +346,25 @@ const onboardingSteps = [
   {
     title: "Create First Lead",
     completed: leads > 0,
-    href: "/leads/new",
+    href: "/leads",
     description: "Start capturing new opportunities.",
   },
   {
     title: "Create First Customer",
     completed: customers > 0,
-    href: "/customers/new",
+    href: "/customers",
     description: "Add your first customer.",
   },
   {
     title: "Create First Job",
     completed: jobs > 0,
-    href: "/jobs/new",
+    href: "/jobs",
     description: "Schedule your first job.",
   },
   {
     title: "Create First Invoice",
     completed: invoices > 0,
-    href: "/invoices/new",
+    href: "/invoices",
     description: "Send your first invoice.",
   },
 ];
@@ -677,7 +677,7 @@ gap-4
     items={recentLeads.map(
         x => `${x.firstName} ${x.lastName}`
     )}
-    href="/leads/new"
+    href="/leads"
     action="Create First Lead"
     description="You haven't created any leads yet."
 />
@@ -687,7 +687,7 @@ gap-4
     items={recentCustomers.map(
         x => `${x.firstName} ${x.lastName}`
     )}
-    href="/customers/new"
+    href="/customers"
     action="Create First Customer"
     description="No customers yet."
 />
@@ -697,7 +697,7 @@ gap-4
     items={recentJobs.map(
         x => x.title
     )}
-    href="/jobs/new"
+    href="/jobs"
     action="Create First Job"
     description="No jobs have been created."
 />

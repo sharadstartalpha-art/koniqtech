@@ -102,65 +102,10 @@ export async function POST(
 
         async (tx) => {
 
-          const createdQuote =
-            await tx.quote.create({
+          
+          
 
-              data: {
-
-                orgId,
-
-                customerId,
-
-                quoteNumber,
-
-                status,
-
-                validUntil:
-                  validUntil
-                    ? new Date(validUntil)
-                    : null,
-
-                subtotal,
-
-                tax,
-
-                total
-
-              }
-
-            })
-
-          await tx.quoteItem.createMany({
-
-            data:
-
-              items.map(
-
-                (item: any) => ({
-
-                  quoteId:
-                    createdQuote.id,
-
-                  itemName:
-                    item.itemName,
-
-                  qty:
-                    Number(item.qty),
-
-                  price:
-                    Number(item.price),
-
-                  total:
-                    Number(item.qty) *
-                    Number(item.price)
-
-                })
-
-              )
-
-          })
-
-          return createdQuote
+          
 
         }
 

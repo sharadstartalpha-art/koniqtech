@@ -306,7 +306,7 @@ export const MENU: MenuSection[] = [
 
       {
         label: "Dispatch",
-        href: "/jobs/dispatch",
+        href: "/dispatch",
         icon: Truck,
 
         roles: [

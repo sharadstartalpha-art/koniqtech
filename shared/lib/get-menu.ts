@@ -16,7 +16,7 @@ export function getMenuForPlan(
   case "/crew":
     return features.crew;
 
-  case "/jobs/dispatch":
+  case "/dispatch":
     return features.dispatch;
 
   case "/inventory":

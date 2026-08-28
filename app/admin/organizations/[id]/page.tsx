@@ -140,13 +140,17 @@ const startFromNow =
 let baseDate: Date;
 
 if (startFromNow) {
-  baseDate = new Date(now);
+  // Ignore current subscription
+  baseDate = new Date();
 } else {
+  const existingEnd =
+    organization.subscriptionEndsAt;
+
   baseDate =
     existingEnd &&
     existingEnd > now
       ? new Date(existingEnd)
-      : new Date(now);
+      : new Date();
 }
 
   const expiresAt =

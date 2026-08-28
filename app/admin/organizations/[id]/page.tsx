@@ -74,6 +74,10 @@ async function grantSubscription(
     formData.get("duration") ?? "1mo"
   ).trim();
 
+  console.log("==========");
+console.log("Duration:", duration);
+console.log("==========");
+
   if (!orgId) {
     throw new Error(
       "Organization ID is required."
@@ -142,6 +146,7 @@ async function grantSubscription(
   const expiresAt =
   new Date(baseDate);
 
+  console.log("Before switch:", duration);
 switch (duration) {
   case "15m":
     expiresAt.setMinutes(expiresAt.getMinutes() + 15);
@@ -679,7 +684,7 @@ export default async function OrganizationPage({
 
             <select
               name="duration"
-               defaultValue="1mo"
+              defaultValue="1mo"
               required
               className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >

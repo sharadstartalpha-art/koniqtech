@@ -74,9 +74,9 @@ async function grantSubscription(
     formData.get("duration") ?? "1mo"
   ).trim();
 
-  console.log("==========");
-console.log("Duration:", duration);
-console.log("==========");
+const startFromNow =
+  formData.get("startFromNow") === "on";
+
 
   if (!orgId) {
     throw new Error(
@@ -135,13 +135,19 @@ console.log("==========");
   const now = new Date();
 
   const existingEnd =
-    organization.subscriptionEndsAt;
+  organization.subscriptionEndsAt;
 
-  const baseDate =
+let baseDate: Date;
+
+if (startFromNow) {
+  baseDate = new Date(now);
+} else {
+  baseDate =
     existingEnd &&
     existingEnd > now
       ? new Date(existingEnd)
       : new Date(now);
+}
 
   const expiresAt =
   new Date(baseDate);
@@ -711,6 +717,21 @@ export default async function OrganizationPage({
           </div>
 
           {/* ACTION */}
+          <div className="flex items-center mt-8">
+  <input
+    id="startFromNow"
+    name="startFromNow"
+    type="checkbox"
+    className="h-4 w-4 rounded border-slate-300"
+  />
+
+  <label
+    htmlFor="startFromNow"
+    className="ml-2 text-sm text-slate-700"
+  >
+    Start from current time (Testing)
+  </label>
+</div>
           <div className="flex items-end">
             <button
               type="submit"

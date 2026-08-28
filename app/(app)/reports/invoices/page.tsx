@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function RevenueReportPage() {
+export default async function InvoiceReportPage() {
 
   const session =
     await auth();
@@ -18,159 +18,90 @@ export default async function RevenueReportPage() {
   const orgId =
     session.user.orgId;
 
-  const [
-
-    totalRevenue,
-
-    paidRevenue,
-
-    outstandingRevenue,
-
-    totalInvoices,
-
-    paidInvoices,
-
-    overdueInvoices,
-
-    invoices,
-
-  ] = await Promise.all([
-
-    prisma.invoice.aggregate({
+  const invoices =
+    await prisma.invoice.findMany({
 
       where: {
-
         orgId,
-
-      },
-
-      _sum: {
-
-        total: true,
-
-      },
-
-    }),
-
-    prisma.invoice.aggregate({
-
-      where: {
-
-        orgId,
-
-        status: "paid",
-
-      },
-
-      _sum: {
-
-        total: true,
-
-      },
-
-    }),
-
-    prisma.invoice.aggregate({
-
-      where: {
-
-        orgId,
-
-        NOT: {
-
-          status: "paid",
-
-        },
-
-      },
-
-      _sum: {
-
-        total: true,
-
-      },
-
-    }),
-
-    prisma.invoice.count({
-
-      where: {
-
-        orgId,
-
-      },
-
-    }),
-
-    prisma.invoice.count({
-
-      where: {
-
-        orgId,
-
-        status: "paid",
-
-      },
-
-    }),
-
-    prisma.invoice.count({
-
-      where: {
-
-        orgId,
-
-        status: "overdue",
-
-      },
-
-    }),
-
-    prisma.invoice.findMany({
-
-      where: {
-
-        orgId,
-
       },
 
       include: {
 
-        customer: {
+        customer: true,
 
-          select: {
-
-            companyName: true,
-
-            firstName: true,
-
-            lastName: true,
-
-          },
-
-        },
+        job: true,
 
       },
 
       orderBy: {
-
-        total: "desc",
-
+        createdAt: "desc",
       },
 
-      take: 10,
+    });
 
-    }),
+  const totalInvoices =
+    invoices.length;
 
-  ]);
+  const totalRevenue =
+    invoices.reduce(
 
-  const collectionRate =
+      (sum, invoice) =>
 
-    totalInvoices === 0
+        sum +
+        Number(invoice.total),
 
-      ? 0
+      0,
 
-      : (paidInvoices / totalInvoices) * 100;
+    );
+
+  const draftInvoices =
+    invoices.filter(
+      (invoice) =>
+        invoice.status === "draft",
+    );
+
+  const sentInvoices =
+    invoices.filter(
+      (invoice) =>
+        invoice.status === "sent",
+    );
+
+  const paidInvoices =
+    invoices.filter(
+      (invoice) =>
+        invoice.status === "paid",
+    );
+
+  const overdueInvoices =
+    invoices.filter(
+      (invoice) =>
+        invoice.status === "overdue",
+    );
+
+  const cancelledInvoices =
+    invoices.filter(
+      (invoice) =>
+        invoice.status === "cancelled",
+    );
+
+  const outstandingBalance =
+    invoices
+
+      .filter(
+        (invoice) =>
+          invoice.status !== "paid",
+      )
+
+      .reduce(
+
+        (sum, invoice) =>
+
+          sum +
+          Number(invoice.total),
+
+        0,
+
+      );
 
   return (
 
@@ -181,11 +112,11 @@ export default async function RevenueReportPage() {
         <div>
 
           <h1 className="text-5xl font-bold">
-            Revenue Report
+            Invoice Report
           </h1>
 
           <p className="mt-2 text-slate-600">
-            Revenue, collections and outstanding invoice analytics.
+            Revenue, payment status and invoice performance.
           </p>
 
         </div>
@@ -204,14 +135,25 @@ export default async function RevenueReportPage() {
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-slate-500">
+            Total Invoices
+          </p>
+
+          <h2 className="mt-3 text-4xl font-bold">
+            {totalInvoices}
+          </h2>
+
+        </div>
+
+        <div className="rounded-3xl border bg-white p-6">
+
+          <p className="text-slate-500">
             Total Revenue
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
 
-            ₹{Number(
-              totalRevenue._sum.total ?? 0
-            ).toLocaleString()}
+            ₹
+            {totalRevenue.toLocaleString()}
 
           </h2>
 
@@ -220,15 +162,11 @@ export default async function RevenueReportPage() {
         <div className="rounded-3xl border bg-white p-6">
 
           <p className="text-slate-500">
-            Paid Revenue
+            Paid Invoices
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-blue-600">
-
-            ₹{Number(
-              paidRevenue._sum.total ?? 0
-            ).toLocaleString()}
-
+            {paidInvoices.length}
           </h2>
 
         </div>
@@ -241,31 +179,77 @@ export default async function RevenueReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-red-600">
 
-            ₹{Number(
-              outstandingRevenue._sum.total ?? 0
-            ).toLocaleString()}
-
-          </h2>
-
-        </div>
-
-        <div className="rounded-3xl border bg-white p-6">
-
-          <p className="text-slate-500">
-            Collection Rate
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold">
-
-            {collectionRate.toFixed(1)}%
+            ₹
+            {outstandingBalance.toLocaleString()}
 
           </h2>
 
         </div>
 
       </div>
-
             <div className="grid gap-6 lg:grid-cols-2">
+
+        <div className="rounded-3xl border bg-white p-8">
+
+          <h2 className="mb-6 text-2xl font-bold">
+            Invoice Status Summary
+          </h2>
+
+          <dl className="space-y-5">
+
+            <div className="flex items-center justify-between">
+
+              <dt>Draft</dt>
+
+              <dd className="font-semibold text-slate-600">
+                {draftInvoices.length}
+              </dd>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <dt>Sent</dt>
+
+              <dd className="font-semibold text-blue-600">
+                {sentInvoices.length}
+              </dd>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <dt>Paid</dt>
+
+              <dd className="font-semibold text-green-600">
+                {paidInvoices.length}
+              </dd>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <dt>Overdue</dt>
+
+              <dd className="font-semibold text-red-600">
+                {overdueInvoices.length}
+              </dd>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <dt>Cancelled</dt>
+
+              <dd className="font-semibold text-orange-600">
+                {cancelledInvoices.length}
+              </dd>
+
+            </div>
+
+          </dl>
+
+        </div>
 
         <div className="rounded-3xl border bg-white p-8">
 
@@ -280,9 +264,17 @@ export default async function RevenueReportPage() {
               <dt>Total Revenue</dt>
 
               <dd className="font-semibold text-green-600">
-                ₹{Number(
-                  totalRevenue._sum.total ?? 0
-                ).toLocaleString()}
+                ₹{totalRevenue.toLocaleString()}
+              </dd>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <dt>Outstanding Balance</dt>
+
+              <dd className="font-semibold text-red-600">
+                ₹{outstandingBalance.toLocaleString()}
               </dd>
 
             </div>
@@ -292,21 +284,16 @@ export default async function RevenueReportPage() {
               <dt>Paid Revenue</dt>
 
               <dd className="font-semibold text-blue-600">
-                ₹{Number(
-                  paidRevenue._sum.total ?? 0
-                ).toLocaleString()}
-              </dd>
 
-            </div>
+                ₹
+                {paidInvoices
+                  .reduce(
+                    (sum, invoice) =>
+                      sum + Number(invoice.total),
+                    0,
+                  )
+                  .toLocaleString()}
 
-            <div className="flex items-center justify-between">
-
-              <dt>Outstanding Revenue</dt>
-
-              <dd className="font-semibold text-red-600">
-                ₹{Number(
-                  outstandingRevenue._sum.total ?? 0
-                ).toLocaleString()}
               </dd>
 
             </div>
@@ -315,60 +302,20 @@ export default async function RevenueReportPage() {
 
               <dt>Collection Rate</dt>
 
-              <dd className="font-semibold">
-                {collectionRate.toFixed(1)}%
-              </dd>
-
-            </div>
-
-          </dl>
-
-        </div>
-
-        <div className="rounded-3xl border bg-white p-8">
-
-          <h2 className="mb-6 text-2xl font-bold">
-            Invoice Collection
-          </h2>
-
-          <dl className="space-y-5">
-
-            <div className="flex items-center justify-between">
-
-              <dt>Total Invoices</dt>
-
-              <dd className="font-semibold">
-                {totalInvoices}
-              </dd>
-
-            </div>
-
-            <div className="flex items-center justify-between">
-
-              <dt>Paid Invoices</dt>
-
               <dd className="font-semibold text-green-600">
-                {paidInvoices}
-              </dd>
 
-            </div>
+                {totalRevenue === 0
+                  ? "0%"
+                  : `${(
+                      (paidInvoices.reduce(
+                        (sum, invoice) =>
+                          sum + Number(invoice.total),
+                        0,
+                      ) /
+                        totalRevenue) *
+                      100
+                    ).toFixed(1)}%`}
 
-            <div className="flex items-center justify-between">
-
-              <dt>Overdue Invoices</dt>
-
-              <dd className="font-semibold text-red-600">
-                {overdueInvoices}
-              </dd>
-
-            </div>
-
-            <div className="flex items-center justify-between">
-
-              <dt>Outstanding Invoices</dt>
-
-              <dd className="font-semibold">
-                {totalInvoices - paidInvoices}
               </dd>
 
             </div>
@@ -379,19 +326,19 @@ export default async function RevenueReportPage() {
 
       </div>
 
-      <div className="rounded-3xl border bg-white overflow-hidden">
+      <div className="overflow-hidden rounded-3xl border bg-white">
 
         <div className="border-b px-8 py-6">
 
           <h2 className="text-2xl font-bold">
-            Top Revenue Invoices
+            Recent Invoices
           </h2>
 
         </div>
 
         <table className="min-w-full">
 
-          <thead className="bg-slate-50 border-b">
+          <thead className="border-b bg-slate-50">
 
             <tr>
 
@@ -403,12 +350,16 @@ export default async function RevenueReportPage() {
                 Customer
               </th>
 
-              <th className="px-6 py-4 text-right">
-                Amount
-              </th>
-
               <th className="px-6 py-4 text-left">
                 Status
+              </th>
+
+              <th className="px-6 py-4 text-right">
+                Total
+              </th>
+
+              <th className="px-6 py-4 text-right">
+                Actions
               </th>
 
             </tr>
@@ -416,16 +367,15 @@ export default async function RevenueReportPage() {
           </thead>
 
           <tbody>
-
                         {invoices.length === 0 && (
 
               <tr>
 
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-6 py-12 text-center text-slate-500"
                 >
-                  No invoice data available.
+                  No invoices found.
                 </td>
 
               </tr>
@@ -458,15 +408,6 @@ export default async function RevenueReportPage() {
 
                 </td>
 
-                <td className="px-6 py-4 text-right font-semibold">
-
-                  ₹{Number(invoice.total).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-
-                </td>
-
                 <td className="px-6 py-4">
 
                   <span
@@ -486,6 +427,34 @@ export default async function RevenueReportPage() {
                     {invoice.status.charAt(0).toUpperCase() +
                       invoice.status.slice(1)}
                   </span>
+
+                </td>
+
+                <td className="px-6 py-4 text-right font-semibold">
+
+                  ₹
+                  {Number(invoice.total).toLocaleString(
+                    undefined,
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}
+
+                </td>
+
+                <td className="px-6 py-4">
+
+                  <div className="flex justify-end">
+
+                    <Link
+                      href={`/billing/${invoice.id}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      View
+                    </Link>
+
+                  </div>
 
                 </td>
 

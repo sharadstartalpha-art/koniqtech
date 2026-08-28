@@ -69,10 +69,10 @@ async function grantSubscription(
       formData.get("plan") ?? ""
     ).trim();
 
-  const months =
-    Number(
-      formData.get("months") ?? "1"
-    );
+  const duration =
+  String(
+    formData.get("duration") ?? "1mo"
+  ).trim();
 
   if (!orgId) {
     throw new Error(
@@ -92,15 +92,7 @@ async function grantSubscription(
     );
   }
 
-  if (
-    !Number.isInteger(months) ||
-    months < 1 ||
-    months > 24
-  ) {
-    throw new Error(
-      "Invalid subscription duration."
-    );
-  }
+  
 
   const plan =
     planValue as SubscriptionPlan;
@@ -148,11 +140,76 @@ async function grantSubscription(
       : new Date(now);
 
   const expiresAt =
-    new Date(baseDate);
+  new Date(baseDate);
 
-  expiresAt.setMonth(
-    expiresAt.getMonth() + months
-  );
+switch (duration) {
+  case "15m":
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+    break;
+
+  case "30m":
+    expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+    break;
+
+  case "1h":
+    expiresAt.setHours(expiresAt.getHours() + 1);
+    break;
+
+  case "2h":
+    expiresAt.setHours(expiresAt.getHours() + 2);
+    break;
+
+  case "6h":
+    expiresAt.setHours(expiresAt.getHours() + 6);
+    break;
+
+  case "12h":
+    expiresAt.setHours(expiresAt.getHours() + 12);
+    break;
+
+  case "1d":
+    expiresAt.setDate(expiresAt.getDate() + 1);
+    break;
+
+  case "2d":
+    expiresAt.setDate(expiresAt.getDate() + 2);
+    break;
+
+  case "3d":
+    expiresAt.setDate(expiresAt.getDate() + 3);
+    break;
+
+  case "7d":
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    break;
+
+  case "15d":
+    expiresAt.setDate(expiresAt.getDate() + 15);
+    break;
+
+  case "30d":
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    break;
+
+  case "3mo":
+    expiresAt.setMonth(expiresAt.getMonth() + 3);
+    break;
+
+  case "6mo":
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    break;
+
+  case "12mo":
+    expiresAt.setMonth(expiresAt.getMonth() + 12);
+    break;
+
+  case "24mo":
+    expiresAt.setMonth(expiresAt.getMonth() + 24);
+    break;
+
+  default:
+    throw new Error("Invalid subscription duration.");
+}
 
   /*
    * Keep User / Subscription / Organization
@@ -622,29 +679,29 @@ export default async function OrganizationPage({
 
             <select
               name="months"
-              defaultValue="1"
+               defaultValue="1mo"
               required
               className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
-              <option value="1">
-                1 month
-              </option>
+             <option value="15m">15 Minutes</option>
+<option value="30m">30 Minutes</option>
 
-              <option value="3">
-                3 months
-              </option>
+<option value="1h">1 Hour</option>
+<option value="2h">2 Hours</option>
+<option value="6h">6 Hours</option>
+<option value="12h">12 Hours</option>
 
-              <option value="6">
-                6 months
-              </option>
+<option value="1d">1 Day</option>
+<option value="2d">2 Days</option>
+<option value="3d">3 Days</option>
+<option value="7d">7 Days</option>
+<option value="15d">15 Days</option>
+<option value="30d">30 Days</option>
 
-              <option value="12">
-                12 months
-              </option>
-
-              <option value="24">
-                24 months
-              </option>
+<option value="3mo">3 Months</option>
+<option value="6mo">6 Months</option>
+<option value="12mo">12 Months</option>
+<option value="24mo">24 Months</option>
             </select>
           </div>
 

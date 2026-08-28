@@ -1002,8 +1002,8 @@ enum QuoteStatus {
 }
 
 enum SubscriptionStatus {
-  active
   trial
+  active
   cancelled
   expired
 }

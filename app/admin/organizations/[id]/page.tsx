@@ -678,7 +678,7 @@ export default async function OrganizationPage({
             </label>
 
             <select
-              name="months"
+              name="duration"
                defaultValue="1mo"
               required
               className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -698,6 +698,7 @@ export default async function OrganizationPage({
 <option value="15d">15 Days</option>
 <option value="30d">30 Days</option>
 
+<option value="1mo">1 Month</option>
 <option value="3mo">3 Months</option>
 <option value="6mo">6 Months</option>
 <option value="12mo">12 Months</option>

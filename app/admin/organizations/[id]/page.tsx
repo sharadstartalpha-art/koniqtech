@@ -480,7 +480,10 @@ export default async function OrganizationPage({
         expiryDate &&
         expiryDate > now
     );
-
+console.log("Now:", now);
+console.log("Expiry:", expiryDate);
+console.log("Status:", subscription?.status);
+console.log("Active:", subscriptionActive);
   return (
     <div className="mx-auto max-w-7xl space-y-8 p-10">
       {/* ================================================= */}

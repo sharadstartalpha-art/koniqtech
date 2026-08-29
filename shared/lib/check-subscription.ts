@@ -1,6 +1,6 @@
-
 import { redirect } from "next/navigation";
-import prisma from "./prisma"
+import prisma from "./prisma";
+
 export async function requireActiveSubscription(orgId: string) {
   const organization = await prisma.organization.findUnique({
     where: {
@@ -17,18 +17,15 @@ export async function requireActiveSubscription(orgId: string) {
 
   const subscription = organization.subscriptions;
 
- if (!subscription || subscription.status !== "active") {
+  if (!subscription) {
     redirect("/subscription-expired");
-}
+  }
 
-  const expired =
-  subscription.status !== "active" ||
-  (
-    subscription.renewAt &&
-    new Date(subscription.renewAt) <= new Date()
-  );
-
-  if (expired) {
+  if (
+    subscription.status !== "active" ||
+    (subscription.renewAt &&
+      subscription.renewAt <= new Date())
+  ) {
     redirect("/subscription-expired");
   }
 

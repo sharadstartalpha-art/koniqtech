@@ -143,6 +143,20 @@ const subscriptionExpired =
       </p>
     </div>
 
+
+    {subscriptionExpired && (
+  <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
+    <h3 className="text-xl font-bold text-red-700">
+      Subscription Expired
+    </h3>
+
+    <p className="mt-2 text-red-600">
+      Your CRM access has been suspended because your subscription has expired.
+      Renew your current plan or upgrade to restore full access immediately.
+    </p>
+  </div>
+)}
+
   </div>
 
 </div>

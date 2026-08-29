@@ -132,21 +132,24 @@ export default async function BillingPage({
 
   };
 
-  const [
+ const [
+  organization,
+  invoices,
+  totalInvoices,
+  draftCount,
+  sentCount,
+  paidCount,
+  overdueCount,
+] = await Promise.all([
+  prisma.organization.findUnique({
+    where: {
+      id: orgId,
+    },
+    include: {
+      subscriptions: true,
+    },
+  }),
 
-    invoices,
-
-    totalInvoices,
-
-    draftCount,
-
-    sentCount,
-
-    paidCount,
-
-    overdueCount,
-
-  ] = await Promise.all([
 
     prisma.invoice.findMany({
 
@@ -255,6 +258,97 @@ export default async function BillingPage({
   return (
 
     <div className="space-y-8">
+
+      <div className="rounded-3xl border bg-white p-8 shadow-sm">
+
+  <div className="flex items-center justify-between">
+
+    <div>
+
+      <h2 className="text-2xl font-bold">
+        Subscription
+      </h2>
+
+      <p className="mt-1 text-slate-500">
+        Manage your KoniqTech subscription.
+      </p>
+
+    </div>
+
+    <Link
+      href="/billing/plans"
+      className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
+    >
+      Manage Plan
+    </Link>
+
+  </div>
+
+  <div className="mt-8 grid gap-6 md:grid-cols-4">
+
+    <div>
+
+      <p className="text-sm text-slate-500">
+        Current Plan
+      </p>
+
+      <h3 className="mt-2 text-2xl font-bold capitalize">
+        {organization?.plan}
+      </h3>
+
+    </div>
+
+    <div>
+
+      <p className="text-sm text-slate-500">
+        Status
+      </p>
+
+      <h3
+        className={`mt-2 text-2xl font-bold ${
+          organization?.subscriptions?.status === "active"
+            ? "text-green-600"
+            : "text-red-600"
+        }`}
+      >
+        {organization?.subscriptions?.status ?? "None"}
+      </h3>
+
+    </div>
+
+    <div>
+
+      <p className="text-sm text-slate-500">
+        Renews On
+      </p>
+
+      <h3 className="mt-2 text-xl font-semibold">
+
+        {organization?.subscriptions?.renewAt
+          ? organization.subscriptions.renewAt.toLocaleString()
+          : "-"}
+
+      </h3>
+
+    </div>
+
+    <div>
+
+      <p className="text-sm text-slate-500">
+        Users
+      </p>
+
+      <h3 className="mt-2 text-2xl font-bold">
+
+        {organization?.subscriptions?.userLimit}
+
+      </h3>
+
+    </div>
+
+  </div>
+
+</div>
 
       <div className="flex items-center justify-between">
 

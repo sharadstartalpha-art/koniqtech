@@ -162,7 +162,13 @@ const subscriptionExpired =
 </div>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3">
+     <div
+  className={`grid gap-8 ${
+    visiblePlans.length === 1
+      ? "mx-auto max-w-md"
+      : "md:grid-cols-3"
+  }`}
+>
 
         {visiblePlans.map((plan) => {
 
@@ -173,11 +179,11 @@ const subscriptionExpired =
 
             <div
               key={plan.id}
-              className={`rounded-3xl border p-8 shadow-sm ${
-                isCurrent
-                  ? "border-orange-500 ring-2 ring-orange-200"
-                  : ""
-              }`}
+             className={`rounded-3xl border p-8 transition-all ${
+  isCurrent
+    ? "border-orange-500 bg-orange-50 shadow-xl scale-[1.02]"
+    : "border-slate-200 bg-white shadow-sm hover:shadow-lg"
+}`}
             >
 
              {isCurrent && (
@@ -189,7 +195,7 @@ const subscriptionExpired =
     }`}
   >
     {subscriptionExpired
-      ? "Expired Plan"
+      ? "Plan Expired"
       : "Current Plan"}
   </div>
 )}
@@ -207,11 +213,15 @@ const subscriptionExpired =
                 {plan.features.map((feature) => (
 
                   <li
-                    key={feature}
-                    className="text-slate-600"
-                  >
-                    ✓ {feature}
-                  </li>
+  key={feature}
+  className="flex items-center gap-3 text-slate-700"
+>
+  <span className="text-green-600 font-bold">
+    ✓
+  </span>
+
+  {feature}
+</li>
 
                 ))}
 
@@ -219,28 +229,62 @@ const subscriptionExpired =
 
              <Link
   href={`/billing/plans/checkout?plan=${plan.id}`}
-  className={`mt-10 block rounded-xl py-3 text-center font-medium ${
+  className={`mt-10 block w-full rounded-xl py-4 text-lg font-semibold transition ${
     isCurrent && !subscriptionExpired
       ? "pointer-events-none bg-gray-300 text-gray-600"
       : "bg-orange-500 text-white hover:bg-orange-600"
   }`}
 >
-              {isCurrent
+             {isCurrent
   ? (
       subscriptionExpired
-        ? "Renew Plan"
+        ? `Renew ${plan.title}`
         : "Current Plan"
     )
-  : "Upgrade Plan"}
+  : `Upgrade to ${plan.title}`}
               </Link>
 
             </div>
+
+
+
 
           );
         })}
 
       </div>
 
+
+<div className="mt-16 rounded-3xl border bg-white p-8 shadow-sm">
+
+  <h2 className="text-2xl font-bold">
+    Need Help?
+  </h2>
+
+  <p className="mt-3 text-slate-600">
+    Having trouble renewing your subscription or updating your billing
+    information? Our support team is here to help.
+  </p>
+
+  <div className="mt-6 flex flex-wrap gap-4">
+
+    <Link
+      href="/contact"
+      className="rounded-xl border px-5 py-3 font-medium hover:bg-slate-50"
+    >
+      Contact Support
+    </Link>
+
+    <Link
+      href="/billing/history"
+      className="rounded-xl border px-5 py-3 font-medium hover:bg-slate-50"
+    >
+      Billing History
+    </Link>
+
+  </div>
+
+</div>
     </main>
   );
 }

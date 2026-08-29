@@ -1,5 +1,9 @@
 "use client"
 
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { requireActiveSubscription } from "@/shared/lib/check-subscription";
+
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -39,17 +43,11 @@ User
 import { getMenuForPlan } from "@/shared/lib/get-menu";
 import { SubscriptionPlan } from "@prisma/client";
 
-export default function Layout({
-
-
-
-children
-
-}:{
-
-children:React.ReactNode
-
-}){
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
 
 
 
@@ -178,12 +176,13 @@ setOpen(false)
 }
 
 async function load() {
-  const session = await getSession()
+  const session = await auth();
 
-  if (!session) {
-    router.replace("/login")
-    return
-  }
+if (!session) {
+  redirect("/login");
+}
+
+await requireActiveSubscription(session.user.orgId);
 
   setEmail(
     session?.user?.email || ""

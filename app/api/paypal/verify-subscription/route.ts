@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
 
     
-   const { subscriptionId, orgId } = await req.json();
+   const { subscriptionId, orgId, source } = await req.json();
 
     if (!subscriptionId || !orgId) {
   return NextResponse.json(
@@ -91,6 +91,24 @@ if (
   process.env.PAYPAL_ENTERPRISE_PLAN_ID
 ) {
   plan = SubscriptionPlan.enterprise;
+}
+
+
+const existingSubscription =
+  await prisma.subscription.findUnique({
+    where: {
+      orgId,
+    },
+  });
+
+if (
+  existingSubscription &&
+  existingSubscription.externalId === subscription.id
+) {
+  return NextResponse.json({
+    success: true,
+    plan,
+  });
 }
 
     await prisma.subscription.upsert({
@@ -184,16 +202,17 @@ if (
       },
 
       data: {
-        plan,
+  plan,
 
-        subscriptionEndsAt:
-          subscription.billing_info
-            ?.next_billing_time
-            ? new Date(
-                subscription.billing_info.next_billing_time
-              )
-            : null,
-      },
+  active: true,
+
+  subscriptionEndsAt:
+    subscription.billing_info?.next_billing_time
+      ? new Date(
+          subscription.billing_info.next_billing_time
+        )
+      : null,
+},
     });
 
     return NextResponse.json({

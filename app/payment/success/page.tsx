@@ -24,9 +24,15 @@ function SuccessContent() {
       if (!subscriptionId || !orgId) {
         setMessage("Invalid payment session.");
 
-        setTimeout(() => {
-          router.replace("/register/plan");
-        }, 3000);
+        const source = searchParams.get("source");
+
+setTimeout(() => {
+  if (source === "renewal") {
+    router.replace("/billing/plans");
+  } else {
+    router.replace("/register/plan");
+  }
+}, 3000);
 
         return;
       }
@@ -58,9 +64,15 @@ function SuccessContent() {
           "Subscription activated successfully."
         );
 
-        setTimeout(() => {
-          router.replace("/login");
-        }, 2000);
+        const source = searchParams.get("source");
+
+setTimeout(() => {
+  if (source === "renewal") {
+    router.replace("/billing");
+  } else {
+    router.replace("/login");
+  }
+}, 2000);
       } catch (err: any) {
         console.error(err);
 
@@ -69,9 +81,15 @@ function SuccessContent() {
             "Unable to verify subscription."
         );
 
-        setTimeout(() => {
-          router.replace("/register/plan");
-        }, 4000);
+       const source = searchParams.get("source");
+
+setTimeout(() => {
+  if (source === "renewal") {
+    router.replace("/billing/plans");
+  } else {
+    router.replace("/register/plan");
+  }
+}, 4000);
       }
     };
 

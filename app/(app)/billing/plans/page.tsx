@@ -24,9 +24,19 @@ export default async function BillingPlansPage() {
     redirect("/login");
   }
 
-  const currentPlan =
-    organization.subscriptions?.plan ??
-    organization.plan;
+  const subscription = organization.subscriptions;
+
+const currentPlan =
+  subscription?.plan ??
+  organization.plan;
+
+const subscriptionExpired =
+  !subscription ||
+  subscription.status !== "active" ||
+  (
+    subscription.renewAt &&
+    subscription.renewAt <= new Date()
+  );
 
   const plans = [
     {
@@ -91,6 +101,51 @@ export default async function BillingPlansPage() {
           Renew your current plan or upgrade anytime.
         </p>
 
+<div className="mt-6 rounded-2xl border bg-slate-50 p-5">
+
+  <div className="grid gap-4 md:grid-cols-3">
+
+    <div>
+      <p className="text-sm text-slate-500">
+        Current Plan
+      </p>
+
+      <p className="mt-1 text-lg font-semibold capitalize">
+        {currentPlan}
+      </p>
+    </div>
+
+    <div>
+      <p className="text-sm text-slate-500">
+        Status
+      </p>
+
+      <p
+        className={`mt-1 text-lg font-semibold ${
+          subscriptionExpired
+            ? "text-red-600"
+            : "text-green-600"
+        }`}
+      >
+        {subscriptionExpired ? "Expired" : "Active"}
+      </p>
+    </div>
+
+    <div>
+      <p className="text-sm text-slate-500">
+        Renewal Date
+      </p>
+
+      <p className="mt-1 text-lg font-semibold">
+        {subscription?.renewAt
+          ? subscription.renewAt.toLocaleDateString()
+          : "-"}
+      </p>
+    </div>
+
+  </div>
+
+</div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-3">
@@ -111,11 +166,19 @@ export default async function BillingPlansPage() {
               }`}
             >
 
-              {isCurrent && (
-                <div className="mb-4 inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-600">
-                  Current Plan
-                </div>
-              )}
+             {isCurrent && (
+  <div
+    className={`mb-4 inline-flex rounded-full px-3 py-1 text-sm font-medium ${
+      subscriptionExpired
+        ? "bg-red-100 text-red-600"
+        : "bg-green-100 text-green-700"
+    }`}
+  >
+    {subscriptionExpired
+      ? "Expired Plan"
+      : "Current Plan"}
+  </div>
+)}
 
               <h2 className="text-3xl font-bold">
                 {plan.title}
@@ -140,13 +203,21 @@ export default async function BillingPlansPage() {
 
               </ul>
 
-              <Link
-                href={`/billing/plans/checkout?plan=${plan.id}`}
-                className="mt-10 block rounded-xl bg-orange-500 py-3 text-center font-medium text-white hover:bg-orange-600"
-              >
-                {isCurrent
-                  ? "Renew Plan"
-                  : "Upgrade Plan"}
+             <Link
+  href={`/billing/plans/checkout?plan=${plan.id}`}
+  className={`mt-10 block rounded-xl py-3 text-center font-medium ${
+    isCurrent && !subscriptionExpired
+      ? "pointer-events-none bg-gray-300 text-gray-600"
+      : "bg-orange-500 text-white hover:bg-orange-600"
+  }`}
+>
+              {isCurrent
+  ? (
+      subscriptionExpired
+        ? "Renew Plan"
+        : "Current Plan"
+    )
+  : "Upgrade Plan"}
               </Link>
 
             </div>

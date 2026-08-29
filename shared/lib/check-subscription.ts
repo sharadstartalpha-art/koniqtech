@@ -18,7 +18,7 @@ export async function requireActiveSubscription(orgId: string) {
   const subscription = organization.subscriptions;
 
   if (!subscription) {
-    redirect("/subscription-expired");
+    redirect("/billing/plans");
   }
 
   if (
@@ -26,7 +26,7 @@ export async function requireActiveSubscription(orgId: string) {
     (subscription.renewAt &&
       subscription.renewAt <= new Date())
   ) {
-    redirect("/subscription-expired");
+    redirect("/billing/plans");
   }
 
   return subscription;

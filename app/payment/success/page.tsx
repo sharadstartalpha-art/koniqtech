@@ -30,7 +30,13 @@ setTimeout(() => {
   if (source === "renewal") {
     router.replace("/billing/plans");
   } else {
-    router.replace("/register/plan");
+    const source = searchParams.get("source");
+
+if (source === "renewal") {
+  router.replace("/billing/plans");
+} else {
+  router.replace("/register/plan");
+}
   }
 }, 3000);
 
@@ -64,11 +70,13 @@ setTimeout(() => {
           "Subscription activated successfully."
         );
 
-        const source = searchParams.get("source");
+       const source = searchParams.get("source");
+
+setMessage("Subscription activated successfully.");
 
 setTimeout(() => {
   if (source === "renewal") {
-    router.replace("/billing");
+    router.replace("/");
   } else {
     router.replace("/login");
   }
@@ -87,7 +95,13 @@ setTimeout(() => {
   if (source === "renewal") {
     router.replace("/billing/plans");
   } else {
-    router.replace("/register/plan");
+   const source = searchParams.get("source");
+
+if (source === "renewal") {
+  router.replace("/billing/plans");
+} else {
+  router.replace("/register/plan");
+}
   }
 }, 4000);
       }

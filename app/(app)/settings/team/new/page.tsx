@@ -65,6 +65,39 @@ if (!orgId) {
   )
 }
 
+
+
+
+const organization = await prisma.organization.findUnique({
+  where: {
+    id: orgId,
+  },
+  select: {
+  usersLimit: true,
+  plan: true,
+},
+})
+
+if (!organization) {
+  throw new Error("Organization not found")
+}
+
+const currentUsers = await prisma.user.count({
+  where: {
+    orgId,
+  },
+})
+
+if (
+  session?.user?.role !== "super_admin" &&
+  organization &&
+  currentUsers >= organization.usersLimit
+) {
+  throw new Error(
+    `Your current plan allows only ${organization.usersLimit} team members. Please upgrade your subscription to add more users.`
+  )
+}
+
 await prisma.user.create({
   data: {
     orgId,
@@ -75,25 +108,9 @@ await prisma.user.create({
     status,
   },
 })
+redirect("/settings/team")
 
-const users =
-    await prisma.user.findMany({
-      where:{
-        orgId
-      },
-      orderBy:{
-        createdAt:"desc"
-      }
-    })
- 
-
-  redirect("/settings/team")
 }
-
-
-
-
-
 
 export default async function NewTeamMemberPage() {
 
@@ -104,6 +121,74 @@ const orgId = session?.user?.orgId
 if (!orgId) {
   redirect("/login")
 }
+
+
+const organization = await prisma.organization.findUnique({
+  where: {
+    id: orgId,
+  },
+  select: {
+  usersLimit: true,
+  plan: true,
+},
+})
+
+if (!organization) {
+  redirect("/login")
+}
+
+const currentUsers = await prisma.user.count({
+  where: {
+    orgId,
+  },
+})
+
+const limitReached =
+  session.user.role !== "super_admin" &&
+  currentUsers >= (organization?.usersLimit ?? 5)
+
+if (limitReached) {
+  return (
+    <div className="max-w-2xl mx-auto rounded-3xl border bg-white p-10">
+
+      <h1 className="text-3xl font-bold">
+        Team Member Limit Reached
+      </h1>
+
+      <p className="mt-4 text-slate-600">
+  Team Members Used
+</p>
+
+<p className="mt-2 text-3xl font-bold">
+  {currentUsers} / {organization.usersLimit}
+</p>
+
+<p className="mt-2 text-slate-600">
+  Current Plan:
+  <strong className="ml-2 capitalize">
+    {organization.plan}
+  </strong>
+</p>
+
+<p className="mt-4 text-slate-600">
+  You've reached the maximum number of team members for your current subscription.
+</p>
+
+      <p className="mt-2 text-slate-600">
+        Upgrade your plan to add more employees.
+      </p>
+
+      <Link
+        href="/billing/plans"
+        className="mt-8 inline-flex rounded-xl bg-orange-600 px-6 py-3 text-white hover:bg-orange-700"
+      >
+        Upgrade Plan
+      </Link>
+
+    </div>
+  )
+}
+
 
 const roles = await prisma.organizationRole.findMany({
   where: {

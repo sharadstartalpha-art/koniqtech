@@ -24,8 +24,7 @@ async function createUser(
  const organizationRoleId =
   formData.get("organizationRoleId") as string
 
-  const status =
-    formData.get("status") as string
+
 
   
   if (
@@ -47,19 +46,12 @@ if (existing) {
 }
 
 
- const existingInvitation =
-  await prisma.teamInvitation.findFirst({
-    where: {
-      email,
-      status: "pending",
-    },
-  })
-
-if (existingInvitation) {
-  throw new Error(
-    "A pending invitation already exists for this email."
-  )
-}
+ await prisma.teamInvitation.deleteMany({
+  where: {
+    email,
+    status: "pending",
+  },
+})
 
   
 
@@ -427,34 +419,7 @@ if (roles.length === 0) {
 
           </div>
 
-          <div>
-
-            <label className="block mb-2 font-medium">
-              Status
-            </label>
-
-            <select
-              name="status"
-              className="
-              w-full
-              h-12
-              px-4
-              rounded-xl
-              border
-              "
-            >
-
-              <option value="active">
-                Active
-              </option>
-
-              <option value="inactive">
-                Inactive
-              </option>
-
-            </select>
-
-          </div>
+         
 
         </div>
 

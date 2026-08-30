@@ -1,8 +1,12 @@
 import Link from "next/link"
 import prisma from "@/shared/lib/prisma"
-import bcrypt from "bcryptjs"
+
 import { redirect } from "next/navigation"
 import { auth } from "@/auth"
+import { randomUUID } from "crypto"
+import { Resend } from "resend"
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function createUser(
   formData: FormData
@@ -15,8 +19,7 @@ async function createUser(
   const email =
     formData.get("email") as string
 
-  const password =
-    formData.get("password") as string
+ 
 
  const organizationRoleId =
   formData.get("organizationRoleId") as string
@@ -26,33 +29,41 @@ async function createUser(
 
   
   if (
-    !name ||
-    !email ||
-    !password
-  ) {
-    throw new Error(
-      "Missing required fields"
-    )
-  }
+  !name ||
+  !email
+) {
+  throw new Error("Missing required fields")
+}
 
-  const existing =
-    await prisma.user.findUnique({
-      where: {
-        email
-      }
-    })
 
-  if (existing) {
-    throw new Error(
-      "Email already exists"
-    )
-  }
+const existing = await prisma.user.findUnique({
+  where: {
+    email,
+  },
+})
 
-  const passwordHash =
-    await bcrypt.hash(
-      password,
-      10
-    )
+if (existing) {
+  throw new Error("A user with this email already exists.")
+}
+
+
+ const existingInvitation =
+  await prisma.teamInvitation.findFirst({
+    where: {
+      email,
+      status: "pending",
+    },
+  })
+
+if (existingInvitation) {
+  throw new Error(
+    "A pending invitation already exists for this email."
+  )
+}
+
+  
+
+  
 
 const session = await auth()
 
@@ -98,16 +109,66 @@ if (
   )
 }
 
-await prisma.user.create({
+const token = randomUUID()
+
+await prisma.teamInvitation.create({
   data: {
     orgId,
-    name,
     email,
-    passwordHash,
-    organizationRoleId,
-    status,
+    name,
+    roleId: organizationRoleId,
+    invitedById: session.user.id,
+    token,
+    status: "pending",
+    expiresAt: new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    ),
   },
 })
+
+const inviteUrl =
+  `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`
+
+await resend.emails.send({
+  from: "KoniqTech <noreply@koniqtech.com>",
+  to: email,
+  subject: "You're invited to join KoniqTech",
+ html: `
+<h2>Hello ${name},</h2>
+
+<p>
+You've been invited to join KoniqTech.
+</p>
+
+<p>
+Click the button below to create your password and activate your account.
+</p>
+
+<p style="margin:30px 0">
+<a
+href="${inviteUrl}"
+style="
+background:#ea580c;
+color:white;
+padding:14px 24px;
+text-decoration:none;
+border-radius:8px;
+display:inline-block;
+font-weight:bold;
+">
+Accept Invitation
+</a>
+</p>
+
+<p>
+This invitation expires in 7 days.
+</p>
+`
+})
+
+
+
+
 redirect("/settings/team")
 
 }
@@ -256,7 +317,7 @@ if (roles.length === 0) {
         </h1>
 
         <p className="text-slate-500 mt-2">
-          Create a new user account
+          Invite a team member by email.
         </p>
 
       </div>
@@ -315,27 +376,7 @@ if (roles.length === 0) {
 
         </div>
 
-        <div>
-
-          <label className="block mb-2 font-medium">
-            Password
-          </label>
-
-          <input
-            type="password"
-            name="password"
-            required
-            placeholder="Minimum 8 characters"
-            className="
-            w-full
-            h-12
-            px-4
-            rounded-xl
-            border
-            "
-          />
-
-        </div>
+        
 
         <div className="grid grid-cols-2 gap-6">
 
@@ -431,7 +472,7 @@ if (roles.length === 0) {
             hover:bg-orange-700
             "
           >
-            Create User
+            Send Invitation
           </button>
 
           <Link

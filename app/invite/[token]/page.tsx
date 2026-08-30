@@ -37,66 +37,87 @@ export default async function Page({
 
   const validInvitation = invitation
 
-  async function acceptInvite(
-    formData:FormData
-  ){
+ async function acceptInvite(
+  formData: FormData
+) {
 
-    "use server"
+  "use server"
 
-    const name =
-      String(formData.get("name"))
+  const name =
+    String(formData.get("name")).trim()
 
-    const password =
-      String(formData.get("password"))
+  const password =
+    String(formData.get("password"))
 
-    const hash =
-      await bcrypt.hash(
-        password,
-        10
-      )
+  const confirmPassword =
+    String(formData.get("confirmPassword"))
 
+  if (!name) {
+    throw new Error("Name is required.")
+  }
 
-     
-const orgRole = await prisma.organizationRole.findUnique({
-  where: {
-    id: validInvitation.roleId,
-  },
-})
+  if (password.length < 8) {
+    throw new Error("Password must be at least 8 characters.")
+  }
 
-if (!orgRole) {
-  throw new Error("Role not found")
-}
+  if (password !== confirmPassword) {
+    throw new Error("Passwords do not match.")
+  }
 
-   await prisma.user.create({
-    data: {
+  const existingUser =
+    await prisma.user.findUnique({
+      where: {
+        email: validInvitation.email,
+      },
+    })
+
+  if (existingUser) {
+    throw new Error("This account already exists.")
+  }
+
+  const orgRole =
+    await prisma.organizationRole.findUnique({
+      where: {
+        id: validInvitation.roleId,
+      },
+    })
+
+  if (!orgRole) {
+    throw new Error("Role not found.")
+  }
+
+  // <-- THIS WAS MISSING
+  const hash = await bcrypt.hash(password, 10)
+
+  await prisma.$transaction(async (tx) => {
+
+    await tx.user.create({
+      data: {
         orgId: validInvitation.orgId,
         name,
         email: validInvitation.email,
         passwordHash: hash,
         organizationRoleId: validInvitation.roleId,
-    }
-})
-
-
-    await prisma.teamInvitation.update({
-
-      where:{
-        id:validInvitation.id
+        status: "active",
+        emailVerified: true,
       },
-
-      data:{
-
-        status:"accepted",
-
-        acceptedAt:
-          new Date()
-
-      }
-
     })
 
-    redirect("/login?registered=1")
-  }
+    await tx.teamInvitation.update({
+      where: {
+        id: validInvitation.id,
+      },
+      data: {
+        status: "accepted",
+        acceptedAt: new Date(),
+      },
+    })
+
+  })
+
+  redirect("/login?registered=1")
+}
+
 
   return(
 
@@ -126,21 +147,26 @@ if (!orgRole) {
         </h1>
 
         <p className="text-slate-500">
-          {invitation.email}
-        </p>
+  You're accepting an invitation for
+</p>
 
-        <input
-          name="name"
-          required
-          placeholder="Full Name"
-          className="
-          w-full
-          h-12
-          border
-          rounded-xl
-          px-4
-          "
-        />
+<p className="font-medium">
+  {invitation.email}
+</p>
+
+       <input
+  name="name"
+  required
+  defaultValue={invitation.name ?? ""}
+  placeholder="Full Name"
+  className="
+    w-full
+    h-12
+    border
+    rounded-xl
+    px-4
+  "
+/>
 
         <input
           name="password"
@@ -155,6 +181,21 @@ if (!orgRole) {
           px-4
           "
         />
+
+<input
+  name="confirmPassword"
+  type="password"
+  required
+  placeholder="Confirm Password"
+  className="
+    w-full
+    h-12
+    border
+    rounded-xl
+    px-4
+  "
+/>
+
 
         <button
           className="

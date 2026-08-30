@@ -809,7 +809,7 @@ export default function ContactPage() {
                 />
 
                 <StatCard
-                  value="7 Days"
+                  value="3 Days"
                   label="Free Trial"
                 />
 

@@ -222,7 +222,7 @@ const successStats = [
     label: "Fast Setup"
   },
   {
-    value: "7 Days",
+    value: "3 Days",
     label: "Free Trial"
   },
   {

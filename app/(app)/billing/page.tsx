@@ -255,6 +255,17 @@ export default async function BillingPage({
 
   ]);
 
+const recentPayments =
+  await prisma.subscriptionPayment.findMany({
+    where: {
+      orgId: session.user.orgId,
+    },
+    orderBy: {
+      paidAt: "desc",
+    },
+    take: 5,
+  });
+
   return (
 
     <div className="space-y-8">
@@ -281,6 +292,13 @@ export default async function BillingPage({
     >
       Manage Plan
     </Link>
+
+    <Link
+  href="/billing/history"
+  className="text-orange-600 hover:underline"
+>
+  View Full Billing History →
+</Link>
 
   </div>
 

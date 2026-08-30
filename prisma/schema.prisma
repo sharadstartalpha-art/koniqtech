@@ -241,6 +241,7 @@ model Organization {
   Opportunity          Opportunity[]
   UserJobDocument      UserJobDocument[]
   WarehouseTransaction WarehouseTransaction[]
+  SubscriptionPayment  SubscriptionPayment[]
 }
 
 model User {
@@ -1571,7 +1572,31 @@ model Subscription {
 
   createdAt DateTime @default(now())
 
-  updatedAt DateTime @updatedAt
+  updatedAt           DateTime              @updatedAt
+  SubscriptionPayment SubscriptionPayment[]
+}
+
+model SubscriptionPayment {
+  id String @id @default(cuid())
+
+  subscriptionId String
+  orgId          String
+
+  paypalPaymentId String?
+
+  amount Decimal @db.Decimal(12, 2)
+
+  currency String
+
+  status String
+
+  paidAt DateTime
+
+  createdAt DateTime @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 }
 
 model Employee {

@@ -2,6 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import DataTable from "@/components/DataTable"
 import { redirect } from "next/navigation"
+import { canView } from "@/shared/lib/permissions"
 
 export const dynamic = "force-dynamic"
 
@@ -12,6 +13,15 @@ export default async function Page() {
   if (!session?.user) {
     redirect("/login")
   }
+
+
+const permissions =
+  (session.user as any).permissions ?? []
+
+if (!canView(permissions, "Customers")) {
+  redirect("/dashboard")
+}
+
 
   const orgId = session.user.orgId
 

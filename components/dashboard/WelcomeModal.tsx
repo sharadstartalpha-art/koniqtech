@@ -8,12 +8,23 @@ export default function WelcomeModal() {
 
     if (!open) return null;
 
-    const startSetup = async () => {
-  await fetch("/api/user/welcome", {
-    method: "POST",
-  });
+  const startSetup = async () => {
+  try {
+    const res = await fetch("/api/user/welcome", {
+      method: "POST",
+    });
 
-  setOpen(false);
+    if (!res.ok) {
+      throw new Error("Failed to update welcome status");
+    }
+
+    setOpen(false);
+
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    alert("Unable to continue.");
+  }
 };
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -52,12 +63,7 @@ export default function WelcomeModal() {
 
                 </div>
 
-                <button
-                    onClick={() => setOpen(false)}
-                    className="mt-8 w-full rounded-xl bg-orange-500 py-3 text-white hover:bg-orange-600"
-                >
-                    Start Setup
-                </button>
+               
 
             </div>
 

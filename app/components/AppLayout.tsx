@@ -53,9 +53,12 @@ children:React.ReactNode
 
 
 
-  
-const [role,setRole] =
-useState("")
+const [role,setRole] = useState("")
+
+const [permissions, setPermissions] =
+  useState<any[]>([])
+
+
 
 const [subscriptionPlan, setSubscriptionPlan] =
   useState<SubscriptionPlan>(SubscriptionPlan.starter);
@@ -204,6 +207,12 @@ setRole(
   ).toLowerCase()
 )
 
+const [permissions, setPermissions] = useState<any[]>([])
+
+setPermissions(
+  (session?.user as any)?.permissions ?? []
+)
+
 setSubscriptionPlan(
   (session?.user as any)?.subscriptionPlan ?? "starter"
 )
@@ -216,6 +225,18 @@ setIndustry(
 
 }
 
+
+function hasViewPermission(module: string) {
+  const permission = permissions.find(
+    (p) => p.module === module
+  )
+
+  if (!permission) {
+    return true
+  }
+
+  return permission.canView
+}
 return(
 
 <div className="h-screen flex bg-[#f8f8f8]">
@@ -294,18 +315,27 @@ Koniqtech
   {section.items
    .filter((item) => {
   const roleOk =
-    !item.roles ||
-    item.roles.includes(role as any)
+  !item.roles ||
+  item.roles.includes(role as any)
 
-  const planOk =
-    !item.plans ||
-    item.plans.includes(subscriptionPlan as any)
+const planOk =
+  !item.plans ||
+  item.plans.includes(subscriptionPlan as any)
 
-  const industryOk =
-    !item.industries ||
-    item.industries.includes(industry as any)
+const industryOk =
+  !item.industries ||
+  item.industries.includes(industry as any)
 
-  return roleOk && planOk && industryOk
+const moduleName =
+  item.label
+
+const permissionOk =
+  hasViewPermission(moduleName)
+
+return roleOk &&
+       planOk &&
+       industryOk &&
+       permissionOk
 })
     .map(item => {
 

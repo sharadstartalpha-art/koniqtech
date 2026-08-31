@@ -42,8 +42,11 @@ export const {
               },
             },
 
-            organizationRole: true,
-
+           organizationRole: {
+  include: {
+    permissions: true,
+  },
+},
             employee: {
               include: {
                 role: true,
@@ -79,6 +82,9 @@ export const {
           organizationRole:
             user.organizationRole?.name ?? null,
 
+            permissions:
+             user.organizationRole?.permissions ?? [],
+
           employeeRole:
             user.employee?.role?.name ?? null,
 
@@ -110,6 +116,9 @@ export const {
         token.organizationRole =
           user.organizationRole
 
+         token.permissions =
+  (user as any).permissions
+
         token.employeeRole =
           user.employeeRole
 
@@ -139,6 +148,9 @@ export const {
 
         session.user.organizationRole =
           token.organizationRole as string | null
+
+          ;(session.user as any).permissions =
+            token.permissions ?? []
 
         session.user.employeeRole =
           token.employeeRole as string | null

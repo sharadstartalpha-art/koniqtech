@@ -48,7 +48,6 @@ export interface MenuItem {
   href: string;
   icon: LucideIcon;
 
-  roles?: string[];
   plans?: SubscriptionPlan[];
   industries?: Industry[];
 
@@ -70,15 +69,7 @@ export const MENU: MenuSection[] = [
         href: "/dashboard",
         icon: LayoutDashboard,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-          "accountant",
-        ],
+       
 
         plans: [
           
@@ -100,11 +91,7 @@ export const MENU: MenuSection[] = [
         href: "/leads",
         icon: Users,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-        ],
+       
 
         plans: [
           
@@ -126,11 +113,7 @@ export const MENU: MenuSection[] = [
         href: "/customers",
         icon: Users,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-        ],
+       
 
         plans: [
           SubscriptionPlan.starter,
@@ -151,11 +134,6 @@ export const MENU: MenuSection[] = [
         href: "/pipeline",
         icon: GitBranch,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-        ],
 
         plans: [
           SubscriptionPlan.starter,
@@ -176,11 +154,7 @@ export const MENU: MenuSection[] = [
         href: "/quotes",
         icon: FileText,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-        ],
+        
 
         plans: [
           
@@ -208,13 +182,7 @@ export const MENU: MenuSection[] = [
         href: "/jobs",
         icon: Briefcase,
 
-        roles: [
-          "owner",
-          "manager",
-          "dispatcher",
-          "technician",
-          "crew",
-        ],
+        
 
         plans: [
           
@@ -236,10 +204,7 @@ export const MENU: MenuSection[] = [
         href: "/vendors",
         icon: Truck,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
+        
 
         plans: [
           SubscriptionPlan.starter,
@@ -260,10 +225,7 @@ export const MENU: MenuSection[] = [
          href: "/purchase-orders",
          icon: ShoppingCart,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
+        
 
         plans: [
           SubscriptionPlan.starter,
@@ -285,11 +247,6 @@ export const MENU: MenuSection[] = [
         href: "/crew",
         icon: Users,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
-
         plans: [
           SubscriptionPlan.starter,
           SubscriptionPlan.professional,
@@ -309,11 +266,7 @@ export const MENU: MenuSection[] = [
         href: "/dispatch",
         icon: Truck,
 
-        roles: [
-          "owner",
-          "manager",
-          "dispatcher",
-        ],
+       
 
         plans: [
           SubscriptionPlan.starter,
@@ -334,14 +287,7 @@ export const MENU: MenuSection[] = [
         href: "/calendar",
         icon: Calendar,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-        ],
+        
 
         plans: [
           
@@ -362,11 +308,6 @@ export const MENU: MenuSection[] = [
         label: "Inventory",
         href: "/inventory",
         icon: Package,
-
-        roles: [
-          "owner",
-          "manager",
-        ],
 
         plans: [
           SubscriptionPlan.professional,
@@ -392,11 +333,7 @@ export const MENU: MenuSection[] = [
         href: "/billing",
         icon: CreditCard,
 
-        roles: [
-          "owner",
-          "accountant",
-        ],
-
+        
         plans: [
           
           SubscriptionPlan.starter,
@@ -417,11 +354,6 @@ export const MENU: MenuSection[] = [
         href: "/invoices",
         icon: FileText,
 
-        roles: [
-          "owner",
-          "accountant",
-          "manager",
-        ],
 
         plans: [
           
@@ -443,11 +375,6 @@ export const MENU: MenuSection[] = [
         href: "/reports",
         icon: BarChart3,
 
-        roles: [
-          "owner",
-          "manager",
-          "accountant",
-        ],
 
         plans: [
           SubscriptionPlan.starter,
@@ -474,15 +401,6 @@ export const MENU: MenuSection[] = [
         href: "/messages",
         icon: MessageSquare,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-          "accountant",
-        ],
 
         plans: [
           SubscriptionPlan.starter,
@@ -503,15 +421,7 @@ export const MENU: MenuSection[] = [
         href: "/notifications",
         icon: Bell,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-          "accountant",
-        ],
+        
 
         plans: [
           
@@ -539,10 +449,7 @@ export const MENU: MenuSection[] = [
         href: "/ai",
         icon: Brain,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
+        
 
         plans: [
           SubscriptionPlan.professional,
@@ -568,16 +475,7 @@ export const MENU: MenuSection[] = [
         href: "/profile",
         icon: UserCog,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-          "accountant",
-        ],
-
+        
         plans: [
           
           SubscriptionPlan.starter,
@@ -598,15 +496,6 @@ export const MENU: MenuSection[] = [
         href: "/profile/security",
         icon: Settings,
 
-        roles: [
-          "owner",
-          "manager",
-          "sales",
-          "dispatcher",
-          "technician",
-          "crew",
-          "accountant",
-        ],
 
         plans: [
           
@@ -634,10 +523,6 @@ export const MENU: MenuSection[] = [
         href: "/settings/team",
         icon: UserCog,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
 
         plans: [
           SubscriptionPlan.starter,
@@ -658,10 +543,7 @@ export const MENU: MenuSection[] = [
         href: "/settings",
         icon: Settings,
 
-        roles: [
-          "owner",
-          "manager",
-        ],
+        
 
         plans: [
           SubscriptionPlan.starter,

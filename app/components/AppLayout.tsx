@@ -227,17 +227,6 @@ setIndustry(
 }
 
 
-function hasViewPermission(module: string) {
-  const permission = permissions.find(
-    (p) => p.module === module
-  )
-
-  if (!permission) {
-    return true
-  }
-
-  return permission.canView
-}
 return(
 
 <div className="h-screen flex bg-[#f8f8f8]">
@@ -315,17 +304,16 @@ Koniqtech
 
   {section.items
    .filter((item) => {
-  const roleOk =
-  !item.roles ||
-  item.roles.includes(role as any)
-
-const planOk =
+    
+  const planOk =
   !item.plans ||
-  item.plans.includes(subscriptionPlan as any)
+  item.plans.includes(subscriptionPlan)
 
 const industryOk =
   !item.industries ||
   item.industries.includes(industry as any)
+
+
 
 const moduleName =
   item.label
@@ -334,14 +322,15 @@ const isOwner = role === "owner";
 
 const permissionOk = canView(
   permissions,
-  moduleName,
+  item.label,
   isOwner
 );
 
-return roleOk &&
-       planOk &&
-       industryOk &&
-       permissionOk
+return (
+  planOk &&
+  industryOk &&
+  permissionOk
+)
 })
     .map(item => {
 
@@ -404,19 +393,24 @@ return roleOk &&
 
           {item.children
   .filter((child) => {
-    const roleOk =
-      !child.roles ||
-      child.roles.includes(role as any)
+    
 
     const planOk =
-      !child.plans ||
-      child.plans.includes(subscriptionPlan as any)
+    !child.plans ||
+    child.plans.includes(subscriptionPlan);
 
-    const industryOk =
-      !child.industries ||
-      child.industries.includes(industry as any)
+  const industryOk =
+    !child.industries ||
+    child.industries.includes(industry as any);
 
-    return roleOk && planOk && industryOk
+  const permissionOk = canView(
+    permissions,
+    child.label,
+    role === "owner"
+  );
+
+    return planOk && industryOk &&
+    permissionOk
   }).map((child) => {
 
   const ChildIcon = child.icon

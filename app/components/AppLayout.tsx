@@ -208,7 +208,7 @@ setRole(
   ).toLowerCase()
 )
 
-const [permissions, setPermissions] = useState<any[]>([])
+
 
 setPermissions(
   (session?.user as any)?.permissions ?? []
@@ -334,7 +334,7 @@ const permissionOk =
   canView(
       permissions,
       moduleName,
-      role === "owner"
+      role === "Owner"
   )
 
 return roleOk &&

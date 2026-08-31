@@ -330,12 +330,13 @@ const industryOk =
 const moduleName =
   item.label
 
-const permissionOk =
-  canView(
-      permissions,
-      moduleName,
-      role === "Owner"
-  )
+const isOwner = role === "owner";
+
+const permissionOk = canView(
+  permissions,
+  moduleName,
+  isOwner
+);
 
 return roleOk &&
        planOk &&

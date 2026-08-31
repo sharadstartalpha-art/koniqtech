@@ -33,14 +33,18 @@ export function canView(
   isOwner = false
 ) {
   if (isOwner) {
-    return true
+    return true;
   }
 
-  return permissions.some(
-    p =>
-      p.module === module &&
-      p.canView
-  )
+  const permission = permissions.find(
+    (p) => p.module === module
+  );
+
+  if (!permission) {
+    return true;
+  }
+
+  return permission.canView;
 }
 
 export function canCreate(

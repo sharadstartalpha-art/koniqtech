@@ -38,6 +38,7 @@ User
 
 import { getMenuForPlan } from "@/shared/lib/get-menu";
 import { SubscriptionPlan } from "@prisma/client";
+import { canView } from "@/shared/lib/permissions";
 
 export default function AppLayout({
 
@@ -330,7 +331,11 @@ const moduleName =
   item.label
 
 const permissionOk =
-  hasViewPermission(moduleName)
+  canView(
+      permissions,
+      moduleName,
+      role === "owner"
+  )
 
 return roleOk &&
        planOk &&

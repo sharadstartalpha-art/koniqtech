@@ -28,19 +28,19 @@ function getPermission(
 }
 
 export function canView(
-  permissions: Permission[],
-  module: string
+  permissions: any[],
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
-
-  if (!permission) {
+  if (isOwner) {
     return true
   }
 
-  return permission.canView
+  return permissions.some(
+    p =>
+      p.module === module &&
+      p.canView
+  )
 }
 
 export function canCreate(

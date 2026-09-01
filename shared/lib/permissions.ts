@@ -41,7 +41,7 @@ export function canView(
   );
 
   if (!permission) {
-    return true;
+    return false;
   }
 
   return permission.canView;
@@ -57,7 +57,7 @@ export function canCreate(
   )
 
   if (!permission) {
-    return true
+    return false;
   }
 
   return permission.canCreate
@@ -73,7 +73,7 @@ export function canEdit(
   )
 
   if (!permission) {
-    return true
+    return false;
   }
 
   return permission.canEdit
@@ -89,7 +89,7 @@ export function canDelete(
   )
 
   if (!permission) {
-    return true
+   return false;
   }
 
   return permission.canDelete
@@ -105,7 +105,7 @@ export function canImport(
   )
 
   if (!permission) {
-    return true
+    return false;
   }
 
   return permission.canImport ?? false
@@ -121,7 +121,7 @@ export function canExport(
   )
 
   if (!permission) {
-    return true
+    return false;
   }
 
   return permission.canExport ?? false
@@ -137,7 +137,7 @@ export function canApprove(
   )
 
   if (!permission) {
-    return true
+   return false;
   }
 
   return permission.canApprove ?? false
@@ -153,7 +153,7 @@ export function canAssign(
   )
 
   if (!permission) {
-    return true
+    return false;
   }
 
   return permission.canAssign ?? false

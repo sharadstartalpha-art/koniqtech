@@ -38,7 +38,8 @@ export interface MenuChild {
   href: string;
   icon: LucideIcon;
 
-  roles?: string[];
+  permission?: string;
+
   plans?: SubscriptionPlan[];
   industries?: Industry[];
 }
@@ -47,6 +48,8 @@ export interface MenuItem {
   label: string;
   href: string;
   icon: LucideIcon;
+
+  permission?: string;
 
   plans?: SubscriptionPlan[];
   industries?: Industry[];
@@ -67,6 +70,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Dashboard",
         href: "/dashboard",
+        permission: "Dashboard",
         icon: LayoutDashboard,
 
        
@@ -89,6 +93,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Leads",
         href: "/leads",
+        permission: "Leads",
         icon: Users,
 
        
@@ -111,6 +116,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Customers",
         href: "/customers",
+        permission: "Customers",
         icon: Users,
 
        
@@ -132,6 +138,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Pipeline",
         href: "/pipeline",
+        permission: "Pipeline",
         icon: GitBranch,
 
 
@@ -152,6 +159,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Quotes",
         href: "/quotes",
+        permission: "Quotes",
         icon: FileText,
 
         
@@ -180,6 +188,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Jobs",
         href: "/jobs",
+        permission: "Jobs",
         icon: Briefcase,
 
         
@@ -202,6 +211,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Vendors",
         href: "/vendors",
+        permission: "Vendors",
         icon: Truck,
 
         
@@ -245,6 +255,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Crew",
         href: "/crew",
+        permission: "Crew",
         icon: Users,
 
         plans: [
@@ -264,6 +275,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Dispatch",
         href: "/dispatch",
+        permission: "Dispatch",
         icon: Truck,
 
        
@@ -285,6 +297,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Calendar",
         href: "/calendar",
+        permission: "Calendar",
         icon: Calendar,
 
         
@@ -307,6 +320,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Inventory",
         href: "/inventory",
+        permission: "Inventory",
         icon: Package,
 
         plans: [
@@ -331,6 +345,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Billing",
         href: "/billing",
+        permission: "Billing",
         icon: CreditCard,
 
         
@@ -352,6 +367,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Invoices",
         href: "/invoices",
+        permission: "Invoices",
         icon: FileText,
 
 
@@ -373,6 +389,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Reports",
         href: "/reports",
+        permission: "Reports",
         icon: BarChart3,
 
 
@@ -399,6 +416,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Messages",
         href: "/messages",
+        permission: "Messages",
         icon: MessageSquare,
 
 
@@ -419,6 +437,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Notifications",
         href: "/notifications",
+        permission: "Notifications",
         icon: Bell,
 
         
@@ -447,6 +466,7 @@ export const MENU: MenuSection[] = [
       {
         label: "AI Assistant",
         href: "/ai",
+        permission: "AI Assistant",
         icon: Brain,
 
         
@@ -473,6 +493,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Profile",
         href: "/profile",
+        permission: "Profile",
         icon: UserCog,
 
         
@@ -494,6 +515,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Change Password",
         href: "/profile/security",
+        permission: "Change Password",
         icon: Settings,
 
 
@@ -521,6 +543,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Team",
         href: "/settings/team",
+        permission: "Team",
         icon: UserCog,
 
 
@@ -541,6 +564,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Settings",
         href: "/settings",
+        permission: "Settings",
         icon: Settings,
 
         
@@ -562,37 +586,44 @@ export const MENU: MenuSection[] = [
           {
             label: "Company",
             href: "/settings/company",
+            permission: "Company",
             icon: Building2,
           },
           {
             label: "Organization",
             href: "/settings/organization",
+             permission: "Organization",
             icon: Building,
           },
           
           {
             label: "Branding",
             href: "/settings/branding",
+            permission: "Branding",
             icon: Palette,
           },
           {
             label: "Invitations",
             href: "/settings/invitations",
+             permission: "Invitations",
             icon: Mail,
           },
           {
             label: "Roles & Permissions",
             href: "/settings/roles",
+             permission: "Roles & Permissions",
             icon: ShieldCheck,
           },
           {
             label: "Billing",
             href: "/settings/billing",
+            permission: "Billing",
             icon: CreditCard,
           },
           {
   label: "Integrations",
   href: "/settings/integrations",
+  permission: "Integrations",
   icon: Plug,
 
   plans: [
@@ -603,6 +634,7 @@ export const MENU: MenuSection[] = [
           {
   label: "AI Settings",
   href: "/settings/ai",
+  permission: "AI Settings",
   icon: Brain,
 
   plans: [
@@ -613,11 +645,13 @@ export const MENU: MenuSection[] = [
           {
             label: "Email Templates",
             href: "/settings/email-templates",
+            permission: "Email Templates",
             icon: MailOpen,
           },
           {
             label: "Notifications",
             href: "/settings/notifications",
+            permission: "Notifications",
             icon: Bell,
           },
         ],

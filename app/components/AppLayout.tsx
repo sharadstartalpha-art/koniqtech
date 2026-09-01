@@ -315,16 +315,17 @@ const industryOk =
 
 
 
-const moduleName =
-  item.label
+
 
 const isOwner = role === "owner";
 
-const permissionOk = canView(
-  permissions,
-  item.label,
-  isOwner
-);
+const permissionOk =
+  !item.permission ||
+  canView(
+    permissions,
+    item.permission,
+    isOwner
+  );
 
 return (
   planOk &&
@@ -402,15 +403,22 @@ return (
   const industryOk =
     !child.industries ||
     child.industries.includes(industry as any);
-
-  const permissionOk = canView(
+const isOwner = role === "owner";
+ 
+const permissionOk =
+  !child.permission ||
+  canView(
     permissions,
-    child.label,
-    role === "owner"
+    child.permission,
+    isOwner
   );
 
-    return planOk && industryOk &&
-    permissionOk
+return (
+  planOk &&
+  industryOk &&
+  permissionOk
+);
+
   }).map((child) => {
 
   const ChildIcon = child.icon

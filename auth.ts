@@ -25,58 +25,54 @@ export const {
         password: {},
       },
 
-     async authorize(credentials) {
-  console.log("LOGIN ATTEMPT", credentials);
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+console.log("1");
+        const user = await prisma.user.findUnique({
+          where: {
+            email: String(credentials.email),
+          },
 
-  if (!credentials?.email || !credentials?.password) {
-    console.log("Missing credentials");
-    return null;
-  }
+          include: {
+            organization: {
+              include: {
+                subscriptions: true,
+              },
+            },
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: String(credentials.email),
-    },
-    include: {
-      organization: {
-        include: {
-          subscriptions: true,
-        },
-      },
-      organizationRole: {
-        include: {
-          permissions: true,
-        },
-      },
-      employee: {
-        include: {
-          role: true,
-        },
-      },
-    },
-  });
+           organizationRole: {
+  include: {
+    permissions: true,
+  },
+},
+            employee: {
+              include: {
+                role: true,
+              },
+            },
+          },
+        })
+console.log("2");
+        if (!user) {
+          return null
+        }
 
-  console.log("USER:", user?.email);
+        const validPassword = await bcrypt.compare(
+          String(credentials.password),
+          user.passwordHash
+        )
+console.log("3");
+        if (!validPassword) {
+          return null
+        }
 
-  if (!user) {
-    console.log("User not found");
-    return null;
-  }
 
-  console.log("HASH:", user.passwordHash);
+const permissions =
+  user.organizationRole?.permissions ?? [];
 
-  const validPassword = await bcrypt.compare(
-    String(credentials.password),
-    user.passwordHash
-  );
-
-  console.log("PASSWORD OK:", validPassword);
-
-  if (!validPassword) {
-    return null;
-  }
-
-       
+console.log("4", permissions);
 
         return {
           id: user.id,

@@ -15,8 +15,11 @@ columns,
 rows,
 onDeletePath,
 editPath,
-rowHref
-}:any){
+rowHref,
+canCreate = true,
+canEdit = true,
+canDelete = true,
+}: any) {
 
 const router = useRouter()
 
@@ -95,8 +98,7 @@ text-black
 {title}
 
 </h1>
-
-{buttonHref && (
+{buttonHref && canCreate && (
 
 <Link
 href={buttonHref}
@@ -117,7 +119,6 @@ items-center
 </Link>
 
 )}
-
 </div>
 
 <div className="
@@ -319,7 +320,7 @@ px-6
 flex
 gap-2
 ">
-{editPath && (
+{editPath && canEdit && (
 <Link
 
 href={`${editPath}/${row.id}`}
@@ -347,7 +348,7 @@ Edit
 </Link>
 )}
 
-{onDeletePath && (
+{onDeletePath && canDelete && (
 <button
 
 onClick={(e)=>{

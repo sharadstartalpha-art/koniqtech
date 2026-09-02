@@ -72,9 +72,14 @@ export const {
 const permissions =
   user.organizationRole?.permissions ?? [];
 
-
+console.log(
+  JSON.stringify(
+    user.organizationRole?.permissions
+  ).length
+)
 
         return {
+          
           id: user.id,
 
           email: user.email,

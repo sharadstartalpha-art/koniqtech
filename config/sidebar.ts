@@ -31,14 +31,14 @@ import {
   ShoppingCart,
 } from "lucide-react";
 
-
+import type { ModuleName } from "@/shared/constants/modules";
 
 export interface MenuChild {
   label: string;
   href: string;
   icon: LucideIcon;
 
-  permission?: string;
+  permission?: ModuleName
 
   plans?: SubscriptionPlan[];
   industries?: Industry[];
@@ -49,7 +49,7 @@ export interface MenuItem {
   href: string;
   icon: LucideIcon;
 
-  permission?: string;
+ permission?: ModuleName
 
   plans?: SubscriptionPlan[];
   industries?: Industry[];

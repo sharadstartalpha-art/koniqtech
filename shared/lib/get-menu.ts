@@ -1,6 +1,7 @@
 import { SubscriptionPlan } from "@prisma/client";
 import { MENU } from "@/config/sidebar";
 import { PLAN_FEATURES } from "@/shared/config/plan-features";
+import type { ModuleName } from "@/shared/constants/modules";
 
 export function getMenuForPlan(
   plan?: SubscriptionPlan

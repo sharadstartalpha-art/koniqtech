@@ -1,5 +1,7 @@
+import type { ModuleName } from "@/shared/constants/modules";
+
 export type Permission = {
-  module: string
+  module: ModuleName
 
   canView: boolean
 
@@ -20,7 +22,7 @@ export type Permission = {
 
 function getPermission(
   permissions: Permission[],
-  module: string
+  module: ModuleName
 ) {
   return permissions.find(
     (p) => p.module === module
@@ -28,8 +30,8 @@ function getPermission(
 }
 
 export function canView(
-  permissions: any[],
-  module: string,
+  permissions: Permission[],
+  module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -49,7 +51,7 @@ export function canView(
 
 export function canCreate(
   permissions: Permission[],
-  module: string,
+ module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -67,7 +69,7 @@ export function canCreate(
 
 export function canEdit(
   permissions: Permission[],
-  module: string,
+ module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -85,7 +87,7 @@ export function canEdit(
 
 export function canDelete(
   permissions: Permission[],
-  module: string,
+  module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -103,7 +105,7 @@ export function canDelete(
 
 export function canImport(
   permissions: Permission[],
-  module: string,
+ module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -121,7 +123,7 @@ export function canImport(
 
 export function canExport(
   permissions: Permission[],
-  module: string,
+  module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -139,7 +141,7 @@ export function canExport(
 
 export function canApprove(
   permissions: Permission[],
-  module: string,
+  module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {
@@ -157,7 +159,7 @@ export function canApprove(
 
 export function canAssign(
   permissions: Permission[],
-  module: string,
+  module: ModuleName,
   isOwner = false
 ) {
   if (isOwner) {

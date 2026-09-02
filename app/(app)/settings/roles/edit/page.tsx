@@ -2,7 +2,10 @@ import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { MODULES } from "@/shared/constants/modules"
+import {
+  MODULES,
+  type ModuleName,
+} from "@/shared/constants/modules"
 
 
 async function savePermissions(
@@ -89,15 +92,15 @@ const permissions =
     }
   })
 
-  const getPermission = (
-    module: string
-  ) => {
+ const getPermission = (
+  module: ModuleName
+) => {
 
-    return permissions.find(
-      p => p.module === module
-    )
+  return permissions.find(
+   p => p.module === String(module)
+  )
 
-  }
+}
 
   return (
 

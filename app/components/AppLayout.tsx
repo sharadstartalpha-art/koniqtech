@@ -38,7 +38,12 @@ User
 
 import { getMenuForPlan } from "@/shared/lib/get-menu";
 import { SubscriptionPlan } from "@prisma/client";
-import { canView } from "@/shared/lib/permissions";
+import {
+  canView,
+  type Permission,
+} from "@/shared/lib/permissions";
+
+
 
 export default function AppLayout({
 
@@ -57,7 +62,7 @@ children:React.ReactNode
 const [role,setRole] = useState("")
 
 const [permissions, setPermissions] =
-  useState<any[]>([])
+  useState<Permission[]>([])
 
 
 

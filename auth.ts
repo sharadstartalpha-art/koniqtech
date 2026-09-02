@@ -78,6 +78,8 @@ console.log(
   ).length
 )
 
+
+
         return {
           
           id: user.id,
@@ -93,18 +95,17 @@ console.log(
           organizationRole:
             user.organizationRole?.name ?? null,
 
-          permissions:
-user.organizationRole?.permissions
-  .map(p => ({
-    module: p.module,
-    canView: p.canView,
-    canCreate: p.canCreate,
-    canEdit: p.canEdit,
-    canDelete: p.canDelete,
-    canImport: p.canImport,
-    canExport: p.canExport,
-    canApprove: p.canApprove,
-    canAssign: p.canAssign,
+            
+            permissions: permissions.map(p => ({
+    module: String(p.module),
+    canView: Boolean(p.canView),
+    canCreate: Boolean(p.canCreate),
+    canEdit: Boolean(p.canEdit),
+    canDelete: Boolean(p.canDelete),
+    canImport: Boolean(p.canImport),
+    canExport: Boolean(p.canExport),
+    canApprove: Boolean(p.canApprove),
+    canAssign: Boolean(p.canAssign),
   })) ?? [],
 
           employeeRole:

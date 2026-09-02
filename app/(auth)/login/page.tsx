@@ -39,8 +39,9 @@ export default function LoginPage() {
         password,
         redirect:false
       }
+      
     )
-
+console.log(res)
     setLoading(false)
 
     if(!res?.ok){

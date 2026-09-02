@@ -89,17 +89,12 @@ const permissions =
             user.organizationRole?.name ?? null,
 
            permissions:
-user.organizationRole?.permissions.map(p => ({
-  module: p.module,
-  canView: p.canView,
-  canCreate: p.canCreate,
-  canEdit: p.canEdit,
-  canDelete: p.canDelete,
-  canImport: p.canImport,
-  canExport: p.canExport,
-  canApprove: p.canApprove,
-  canAssign: p.canAssign,
-})) ?? [],
+user.organizationRole?.permissions
+  .slice(0, 1)
+  .map(p => ({
+    module: p.module,
+    canView: p.canView,
+  })) ?? [],
 
           employeeRole:
             user.employee?.role?.name ?? null,

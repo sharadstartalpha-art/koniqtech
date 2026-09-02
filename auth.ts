@@ -93,12 +93,18 @@ console.log(
           organizationRole:
             user.organizationRole?.name ?? null,
 
-           permissions:
+          permissions:
 user.organizationRole?.permissions
-  .slice(0, 1)
   .map(p => ({
     module: p.module,
     canView: p.canView,
+    canCreate: p.canCreate,
+    canEdit: p.canEdit,
+    canDelete: p.canDelete,
+    canImport: p.canImport,
+    canExport: p.canExport,
+    canApprove: p.canApprove,
+    canAssign: p.canAssign,
   })) ?? [],
 
           employeeRole:

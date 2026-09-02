@@ -41,7 +41,7 @@ export default function LoginPage() {
       }
       
     )
-console.log(res)
+
     setLoading(false)
 
     if(!res?.ok){

@@ -29,7 +29,7 @@ export const {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
-console.log("1");
+
         const user = await prisma.user.findUnique({
           where: {
             email: String(credentials.email),
@@ -54,7 +54,7 @@ console.log("1");
             },
           },
         })
-console.log("2");
+
         if (!user) {
           return null
         }
@@ -63,7 +63,7 @@ console.log("2");
           String(credentials.password),
           user.passwordHash
         )
-console.log("3");
+
         if (!validPassword) {
           return null
         }
@@ -72,7 +72,7 @@ console.log("3");
 const permissions =
   user.organizationRole?.permissions ?? [];
 
-console.log("4", permissions);
+
 
         return {
           id: user.id,
@@ -88,7 +88,18 @@ console.log("4", permissions);
           organizationRole:
             user.organizationRole?.name ?? null,
 
-           permissions: [],
+           permissions:
+user.organizationRole?.permissions.map(p => ({
+  module: p.module,
+  canView: p.canView,
+  canCreate: p.canCreate,
+  canEdit: p.canEdit,
+  canDelete: p.canDelete,
+  canImport: p.canImport,
+  canExport: p.canExport,
+  canApprove: p.canApprove,
+  canAssign: p.canAssign,
+})) ?? [],
 
           employeeRole:
             user.employee?.role?.name ?? null,

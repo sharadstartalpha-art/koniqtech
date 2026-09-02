@@ -122,6 +122,9 @@ user.organizationRole?.permissions
 
   callbacks: {
     async jwt({ token, user }) {
+      const jwtString = JSON.stringify(token);
+
+console.log("JWT SIZE:", jwtString.length);
       if (user) {
         token.id = user.id
 

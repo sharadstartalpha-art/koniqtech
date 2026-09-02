@@ -88,8 +88,7 @@ console.log("4", permissions);
           organizationRole:
             user.organizationRole?.name ?? null,
 
-            permissions:
-             user.organizationRole?.permissions ?? [],
+           permissions: [],
 
           employeeRole:
             user.employee?.role?.name ?? null,

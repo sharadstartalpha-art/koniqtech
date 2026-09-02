@@ -1,5 +1,10 @@
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
+import {
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 import DataTable from "@/components/DataTable"
 import { redirect } from "next/navigation"
@@ -15,12 +20,19 @@ if (!session?.user) {
   redirect("/login")
 }
 
+
+
 const orgId =
 session.user.orgId
 
 if (!orgId) {
   redirect("/welcome")
 }
+
+const permissions = (session.user as any).permissions ?? [];
+
+const isOwner =
+  session.user.organizationRole === "Owner";
 
 const leads =
 await prisma.lead.findMany({
@@ -47,17 +59,24 @@ await prisma.lead.findMany({
 return(
 
 <DataTable
+  title="Leads"
+  buttonLabel="New Lead"
+  buttonHref="/leads/create"
+  editPath="/leads/edit"
+  onDeletePath="/api/leads"
+  rowHref="/leads"
 
-title="Leads"
+  canCreate={
+    canCreate(permissions, "Leads") || isOwner
+  }
 
-buttonLabel="New Lead"
+  canEdit={
+    canEdit(permissions, "Leads") || isOwner
+  }
 
-buttonHref="/leads/create"
-
-editPath="/leads/edit"
-
-onDeletePath="/api/leads"
-rowHref="/leads"
+  canDelete={
+    canDelete(permissions, "Leads") || isOwner
+  }
 
 columns={[
 

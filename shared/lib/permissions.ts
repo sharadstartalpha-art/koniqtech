@@ -49,112 +49,126 @@ export function canView(
 
 export function canCreate(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
+  if (isOwner) {
+    return true;
+  }
+
+  const permission = getPermission(permissions, module);
 
   if (!permission) {
     return false;
   }
 
-  return permission.canCreate
+  return permission.canCreate;
 }
 
 export function canEdit(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
+  if (isOwner) {
+    return true;
+  }
+
+  const permission = getPermission(permissions, module);
 
   if (!permission) {
     return false;
   }
 
-  return permission.canEdit
+  return permission.canEdit;
 }
 
 export function canDelete(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
-
-  if (!permission) {
-   return false;
+  if (isOwner) {
+    return true;
   }
 
-  return permission.canDelete
+  const permission = getPermission(permissions, module);
+
+  if (!permission) {
+    return false;
+  }
+
+  return permission.canDelete;
 }
 
 export function canImport(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
+  if (isOwner) {
+    return true;
+  }
+
+  const permission = getPermission(permissions, module);
 
   if (!permission) {
     return false;
   }
 
-  return permission.canImport ?? false
+  return permission.canImport ?? false;
 }
 
 export function canExport(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
+  if (isOwner) {
+    return true;
+  }
+
+  const permission = getPermission(permissions, module);
 
   if (!permission) {
     return false;
   }
 
-  return permission.canExport ?? false
+  return permission.canExport ?? false;
 }
 
 export function canApprove(
   permissions: Permission[],
-  module: string
+  module: string,
+  isOwner = false
 ) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
-
-  if (!permission) {
-   return false;
+  if (isOwner) {
+    return true;
   }
 
-  return permission.canApprove ?? false
-}
-
-export function canAssign(
-  permissions: Permission[],
-  module: string
-) {
-  const permission = getPermission(
-    permissions,
-    module
-  )
+  const permission = getPermission(permissions, module);
 
   if (!permission) {
     return false;
   }
 
-  return permission.canAssign ?? false
+  return permission.canApprove ?? false;
+}
+
+export function canAssign(
+  permissions: Permission[],
+  module: string,
+  isOwner = false
+) {
+  if (isOwner) {
+    return true;
+  }
+
+  const permission = getPermission(permissions, module);
+
+  if (!permission) {
+    return false;
+  }
+
+  return permission.canAssign ?? false;
 }

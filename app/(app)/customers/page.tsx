@@ -15,13 +15,14 @@ export default async function Page() {
   }
 
 
-const permissions =
-  (session.user as any).permissions ?? []
+const permissions = (session.user as any).permissions ?? [];
 
-if (!canView(permissions, "Customers")) {
-  redirect("/dashboard")
+const isOwner =
+  session.user.organizationRole === "Owner";
+
+if (!canView(permissions, "Customers", isOwner)) {
+  redirect("/dashboard");
 }
-
 
   const orgId = session.user.orgId
 

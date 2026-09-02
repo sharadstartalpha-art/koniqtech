@@ -31,7 +31,7 @@ if (!orgId) {
 
 const permissions = (session.user as any).permissions ?? [];
 
-console.log((session.user as any).permissions);
+
 
 const isOwner =
   session.user.organizationRole === "Owner";

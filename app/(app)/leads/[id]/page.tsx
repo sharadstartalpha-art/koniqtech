@@ -1,6 +1,10 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
-
+import {
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 import { auth } from "@/auth"
 import { redirect, notFound } from "next/navigation"
 
@@ -17,6 +21,12 @@ export default async function Page({
 if (!session?.user) {
   redirect("/login")
 }
+
+
+
+const permissions = (session.user as any).permissions ?? [];
+const isOwner =
+  session.user.organizationRole === "Owner";
 
 const orgId = (session.user as any).orgId
 
@@ -108,7 +118,7 @@ return (
       </div>
 
       <div className="flex gap-3">
-
+{canEdit(permissions, "Leads", isOwner) && (
         <Link
           href={`/leads/edit/${lead.id}`}
           className="
@@ -122,8 +132,9 @@ return (
         >
           Edit
         </Link>
+)}
 
-
+{canDelete(permissions, "Leads", isOwner) && (
 <Link
   href={`/leads/${lead.id}/delete`}
   className="
@@ -138,7 +149,7 @@ return (
 >
   Delete
 </Link>
-
+)}
 
         {customer ? (
 

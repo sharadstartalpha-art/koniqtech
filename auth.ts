@@ -25,48 +25,58 @@ export const {
         password: {},
       },
 
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+     async authorize(credentials) {
+  console.log("LOGIN ATTEMPT", credentials);
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: String(credentials.email),
-          },
+  if (!credentials?.email || !credentials?.password) {
+    console.log("Missing credentials");
+    return null;
+  }
 
-          include: {
-            organization: {
-              include: {
-                subscriptions: true,
-              },
-            },
+  const user = await prisma.user.findUnique({
+    where: {
+      email: String(credentials.email),
+    },
+    include: {
+      organization: {
+        include: {
+          subscriptions: true,
+        },
+      },
+      organizationRole: {
+        include: {
+          permissions: true,
+        },
+      },
+      employee: {
+        include: {
+          role: true,
+        },
+      },
+    },
+  });
 
-           organizationRole: {
-  include: {
-    permissions: true,
-  },
-},
-            employee: {
-              include: {
-                role: true,
-              },
-            },
-          },
-        })
+  console.log("USER:", user?.email);
 
-        if (!user) {
-          return null
-        }
+  if (!user) {
+    console.log("User not found");
+    return null;
+  }
 
-        const validPassword = await bcrypt.compare(
-          String(credentials.password),
-          user.passwordHash
-        )
+  console.log("HASH:", user.passwordHash);
 
-        if (!validPassword) {
-          return null
-        }
+  const validPassword = await bcrypt.compare(
+    String(credentials.password),
+    user.passwordHash
+  );
+
+  console.log("PASSWORD OK:", validPassword);
+
+  if (!validPassword) {
+    return null;
+  }
+
+       
 
         return {
           id: user.id,

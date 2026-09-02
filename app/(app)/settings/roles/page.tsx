@@ -1,7 +1,13 @@
 import Link from "next/link"
 import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
-
+import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+  canEdit,
+} from "@/shared/lib/permissions";
+import { MODULES } from "@/shared/constants/modules";
 export default async function RolesPage({
   searchParams
 }:{
@@ -10,9 +16,23 @@ export default async function RolesPage({
   }
 }) {
 
-  const session = await auth()
-  const orgId =
-  (session?.user as any)?.orgId
+  const session = await auth();
+
+if (!session?.user) {
+  redirect("/login");
+}
+
+const permissions =
+  (session.user as any).permissions ?? [];
+
+const isOwner =
+  session.user.organizationRole === "Owner";
+
+if (!canView(permissions, "Roles & Permissions", isOwner)) {
+  redirect("/dashboard");
+}
+
+const orgId = session.user.orgId;
 
 
   const permissionCount =
@@ -33,8 +53,7 @@ const users = await prisma.user.findMany({
   },
 })
 
-const permissions =
-  await prisma.rolePermission.findMany()
+
 
  const roles = await prisma.organizationRole.findMany({
   where: { orgId },
@@ -233,16 +252,7 @@ const permissions =
 
             <tbody>
 
-              {[
-                "Leads",
-                "Customers",
-                "Quotes",
-                "Jobs",
-                "Crew",
-                "Billing",
-                "Reports",
-                "Users"
-              ].map(module => (
+             {MODULES.map(module => (
 
                 <tr
                   key={module}
@@ -256,9 +266,9 @@ const permissions =
                   <td className="p-4">
                     {
                       permissions.filter(
-                        p =>
-                          p.module === module
-                      ).length
+  (p: any) =>
+    p.module === module
+).length
                     }
                   </td>
 

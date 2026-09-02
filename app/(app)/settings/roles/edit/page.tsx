@@ -2,18 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-
-
-const MODULES = [
-  "Leads",
-  "Quotes",
-  "Jobs",
-  "Crew",
-  "Billing",
-  "Users",
-  "Reports"
-]
-
+import { MODULES } from "@/shared/constants/modules"
 
 
 async function savePermissions(

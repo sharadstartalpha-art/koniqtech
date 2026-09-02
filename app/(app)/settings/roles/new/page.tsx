@@ -3,6 +3,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { MODULES } from "@/shared/constants/modules"
 
 async function createRole(
   formData: FormData
@@ -43,15 +44,30 @@ async function createRole(
     throw new Error("Role already exists")
   }
 
-  const role =
-    await prisma.organizationRole.create({
-      data: {
-        orgId,
-        name,
-        description,
-        active,
-      },
-    })
+ const role =
+  await prisma.organizationRole.create({
+    data: {
+      orgId,
+      name,
+      description,
+      active,
+    },
+  })
+
+await prisma.rolePermission.createMany({
+  data: MODULES.map(module => ({
+    roleId: role.id,
+    module,
+    canView: false,
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canImport: false,
+    canExport: false,
+    canApprove: false,
+    canAssign: false,
+  })),
+})
 
   revalidatePath("/settings/roles")
 

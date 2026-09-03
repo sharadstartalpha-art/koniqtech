@@ -90,110 +90,74 @@ console.log(
 );
 
 
-        return {
-          
-          id: user.id,
+       return {
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  role: user.role,
+  orgId: user.orgId,
 
-          email: user.email,
+  organizationRole:
+    user.organizationRole?.name ?? null,
 
-          name: user.name,
+  employeeRole:
+    user.employee?.role?.name ?? null,
 
-          role: user.role,
+  employeeId:
+    user.employee?.id ?? null,
 
-          orgId: user.orgId,
+  subscriptionPlan:
+    user.organization.subscriptions &&
+    user.organization.subscriptions.status === "active"
+      ? user.organization.subscriptions.plan
+      : user.organization.plan,
 
-          organizationRole:
-            user.organizationRole?.name ?? null,
-
-            
-         permissions:
-user.organizationRole?.permissions.map(p => ({
-  module: String(p.module),
-  canView: Boolean(p.canView),
-  canCreate: Boolean(p.canCreate),
-  canEdit: Boolean(p.canEdit),
-  canDelete: Boolean(p.canDelete),
-  canImport: Boolean(p.canImport),
-  canExport: Boolean(p.canExport),
-  canApprove: Boolean(p.canApprove),
-  canAssign: Boolean(p.canAssign),
-})) ?? [],
-
-          employeeRole:
-            user.employee?.role?.name ?? null,
-
-          employeeId:
-            user.employee?.id ?? null,
-
-          subscriptionPlan:
-            user.organization.subscriptions &&
-            user.organization.subscriptions.status === "active"
-              ? user.organization.subscriptions.plan
-              : user.organization.plan,
-
-          industry:
-            user.organization.industry,
-        }
+  industry:
+    user.organization.industry,
+}
       },
     }),
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+ async jwt({ token, user }) {
   if (user) {
-    token.id = user.id;
-    token.role = user.role;
-    token.orgId = user.orgId;
-    token.organizationRole = user.organizationRole;
-   token.permissions = JSON.parse(
-  JSON.stringify((user as any).permissions)
-);
-    token.employeeRole = user.employeeRole;
-    token.employeeId = user.employeeId;
-    token.subscriptionPlan = user.subscriptionPlan;
-    token.industry = user.industry;
+    token.id = user.id
+    token.role = user.role
+    token.orgId = user.orgId
+    token.organizationRole = user.organizationRole
+    token.employeeRole = user.employeeRole
+    token.employeeId = user.employeeId
+    token.subscriptionPlan = user.subscriptionPlan
+    token.industry = user.industry
   }
 
-  console.log(
-    "FINAL JWT SIZE:",
-    JSON.stringify(token).length
-  );
-
-  return token;
+  return token
 },
 
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id =
-          token.id as string
+  if (session.user) {
+    session.user.id = token.id as string
+    session.user.role = token.role as "super_admin" | "user"
+    session.user.orgId = token.orgId as string
+    session.user.organizationRole =
+      token.organizationRole as string | null
 
-        session.user.role =
-          token.role as "super_admin" | "user"
+    session.user.employeeRole =
+      token.employeeRole as string | null
 
-        session.user.orgId =
-          token.orgId as string
+    session.user.employeeId =
+      token.employeeId as string | null
 
-        session.user.organizationRole =
-          token.organizationRole as string | null
+    session.user.subscriptionPlan =
+      token.subscriptionPlan as any
 
-          ;(session.user as any).permissions =
-            token.permissions ?? []
+    session.user.industry =
+      token.industry as any
+  }
 
-        session.user.employeeRole =
-          token.employeeRole as string | null
-
-        session.user.employeeId =
-          token.employeeId as string | null
-
-        session.user.subscriptionPlan =
-          token.subscriptionPlan as any
-
-        session.user.industry =
-          token.industry as any
-      }
-
-      return session
-    },
+  return session
+},
   },
 
   pages: {

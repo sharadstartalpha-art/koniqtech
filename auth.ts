@@ -106,11 +106,17 @@ console.log(
             user.organizationRole?.name ?? null,
 
             
-           permissions:
+         permissions:
 user.organizationRole?.permissions.map(p => ({
   module: String(p.module),
   canView: Boolean(p.canView),
   canCreate: Boolean(p.canCreate),
+  canEdit: Boolean(p.canEdit),
+  canDelete: Boolean(p.canDelete),
+  canImport: Boolean(p.canImport),
+  canExport: Boolean(p.canExport),
+  canApprove: Boolean(p.canApprove),
+  canAssign: Boolean(p.canAssign),
 })) ?? [],
 
           employeeRole:

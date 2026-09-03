@@ -8,6 +8,9 @@ import {
   canEdit,
 } from "@/shared/lib/permissions";
 import { MODULES } from "@/shared/constants/modules";
+import type { Permission } from "@/shared/lib/permissions";
+
+
 export default async function RolesPage({
   searchParams
 }:{
@@ -22,8 +25,21 @@ if (!session?.user) {
   redirect("/login");
 }
 
-const permissions =
-  (session.user as any).permissions ?? [];
+const user = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+const permissions: Permission[] =
+  (user?.organizationRole?.permissions as Permission[]) ?? [];
 
 const isOwner =
   session.user.organizationRole === "Owner";

@@ -1,25 +1,18 @@
 import type { ModuleName } from "@/shared/constants/modules";
+import type { RolePermission } from "@prisma/client";
 
-export type Permission = {
-  module: ModuleName
-
-  canView: boolean
-
-  canCreate: boolean
-
-  canEdit: boolean
-
-  canDelete: boolean
-
-  canImport?: boolean
-
-  canExport?: boolean
-
-  canApprove?: boolean
-
-  canAssign?: boolean
-}
-
+export type Permission = Pick<
+  RolePermission,
+  | "module"
+  | "canView"
+  | "canCreate"
+  | "canEdit"
+  | "canDelete"
+  | "canImport"
+  | "canExport"
+  | "canApprove"
+  | "canAssign"
+>;
 function getPermission(
   permissions: Permission[],
   module: ModuleName

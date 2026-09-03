@@ -4,7 +4,7 @@ import NextAction from "@/components/dashboard/NextAction";
 import { auth } from "@/auth"
 import WelcomeModal from "@/components/dashboard/WelcomeModal";
 import Link from "next/link"
-import { canView } from "@/shared/lib/permissions";
+import { canView, Permission } from "@/shared/lib/permissions";
 
 import { redirect } from "next/navigation"
 
@@ -21,33 +21,46 @@ export const dynamic="force-dynamic"
 
 export default async function DashboardPage(){
 
-const session=
-await auth()
+const session = await auth();
 
-if(!session?.user){
-
-redirect("/login")
-
+if (!session?.user) {
+    redirect("/login");
 }
 
-const permissions =
-  (session.user as any).permissions ?? [];
+const dbUser = await prisma.user.findUnique({
+    where: {
+        email: session.user.email!,
+    },
+    include: {
+        organization: true,
+
+        organizationRole: {
+            include: {
+                permissions: true,
+            },
+        },
+    },
+});
+
+if (!dbUser) {
+    return <div>User not found</div>;
+}
+
+
+const permissions: Permission[] =
+    dbUser.organizationRole?.permissions ?? [];
 
 const isOwner =
-  session.user.organizationRole === "Owner";
+dbUser?.organizationRole?.name === "Owner";
 
-  console.log("SESSION PERMISSIONS:", permissions);
-
+ 
 console.log(
   permissions.find(
     (p: any) => p.module === "Dashboard"
   )
 );
 
-console.log(
-  "Dashboard canView:",
-  canView(permissions, "Dashboard", isOwner)
-);
+
 
  if (!canView(permissions, "Dashboard", isOwner)) {
   redirect("/unauthorized");
@@ -71,43 +84,7 @@ redirect(
 
 }
 
-const dbUser=
 
-await prisma.user.findUnique({
-
-where:{
-
-email:
-session.user.email!
-
-},
-
-include:{
-
-organization:true
-
-}
-
-})
-
-if(!dbUser){
-
-return(
-
-<div className="
-bg-white
-border
-rounded-3xl
-p-8
-">
-
-User not found
-
-</div>
-
-)
-
-}
 
 const [
     leads,

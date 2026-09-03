@@ -3,19 +3,33 @@ import { auth } from "@/auth"
 import DataTable from "@/components/DataTable"
 import { redirect } from "next/navigation"
 import { canView } from "@/shared/lib/permissions"
+import type { Permission } from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic"
 
 export default async function Page() {
 
-  const session = await auth()
+ const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login")
-  }
+if (!session?.user) {
+  redirect("/login");
+}
 
+const user = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
 
-const permissions = (session.user as any).permissions ?? [];
+const permissions: Permission[] =
+  (user?.organizationRole?.permissions as Permission[]) ?? [];
 
 const isOwner =
   session.user.organizationRole === "Owner";
@@ -24,11 +38,11 @@ if (!canView(permissions, "Customers", isOwner)) {
   redirect("/dashboard");
 }
 
-  const orgId = session.user.orgId
+const orgId = session.user.orgId;
 
-  if (!orgId) {
-    redirect("/welcome")
-  }
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const customers = await prisma.customer.findMany({
 

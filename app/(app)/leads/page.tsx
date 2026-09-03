@@ -5,7 +5,7 @@ import {
   canEdit,
   canDelete,
 } from "@/shared/lib/permissions";
-
+import type { Permission } from "@/shared/lib/permissions";
 import DataTable from "@/components/DataTable"
 import { redirect } from "next/navigation"
 
@@ -29,9 +29,21 @@ if (!orgId) {
   redirect("/welcome")
 }
 
-const permissions = (session.user as any).permissions ?? [];
+const user = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
 
-
+const permissions: Permission[] =
+  (user?.organizationRole?.permissions as Permission[]) ?? [];
 
 const isOwner =
   session.user.organizationRole === "Owner";

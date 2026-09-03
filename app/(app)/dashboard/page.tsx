@@ -4,6 +4,7 @@ import NextAction from "@/components/dashboard/NextAction";
 import { auth } from "@/auth"
 import WelcomeModal from "@/components/dashboard/WelcomeModal";
 import Link from "next/link"
+import { canView } from "@/shared/lib/permissions";
 
 import { redirect } from "next/navigation"
 
@@ -27,6 +28,16 @@ if(!session?.user){
 
 redirect("/login")
 
+}
+
+const permissions =
+  (session.user as any).permissions ?? [];
+
+const isOwner =
+  session.user.organizationRole === "Owner";
+
+  if (!canView(permissions, "Dashboard", isOwner)) {
+  redirect("/dashboard");
 }
 
 const role=
@@ -429,41 +440,32 @@ md:grid-cols-3
 gap-4
 ">
 
-<MetricCard
+{canView(permissions, "Leads", isOwner) && (
+  <MetricCard
+    title="Leads"
+    value={leads}
+    href="/leads"
+    icon={<UserPlus size={16} />}
+  />
+)}
 
-title="Leads"
+{canView(permissions, "Customers", isOwner) && (
+  <MetricCard
+    title="Customers"
+    value={customers}
+    href="/customers"
+    icon={<Users size={16} />}
+  />
+)}
 
-value={leads}
-
-href="/leads"
-
-icon={<UserPlus size={16}/>}
-
-/>
-
-<MetricCard
-
-title="Customers"
-
-value={customers}
-
-href="/customers"
-
-icon={<Users size={16}/>}
-
-/>
-
-<MetricCard
-
-title="Jobs"
-
-value={jobs}
-
-href="/jobs"
-
-icon={<Briefcase size={16}/>}
-
-/>
+{canView(permissions, "Jobs", isOwner) && (
+  <MetricCard
+    title="Jobs"
+    value={jobs}
+    href="/jobs"
+    icon={<Briefcase size={16} />}
+  />
+)}
 
 </div>
 
@@ -672,35 +674,41 @@ md:grid-cols-3
 gap-4
 ">
 
-<ActivityCard
+{canView(permissions, "Leads", isOwner) && (
+  <ActivityCard
     title="Recent Leads"
     items={recentLeads.map(
-        x => `${x.firstName} ${x.lastName}`
+      x => `${x.firstName} ${x.lastName}`
     )}
     href="/leads"
     action="Create First Lead"
     description="You haven't created any leads yet."
-/>
+  />
+)}
 
-<ActivityCard
+{canView(permissions, "Customers", isOwner) && (
+  <ActivityCard
     title="Recent Customers"
     items={recentCustomers.map(
-        x => `${x.firstName} ${x.lastName}`
+      x => `${x.firstName} ${x.lastName}`
     )}
     href="/customers"
     action="Create First Customer"
     description="No customers yet."
-/>
+  />
+)}
 
-<ActivityCard
+{canView(permissions, "Jobs", isOwner) && (
+  <ActivityCard
     title="Recent Jobs"
     items={recentJobs.map(
-        x => x.title
+      x => x.title
     )}
     href="/jobs"
     action="Create First Job"
     description="No jobs have been created."
-/>
+  />
+)}
 
 </div>
 

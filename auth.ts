@@ -27,6 +27,7 @@ export const {
 
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          
           return null
         }
 
@@ -78,6 +79,15 @@ console.log(
   ).length
 )
 
+console.log(
+  "Permission count:",
+  user.organizationRole?.permissions.length
+);
+
+console.log(
+  "Permissions JSON size:",
+  JSON.stringify(user.organizationRole?.permissions).length
+);
 
 
         return {
@@ -124,37 +134,27 @@ user.organizationRole?.permissions.map(p => ({
 
   callbacks: {
     async jwt({ token, user }) {
-      const jwtString = JSON.stringify(token);
+  if (user) {
+    token.id = user.id;
+    token.role = user.role;
+    token.orgId = user.orgId;
+    token.organizationRole = user.organizationRole;
+   token.permissions = JSON.parse(
+  JSON.stringify((user as any).permissions)
+);
+    token.employeeRole = user.employeeRole;
+    token.employeeId = user.employeeId;
+    token.subscriptionPlan = user.subscriptionPlan;
+    token.industry = user.industry;
+  }
 
-console.log("JWT SIZE:", jwtString.length);
-      if (user) {
-        token.id = user.id
+  console.log(
+    "FINAL JWT SIZE:",
+    JSON.stringify(token).length
+  );
 
-        token.role = user.role
-
-        token.orgId = user.orgId
-
-        token.organizationRole =
-          user.organizationRole
-
-         token.permissions =
-  (user as any).permissions
-
-        token.employeeRole =
-          user.employeeRole
-
-        token.employeeId =
-          user.employeeId
-
-        token.subscriptionPlan =
-          user.subscriptionPlan
-
-        token.industry =
-          user.industry
-      }
-
-      return token
-    },
+  return token;
+},
 
     async session({ session, token }) {
       if (session.user) {

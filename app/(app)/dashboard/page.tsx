@@ -36,10 +36,9 @@ const permissions =
 const isOwner =
   session.user.organizationRole === "Owner";
 
-  if (!canView(permissions, "Dashboard", isOwner)) {
-  redirect("/dashboard");
+ if (!canView(permissions, "Dashboard", isOwner)) {
+  redirect("/unauthorized");
 }
-
 const role=
 
 (session.user as any)

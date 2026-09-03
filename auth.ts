@@ -3,6 +3,9 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
+import { Permission } from "@/shared/lib/permissions";
+
+
 
 export const {
   handlers,
@@ -69,9 +72,8 @@ export const {
           return null
         }
 
-
 const permissions =
-  user.organizationRole?.permissions ?? [];
+  (user.organizationRole?.permissions ?? []) as Permission[];
 
 console.log(
   JSON.stringify(
@@ -114,6 +116,7 @@ console.log(
 
   industry:
     user.organization.industry,
+     permissions, 
 }
       },
     }),
@@ -130,6 +133,9 @@ console.log(
     token.employeeId = user.employeeId
     token.subscriptionPlan = user.subscriptionPlan
     token.industry = user.industry
+    if (user) {
+  token.permissions = user.permissions;
+} 
   }
 
   return token
@@ -154,6 +160,9 @@ console.log(
 
     session.user.industry =
       token.industry as any
+
+      session.user.permissions =
+      token.permissions as any[];
   }
 
   return session

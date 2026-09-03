@@ -1,6 +1,7 @@
 import { DefaultSession } from "next-auth"
 import { JWT } from "next-auth/jwt"
 import { PlatformRole } from "@prisma/client"
+import { Permission } from "@/shared/lib/permissions";
 
 declare module "next-auth" {
   interface Session {
@@ -13,6 +14,7 @@ declare module "next-auth" {
       employeeId: string | null
       subscriptionPlan: any
       industry: any
+      permissions: Permission[];   // <-- ADD THIS
     }
   }
 
@@ -25,6 +27,7 @@ declare module "next-auth" {
     employeeId: string | null
     subscriptionPlan: any
     industry: any
+     permissions: Permission[]   // <-- ADD THIS
   }
 }
 
@@ -38,5 +41,6 @@ declare module "next-auth/jwt" {
     employeeId: string | null
     subscriptionPlan: any
     industry: any
+    permissions: Permission[];   // <-- ADD THIS
   }
 }

@@ -3,8 +3,6 @@ import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
-import { Permission } from "@/shared/lib/permissions";
-
 
 
 export const {
@@ -72,24 +70,11 @@ export const {
           return null
         }
 
+
 const permissions =
-  (user.organizationRole?.permissions ?? []) as Permission[];
+  user.organizationRole?.permissions ?? [];
 
-console.log(
-  JSON.stringify(
-    user.organizationRole?.permissions
-  ).length
-)
 
-console.log(
-  "Permission count:",
-  user.organizationRole?.permissions.length
-);
-
-console.log(
-  "Permissions JSON size:",
-  JSON.stringify(user.organizationRole?.permissions).length
-);
 
 
        return {
@@ -116,7 +101,7 @@ console.log(
 
   industry:
     user.organization.industry,
-     permissions, 
+      
 }
       },
     }),
@@ -133,9 +118,7 @@ console.log(
     token.employeeId = user.employeeId
     token.subscriptionPlan = user.subscriptionPlan
     token.industry = user.industry
-    if (user) {
-  token.permissions = user.permissions;
-} 
+    
   }
 
   return token
@@ -161,8 +144,7 @@ console.log(
     session.user.industry =
       token.industry as any
 
-      session.user.permissions =
-      token.permissions as any[];
+     
   }
 
   return session

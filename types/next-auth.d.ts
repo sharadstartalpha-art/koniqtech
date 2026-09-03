@@ -14,7 +14,7 @@ declare module "next-auth" {
       employeeId: string | null
       subscriptionPlan: any
       industry: any
-      permissions: Permission[];   // <-- ADD THIS
+      
     }
   }
 
@@ -27,7 +27,7 @@ declare module "next-auth" {
     employeeId: string | null
     subscriptionPlan: any
     industry: any
-     permissions: Permission[]   // <-- ADD THIS
+    
   }
 }
 
@@ -41,6 +41,6 @@ declare module "next-auth/jwt" {
     employeeId: string | null
     subscriptionPlan: any
     industry: any
-    permissions: Permission[];   // <-- ADD THIS
+   
   }
 }

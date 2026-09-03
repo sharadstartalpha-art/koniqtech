@@ -215,9 +215,19 @@ setRole(
 
 
 
-setPermissions(
-  (session?.user as any)?.permissions ?? []
-)
+try {
+  const res = await fetch("/api/me/permissions");
+
+  if (res.ok) {
+    const data = await res.json();
+    console.log("Permissions:", data);
+    setPermissions(data);
+  } else {
+    setPermissions([]);
+  }
+} catch {
+  setPermissions([]);
+}
 
 setSubscriptionPlan(
   (session?.user as any)?.subscriptionPlan ?? "starter"

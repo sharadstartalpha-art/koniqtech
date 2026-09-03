@@ -36,6 +36,19 @@ const permissions =
 const isOwner =
   session.user.organizationRole === "Owner";
 
+  console.log("SESSION PERMISSIONS:", permissions);
+
+console.log(
+  permissions.find(
+    (p: any) => p.module === "Dashboard"
+  )
+);
+
+console.log(
+  "Dashboard canView:",
+  canView(permissions, "Dashboard", isOwner)
+);
+
  if (!canView(permissions, "Dashboard", isOwner)) {
   redirect("/unauthorized");
 }

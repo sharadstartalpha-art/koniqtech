@@ -233,6 +233,7 @@ export const MENU: MenuSection[] = [
       {
         label: "Purchase Orders",
          href: "/purchase-orders",
+         permission: "Purchase Orders",
          icon: ShoppingCart,
 
         

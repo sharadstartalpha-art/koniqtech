@@ -2,6 +2,11 @@ import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import {
+  canView,
+  canCreate,
+  canEdit,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic"
 
@@ -13,13 +18,46 @@ const statusColors = {
 } as const
 
 export default async function JobsPage() {
-  const session = await auth()
+ 
 
-  const orgId = (session?.user as any)?.orgId
+  const session = await auth();
 
-  if (!orgId) {
-    redirect("/login")
-  }
+if (!session?.user) {
+  redirect("/login");
+}
+
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Jobs", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const jobs = await prisma.job.findMany({
     where: {
@@ -76,12 +114,14 @@ export default async function JobsPage() {
             Job Board
           </Link>
 
-          <Link
-            href="/jobs/create"
-            className="rounded-xl bg-green-600 px-5 py-3 text-white hover:bg-green-700"
-          >
-            New Job
-          </Link>
+         {canCreate(permissions, "Jobs", isOwner) && (
+  <Link
+    href="/jobs/create"
+    className="rounded-xl bg-green-600 px-5 py-3 text-white hover:bg-green-700"
+  >
+    New Job
+  </Link>
+)}
 
         </div>
 
@@ -279,12 +319,14 @@ export default async function JobsPage() {
                         View
                       </Link>
 
-                      <Link
-                        href={`/jobs/${job.id}/edit`}
-                        className="rounded-lg border px-3 py-1 text-sm hover:bg-slate-100"
-                      >
-                        Edit
-                      </Link>
+                     {canEdit(permissions, "Jobs", isOwner) && (
+  <Link
+    href={`/jobs/${job.id}/edit`}
+    className="rounded-lg border px-3 py-1 text-sm hover:bg-slate-100"
+  >
+    Edit
+  </Link>
+)}
 
                     </div>
 
@@ -313,12 +355,14 @@ export default async function JobsPage() {
                     Create your first service job.
                   </p>
 
-                  <Link
-                    href="/jobs/create"
-                    className="mt-6 inline-block rounded-xl bg-green-600 px-6 py-3 text-white hover:bg-green-700"
-                  >
-                    Create Job
-                  </Link>
+                 {canCreate(permissions, "Jobs", isOwner) && (
+  <Link
+    href="/jobs/create"
+    className="mt-6 inline-block rounded-xl bg-green-600 px-6 py-3 text-white hover:bg-green-700"
+  >
+    Create Job
+  </Link>
+)}
 
                 </td>
 

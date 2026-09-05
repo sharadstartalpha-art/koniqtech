@@ -83,17 +83,11 @@ if (!orgId) {
       rowHref="/customers"
 
 
- canCreate={
-    canCreate(permissions, "Leads") || isOwner
-  }
+ canCreate={canCreate(permissions, "Customers", isOwner)}
 
-  canEdit={
-    canEdit(permissions, "Leads") || isOwner
-  }
+canEdit={canEdit(permissions, "Customers", isOwner)}
 
-  canDelete={
-    canDelete(permissions, "Leads") || isOwner
-  }
+canDelete={canDelete(permissions, "Customers", isOwner)}
 
       onDeletePath="/api/customers"
 

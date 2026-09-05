@@ -7,6 +7,14 @@ import {
   redirect,
 } from "next/navigation";
 
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
+
+
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -46,11 +54,42 @@ export default async function PurchaseOrdersPage({
 
   const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+if (!session?.user) {
+  redirect("/login");
+}
 
-  const orgId = (session.user as any).orgId;
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Purchase Orders", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const search = params.search?.trim() ?? "";
 
@@ -238,12 +277,18 @@ export default async function PurchaseOrdersPage({
 
         </div>
 
-        <Link
-          href="/purchase-orders/create"
-          className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          + New Purchase Order
-        </Link>
+      {canCreate(
+  permissions,
+  "Purchase Orders",
+  isOwner
+) && (
+  <Link
+    href="/purchase-orders/create"
+    className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    + New Purchase Order
+  </Link>
+)}
 
       </div>
 
@@ -545,22 +590,40 @@ export default async function PurchaseOrdersPage({
 
                         <div className="flex justify-center gap-2">
 
-                          <Link
-                            href={`/purchase-orders/${purchaseOrder.id}`}
-                            className="rounded-lg border px-3 py-2 hover:bg-slate-100"
-                          >
-                            View
-                          </Link>
+  <Link
+    href={`/purchase-orders/${purchaseOrder.id}`}
+    className="rounded-lg border px-3 py-2 hover:bg-slate-100"
+  >
+    View
+  </Link>
 
-                          <Link
-                            href={`/purchase-orders/${purchaseOrder.id}/edit`}
-                            className="rounded-lg border px-3 py-2 hover:bg-slate-100"
-                          >
-                            Edit
-                          </Link>
+  {canEdit(
+    permissions,
+    "Purchase Orders",
+    isOwner
+  ) && (
+    <Link
+      href={`/purchase-orders/${purchaseOrder.id}/edit`}
+      className="rounded-lg border px-3 py-2 hover:bg-slate-100"
+    >
+      Edit
+    </Link>
+  )}
 
-                        </div>
+  {canDelete(
+    permissions,
+    "Purchase Orders",
+    isOwner
+  ) && (
+    <Link
+      href={`/purchase-orders/${purchaseOrder.id}/delete`}
+      className="rounded-lg border border-red-200 px-3 py-2 text-red-600 hover:bg-red-50"
+    >
+      Delete
+    </Link>
+  )}
 
+</div>
                       </td>
 
                     </tr>

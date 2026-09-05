@@ -18,16 +18,55 @@ import {
   Star,
 } from "lucide-react";
 
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
+
 export const dynamic = "force-dynamic";
 
 export default async function VendorsPage() {
+ 
   const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+if (!session?.user) {
+  redirect("/login");
+}
 
-  const orgId = (session.user as any).orgId;
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Vendors", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const vendors = await prisma.vendor.findMany({
     where: {
@@ -85,13 +124,15 @@ export default async function VendorsPage() {
           </p>
         </div>
 
-        <Link
-          href="/vendors/create"
-          className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          New Vendor
-        </Link>
+       {canCreate(permissions, "Vendors", isOwner) && (
+  <Link
+    href="/vendors/create"
+    className="inline-flex items-center rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+  >
+    <Plus className="mr-2 h-5 w-5" />
+    New Vendor
+  </Link>
+)}
 
       </div>
 
@@ -292,19 +333,23 @@ export default async function VendorsPage() {
                       <Eye className="h-4 w-4" />
                     </Link>
 
-                    <Link
-                      href={`/vendors/${vendor.id}/edit`}
-                      className="rounded-lg border p-2 hover:bg-gray-100"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
+                    {canEdit(permissions, "Vendors", isOwner) && (
+  <Link
+    href={`/vendors/${vendor.id}/edit`}
+    className="rounded-lg border p-2 hover:bg-gray-100"
+  >
+    <Pencil className="h-4 w-4" />
+  </Link>
+)}
 
-                    <Link
-                      href={`/vendors/${vendor.id}/delete`}
-                      className="rounded-lg border border-red-300 p-2 text-red-600 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Link>
+                    {canDelete(permissions, "Vendors", isOwner) && (
+  <Link
+    href={`/vendors/${vendor.id}/delete`}
+    className="rounded-lg border border-red-300 p-2 text-red-600 hover:bg-red-50"
+  >
+    <Trash2 className="h-4 w-4" />
+  </Link>
+)}
 
                   </div>
 
@@ -460,19 +505,23 @@ export default async function VendorsPage() {
                       View
                     </Link>
 
-                    <Link
-                      href={`/vendors/${vendor.id}/edit`}
-                      className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
-                    >
-                      Edit
-                    </Link>
+                    {canEdit(permissions, "Vendors", isOwner) && (
+  <Link
+    href={`/vendors/${vendor.id}/edit`}
+    className="rounded border px-3 py-1 text-sm hover:bg-gray-50"
+  >
+    Edit
+  </Link>
+)}
 
-                    <Link
-                      href={`/vendors/${vendor.id}/delete`}
-                      className="rounded border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Delete
-                    </Link>
+                   {canDelete(permissions, "Vendors", isOwner) && (
+  <Link
+    href={`/vendors/${vendor.id}/delete`}
+    className="rounded border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+  >
+    Delete
+  </Link>
+)}
 
                   </div>
 

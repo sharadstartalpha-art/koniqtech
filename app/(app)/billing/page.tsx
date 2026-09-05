@@ -5,6 +5,12 @@ import { Prisma } from "@prisma/client";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,15 +30,44 @@ export default async function BillingPage({
     status = "",
   } = await searchParams;
 
-  const session =
-    await auth();
+  const session = await auth();
 
-  if (!session?.user?.orgId) {
-    redirect("/login");
-  }
+if (!session?.user) {
+  redirect("/login");
+}
 
-  const orgId =
-    session.user.orgId;
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Billing", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const where: Prisma.InvoiceWhereInput = {
 
@@ -258,7 +293,7 @@ export default async function BillingPage({
 const recentPayments =
   await prisma.subscriptionPayment.findMany({
     where: {
-      orgId: session.user.orgId,
+      orgId,
     },
     orderBy: {
       paidAt: "desc",
@@ -286,12 +321,14 @@ const recentPayments =
 
     </div>
 
-    <Link
-      href="/billing/plans"
-      className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
-    >
-      Manage Plan
-    </Link>
+    {canEdit(permissions, "Billing", isOwner) && (
+  <Link
+    href="/billing/plans"
+    className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
+  >
+    Manage Plan
+  </Link>
+)}
 
     <Link
   href="/billing/history"
@@ -382,12 +419,14 @@ const recentPayments =
 
         </div>
 
-        <Link
-          href="/billing/create"
-          className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
-        >
-          New Invoice
-        </Link>
+        {canCreate(permissions, "Billing", isOwner) && (
+  <Link
+    href="/billing/create"
+    className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
+  >
+    New Invoice
+  </Link>
+)}
 
       </div>
             <div className="grid gap-6 md:grid-cols-4">
@@ -635,19 +674,23 @@ const recentPayments =
                       View
                     </Link>
 
-                    <Link
-                      href={`/billing/${invoice.id}/edit`}
-                      className="font-medium text-orange-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
+                    {canEdit(permissions, "Billing", isOwner) && (
+  <Link
+    href={`/billing/${invoice.id}/edit`}
+    className="font-medium text-orange-600 hover:underline"
+  >
+    Edit
+  </Link>
+)}
 
-                    <Link
-                      href={`/billing/${invoice.id}/delete`}
-                      className="font-medium text-red-600 hover:underline"
-                    >
-                      Delete
-                    </Link>
+                    {canDelete(permissions, "Billing", isOwner) && (
+  <Link
+    href={`/billing/${invoice.id}/delete`}
+    className="font-medium text-red-600 hover:underline"
+  >
+    Delete
+  </Link>
+)}
 
                   </div>
 

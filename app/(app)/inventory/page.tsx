@@ -1,5 +1,11 @@
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 import Link from "next/link";
 
@@ -9,15 +15,44 @@ export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
 
-  const session =
-    await auth();
+  const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+if (!session?.user) {
+  redirect("/login");
+}
 
-  const orgId =
-    (session.user as any).orgId;
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Inventory", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const [
     inventoryItems,
@@ -109,12 +144,14 @@ export default async function InventoryPage() {
 
         </div>
 
-        <Link
-          href="/inventory/create"
-          className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          + New Inventory Item
-        </Link>
+        {canCreate(permissions, "Inventory", isOwner) && (
+  <Link
+    href="/inventory/create"
+    className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    + New Inventory Item
+  </Link>
+)}
 
       </div>
 
@@ -201,12 +238,14 @@ export default async function InventoryPage() {
               start tracking stock.
             </p>
 
-            <Link
-              href="/inventory/create"
-              className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-            >
-              Create Inventory Item
-            </Link>
+           {canCreate(permissions, "Inventory", isOwner) && (
+  <Link
+    href="/inventory/create"
+    className="mt-6 inline-flex rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    Create Inventory Item
+  </Link>
+)}
 
           </div>
 
@@ -322,19 +361,23 @@ export default async function InventoryPage() {
                             View
                           </Link>
 
-                          <Link
-                            href={`/inventory/${item.id}/edit`}
-                            className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-100"
-                          >
-                            Edit
-                          </Link>
+                          {canEdit(permissions, "Inventory", isOwner) && (
+  <Link
+    href={`/inventory/${item.id}/edit`}
+    className="rounded-lg border px-3 py-2 text-sm hover:bg-slate-100"
+  >
+    Edit
+  </Link>
+)}
 
-                          <Link
-                            href={`/inventory/${item.id}/delete`}
-                            className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Delete
-                          </Link>
+                          {canDelete(permissions, "Inventory", isOwner) && (
+  <Link
+    href={`/inventory/${item.id}/delete`}
+    className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+  >
+    Delete
+  </Link>
+)}
 
                         </div>
 

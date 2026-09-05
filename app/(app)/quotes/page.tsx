@@ -4,6 +4,12 @@ import { Prisma, QuoteStatus } from "@prisma/client";
 import Link from "next/link";
 
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +36,38 @@ export default async function QuotesPage({
     redirect("/login");
   }
 
-  const orgId =
-    (session.user as any).orgId;
+  const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Quotes", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
 const where: Prisma.QuoteWhereInput = {
 
@@ -180,12 +216,14 @@ const where: Prisma.QuoteWhereInput = {
 
         </div>
 
-        <Link
-          href="/quotes/create"
-          className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
-        >
-          New Quote
-        </Link>
+       {canCreate(permissions, "Quotes", isOwner) && (
+  <Link
+    href="/quotes/create"
+    className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
+  >
+    New Quote
+  </Link>
+)}
 
       </div>
 
@@ -414,19 +452,23 @@ const where: Prisma.QuoteWhereInput = {
                       View
                     </Link>
 
-                    <Link
-                      href={`/quotes/${quote.id}/edit`}
-                      className="font-medium text-orange-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
+                    {canEdit(permissions, "Quotes", isOwner) && (
+  <Link
+    href={`/quotes/${quote.id}/edit`}
+    className="font-medium text-orange-600 hover:underline"
+  >
+    Edit
+  </Link>
+)}
 
-                    <Link
-                      href={`/quotes/${quote.id}/delete`}
-                      className="font-medium text-red-600 hover:underline"
-                    >
-                      Delete
-                    </Link>
+                   {canDelete(permissions, "Quotes", isOwner) && (
+  <Link
+    href={`/quotes/${quote.id}/delete`}
+    className="font-medium text-red-600 hover:underline"
+  >
+    Delete
+  </Link>
+)}
 
                   </div>
 

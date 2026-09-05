@@ -2,7 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import DataTable from "@/components/DataTable"
 import { redirect } from "next/navigation"
-import { canView } from "@/shared/lib/permissions"
+import { canCreate, canDelete, canEdit, canView } from "@/shared/lib/permissions"
 import type { Permission } from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic"
@@ -81,6 +81,19 @@ if (!orgId) {
       editPath="/customers/edit"
 
       rowHref="/customers"
+
+
+ canCreate={
+    canCreate(permissions, "Leads") || isOwner
+  }
+
+  canEdit={
+    canEdit(permissions, "Leads") || isOwner
+  }
+
+  canDelete={
+    canDelete(permissions, "Leads") || isOwner
+  }
 
       onDeletePath="/api/customers"
 

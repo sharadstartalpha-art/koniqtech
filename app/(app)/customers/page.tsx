@@ -12,30 +12,33 @@ export default async function Page() {
  const session = await auth();
 
 if (!session?.user) {
-  redirect("/login");
+    redirect("/login");
 }
 
-const user = await prisma.user.findUnique({
-  where: {
-    id: session.user.id,
-  },
-  include: {
-    organizationRole: {
-      include: {
-        permissions: true,
-      },
+const dbUser = await prisma.user.findUnique({
+    where: {
+        email: session.user.email!,
     },
-  },
+    include: {
+        organizationRole: {
+            include: {
+                permissions: true,
+            },
+        },
+    },
 });
 
-const permissions: Permission[] =
-  (user?.organizationRole?.permissions as Permission[]) ?? [];
+if (!dbUser) {
+    redirect("/login");
+}
+
+const permissions = dbUser.organizationRole?.permissions ?? [];
 
 const isOwner =
-  session.user.organizationRole === "Owner";
+    dbUser.organizationRole?.name === "Owner";
 
 if (!canView(permissions, "Customers", isOwner)) {
-  redirect("/dashboard");
+    redirect("/unauthorized");
 }
 
 const orgId = session.user.orgId;

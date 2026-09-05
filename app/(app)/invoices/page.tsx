@@ -2,10 +2,20 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { Prisma } from "@prisma/client"
 
 export const dynamic = "force-dynamic"
 
-export default async function InvoicesPage() {
+interface PageProps {
+  searchParams: Promise<{
+    search?: string
+    status?: string
+  }>
+}
+
+export default async function InvoicesPage({
+  searchParams,
+}: PageProps) {
   const session = await auth()
 
   if (!session?.user) {
@@ -18,18 +28,76 @@ export default async function InvoicesPage() {
     redirect("/welcome")
   }
 
+const {
+  search = "",
+  status = "",
+} = await searchParams
+
+const where: Prisma.InvoiceWhereInput = {
+  orgId,
+
+  ...(search
+    ? {
+        OR: [
+          {
+            invoiceNumber: {
+              contains: search,
+              mode: Prisma.QueryMode.insensitive,
+            },
+          },
+          {
+            customer: {
+              OR: [
+                {
+                  firstName: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+                {
+                  lastName: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+                {
+                  companyName: {
+                    contains: search,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            job: {
+              title: {
+                contains: search,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            },
+          },
+        ],
+      }
+    : {}),
+
+  ...(status
+    ? {
+        status,
+      }
+    : {}),
+}
+  
   const invoices = await prisma.invoice.findMany({
-    where: {
-      orgId,
-    },
-    include: {
-      customer: true,
-      job: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+  where,
+  include: {
+    customer: true,
+    job: true,
+  },
+  orderBy: {
+    createdAt: "desc",
+  },
+})
 
   const draft = invoices.filter(
     (i) => i.status === "draft"
@@ -51,6 +119,9 @@ export default async function InvoicesPage() {
     (sum, invoice) => sum + Number(invoice.total),
     0
   )
+
+
+  
 
   return (
     <div className="space-y-8">
@@ -144,6 +215,57 @@ export default async function InvoicesPage() {
       </div>
 
       <div className="bg-white border rounded-3xl overflow-hidden">
+
+<form className="flex flex-col gap-4 lg:flex-row">
+
+  <input
+    type="text"
+    name="search"
+    defaultValue={search}
+    placeholder="Search invoice..."
+    className="flex-1 rounded-xl border px-5 py-3"
+  />
+
+  <select
+    name="status"
+    defaultValue={status}
+    className="rounded-xl border px-5 py-3"
+  >
+    <option value="">
+      All Statuses
+    </option>
+
+    <option value="draft">
+      Draft
+    </option>
+
+    <option value="sent">
+      Sent
+    </option>
+
+    <option value="paid">
+      Paid
+    </option>
+
+    <option value="overdue">
+      Overdue
+    </option>
+
+    <option value="cancelled">
+      Cancelled
+    </option>
+
+  </select>
+
+  <button
+    type="submit"
+    className="rounded-xl bg-slate-900 px-6 py-3 text-white hover:bg-slate-800"
+  >
+    Search
+  </button>
+
+</form>
+
 
         <table className="w-full">
 

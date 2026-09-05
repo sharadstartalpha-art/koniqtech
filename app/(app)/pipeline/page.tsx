@@ -1,9 +1,10 @@
-import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
-import { auth } from "@/auth"
-import { redirect } from "next/navigation"
+import prisma from "@/shared/lib/prisma";
+import Link from "next/link";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
+import { canCreate, canView } from "@/shared/lib/permissions";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 const stages = [
   "new",
@@ -11,45 +12,67 @@ const stages = [
   "proposal",
   "negotiation",
   "won",
-  "lost"
-]
+  "lost",
+];
 
 export default async function PipelinePage() {
-
-  const session = await auth()
+  const session = await auth();
 
   if (!session?.user) {
-    redirect("/login")
+    redirect("/login");
   }
 
-  const orgId = session.user.orgId
+  const dbUser = await prisma.user.findUnique({
+    where: {
+      email: session.user.email!,
+    },
+    include: {
+      organizationRole: {
+        include: {
+          permissions: true,
+        },
+      },
+    },
+  });
+
+  if (!dbUser) {
+    redirect("/login");
+  }
+
+  const permissions =
+    dbUser.organizationRole?.permissions ?? [];
+
+  const isOwner =
+    dbUser.organizationRole?.name === "Owner";
+
+  if (!canView(permissions, "Pipeline", isOwner)) {
+    redirect("/unauthorized");
+  }
+
+  const orgId = dbUser.orgId;
 
   if (!orgId) {
-    redirect("/welcome")
+    redirect("/welcome");
   }
 
   const opportunities =
     await prisma.opportunity.findMany({
-
       where: {
-        orgId
+        orgId,
       },
-
       include: {
-        customer: true
+        customer: true,
       },
-
       orderBy: {
-        createdAt: "desc"
-      }
-
-    })
+        createdAt: "desc",
+      },
+    });
 
   const pipelineValue =
     opportunities.reduce(
       (sum, item) => sum + (item.value ?? 0),
       0
-    )
+    );
 
   return (
 
@@ -69,19 +92,14 @@ export default async function PipelinePage() {
 
         </div>
 
-        <Link
-          href="/pipeline/create"
-          className="
-          bg-orange-600
-          hover:bg-orange-700
-          text-white
-          px-6
-          py-3
-          rounded-xl
-          "
-        >
-          New Opportunity
-        </Link>
+       {canCreate(permissions, "Pipeline", isOwner) && (
+  <Link
+    href="/pipeline/create"
+    className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl"
+  >
+    New Opportunity
+  </Link>
+)}
 
       </div>
 

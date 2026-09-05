@@ -3,6 +3,12 @@ import { auth } from "@/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Prisma } from "@prisma/client"
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic"
 
@@ -22,11 +28,63 @@ export default async function InvoicesPage({
     redirect("/login")
   }
 
-  const orgId = session.user.orgId
+ 
+const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!dbUser) {
+  redirect("/login")
+}
+
+ const orgId = session.user.orgId
 
   if (!orgId) {
     redirect("/welcome")
   }
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? []
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner"
+
+const canViewInvoices = canView(
+  permissions,
+  "Invoices",
+  isOwner
+)
+
+const canCreateInvoices = canCreate(
+  permissions,
+  "Invoices",
+  isOwner
+)
+
+const canEditInvoices = canEdit(
+  permissions,
+  "Invoices",
+  isOwner
+)
+
+const canDeleteInvoices = canDelete(
+  permissions,
+  "Invoices",
+  isOwner
+)
+
+if (!canViewInvoices) {
+  redirect("/unauthorized")
+}
 
 const {
   search = "",
@@ -140,21 +198,22 @@ const where: Prisma.InvoiceWhereInput = {
 
         </div>
 
-        <Link
-          href="/invoices/create"
-          className="
-            bg-orange-600
-            hover:bg-orange-700
-            text-white
-            px-6
-            py-3
-            rounded-xl
-            font-medium
-          "
-        >
-          + New Invoice
-        </Link>
-
+       {canCreateInvoices && (
+  <Link
+    href="/invoices/create"
+    className="
+      bg-orange-600
+      hover:bg-orange-700
+      text-white
+      px-6
+      py-3
+      rounded-xl
+      font-medium
+    "
+  >
+    + New Invoice
+  </Link>
+)}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -379,39 +438,59 @@ const where: Prisma.InvoiceWhereInput = {
 
                 </td>
 
-                <td className="p-4">
+               <td className="p-4">
 
-                  <div className="flex justify-end gap-2">
+  <div className="flex justify-end gap-2">
 
-                    <Link
-                      href={`/invoices/${invoice.id}`}
-                      className="
-                        border
-                        px-3
-                        py-2
-                        rounded-lg
-                        hover:bg-slate-100
-                      "
-                    >
-                      View
-                    </Link>
+    {canViewInvoices && (
+      <Link
+        href={`/invoices/${invoice.id}`}
+        className="
+          border
+          px-3
+          py-2
+          rounded-lg
+          hover:bg-slate-100
+        "
+      >
+        View
+      </Link>
+    )}
 
-                    <Link
-                      href={`/invoices/${invoice.id}/edit`}
-                      className="
-                        border
-                        px-3
-                        py-2
-                        rounded-lg
-                        hover:bg-slate-100
-                      "
-                    >
-                      Edit
-                    </Link>
+    {canEditInvoices && (
+      <Link
+        href={`/invoices/${invoice.id}/edit`}
+        className="
+          border
+          px-3
+          py-2
+          rounded-lg
+          hover:bg-slate-100
+        "
+      >
+        Edit
+      </Link>
+    )}
 
-                  </div>
+    {canDeleteInvoices && (
+      <Link
+        href={`/invoices/${invoice.id}/delete`}
+        className="
+          border
+          px-3
+          py-2
+          rounded-lg
+          text-red-600
+          hover:bg-red-50
+        "
+      >
+        Delete
+      </Link>
+    )}
 
-                </td>
+  </div>
+
+</td>
 
               </tr>
 

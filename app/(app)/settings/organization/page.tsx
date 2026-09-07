@@ -12,6 +12,39 @@ if (!session?.user?.orgId) {
 
 const orgId = session.user.orgId
 
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!currentUser) {
+  redirect("/login")
+}
+
+const isOwner =
+  currentUser.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser.organizationRole?.permissions.find(
+    p => p.module === "Organization"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
 
   const organization =
     await prisma.organization.findUnique({

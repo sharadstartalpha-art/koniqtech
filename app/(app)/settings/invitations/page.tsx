@@ -23,6 +23,40 @@ export default async function Page({
 
   const params = await searchParams
 
+  const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!currentUser) {
+  redirect("/login")
+}
+
+const isOwner =
+  currentUser.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "Invitations"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
   const roles = await prisma.organizationRole.findMany({
     where: {
       orgId,
@@ -55,6 +89,36 @@ async function sendInvite(formData: FormData) {
   }
 
   const orgId = (session.user as any).orgId
+
+  const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+const isOwner =
+  currentUser?.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser?.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "Invitations"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canCreate
+) {
+  throw new Error("Unauthorized")
+}
 
   const email = String(formData.get("email"))
   const roleId = String(formData.get("roleId"))
@@ -180,6 +244,37 @@ await resend.emails.send({
     redirect("/signin")
   }
 
+
+  const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+const isOwner =
+  currentUser?.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser?.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "Invitations"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canDelete
+) {
+  throw new Error("Unauthorized")
+}
+
   await prisma.teamInvitation.delete({
     where: {
       id,
@@ -245,15 +340,17 @@ await resend.emails.send({
 
 )}
 
-      <form
-        action={sendInvite}
-        className="
-        bg-white
-        border
-        rounded-3xl
-        p-8
-        "
-      >
+     {(isOwner || permission?.canCreate) && (
+
+<form
+  action={sendInvite}
+  className="
+  bg-white
+  border
+  rounded-3xl
+  p-8
+  "
+>
 
         <h2 className="text-xl font-semibold mb-6">
           Send Invitation
@@ -302,6 +399,8 @@ await resend.emails.send({
         </div>
 
       </form>
+
+)}
 
       {/* Pending */}
 
@@ -390,26 +489,30 @@ await resend.emails.send({
 
                 <td className="p-4">
 
-                  <form
-                    action={
-                      cancelInvite.bind(
-                        null,
-                        inv.id
-                      )
-                    }
-                  >
+  {(isOwner || permission?.canDelete) && (
 
-                    <button
-                      className="
-                      text-red-600
-                      "
-                    >
-                      Cancel
-                    </button>
+    <form
+      action={
+        cancelInvite.bind(
+          null,
+          inv.id
+        )
+      }
+    >
 
-                  </form>
+      <button
+        className="
+        text-red-600
+        "
+      >
+        Cancel
+      </button>
 
-                </td>
+    </form>
+
+  )}
+
+</td>
 
               </tr>
 

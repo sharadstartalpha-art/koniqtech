@@ -1,4 +1,51 @@
-export default function EmailTemplatesPage() {
+import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+
+export default async function EmailTemplatesPage() {
+
+  const session = await auth()
+
+if (!session?.user) {
+  redirect("/login")
+}
+
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!currentUser) {
+  redirect("/login")
+}
+
+const isOwner =
+  currentUser.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser.organizationRole?.permissions.find(
+    p => p.module === "Email Templates"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
+const canEdit =
+  isOwner ||
+  permission?.canEdit === true
 
   return (
 
@@ -30,21 +77,25 @@ export default function EmailTemplatesPage() {
 
       <div className="grid gap-6">
 
-        <TemplateCard
-          title="Welcome Email"
-        />
+      <TemplateCard
+  title="Welcome Email"
+  canEdit={canEdit}
+/>
 
-        <TemplateCard
-          title="Quote Sent"
-        />
+<TemplateCard
+  title="Quote Sent"
+  canEdit={canEdit}
+/>
 
-        <TemplateCard
-          title="Invoice Sent"
-        />
+<TemplateCard
+  title="Invoice Sent"
+  canEdit={canEdit}
+/>
 
-        <TemplateCard
-          title="Job Completed"
-        />
+<TemplateCard
+  title="Job Completed"
+  canEdit={canEdit}
+/>
 
       </div>
 
@@ -55,9 +106,11 @@ export default function EmailTemplatesPage() {
 }
 
 function TemplateCard({
-  title
+  title,
+  canEdit,
 }:{
   title:string
+  canEdit:boolean
 }){
 
   return(
@@ -83,18 +136,21 @@ function TemplateCard({
 
         </div>
 
-        <button
+ <button
   type="button"
   disabled
-  className="
-  px-4
-  py-2
-  rounded-xl
-  border
-  bg-slate-100
-  text-slate-500
-  cursor-not-allowed
-  "
+  className={`
+    px-4
+    py-2
+    rounded-xl
+    border
+    ${
+      canEdit
+        ? "bg-orange-100 text-orange-600"
+        : "bg-slate-100 text-slate-500"
+    }
+    cursor-not-allowed
+  `}
 >
   Coming Soon
 </button>

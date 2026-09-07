@@ -1,4 +1,48 @@
-export default function NotificationSettingsPage() {
+import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+
+export default async function NotificationSettingsPage() {
+
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    redirect("/login")
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: {
+      id: session.user.id,
+    },
+    include: {
+      organizationRole: {
+        include: {
+          permissions: true,
+        },
+      },
+    },
+  })
+
+  if (!currentUser) {
+    redirect("/login")
+  }
+
+  const isOwner =
+    currentUser.organizationRole?.name.toLowerCase() ===
+    "owner"
+
+  const permission =
+    currentUser.organizationRole?.permissions.find(
+      p => p.module === "Notifications"
+    )
+
+  if (
+    !isOwner &&
+    !permission?.canView
+  ) {
+    redirect("/dashboard")
+  }
+
 
   return (
 
@@ -39,20 +83,24 @@ export default function NotificationSettingsPage() {
 
             <span>Email Notifications</span>
 
-            <input
-              type="checkbox"
-              defaultChecked
-            />
+           <input
+  type="checkbox"
+  checked
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 
           <label className="flex justify-between">
 
             <span>SMS Notifications</span>
-
-            <input
-              type="checkbox"
-            />
+<input
+  type="checkbox"
+  checked
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 
@@ -61,9 +109,11 @@ export default function NotificationSettingsPage() {
             <span>Lead Alerts</span>
 
             <input
-              type="checkbox"
-              defaultChecked
-            />
+  type="checkbox"
+  checked
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 
@@ -72,9 +122,11 @@ export default function NotificationSettingsPage() {
             <span>Invoice Alerts</span>
 
             <input
-              type="checkbox"
-              defaultChecked
-            />
+  type="checkbox"
+  checked
+  disabled
+  className="h-5 w-5 cursor-not-allowed"
+/>
 
           </label>
 

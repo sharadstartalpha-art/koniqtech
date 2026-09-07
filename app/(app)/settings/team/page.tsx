@@ -18,13 +18,13 @@ export default async function TeamPage({
 
   const session = await auth()
 
-  if (!session?.user?.orgId) {
-    redirect("/login")
-  }
+if (!session?.user?.id) {
+  redirect("/login")
+}
 
   const orgId = session.user.orgId
 
-  const currentUser = await prisma.user.findUnique({
+ const currentUser = await prisma.user.findUnique({
   where: {
     id: session.user.id,
   },
@@ -37,10 +37,25 @@ export default async function TeamPage({
   },
 })
 
+if (!currentUser) {
+  redirect("/login")
+}
+
 const isOwner =
-  currentUser?.organizationRole?.name.toLowerCase() ===
+  currentUser.organizationRole?.name.toLowerCase() ===
   "owner"
 
+const canViewTeam =
+  isOwner ||
+  currentUser.organizationRole?.permissions.some(
+    p =>
+      p.module === "Team" &&
+      p.canView
+  )
+
+if (!canViewTeam) {
+  redirect("/dashboard")
+}
 const permission =
   currentUser?.organizationRole?.permissions.find(
     permission =>
@@ -241,25 +256,25 @@ const salesReps = users.filter(
 
         </div>
 
-        {(
-  isOwner ||
-  permission?.canCreate
-) && (
-
+       {(isOwner ||
+  currentUser.organizationRole?.permissions.some(
+    p =>
+      p.module === "Team" &&
+      p.canCreate
+  )) && (
   <Link
     href="/settings/team/new"
     className="
-    px-5
-    py-3
-    bg-orange-600
-    text-white
-    rounded-2xl
-    font-medium
+      px-5
+      py-3
+      bg-orange-600
+      text-white
+      rounded-2xl
+      font-medium
     "
   >
     + Add Team Member
   </Link>
-
 )}
 
       </div>
@@ -457,31 +472,33 @@ const salesReps = users.filter(
 
   <div className="flex gap-2">
 
-   {(
-  isOwner ||
-  permission?.canEdit
-) && (
-
+  {(isOwner ||
+  currentUser.organizationRole?.permissions.some(
+    p =>
+      p.module === "Team" &&
+      p.canEdit
+  )) && (
   <Link
     href={`/settings/team/${user.id}/edit`}
     className="
-    px-3
-    py-1
-    text-sm
-    rounded-lg
-    bg-blue-100
-    text-blue-700
+      px-3
+      py-1
+      text-sm
+      rounded-lg
+      bg-blue-100
+      text-blue-700
     "
   >
     Edit
   </Link>
-
 )}
 
-    {(
-  isOwner ||
-  permission?.canEdit
-) && (
+   {(isOwner ||
+  currentUser.organizationRole?.permissions.some(
+    p =>
+      p.module === "Team" &&
+      p.canEdit
+  )) && (
 
 <form
   action={toggleUserStatus}

@@ -3,6 +3,12 @@ import prisma from "@/shared/lib/prisma";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+  canEdit,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +20,40 @@ export default async function NotificationsPage() {
     redirect("/login");
   }
 
-  const orgId = session.user.orgId;
+  const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
 
-  const userId = session.user.id;
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Notifications", isOwner)) {
+  redirect("/403");
+}
+
+const orgId = dbUser.orgId;
+
+const userId = dbUser.id;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const notifications =
     await prisma.notification.findMany({
@@ -78,12 +115,14 @@ export default async function NotificationsPage() {
 
         </div>
 
-        <Link
-          href="/notifications/create"
-          className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          New Notification
-        </Link>
+        {canCreate(permissions, "Notifications", isOwner) && (
+  <Link
+    href="/notifications/create"
+    className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    New Notification
+  </Link>
+)}
 
       </div>
 
@@ -410,28 +449,32 @@ export default async function NotificationsPage() {
 
                   <div className="flex justify-end gap-3">
 
-                    <Link
-                      href={`/notifications/${notification.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </Link>
+  <Link
+    href={`/notifications/${notification.id}`}
+    className="text-blue-600 hover:underline"
+  >
+    View
+  </Link>
 
-                    <Link
-                      href={`/notifications/${notification.id}/edit`}
-                      className="text-amber-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
+  {canEdit(permissions, "Notifications", isOwner) && (
+    <Link
+      href={`/notifications/${notification.id}/edit`}
+      className="text-amber-600 hover:underline"
+    >
+      Edit
+    </Link>
+  )}
 
-                    <Link
-                      href={`/notifications/${notification.id}/delete`}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </Link>
+  {canDelete(permissions, "Notifications", isOwner) && (
+    <Link
+      href={`/notifications/${notification.id}/delete`}
+      className="text-red-600 hover:underline"
+    >
+      Delete
+    </Link>
+  )}
 
-                  </div>
+</div>
 
                 </td>
 

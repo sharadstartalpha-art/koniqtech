@@ -3,6 +3,10 @@ import prisma from "@/shared/lib/prisma";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +18,38 @@ export default async function MessagesPage() {
     redirect("/login");
   }
 
-  const orgId = session.user.orgId;
+  const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Messages", isOwner)) {
+  redirect("/403");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const conversations =
     await prisma.conversation.findMany({
@@ -92,12 +127,14 @@ export default async function MessagesPage() {
 
         </div>
 
-        <Link
-          href="/messages/create"
-          className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          New Conversation
-        </Link>
+        {canCreate(permissions, "Messages", isOwner) && (
+  <Link
+    href="/messages/create"
+    className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    New Conversation
+  </Link>
+)}
 
       </div>
 

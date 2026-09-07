@@ -48,6 +48,12 @@ if (!canView(permissions, "Reports", isOwner)) {
 
 const orgId = dbUser.orgId;
 
+const canExportReports = canExport(
+  permissions,
+  "Reports",
+  isOwner
+);
+
   const [
 
     totalCustomers,

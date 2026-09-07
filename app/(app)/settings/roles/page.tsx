@@ -42,7 +42,8 @@ const permissions: Permission[] =
   (user?.organizationRole?.permissions as Permission[]) ?? [];
 
 const isOwner =
-  session.user.organizationRole === "Owner";
+  user?.organizationRole?.name.toLowerCase() ===
+  "owner";
 
 if (!canView(permissions, "Roles & Permissions", isOwner)) {
   redirect("/dashboard");
@@ -108,6 +109,11 @@ const users = await prisma.user.findMany({
     </p>
   </div>
 
+  {canCreate(
+  permissions,
+  "Roles & Permissions",
+  isOwner
+) && (
   <Link
     href="/settings/roles/new"
     className="
@@ -121,6 +127,7 @@ const users = await prisma.user.findMany({
   >
     + Create Role
   </Link>
+)}
       </div>
 
 
@@ -207,21 +214,26 @@ const users = await prisma.user.findMany({
                 {count} users
               </p>
 
-              <Link
-                href={`/settings/roles/edit?role=${role.id}`}
-                className="
-                inline-block
-                mt-4
-                px-4
-                py-2
-                rounded-xl
-                bg-orange-600
-                text-white
-                "
-              >
-                Edit
-              </Link>
-
+             {canEdit(
+  permissions,
+  "Roles & Permissions",
+  isOwner
+) && (
+  <Link
+    href={`/settings/roles/edit?role=${role.id}`}
+    className="
+      inline-block
+      mt-4
+      px-4
+      py-2
+      rounded-xl
+      bg-orange-600
+      text-white
+    "
+  >
+    Edit
+  </Link>
+)}
             </div>
 
           )
@@ -290,15 +302,18 @@ const users = await prisma.user.findMany({
 
                   <td className="p-4">
 
-                    <Link
-                      href={`/settings/roles/edit?module=${module}`}
-                      className="
-                      text-orange-600
-                      "
-                    >
-                      Configure
-                    </Link>
-
+                   {canEdit(
+  permissions,
+  "Roles & Permissions",
+  isOwner
+) && (
+  <Link
+    href={`/settings/roles/edit?module=${module}`}
+    className="text-orange-600"
+  >
+    Configure
+  </Link>
+)}
                   </td>
 
                 </tr>

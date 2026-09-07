@@ -3,6 +3,10 @@ import prisma from "@/shared/lib/prisma";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canExport,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +19,34 @@ export default async function ReportsPage() {
     redirect("/login");
   }
 
-  const orgId =
-    session.user.orgId;
+  const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "Reports", isOwner)) {
+  redirect("/unauthorized");
+}
+
+const orgId = dbUser.orgId;
 
   const [
 

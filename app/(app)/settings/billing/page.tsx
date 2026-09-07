@@ -12,6 +12,43 @@ if (!session?.user) {
 
 const orgId = (session.user as any).orgId
 
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!currentUser) {
+  redirect("/login")
+}
+
+const isOwner =
+  currentUser.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser.organizationRole?.permissions.find(
+    p => p.module === "Billing"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
+const canEdit =
+  isOwner ||
+  permission?.canEdit
+
 const organization =
   await prisma.organization.findUnique({
     where: {
@@ -131,16 +168,46 @@ if (!organization) {
           Payment Method
         </h2>
 
-        <div className="
-        border
-        rounded-2xl
-        p-5
-        ">
+       <div
+  className="
+  border
+  rounded-2xl
+  p-5
+  flex
+  items-center
+  justify-between
+  "
+>
+  <span>Stripe Connected</span>
 
-          Stripe Connected
-
-        </div>
-
+  {canEdit ? (
+    <button
+      className="
+      px-4
+      py-2
+      rounded-xl
+      bg-orange-600
+      text-white
+      "
+    >
+      Manage
+    </button>
+  ) : (
+    <button
+      disabled
+      className="
+      px-4
+      py-2
+      rounded-xl
+      bg-slate-100
+      text-slate-500
+      cursor-not-allowed
+      "
+    >
+      No Permission
+    </button>
+  )}
+</div>
       </div>
 
     </div>

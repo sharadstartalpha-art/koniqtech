@@ -59,7 +59,7 @@ if (!canViewTeam) {
 const permission =
   currentUser?.organizationRole?.permissions.find(
     permission =>
-      permission.module === "team"
+      permission.module === "Team"
   )
 
 if (
@@ -118,7 +118,7 @@ const isOwner =
 const permission =
   currentUser?.organizationRole?.permissions.find(
     permission =>
-      permission.module === "team"
+      permission.module === "Team"
   )
 
 if (
@@ -178,7 +178,7 @@ const isOwner =
 const permission =
   currentUser?.organizationRole?.permissions.find(
     permission =>
-      permission.module === "team"
+      permission.module === "Team"
   )
 
 if (

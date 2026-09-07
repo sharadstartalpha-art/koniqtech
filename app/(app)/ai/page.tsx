@@ -3,6 +3,11 @@ import prisma from "@/shared/lib/prisma";
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  canView,
+  canCreate,
+  canDelete,
+} from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +19,38 @@ export default async function AiDashboardPage() {
     redirect("/login");
   }
 
-  const orgId = session.user.orgId;
+ const dbUser = await prisma.user.findUnique({
+  where: {
+    email: session.user.email!,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+});
+
+if (!dbUser) {
+  redirect("/login");
+}
+
+const permissions =
+  dbUser.organizationRole?.permissions ?? [];
+
+const isOwner =
+  dbUser.organizationRole?.name === "Owner";
+
+if (!canView(permissions, "AI Assistant", isOwner)) {
+  redirect("/403");
+}
+
+const orgId = dbUser.orgId;
+
+if (!orgId) {
+  redirect("/welcome");
+}
 
   const aiLogs =
     await prisma.aiLog.findMany({
@@ -84,12 +120,14 @@ export default async function AiDashboardPage() {
 
         </div>
 
-        <Link
-          href="/ai/chat"
-          className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
-        >
-          Open AI Chat
-        </Link>
+        {canCreate(permissions, "AI Assistant", isOwner) && (
+  <Link
+    href="/ai/chat"
+    className="rounded-xl bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+  >
+    Open AI Chat
+  </Link>
+)}
 
       </div>
 
@@ -384,23 +422,25 @@ export default async function AiDashboardPage() {
 
                 <td className="px-6 py-4">
 
-                  <div className="flex justify-end gap-3">
+                 <div className="flex justify-end gap-3">
 
-                    <Link
-                      href={`/ai/${log.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      View
-                    </Link>
+  <Link
+    href={`/ai/${log.id}`}
+    className="text-blue-600 hover:underline"
+  >
+    View
+  </Link>
 
-                    <Link
-                      href={`/ai/${log.id}/delete`}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </Link>
+  {canDelete(permissions, "AI Assistant", isOwner) && (
+    <Link
+      href={`/ai/${log.id}/delete`}
+      className="text-red-600 hover:underline"
+    >
+      Delete
+    </Link>
+  )}
 
-                  </div>
+</div>
 
                 </td>
 

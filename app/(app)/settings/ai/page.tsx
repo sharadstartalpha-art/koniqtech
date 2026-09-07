@@ -1,4 +1,52 @@
-export default function AISettingsPage() {
+import prisma from "@/shared/lib/prisma"
+import { auth } from "@/auth"
+import { redirect } from "next/navigation"
+
+export default async function AISettingsPage() {
+
+  const session = await auth()
+
+if (!session?.user) {
+  redirect("/login")
+}
+
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+if (!currentUser) {
+  redirect("/login")
+}
+
+const isOwner =
+  currentUser.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser.organizationRole?.permissions.find(
+    p => p.module === "AI Settings"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
+const canEdit =
+  isOwner ||
+  permission?.canEdit
+
 
   return (
 
@@ -54,7 +102,11 @@ export default function AISettingsPage() {
               AI Lead Scoring
             </span>
 
-            <input type="checkbox" defaultChecked />
+           <input
+  type="checkbox"
+  defaultChecked
+  disabled={!canEdit}
+/>
 
           </label>
 
@@ -64,7 +116,11 @@ export default function AISettingsPage() {
               AI Quote Generation
             </span>
 
-            <input type="checkbox" defaultChecked />
+           <input
+  type="checkbox"
+  defaultChecked
+  disabled={!canEdit}
+/>
 
           </label>
 

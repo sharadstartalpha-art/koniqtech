@@ -18,7 +18,9 @@ export default async function CompanyPage({
     redirect("/login");
   }
 
-const currentUser = await prisma.user.findUnique({
+  const orgId = (session.user as any).orgId;
+
+  const currentUser = await prisma.user.findUnique({
   where: {
     id: session.user.id,
   },
@@ -44,12 +46,12 @@ const permission =
     p => p.module === "Company"
   )
 
-if (!isOwner && !permission?.canView) {
+if (
+  !isOwner &&
+  !permission?.canView
+) {
   redirect("/dashboard")
 }
-
-
-  const orgId = (session.user as any).orgId;
 
   const organization = await prisma.organization.findUnique({
     where: {
@@ -66,21 +68,20 @@ async function saveCompany(
 ) {
   "use server"
 
-  const session = await auth()
+const session = await auth()
 
-const currentUser =
-  await prisma.user.findUnique({
-    where: {
-      id: session!.user.id,
-    },
-    include: {
-      organizationRole: {
-        include: {
-          permissions: true,
-        },
+const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session!.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
       },
     },
-  })
+  },
+})
 
 const isOwner =
   currentUser?.organizationRole?.name.toLowerCase() ===
@@ -91,7 +92,10 @@ const permission =
     p => p.module === "Company"
   )
 
-if (!isOwner && !permission?.canEdit) {
+if (
+  !isOwner &&
+  !permission?.canEdit
+) {
   throw new Error("Unauthorized")
 }
 
@@ -157,12 +161,11 @@ if (!isOwner && !permission?.canEdit) {
               Company Name
             </label>
 
-           <input
-  name="name"
-  defaultValue={organization.name}
-  readOnly={!isOwner && !permission?.canEdit}
-  className="w-full rounded-xl border p-4"
-/>
+            <input
+              name="name"
+              defaultValue={organization.name}
+              className="w-full rounded-xl border p-4"
+            />
           </div>
 
           <div>
@@ -262,15 +265,14 @@ if (!isOwner && !permission?.canEdit) {
             />
           </div>
         </div>
-
-       {(isOwner || permission?.canEdit) && (
-  <button
-    type="submit"
-    className="px-6 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition"
-  >
-    Save Changes
-  </button>
-)}
+{(isOwner || permission?.canEdit) && (
+        <button
+          type="submit"
+          className="px-6 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700 transition"
+        >
+          Save Changes
+        </button>
+        )}
       </form>
     </div>
   );

@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function BrandingForm() {
+export default function BrandingForm({
+  canEdit,
+}: {
+  canEdit: boolean
+}) {
   const router = useRouter();
 
   const [logo, setLogo] = useState<File | null>(null);

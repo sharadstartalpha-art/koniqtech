@@ -24,6 +24,36 @@ export default async function TeamPage({
 
   const orgId = session.user.orgId
 
+  const currentUser = await prisma.user.findUnique({
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
+      },
+    },
+  },
+})
+
+const isOwner =
+  currentUser?.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser?.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "team"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canView
+) {
+  redirect("/dashboard")
+}
+
   const users = await prisma.user.findMany({
   where: {
     orgId,
@@ -46,6 +76,42 @@ async function toggleUserStatus(
 
   const status =
     formData.get("status") as string
+
+    const session = await auth()
+
+const currentUser =
+  await prisma.user.findUnique({
+
+    where: {
+      id: session!.user.id,
+    },
+
+    include: {
+      organizationRole: {
+        include: {
+          permissions: true,
+        },
+      },
+    },
+
+  })
+
+const isOwner =
+  currentUser?.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser?.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "team"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canEdit
+) {
+  throw new Error("Unauthorized")
+}
 
   await prisma.user.update({
 
@@ -70,6 +136,43 @@ async function deleteUser(
 
   const id =
     formData.get("id") as string
+
+    const session = await auth()
+
+const currentUser =
+  await prisma.user.findUnique({
+
+    where: {
+      id: session!.user.id,
+    },
+
+    include: {
+      organizationRole: {
+        include: {
+          permissions: true,
+        },
+      },
+    },
+
+  })
+
+const isOwner =
+  currentUser?.organizationRole?.name.toLowerCase() ===
+  "owner"
+
+const permission =
+  currentUser?.organizationRole?.permissions.find(
+    permission =>
+      permission.module === "team"
+  )
+
+if (
+  !isOwner &&
+  !permission?.canDelete
+) {
+  throw new Error("Unauthorized")
+}
+
 
   const user = await prisma.user.findUnique({
   where: {
@@ -138,19 +241,26 @@ const salesReps = users.filter(
 
         </div>
 
-        <Link
-          href="/settings/team/new"
-          className="
-          px-5
-          py-3
-          bg-orange-600
-          text-white
-          rounded-2xl
-          font-medium
-          "
-        >
-          + Add Team Member
-        </Link>
+        {(
+  isOwner ||
+  permission?.canCreate
+) && (
+
+  <Link
+    href="/settings/team/new"
+    className="
+    px-5
+    py-3
+    bg-orange-600
+    text-white
+    rounded-2xl
+    font-medium
+    "
+  >
+    + Add Team Member
+  </Link>
+
+)}
 
       </div>
 
@@ -347,23 +457,35 @@ const salesReps = users.filter(
 
   <div className="flex gap-2">
 
-    <Link
-      href={`/settings/team/${user.id}/edit`}
-      className="
-      px-3
-      py-1
-      text-sm
-      rounded-lg
-      bg-blue-100
-      text-blue-700
-      "
-    >
-      Edit
-    </Link>
+   {(
+  isOwner ||
+  permission?.canEdit
+) && (
 
-    <form
-      action={toggleUserStatus}
-    >
+  <Link
+    href={`/settings/team/${user.id}/edit`}
+    className="
+    px-3
+    py-1
+    text-sm
+    rounded-lg
+    bg-blue-100
+    text-blue-700
+    "
+  >
+    Edit
+  </Link>
+
+)}
+
+    {(
+  isOwner ||
+  permission?.canEdit
+) && (
+
+<form
+  action={toggleUserStatus}
+>
       <input
         type="hidden"
         name="id"
@@ -402,10 +524,17 @@ const salesReps = users.filter(
       </button>
 
     </form>
+)}
+    
 
-    {user.organizationRole?.name?.toLowerCase() !== "owner" && (
+    {(
+  (isOwner ||
+    permission?.canDelete) &&
+  user.organizationRole?.name?.toLowerCase() !==
+    "owner"
+) && (
 
-      <form action={deleteUser}>
+  <form action={deleteUser}>
 
   <input
     type="hidden"

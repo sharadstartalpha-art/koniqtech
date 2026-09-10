@@ -33,7 +33,7 @@ text-5xl
 font-bold
 ">
 
-AI Quotes
+AI Quotes 
 
 </h1>
 

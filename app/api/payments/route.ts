@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
-
+import { InvoiceStatus } from "@prisma/client"
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
@@ -123,7 +123,9 @@ export async function POST(request: NextRequest) {
         id: invoice.id,
       },
       data: {
-        status,
+        status:
+    status as InvoiceStatus,
+
         paidAt:
           status === "paid"
             ? new Date()

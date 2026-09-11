@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
-
+import { InvoiceStatus } from "@prisma/client"
 export async function PUT(
   request: NextRequest,
   {
@@ -95,6 +95,8 @@ export async function PUT(
       )
     }
 
+
+    
     const updated =
       await prisma.payment.update({
         where: {
@@ -148,7 +150,8 @@ export async function PUT(
         id: invoice.id,
       },
       data: {
-        status,
+       status:
+       status as InvoiceStatus,
         paidAt:
           status === "paid"
             ? new Date()
@@ -266,7 +269,9 @@ export async function DELETE(
           id: invoiceId,
         },
         data: {
-          status,
+          status:
+          status as InvoiceStatus,
+
           paidAt:
             status === "paid"
               ? new Date()

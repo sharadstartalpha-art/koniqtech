@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
 
-import { Prisma } from "@prisma/client";
+import { InvoiceStatus, Prisma } from "@prisma/client"
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -161,7 +161,8 @@ if (!orgId) {
 
     ...(status
       ? {
-          status,
+          status:
+        status as InvoiceStatus
         }
       : {}),
 

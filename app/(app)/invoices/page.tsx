@@ -2,7 +2,7 @@ import prisma from "@/shared/lib/prisma"
 import { auth } from "@/auth"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Prisma } from "@prisma/client"
+import { InvoiceStatus, Prisma } from "@prisma/client"
 import {
   canView,
   canCreate,
@@ -91,6 +91,13 @@ const {
   status = "",
 } = await searchParams
 
+const validStatus =
+  Object.values(InvoiceStatus).includes(
+    status as InvoiceStatus
+  )
+    ? status as InvoiceStatus
+    : undefined
+
 const where: Prisma.InvoiceWhereInput = {
   orgId,
 
@@ -139,9 +146,9 @@ const where: Prisma.InvoiceWhereInput = {
       }
     : {}),
 
-  ...(status
+  ...(validStatus
     ? {
-        status,
+        status: validStatus,
       }
     : {}),
 }

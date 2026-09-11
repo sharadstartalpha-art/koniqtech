@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
-
+import { InvoiceStatus } from "@prisma/client"
 import Link from "next/link"
 
 import {
@@ -199,7 +199,8 @@ export default async function EditInvoicePage({
 
         customerId,
 
-        status,
+        status:
+  status as InvoiceStatus,
 
         subtotal,
 

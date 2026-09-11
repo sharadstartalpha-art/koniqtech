@@ -7,7 +7,7 @@ import {
   notFound,
   redirect,
 } from "next/navigation";
-
+import { InvoiceStatus } from "@prisma/client"
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -246,6 +246,8 @@ export default async function EditInvoicePage({
         "Job not found."
       );
     }
+const invoiceStatus =
+  status as InvoiceStatus
 
     await prisma.invoice.update({
 
@@ -271,7 +273,7 @@ export default async function EditInvoicePage({
 
         dueDate,
 
-        status,
+        status: invoiceStatus,
 
       },
 

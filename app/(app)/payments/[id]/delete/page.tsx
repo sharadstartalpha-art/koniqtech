@@ -5,6 +5,7 @@ import {
   notFound,
   redirect,
 } from "next/navigation"
+import { InvoiceStatus } from "@prisma/client"
 
 export const dynamic = "force-dynamic"
 
@@ -121,7 +122,9 @@ export default async function DeletePaymentPage({
           id: invoiceId,
         },
         data: {
-          status,
+         status:
+    status as InvoiceStatus,
+
           paidAt:
             status === "paid"
               ? new Date()

@@ -8,7 +8,7 @@ import {
   redirect,
 } from "next/navigation"
 
-import { Prisma } from "@prisma/client"
+import { InvoiceStatus, Prisma } from "@prisma/client"
 
 export const dynamic = "force-dynamic"
 
@@ -179,7 +179,9 @@ export default async function CreateInvoicePage({
 
         dueDate,
 
-        status,
+        status:
+  status as InvoiceStatus,
+
 
       },
 

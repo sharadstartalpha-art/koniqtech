@@ -56,7 +56,7 @@ const permissions =
   dbUser.organizationRole?.permissions ?? []
 
 const isOwner =
-  dbUser.organizationRole?.name === "Owner"
+  dbUser.organizationRole?.name?.toLowerCase() === "owner"
 
 const canViewInvoices = canView(
   permissions,
@@ -99,7 +99,10 @@ const validStatus =
     : undefined
 
 const where: Prisma.InvoiceWhereInput = {
+
   orgId,
+
+  archivedAt: null,
 
   ...(search
     ? {
@@ -480,20 +483,20 @@ const where: Prisma.InvoiceWhereInput = {
     )}
 
     {canDeleteInvoices && (
-      <Link
-        href={`/invoices/${invoice.id}/delete`}
-        className="
-          border
-          px-3
-          py-2
-          rounded-lg
-          text-red-600
-          hover:bg-red-50
-        "
-      >
-        Delete
-      </Link>
-    )}
+  <Link
+    href={`/invoices/${invoice.id}/delete`}
+    className="
+      border
+      px-3
+      py-2
+      rounded-lg
+      text-red-600
+      hover:bg-red-50
+    "
+  >
+    Archive
+  </Link>
+)}
 
   </div>
 

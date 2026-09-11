@@ -445,10 +445,6 @@ export async function DELETE(
 
   try {
 
-    /* --------------------------------
-       AUTHENTICATION
-    -------------------------------- */
-
     const session =
       await auth()
 
@@ -456,8 +452,7 @@ export async function DELETE(
 
       return NextResponse.json(
         {
-          error:
-            "Unauthorized",
+          error: "Unauthorized",
         },
         {
           status: 401,
@@ -468,6 +463,9 @@ export async function DELETE(
 
     const orgId =
       session.user.orgId
+
+    const userId =
+      session.user.id
 
     const { id } =
       await params
@@ -501,29 +499,63 @@ export async function DELETE(
     }
 
     /* --------------------------------
-       DELETE
+       ALREADY ARCHIVED
     -------------------------------- */
 
-    await prisma.invoice.delete({
+    if (invoice.archivedAt) {
 
-      where: {
-        id,
-      },
+      return NextResponse.json(
+        {
+          error:
+            "Invoice is already archived.",
+        },
+        {
+          status: 400,
+        }
+      )
+
+    }
+
+    /* --------------------------------
+       ARCHIVE
+    -------------------------------- */
+
+    const archived =
+      await prisma.invoice.update({
+
+        where: {
+          id,
+        },
+
+        data: {
+
+          archivedAt:
+            new Date(),
+
+          archivedById:
+            userId,
+
+        },
+
+      })
+
+    return NextResponse.json({
+
+      success: true,
+
+      archived: true,
+
+      invoiceId:
+        archived.id,
 
     })
-
-    return NextResponse.json(
-      {
-        success: true,
-      }
-    )
 
   }
 
   catch (error: any) {
 
     console.error(
-      "DELETE INVOICE ERROR:",
+      "ARCHIVE INVOICE ERROR:",
       error
     )
 
@@ -531,7 +563,7 @@ export async function DELETE(
       {
         error:
           error?.message ||
-          "Failed to delete invoice.",
+          "Failed to archive invoice.",
       },
       {
         status: 500,

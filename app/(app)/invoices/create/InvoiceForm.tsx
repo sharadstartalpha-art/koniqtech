@@ -3,11 +3,11 @@
 import {
   useMemo,
   useState,
-  useEffect
+  useEffect,
 } from "react"
 
 import { useRouter } from "next/navigation"
-
+import { InvoiceStatus } from "@prisma/client"
 interface Customer {
   id: string
   firstName: string | null
@@ -30,27 +30,19 @@ interface InvoiceData {
   tax: number
   total: number
   dueDate: string
-  status: string
+ status: InvoiceStatus
 }
 
 interface InvoiceFormProps {
-
   customers: Customer[]
-
   jobs: Job[]
-
   invoice?: InvoiceData
-
 }
 
 export default function InvoiceForm({
-
   customers,
-
   jobs,
-
-  invoice
-
+  invoice,
 }: InvoiceFormProps) {
 
   const router = useRouter()
@@ -74,10 +66,11 @@ export default function InvoiceForm({
       `INV-${Date.now()}`
     )
 
-  const [status, setStatus] =
-    useState(
-      invoice?.status ?? "draft"
-    )
+ const [status, setStatus] =
+  useState<InvoiceStatus>(
+    invoice?.status ??
+    InvoiceStatus.draft
+  )
 
   const [dueDate, setDueDate] =
     useState(
@@ -94,37 +87,54 @@ export default function InvoiceForm({
       invoice?.tax ?? 0
     )
 
+  /* --------------------------------
+     AUTOMATIC TOTAL
+  -------------------------------- */
+
   const total = useMemo(() => {
 
-    return Number(subtotal) +
-      Number(tax)
+    return (
+      Number(subtotal || 0) +
+      Number(tax || 0)
+    )
 
   }, [
     subtotal,
-    tax
+    tax,
   ])
+
+  /* --------------------------------
+     FILTER JOBS BY CUSTOMER
+  -------------------------------- */
 
   const filteredJobs =
     useMemo(() => {
 
-      if (!customerId)
+      if (!customerId) {
         return []
+      }
 
-      return jobs.filter(job =>
-        job.customerId === customerId
+      return jobs.filter(
+        (job) =>
+          job.customerId === customerId
       )
 
     }, [
       jobs,
-      customerId
+      customerId,
     ])
+
+  /* --------------------------------
+     CLEAR JOB WHEN CUSTOMER CHANGES
+  -------------------------------- */
 
   useEffect(() => {
 
     if (
       jobId &&
       !filteredJobs.some(
-        j => j.id === jobId
+        (job) =>
+          job.id === jobId
       )
     ) {
 
@@ -134,75 +144,93 @@ export default function InvoiceForm({
 
   }, [
     filteredJobs,
-    jobId
+    jobId,
   ])
 
-    async function handleSubmit(
+  /* --------------------------------
+     SUBMIT
+  -------------------------------- */
+
+  async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
   ) {
 
     e.preventDefault()
 
     if (!customerId) {
-      alert("Please select a customer.")
+
+      alert(
+        "Please select a customer."
+      )
+
       return
+
     }
 
     if (!jobId) {
-      alert("Please select a job.")
+
+      alert(
+        "Please select a job."
+      )
+
       return
+
     }
 
     if (!invoiceNumber.trim()) {
-      alert("Invoice number is required.")
+
+      alert(
+        "Invoice number is required."
+      )
+
       return
+
     }
 
     setLoading(true)
 
     try {
 
-      const response = await fetch(
+      const response =
+        await fetch(
+          invoice
+            ? `/api/invoices/${invoice.id}`
+            : "/api/invoices",
+          {
+            method:
+              invoice
+                ? "PUT"
+                : "POST",
 
-        invoice
-          ? `/api/invoices/${invoice.id}`
-          : "/api/invoices",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-        {
+            body:
+              JSON.stringify({
 
-          method: invoice
-            ? "PUT"
-            : "POST",
+                customerId,
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
+                jobId,
 
-          body: JSON.stringify({
+                invoiceNumber:
+                  invoiceNumber.trim(),
 
-  customerId,
+                status,
 
-  jobId,
+                dueDate:
+                  dueDate || null,
 
-  invoiceNumber,
+                subtotal:
+                  Number(subtotal || 0),
 
-  status,
+                tax:
+                  Number(tax || 0),
 
-  dueDate:
-    dueDate || null,
-
-  subtotal:
-    Number(subtotal),
-
-  tax:
-    Number(tax)
-
-})
-
-        }
-
-      )
+              }),
+          }
+        )
 
       const data =
         await response.json()
@@ -210,10 +238,8 @@ export default function InvoiceForm({
       if (!response.ok) {
 
         throw new Error(
-
           data.error ??
           "Unable to save invoice."
-
         )
 
       }
@@ -225,16 +251,14 @@ export default function InvoiceForm({
       router.refresh()
 
     }
-
     catch (error: any) {
 
       alert(
-        error.message ??
+        error?.message ??
         "Something went wrong."
       )
 
     }
-
     finally {
 
       setLoading(false)
@@ -250,26 +274,59 @@ export default function InvoiceForm({
       className="space-y-8"
     >
 
-              <div className="bg-white border rounded-3xl p-8">
+      {/* --------------------------------
+          INVOICE DETAILS
+      -------------------------------- */}
+
+      <div
+        className="
+          bg-white
+          border
+          rounded-3xl
+          p-8
+        "
+      >
 
         <h2 className="text-2xl font-bold mb-8">
           Invoice Details
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div
+          className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            gap-6
+          "
+        >
+
+          {/* CUSTOMER */}
 
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Customer
             </label>
 
             <select
               value={customerId}
               onChange={(e) =>
-                setCustomerId(e.target.value)
+                setCustomerId(
+                  e.target.value
+                )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
               required
             >
 
@@ -277,88 +334,146 @@ export default function InvoiceForm({
                 Select Customer
               </option>
 
-              {customers.map(customer => (
+              {customers.map(
+                (customer) => (
 
-                <option
-                  key={customer.id}
-                  value={customer.id}
-                >
+                  <option
+                    key={customer.id}
+                    value={customer.id}
+                  >
 
-                  {customer.companyName
-                    ? customer.companyName
-                    : `${customer.firstName ?? ""} ${customer.lastName ?? ""}`}
+                    {customer.companyName
+                      ? customer.companyName
+                      : `${customer.firstName ?? ""} ${customer.lastName ?? ""}`.trim()
+                    }
 
-                </option>
+                  </option>
 
-              ))}
+                )
+              )}
 
             </select>
 
           </div>
 
+          {/* JOB */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Job
             </label>
 
             <select
               value={jobId}
               onChange={(e) =>
-                setJobId(e.target.value)
+                setJobId(
+                  e.target.value
+                )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
               required
+              disabled={!customerId}
             >
 
               <option value="">
-                Select Job
+
+                {!customerId
+                  ? "Select customer first"
+                  : filteredJobs.length === 0
+                  ? "No jobs for this customer"
+                  : "Select Job"
+                }
+
               </option>
 
-              {filteredJobs.map(job => (
+              {filteredJobs.map(
+                (job) => (
 
-                <option
-                  key={job.id}
-                  value={job.id}
-                >
-                  {job.title}
-                </option>
+                  <option
+                    key={job.id}
+                    value={job.id}
+                  >
+                    {job.title}
+                  </option>
 
-              ))}
+                )
+              )}
 
             </select>
 
           </div>
 
+          {/* INVOICE NUMBER */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Invoice Number
             </label>
 
             <input
               value={invoiceNumber}
               onChange={(e) =>
-                setInvoiceNumber(e.target.value)
+                setInvoiceNumber(
+                  e.target.value
+                )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
               required
             />
 
           </div>
 
+          {/* STATUS */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Status
             </label>
 
             <select
               value={status}
               onChange={(e) =>
-                setStatus(e.target.value)
-              }
-              className="w-full border rounded-xl p-4"
+  setStatus(
+    e.target.value as InvoiceStatus
+  )
+}
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
             >
 
               <option value="draft">
@@ -385,9 +500,17 @@ export default function InvoiceForm({
 
           </div>
 
+          {/* DUE DATE */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Due Date
             </label>
 
@@ -395,9 +518,16 @@ export default function InvoiceForm({
               type="date"
               value={dueDate}
               onChange={(e) =>
-                setDueDate(e.target.value)
+                setDueDate(
+                  e.target.value
+                )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
             />
 
           </div>
@@ -405,17 +535,44 @@ export default function InvoiceForm({
         </div>
 
       </div>
-            <div className="bg-white border rounded-3xl p-8">
+
+      {/* --------------------------------
+          AMOUNTS
+      -------------------------------- */}
+
+      <div
+        className="
+          bg-white
+          border
+          rounded-3xl
+          p-8
+        "
+      >
 
         <h2 className="text-2xl font-bold mb-8">
           Invoice Amounts
         </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div
+          className="
+            grid
+            grid-cols-1
+            lg:grid-cols-3
+            gap-6
+          "
+        >
+
+          {/* SUBTOTAL */}
 
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Subtotal
             </label>
 
@@ -426,17 +583,32 @@ export default function InvoiceForm({
               value={subtotal}
               onChange={(e) =>
                 setSubtotal(
-                  Number(e.target.value)
+                  Number(
+                    e.target.value || 0
+                  )
                 )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
             />
 
           </div>
 
+          {/* TAX */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Tax
             </label>
 
@@ -447,21 +619,37 @@ export default function InvoiceForm({
               value={tax}
               onChange={(e) =>
                 setTax(
-                  Number(e.target.value)
+                  Number(
+                    e.target.value || 0
+                  )
                 )
               }
-              className="w-full border rounded-xl p-4"
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
             />
 
           </div>
 
+          {/* TOTAL */}
+
           <div>
 
-            <label className="block mb-2 font-medium">
+            <label
+              className="
+                block
+                mb-2
+                font-medium
+              "
+            >
               Total
             </label>
 
             <input
+              type="text"
               value={total.toFixed(2)}
               readOnly
               className="
@@ -471,12 +659,15 @@ export default function InvoiceForm({
                 p-4
                 bg-slate-100
                 font-bold
+                cursor-not-allowed
               "
             />
 
           </div>
 
         </div>
+
+        {/* SUMMARY */}
 
         <div
           className="
@@ -488,13 +679,24 @@ export default function InvoiceForm({
           "
         >
 
-          <h3 className="text-xl font-bold mb-6">
+          <h3
+            className="
+              text-xl
+              font-bold
+              mb-6
+            "
+          >
             Invoice Summary
           </h3>
 
           <div className="space-y-4">
 
-            <div className="flex justify-between">
+            <div
+              className="
+                flex
+                justify-between
+              "
+            >
 
               <span className="text-slate-600">
                 Subtotal
@@ -502,17 +704,23 @@ export default function InvoiceForm({
 
               <span className="font-semibold">
                 $
-                {subtotal.toLocaleString(
+                {Number(subtotal).toLocaleString(
                   undefined,
                   {
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   }
                 )}
               </span>
 
             </div>
 
-            <div className="flex justify-between">
+            <div
+              className="
+                flex
+                justify-between
+              "
+            >
 
               <span className="text-slate-600">
                 Tax
@@ -520,28 +728,48 @@ export default function InvoiceForm({
 
               <span className="font-semibold">
                 $
-                {tax.toLocaleString(
+                {Number(tax).toLocaleString(
                   undefined,
                   {
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   }
                 )}
               </span>
 
             </div>
 
-            <div className="border-t pt-4 flex justify-between">
+            <div
+              className="
+                border-t
+                pt-4
+                flex
+                justify-between
+              "
+            >
 
-              <span className="text-xl font-bold">
+              <span
+                className="
+                  text-xl
+                  font-bold
+                "
+              >
                 Total
               </span>
 
-              <span className="text-2xl font-bold text-green-600">
+              <span
+                className="
+                  text-2xl
+                  font-bold
+                  text-green-600
+                "
+              >
                 $
                 {total.toLocaleString(
                   undefined,
                   {
-                    minimumFractionDigits: 2
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
                   }
                 )}
               </span>
@@ -553,7 +781,18 @@ export default function InvoiceForm({
         </div>
 
       </div>
-            <div className="flex items-center gap-4">
+
+      {/* --------------------------------
+          BUTTONS
+      -------------------------------- */}
+
+      <div
+        className="
+          flex
+          items-center
+          gap-4
+        "
+      >
 
         <button
           type="submit"
@@ -575,14 +814,17 @@ export default function InvoiceForm({
           {loading
             ? "Saving..."
             : invoice
-              ? "Update Invoice"
-              : "Create Invoice"}
+            ? "Update Invoice"
+            : "Create Invoice"
+          }
 
         </button>
 
         <button
           type="button"
-          onClick={() => router.push("/invoices")}
+          onClick={() =>
+            router.push("/invoices")
+          }
           disabled={loading}
           className="
             border
@@ -603,5 +845,4 @@ export default function InvoiceForm({
     </form>
 
   )
-
 }

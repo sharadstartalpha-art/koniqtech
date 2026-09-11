@@ -1,7 +1,10 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
-import { Prisma } from "@prisma/client"
+import {
+  Prisma,
+  InvoiceStatus,
+} from "@prisma/client"
 
 export async function POST(
   request: NextRequest
@@ -9,24 +12,63 @@ export async function POST(
 
   try {
 
+    /* --------------------------------
+       AUTHENTICATION
+    -------------------------------- */
+
     const session = await auth()
 
     if (!session?.user?.orgId) {
 
       return NextResponse.json(
         {
-          error: "Unauthorized"
+          error: "Unauthorized",
         },
         {
-          status: 401
+          status: 401,
         }
       )
 
     }
 
-    const orgId = session.user.orgId
+    const orgId =
+      session.user.orgId
 
-    const body = await request.json()
+    /* --------------------------------
+       READ REQUEST
+    -------------------------------- */
+
+    const contentType =
+      request.headers.get(
+        "content-type"
+      ) ?? ""
+
+    let body: any
+
+    if (
+      contentType.includes(
+        "application/json"
+      )
+    ) {
+
+      body =
+        await request.json()
+
+    } else {
+
+      const formData =
+        await request.formData()
+
+      body =
+        Object.fromEntries(
+          formData.entries()
+        )
+
+    }
+
+    /* --------------------------------
+       GET FIELDS
+    -------------------------------- */
 
     const {
       customerId,
@@ -35,11 +77,11 @@ export async function POST(
       subtotal,
       tax,
       dueDate,
-      status
+      status,
     } = body
 
     /* --------------------------------
-       VALIDATION
+       REQUIRED FIELDS
     -------------------------------- */
 
     if (
@@ -51,17 +93,50 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Customer, job and invoice number are required."
+            "Customer, job and invoice number are required.",
         },
         {
-          status: 400
+          status: 400,
         }
       )
 
     }
 
     /* --------------------------------
-       CONVERT AMOUNTS
+       STATUS VALIDATION
+    -------------------------------- */
+
+    const validStatuses =
+      Object.values(
+        InvoiceStatus
+      )
+
+    if (
+      status &&
+      !validStatuses.includes(
+        status as InvoiceStatus
+      )
+    ) {
+
+      return NextResponse.json(
+        {
+          error:
+            "Invalid invoice status.",
+        },
+        {
+          status: 400,
+        }
+      )
+
+    }
+
+    const invoiceStatus =
+      status
+        ? status as InvoiceStatus
+        : InvoiceStatus.draft
+
+    /* --------------------------------
+       AMOUNTS
     -------------------------------- */
 
     const subtotalNumber =
@@ -71,31 +146,53 @@ export async function POST(
       Number(tax ?? 0)
 
     if (
-      !Number.isFinite(subtotalNumber) ||
-      !Number.isFinite(taxNumber)
+      !Number.isFinite(
+        subtotalNumber
+      ) ||
+      !Number.isFinite(
+        taxNumber
+      )
     ) {
 
       return NextResponse.json(
         {
           error:
-            "Subtotal and tax must be valid numbers."
+            "Subtotal and tax must be valid numbers.",
         },
         {
-          status: 400
+          status: 400,
+        }
+      )
+
+    }
+
+    if (
+      subtotalNumber < 0 ||
+      taxNumber < 0
+    ) {
+
+      return NextResponse.json(
+        {
+          error:
+            "Subtotal and tax cannot be negative.",
+        },
+        {
+          status: 400,
         }
       )
 
     }
 
     /* --------------------------------
-       CALCULATE TOTAL AUTOMATICALLY
+       AUTOMATIC TOTAL
     -------------------------------- */
 
     const totalNumber =
-      subtotalNumber + taxNumber
+      subtotalNumber +
+      taxNumber
 
     /* --------------------------------
-       CHECK CUSTOMER
+       CUSTOMER
     -------------------------------- */
 
     const customer =
@@ -103,8 +200,8 @@ export async function POST(
 
         where: {
           id: customerId,
-          orgId
-        }
+          orgId,
+        },
 
       })
 
@@ -113,17 +210,17 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Customer not found."
+            "Customer not found.",
         },
         {
-          status: 404
+          status: 404,
         }
       )
 
     }
 
     /* --------------------------------
-       CHECK JOB
+       JOB
     -------------------------------- */
 
     const job =
@@ -132,8 +229,8 @@ export async function POST(
         where: {
           id: jobId,
           orgId,
-          customerId
-        }
+          customerId,
+        },
 
       })
 
@@ -142,26 +239,29 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Job not found for this customer."
+            "Job not found for this customer.",
         },
         {
-          status: 404
+          status: 404,
         }
       )
 
     }
 
     /* --------------------------------
-       CHECK DUPLICATE INVOICE NUMBER
+       DUPLICATE INVOICE NUMBER
     -------------------------------- */
+
+    const cleanInvoiceNumber =
+      invoiceNumber.trim()
 
     const exists =
       await prisma.invoice.findUnique({
 
         where: {
           invoiceNumber:
-            invoiceNumber.trim()
-        }
+            cleanInvoiceNumber,
+        },
 
       })
 
@@ -170,10 +270,10 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Invoice number already exists."
+            "Invoice number already exists.",
         },
         {
-          status: 400
+          status: 400,
         }
       )
 
@@ -195,7 +295,7 @@ export async function POST(
           jobId,
 
           invoiceNumber:
-            invoiceNumber.trim(),
+            cleanInvoiceNumber,
 
           subtotal:
             new Prisma.Decimal(
@@ -220,7 +320,7 @@ export async function POST(
               : null,
 
           status:
-            status || "draft"
+            invoiceStatus,
 
         },
 
@@ -228,16 +328,38 @@ export async function POST(
 
           customer: true,
 
-          job: true
+          job: true,
 
-        }
+        },
 
       })
 
+    /* --------------------------------
+       RESPONSE
+    -------------------------------- */
+
     return NextResponse.json(
-      invoice,
       {
-        status: 201
+        id: invoice.id,
+        invoiceNumber:
+          invoice.invoiceNumber,
+        customerId:
+          invoice.customerId,
+        jobId:
+          invoice.jobId,
+        subtotal:
+          Number(invoice.subtotal),
+        tax:
+          Number(invoice.tax),
+        total:
+          Number(invoice.total),
+        dueDate:
+          invoice.dueDate,
+        status:
+          invoice.status,
+      },
+      {
+        status: 201,
       }
     )
 
@@ -257,11 +379,10 @@ export async function POST(
           "Failed to create invoice.",
 
         code:
-          error?.code || null
-
+          error?.code || null,
       },
       {
-        status: 500
+        status: 500,
       }
     )
 

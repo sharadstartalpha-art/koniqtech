@@ -181,27 +181,24 @@ export default function InvoiceForm({
 
           body: JSON.stringify({
 
-            customerId,
+  customerId,
 
-            jobId,
+  jobId,
 
-            invoiceNumber,
+  invoiceNumber,
 
-            status,
+  status,
 
-            dueDate:
-              dueDate || null,
+  dueDate:
+    dueDate || null,
 
-            subtotal:
-              Number(subtotal),
+  subtotal:
+    Number(subtotal),
 
-            tax:
-              Number(tax),
+  tax:
+    Number(tax)
 
-            total:
-              Number(total)
-
-          })
+})
 
         }
 

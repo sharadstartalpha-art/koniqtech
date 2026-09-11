@@ -1,14 +1,15 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 
 export async function POST(
   request: NextRequest
 ) {
+
   try {
 
-    const session =
-      await auth()
+    const session = await auth()
 
     if (!session?.user?.orgId) {
 
@@ -23,31 +24,23 @@ export async function POST(
 
     }
 
-    const orgId =
-      session.user.orgId
+    const orgId = session.user.orgId
 
-    const body =
-      await request.json()
+    const body = await request.json()
 
     const {
-
       customerId,
-
       jobId,
-
       invoiceNumber,
-
       subtotal,
-
       tax,
-
-      total,
-
       dueDate,
-
       status
-
     } = body
+
+    /* --------------------------------
+       VALIDATION
+    -------------------------------- */
 
     if (
       !customerId ||
@@ -58,7 +51,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Missing required fields."
+            "Customer, job and invoice number are required."
         },
         {
           status: 400
@@ -67,15 +60,50 @@ export async function POST(
 
     }
 
+    /* --------------------------------
+       CONVERT AMOUNTS
+    -------------------------------- */
+
+    const subtotalNumber =
+      Number(subtotal ?? 0)
+
+    const taxNumber =
+      Number(tax ?? 0)
+
+    if (
+      !Number.isFinite(subtotalNumber) ||
+      !Number.isFinite(taxNumber)
+    ) {
+
+      return NextResponse.json(
+        {
+          error:
+            "Subtotal and tax must be valid numbers."
+        },
+        {
+          status: 400
+        }
+      )
+
+    }
+
+    /* --------------------------------
+       CALCULATE TOTAL AUTOMATICALLY
+    -------------------------------- */
+
+    const totalNumber =
+      subtotalNumber + taxNumber
+
+    /* --------------------------------
+       CHECK CUSTOMER
+    -------------------------------- */
+
     const customer =
       await prisma.customer.findFirst({
 
         where: {
-
           id: customerId,
-
           orgId
-
         }
 
       })
@@ -94,15 +122,17 @@ export async function POST(
 
     }
 
+    /* --------------------------------
+       CHECK JOB
+    -------------------------------- */
+
     const job =
       await prisma.job.findFirst({
 
         where: {
-
           id: jobId,
-
-          orgId
-
+          orgId,
+          customerId
         }
 
       })
@@ -112,7 +142,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "Job not found."
+            "Job not found for this customer."
         },
         {
           status: 404
@@ -121,13 +151,16 @@ export async function POST(
 
     }
 
+    /* --------------------------------
+       CHECK DUPLICATE INVOICE NUMBER
+    -------------------------------- */
+
     const exists =
       await prisma.invoice.findUnique({
 
         where: {
-
-          invoiceNumber
-
+          invoiceNumber:
+            invoiceNumber.trim()
         }
 
       })
@@ -146,6 +179,10 @@ export async function POST(
 
     }
 
+    /* --------------------------------
+       CREATE INVOICE
+    -------------------------------- */
+
     const invoice =
       await prisma.invoice.create({
 
@@ -157,20 +194,33 @@ export async function POST(
 
           jobId,
 
-          invoiceNumber,
+          invoiceNumber:
+            invoiceNumber.trim(),
 
-          subtotal,
+          subtotal:
+            new Prisma.Decimal(
+              subtotalNumber
+            ),
 
-          tax,
+          tax:
+            new Prisma.Decimal(
+              taxNumber
+            ),
 
-          total,
+          total:
+            new Prisma.Decimal(
+              totalNumber
+            ),
 
           dueDate:
             dueDate
-              ? new Date(dueDate)
+              ? new Date(
+                  `${dueDate}T00:00:00`
+                )
               : null,
 
-          status
+          status:
+            status || "draft"
 
         },
 
@@ -185,19 +235,30 @@ export async function POST(
       })
 
     return NextResponse.json(
-      invoice
+      invoice,
+      {
+        status: 201
+      }
     )
 
   }
 
-  catch (error) {
+  catch (error: any) {
 
-    console.error(error)
+    console.error(
+      "CREATE INVOICE ERROR:",
+      error
+    )
 
     return NextResponse.json(
       {
         error:
-          "Failed to create invoice."
+          error?.message ||
+          "Failed to create invoice.",
+
+        code:
+          error?.code || null
+
       },
       {
         status: 500

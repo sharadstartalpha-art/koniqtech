@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
+import { Link } from "lucide-react"
 import { notFound, redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
@@ -46,6 +47,22 @@ export default async function InvoicePdfPage({
       <div className="max-w-4xl mx-auto bg-white shadow-xl p-12">
 
         <div className="flex justify-between items-start border-b pb-8">
+
+          <Link
+  href={`/invoices/${invoice.id}`}
+  className="
+    inline-flex
+    items-center
+    border
+    px-5
+    py-3
+    rounded-xl
+    hover:bg-slate-100
+    mb-6
+  "
+>
+  ← Back to Invoice
+</Link>
 
           <div>
 

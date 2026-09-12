@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import { notFound, redirect } from "next/navigation"
 import InvoiceForm from "../../create/InvoiceForm"
+import { Link } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 
@@ -60,15 +61,34 @@ export default async function EditInvoicePage({
   return (
     <div className="max-w-5xl mx-auto space-y-8">
 
-      <div>
-        <h1 className="text-4xl font-bold">
-          Edit Invoice
-        </h1>
+      <div className="flex items-center justify-between">
 
-        <p className="text-slate-600 mt-2">
-          Update invoice information.
-        </p>
-      </div>
+  <div>
+
+    <h1 className="text-5xl font-bold">
+      Edit Invoice
+    </h1>
+
+    <p className="text-slate-500 mt-2">
+      Update invoice information.
+    </p>
+
+  </div>
+
+  <Link
+    href={`/invoices/${invoice.id}`}
+    className="
+      border
+      px-5
+      py-3
+      rounded-xl
+      hover:bg-slate-100
+    "
+  >
+    ← Back
+  </Link>
+
+</div>
 
       <InvoiceForm
         customers={customers}

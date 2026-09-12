@@ -57,6 +57,19 @@ export default async function InvoiceDetailsPage({
         <div className="flex gap-3">
 
           <Link
+    href="/invoices"
+    className="
+      border
+      px-5
+      py-3
+      rounded-xl
+      hover:bg-slate-50
+    "
+  >
+    ← Back
+  </Link>
+
+          <Link
             href={`/invoices/${invoice.id}/edit`}
             className="px-5 py-3 rounded-xl bg-orange-600 text-white hover:bg-orange-700"
           >
@@ -74,7 +87,7 @@ export default async function InvoiceDetailsPage({
             href={`/invoices/${invoice.id}/delete`}
             className="px-5 py-3 rounded-xl border border-red-500 text-red-600 hover:bg-red-50"
           >
-            Delete
+            Archive
           </Link>
 
         </div>

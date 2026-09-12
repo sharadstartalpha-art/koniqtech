@@ -377,7 +377,7 @@ export default async function InvoiceDetailsPage({
 
                 <dd>
 
-                  ₹
+                  $
                   {Number(
                     invoice.subtotal
                   ).toLocaleString(
@@ -400,7 +400,7 @@ export default async function InvoiceDetailsPage({
 
                 <dd>
 
-                  ₹
+                  $
                   {Number(
                     invoice.tax
                   ).toLocaleString(
@@ -423,7 +423,7 @@ export default async function InvoiceDetailsPage({
 
                 <dd>
 
-                  ₹
+                  $
                   {Number(
                     invoice.total
                   ).toLocaleString(
@@ -536,7 +536,7 @@ export default async function InvoiceDetailsPage({
 
                         <td className="px-4 py-4 text-right font-semibold">
 
-                          ₹
+                          $
 
                           {Number(
                             payment.amount
@@ -607,7 +607,7 @@ export default async function InvoiceDetailsPage({
               <strong>
 
                 {" "}
-                ₹
+                $
                 {Number(
                   invoice.total
                 ).toLocaleString(

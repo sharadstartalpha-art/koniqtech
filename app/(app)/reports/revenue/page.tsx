@@ -209,7 +209,7 @@ export default async function RevenueReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
 
-            ₹{Number(
+            ${Number(
               totalRevenue._sum.total ?? 0
             ).toLocaleString()}
 
@@ -225,7 +225,7 @@ export default async function RevenueReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-blue-600">
 
-            ₹{Number(
+            ${Number(
               paidRevenue._sum.total ?? 0
             ).toLocaleString()}
 
@@ -241,7 +241,7 @@ export default async function RevenueReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-red-600">
 
-            ₹{Number(
+            ${Number(
               outstandingRevenue._sum.total ?? 0
             ).toLocaleString()}
 
@@ -280,7 +280,7 @@ export default async function RevenueReportPage() {
               <dt>Total Revenue</dt>
 
               <dd className="font-semibold text-green-600">
-                ₹{Number(
+                ${Number(
                   totalRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -292,7 +292,7 @@ export default async function RevenueReportPage() {
               <dt>Paid Revenue</dt>
 
               <dd className="font-semibold text-blue-600">
-                ₹{Number(
+                ${Number(
                   paidRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -304,7 +304,7 @@ export default async function RevenueReportPage() {
               <dt>Outstanding Revenue</dt>
 
               <dd className="font-semibold text-red-600">
-                ₹{Number(
+                ${Number(
                   outstandingRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -460,7 +460,7 @@ export default async function RevenueReportPage() {
 
                 <td className="px-6 py-4 text-right font-semibold">
 
-                  ₹{Number(invoice.total).toLocaleString(undefined, {
+                  ${Number(invoice.total).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

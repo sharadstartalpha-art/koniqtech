@@ -627,7 +627,7 @@ const recentPayments =
 
                 <td className="px-6 py-4 text-right font-semibold">
 
-                  ₹{Number(invoice.total).toLocaleString(undefined, {
+                  ${Number(invoice.total).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}

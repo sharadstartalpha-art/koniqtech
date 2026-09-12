@@ -449,7 +449,7 @@ export default async function EditPaymentPage({
 
                 <dd className="font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     payment.amount

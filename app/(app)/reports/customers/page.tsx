@@ -237,7 +237,7 @@ export default async function CustomerReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-blue-600">
 
-            ₹
+            $
             {totalRevenue.toLocaleString()}
 
           </h2>
@@ -252,7 +252,7 @@ export default async function CustomerReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold">
 
-            ₹
+            $
             {(
               totalCustomers === 0
                 ? 0
@@ -327,7 +327,7 @@ export default async function CustomerReportPage() {
               <dt>Total Revenue</dt>
 
               <dd className="font-semibold text-blue-600">
-                ₹{totalRevenue.toLocaleString()}
+                ${totalRevenue.toLocaleString()}
               </dd>
 
             </div>
@@ -337,7 +337,7 @@ export default async function CustomerReportPage() {
               <dt>Average Revenue / Customer</dt>
 
               <dd className="font-semibold">
-                ₹{(
+                ${(
                   totalCustomers === 0
                     ? 0
                     : totalRevenue / totalCustomers
@@ -445,7 +445,7 @@ export default async function CustomerReportPage() {
 
                 <td className="px-6 py-4 text-right font-semibold text-green-600">
 
-                  ₹
+                  $
                   {customer.revenue.toLocaleString(
                     undefined,
                     {

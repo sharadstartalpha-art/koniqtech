@@ -444,7 +444,7 @@ export default function PaymentForm({
 
                   {invoice.invoiceNumber}
                   {" — "}
-                  ₹
+                  $
                   {invoice.total.toLocaleString(
                     undefined,
                     {
@@ -665,7 +665,7 @@ export default function PaymentForm({
 
             <span className="text-3xl font-bold text-emerald-600">
 
-              ₹
+              $
               {Number(amount).toLocaleString(
                 undefined,
                 {

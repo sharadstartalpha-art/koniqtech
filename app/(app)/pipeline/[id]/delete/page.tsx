@@ -103,7 +103,7 @@ export default async function Page({
             <p>
 
               {opportunity.value
-                ? `₹${opportunity.value.toLocaleString()}`
+                ? `$${opportunity.value.toLocaleString()}`
                 : "-"}
 
             </p>

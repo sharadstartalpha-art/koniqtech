@@ -152,7 +152,7 @@ export default async function InvoiceReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
 
-            ₹
+            $
             {totalRevenue.toLocaleString()}
 
           </h2>
@@ -179,7 +179,7 @@ export default async function InvoiceReportPage() {
 
           <h2 className="mt-3 text-4xl font-bold text-red-600">
 
-            ₹
+            $
             {outstandingBalance.toLocaleString()}
 
           </h2>
@@ -264,7 +264,7 @@ export default async function InvoiceReportPage() {
               <dt>Total Revenue</dt>
 
               <dd className="font-semibold text-green-600">
-                ₹{totalRevenue.toLocaleString()}
+                ${totalRevenue.toLocaleString()}
               </dd>
 
             </div>
@@ -274,7 +274,7 @@ export default async function InvoiceReportPage() {
               <dt>Outstanding Balance</dt>
 
               <dd className="font-semibold text-red-600">
-                ₹{outstandingBalance.toLocaleString()}
+                ${outstandingBalance.toLocaleString()}
               </dd>
 
             </div>
@@ -285,7 +285,7 @@ export default async function InvoiceReportPage() {
 
               <dd className="font-semibold text-blue-600">
 
-                ₹
+                $
                 {paidInvoices
                   .reduce(
                     (sum, invoice) =>
@@ -432,7 +432,7 @@ export default async function InvoiceReportPage() {
 
                 <td className="px-6 py-4 text-right font-semibold">
 
-                  ₹
+                  $
                   {Number(invoice.total).toLocaleString(
                     undefined,
                     {

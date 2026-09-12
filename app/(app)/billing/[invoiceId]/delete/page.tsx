@@ -252,7 +252,7 @@ export default async function DeleteInvoicePage({
             </dt>
 
             <dd className="mt-1 font-semibold">
-              ₹{Number(currentInvoice.total).toLocaleString(undefined, {
+              ${Number(currentInvoice.total).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

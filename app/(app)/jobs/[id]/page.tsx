@@ -756,7 +756,7 @@ export default async function JobDetailsPage({
                   </p>
 
                   <p className="mt-1 text-lg font-bold text-emerald-600">
-                    ₹
+                    $
                     {Number(job.quote.total).toLocaleString(
                       undefined,
                       {
@@ -865,7 +865,7 @@ export default async function JobDetailsPage({
                   </p>
 
                   <p className="mt-1 text-lg font-bold text-emerald-600">
-                    ₹
+                    $
                     {Number(
                       latestInvoice.total
                     ).toLocaleString(
@@ -1277,7 +1277,7 @@ export default async function JobDetailsPage({
 
                       <p className="text-lg font-bold text-emerald-600">
 
-                        ₹
+                        $
                         {Number(
                           po.total
                         ).toLocaleString(undefined, {
@@ -1437,7 +1437,7 @@ export default async function JobDetailsPage({
 
                     <p className="text-lg font-bold text-emerald-600">
 
-                      ₹
+                      $
                       {Number(
                         changeOrder.amount
                       ).toLocaleString(undefined, {

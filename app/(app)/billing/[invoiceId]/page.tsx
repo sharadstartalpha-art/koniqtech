@@ -170,7 +170,7 @@ export default async function InvoiceDetailsPage({
           </p>
 
           <h2 className="mt-3 text-4xl font-bold">
-            ₹{Number(invoice.total).toLocaleString(undefined, {
+            ${Number(invoice.total).toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -185,7 +185,7 @@ export default async function InvoiceDetailsPage({
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
-            ₹{paidAmount.toLocaleString(undefined, {
+            ${paidAmount.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -200,7 +200,7 @@ export default async function InvoiceDetailsPage({
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-red-600">
-            ₹{balance.toLocaleString(undefined, {
+            ${balance.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -397,7 +397,7 @@ export default async function InvoiceDetailsPage({
 
                     <td className="px-6 py-4 text-right font-semibold">
 
-                      ₹{Number(payment.amount).toLocaleString(undefined, {
+                      ${Number(payment.amount).toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -445,7 +445,7 @@ export default async function InvoiceDetailsPage({
             </dt>
 
             <dd className="mt-1 text-lg font-semibold">
-              ₹{Number(invoice.subtotal).toLocaleString(undefined, {
+              ${Number(invoice.subtotal).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -460,7 +460,7 @@ export default async function InvoiceDetailsPage({
             </dt>
 
             <dd className="mt-1 text-lg font-semibold">
-              ₹{Number(invoice.tax).toLocaleString(undefined, {
+              ${Number(invoice.tax).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

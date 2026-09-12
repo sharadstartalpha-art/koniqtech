@@ -132,7 +132,7 @@ await prisma.invoice.delete({
             </span>
 
             <span className="font-bold text-lg">
-              ₹{Number(invoice.total).toLocaleString()}
+              ${Number(invoice.total).toLocaleString()}
             </span>
 
           </div>

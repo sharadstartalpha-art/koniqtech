@@ -310,7 +310,7 @@ return (
 
     <p className="font-medium">
       {lead.budget
-        ? `₹${lead.budget.toLocaleString()}`
+        ? `$${lead.budget.toLocaleString()}`
         : "-"
       }
     </p>

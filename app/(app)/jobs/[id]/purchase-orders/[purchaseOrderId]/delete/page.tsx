@@ -272,7 +272,7 @@ export default async function DeletePurchaseOrderPage({
                 </dt>
 
                 <dd>
-                  ₹
+                  $
                   {purchaseOrder.subtotal.toLocaleString(
                     undefined,
                     {
@@ -291,7 +291,7 @@ export default async function DeletePurchaseOrderPage({
                 </dt>
 
                 <dd>
-                  ₹
+                  $
                   {purchaseOrder.tax.toLocaleString(
                     undefined,
                     {
@@ -310,7 +310,7 @@ export default async function DeletePurchaseOrderPage({
                 </dt>
 
                 <dd>
-                  ₹
+                  $
                   {purchaseOrder.discount.toLocaleString(
                     undefined,
                     {
@@ -329,7 +329,7 @@ export default async function DeletePurchaseOrderPage({
                 </dt>
 
                 <dd>
-                  ₹
+                  $
                   {purchaseOrder.shipping.toLocaleString(
                     undefined,
                     {
@@ -349,7 +349,7 @@ export default async function DeletePurchaseOrderPage({
 
                 <dd>
 
-                  ₹
+                  $
                   {purchaseOrder.total.toLocaleString(
                     undefined,
                     {

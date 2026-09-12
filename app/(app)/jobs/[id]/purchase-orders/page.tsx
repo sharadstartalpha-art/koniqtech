@@ -299,7 +299,7 @@ export default async function JobPurchaseOrdersPage({
 
                 <td className="px-6 py-5 font-semibold">
 
-                  ₹
+                  $
                   {purchaseOrder.total.toLocaleString(
                     undefined,
                     {
@@ -405,7 +405,7 @@ export default async function JobPurchaseOrdersPage({
 
           <p className="mt-2 text-3xl font-bold">
 
-            ₹
+            $
 
             {purchaseOrders
               .reduce(

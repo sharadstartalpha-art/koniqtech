@@ -280,7 +280,7 @@ export default async function JobPaymentsPage({
 
                 <td className="px-6 py-5 font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     payment.amount
@@ -385,7 +385,7 @@ export default async function JobPaymentsPage({
 
           <p className="mt-2 text-3xl font-bold">
 
-            ₹
+            $
 
             {payments
               .reduce(

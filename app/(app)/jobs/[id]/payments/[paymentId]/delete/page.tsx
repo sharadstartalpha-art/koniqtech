@@ -237,7 +237,7 @@ export default async function DeletePaymentPage({
 
                 <dd className="font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     payment.amount
@@ -342,7 +342,7 @@ export default async function DeletePaymentPage({
 
                 <dd className="mt-1 font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     payment.invoice.total

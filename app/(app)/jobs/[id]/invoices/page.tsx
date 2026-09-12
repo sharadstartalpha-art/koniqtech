@@ -304,7 +304,7 @@ export default async function JobInvoicesPage({
 
                 <td className="px-6 py-5 font-semibold">
 
-                  ₹
+                  $
                   {Number(
                     invoice.total
                   ).toLocaleString(
@@ -418,7 +418,7 @@ export default async function JobInvoicesPage({
 
           <p className="mt-2 text-3xl font-bold">
 
-            ₹
+            $
 
             {invoices
               .reduce(

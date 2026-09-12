@@ -384,7 +384,7 @@ export default async function PurchaseOrderPage({
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <strong>
-                  ₹
+                  $
                   {purchaseOrder.subtotal.toLocaleString(
                     undefined,
                     {
@@ -398,7 +398,7 @@ export default async function PurchaseOrderPage({
               <div className="flex justify-between">
                 <span>Tax</span>
                 <strong>
-                  ₹
+                  $
                   {purchaseOrder.tax.toLocaleString(
                     undefined,
                     {
@@ -412,7 +412,7 @@ export default async function PurchaseOrderPage({
               <div className="flex justify-between">
                 <span>Discount</span>
                 <strong>
-                  ₹
+                  $
                   {purchaseOrder.discount.toLocaleString(
                     undefined,
                     {
@@ -426,7 +426,7 @@ export default async function PurchaseOrderPage({
               <div className="flex justify-between">
                 <span>Shipping</span>
                 <strong>
-                  ₹
+                  $
                   {purchaseOrder.shipping.toLocaleString(
                     undefined,
                     {
@@ -444,7 +444,7 @@ export default async function PurchaseOrderPage({
                 <span>Total</span>
 
                 <span>
-                  ₹
+                  $
                   {purchaseOrder.total.toLocaleString(
                     undefined,
                     {
@@ -557,7 +557,7 @@ export default async function PurchaseOrderPage({
 
                           <td className="px-4 py-4 text-right">
 
-                            ₹
+                            $
                             {item.unitPrice.toLocaleString(
                               undefined,
                               {
@@ -570,7 +570,7 @@ export default async function PurchaseOrderPage({
 
                           <td className="px-4 py-4 text-right">
 
-                            ₹
+                            $
                             {item.tax.toLocaleString(
                               undefined,
                               {
@@ -583,7 +583,7 @@ export default async function PurchaseOrderPage({
 
                           <td className="px-4 py-4 text-right font-semibold">
 
-                            ₹
+                            $
                             {item.total.toLocaleString(
                               undefined,
                               {
@@ -653,7 +653,7 @@ export default async function PurchaseOrderPage({
                 Total purchase value is{" "}
                 <strong>
 
-                  ₹
+                  $
                   {purchaseOrder.total.toLocaleString(
                     undefined,
                     {

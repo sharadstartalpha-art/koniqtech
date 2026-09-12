@@ -186,7 +186,7 @@ export default async function ArchivedInvoicesPage() {
 
                 <td className="text-right p-4 font-semibold">
 
-                  ₹
+                  $
                   {Number(
                     invoice.total
                   ).toLocaleString(

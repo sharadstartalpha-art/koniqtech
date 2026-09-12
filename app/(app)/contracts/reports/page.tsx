@@ -202,7 +202,7 @@ export default async function Page() {
           </p>
 
           <h2 className="text-4xl font-bold mt-2">
-            ₹{totalValue.toLocaleString()}
+            ${totalValue.toLocaleString()}
           </h2>
 
         </div>
@@ -224,7 +224,7 @@ export default async function Page() {
             </span>
 
             <strong>
-              ₹{averageValue.toLocaleString(undefined,{
+              ${averageValue.toLocaleString(undefined,{
                 maximumFractionDigits:0
               })}
             </strong>

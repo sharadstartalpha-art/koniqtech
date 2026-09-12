@@ -310,7 +310,7 @@ const canExportReports = canExport(
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
 
-            ₹
+            $
             {Number(
               totalRevenue._sum.total ?? 0
             ).toLocaleString()}
@@ -366,7 +366,7 @@ const canExportReports = canExport(
               </dt>
 
               <dd className="font-semibold text-green-600">
-                ₹{Number(
+                ${Number(
                   totalRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -380,7 +380,7 @@ const canExportReports = canExport(
               </dt>
 
               <dd className="font-semibold text-blue-600">
-                ₹{Number(
+                ${Number(
                   paidRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -394,7 +394,7 @@ const canExportReports = canExport(
               </dt>
 
               <dd className="font-semibold text-red-600">
-                ₹{Number(
+                ${Number(
                   outstandingRevenue._sum.total ?? 0
                 ).toLocaleString()}
               </dd>
@@ -408,7 +408,7 @@ const canExportReports = canExport(
               </dt>
 
               <dd className="font-semibold">
-                ₹{averageJobValue.toLocaleString(
+                ${averageJobValue.toLocaleString(
                   undefined,
                   {
                     maximumFractionDigits: 2,

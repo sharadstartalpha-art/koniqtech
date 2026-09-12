@@ -286,7 +286,7 @@ export default async function InvoiceDetailsPage({
             <span>Subtotal</span>
 
             <span>
-              ₹{Number(invoice.subtotal).toFixed(2)}
+              ${Number(invoice.subtotal).toFixed(2)}
             </span>
           </div>
 
@@ -294,7 +294,7 @@ export default async function InvoiceDetailsPage({
             <span>Tax</span>
 
             <span>
-              ₹{Number(invoice.tax).toFixed(2)}
+              ${Number(invoice.tax).toFixed(2)}
             </span>
           </div>
 
@@ -303,7 +303,7 @@ export default async function InvoiceDetailsPage({
             <span>Total</span>
 
             <span>
-              ₹{Number(invoice.total).toFixed(2)}
+              ${Number(invoice.total).toFixed(2)}
             </span>
 
           </div>

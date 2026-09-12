@@ -107,7 +107,7 @@ export default async function PaymentDetailsPage({
             </span>
 
             <span className="font-bold text-2xl text-emerald-600">
-              ₹{Number(payment.amount).toLocaleString(undefined, {
+              ${Number(payment.amount).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -181,7 +181,7 @@ export default async function PaymentDetailsPage({
             </span>
 
             <span>
-              ₹{Number(payment.invoice.total).toLocaleString(undefined, {
+              ${Number(payment.invoice.total).toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

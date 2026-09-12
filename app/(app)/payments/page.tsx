@@ -90,7 +90,7 @@ export default async function PaymentsPage() {
           </p>
 
           <h2 className="text-4xl font-bold mt-3 text-green-600">
-            ₹{totalReceived.toLocaleString()}
+            ${totalReceived.toLocaleString()}
           </h2>
 
         </div>
@@ -103,7 +103,7 @@ export default async function PaymentsPage() {
 
           <h2 className="text-4xl font-bold mt-3">
 
-            ₹
+            $
             {payments.length
               ? (
                   totalReceived /
@@ -201,7 +201,7 @@ export default async function PaymentsPage() {
                   </td>
 
                   <td className="p-5 font-semibold text-green-700">
-                    ₹{Number(payment.amount).toFixed(2)}
+                    ${Number(payment.amount).toFixed(2)}
                   </td>
 
                   <td className="p-5 capitalize">

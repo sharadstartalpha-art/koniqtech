@@ -193,7 +193,7 @@ export default async function PaymentDetailsPage({
 
               <dd className="font-semibold">
 
-                ₹
+                $
 
                 {Number(
                   payment.amount
@@ -408,7 +408,7 @@ export default async function PaymentDetailsPage({
 
                 <dd className="font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     payment.invoice.total
@@ -465,7 +465,7 @@ export default async function PaymentDetailsPage({
 
               <span className="text-xl font-bold">
 
-                ₹
+                $
 
                 {Number(
                   payment.amount
@@ -489,7 +489,7 @@ export default async function PaymentDetailsPage({
 
               <span className="font-medium">
 
-                ₹
+                $
 
                 {Number(
                   payment.invoice.total
@@ -513,7 +513,7 @@ export default async function PaymentDetailsPage({
 
               <span className="font-semibold">
 
-                ₹
+                $
 
                 {Math.max(
                   Number(

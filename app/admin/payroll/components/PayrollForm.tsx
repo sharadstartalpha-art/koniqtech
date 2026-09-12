@@ -1767,7 +1767,7 @@ function AmountField({
             text-slate-500
           "
         >
-          ₹
+          $
         </span>
 
 

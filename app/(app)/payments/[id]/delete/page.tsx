@@ -202,7 +202,7 @@ export default async function DeletePaymentPage({
             </span>
 
             <span className="font-bold text-lg text-green-600">
-              ₹
+              $
               {Number(
                 payment.amount
               ).toLocaleString(

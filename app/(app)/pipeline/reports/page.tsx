@@ -156,7 +156,7 @@ export default async function Page() {
 
           <h2 className="text-3xl font-bold mt-2">
 
-            ₹{totalValue.toLocaleString()}
+            ${totalValue.toLocaleString()}
 
           </h2>
 
@@ -170,7 +170,7 @@ export default async function Page() {
 
           <h2 className="text-3xl font-bold mt-2 text-green-600">
 
-            ₹{wonValue.toLocaleString()}
+            ${wonValue.toLocaleString()}
 
           </h2>
 
@@ -232,7 +232,7 @@ export default async function Page() {
 
           <h2 className="text-4xl font-bold mt-4">
 
-            ₹{avgDeal.toLocaleString(
+            ${avgDeal.toLocaleString(
               undefined,
               {
                 maximumFractionDigits: 0
@@ -377,7 +377,7 @@ export default async function Page() {
 
                   <td className="p-5 text-right">
 
-                    ₹{(item.value || 0).toLocaleString()}
+                    ${(item.value || 0).toLocaleString()}
 
                   </td>
 

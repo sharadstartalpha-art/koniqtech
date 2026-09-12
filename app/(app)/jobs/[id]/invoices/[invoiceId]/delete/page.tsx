@@ -255,7 +255,7 @@ export default async function DeleteInvoicePage({
 
                 <dd className="font-semibold">
 
-                  ₹
+                  $
 
                   {Number(
                     invoice.total
@@ -362,7 +362,7 @@ export default async function DeleteInvoicePage({
 
                 <dd className="mt-1 font-semibold">
 
-                  ₹
+                  $
 
                   {invoice.payments
                     .reduce(

@@ -136,7 +136,7 @@ export default async function RestoreInvoicePage({
             </span>
 
             <span className="font-semibold">
-              ₹{Number(invoice.total).toFixed(2)}
+              ${Number(invoice.total).toFixed(2)}
             </span>
 
           </div>

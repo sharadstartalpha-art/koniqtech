@@ -48,7 +48,11 @@ export default async function InvoicePdfPage({
 
         <div className="flex justify-between items-start border-b pb-8">
 
-          <Link
+         
+
+          <div>
+
+             <Link
   href={`/invoices/${invoice.id}`}
   className="
     inline-flex
@@ -63,8 +67,6 @@ export default async function InvoicePdfPage({
 >
   ← Back to Invoice
 </Link>
-
-          <div>
 
             <h1 className="text-5xl font-bold">
               INVOICE

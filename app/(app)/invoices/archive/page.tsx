@@ -84,6 +84,7 @@ export default async function ArchivedInvoicesPage() {
       -------------------------------- */}
 
       <div className="bg-white border rounded-3xl p-6">
+        
 
         <div className="text-slate-500 text-sm">
           Archived Invoices

@@ -79,6 +79,22 @@ export default async function DeleteInvoicePage({
             This invoice will be moved to the archive.
           </p>
 
+           <Link
+  href={`/invoices/${invoice.id}`}
+  className="
+    inline-flex
+    items-center
+    border
+    px-5
+    py-3
+    rounded-xl
+    hover:bg-slate-100
+    mb-6
+  "
+>
+  ← Back to Invoice
+</Link>
+
         </div>
 
         <div

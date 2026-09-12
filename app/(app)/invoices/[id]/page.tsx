@@ -26,9 +26,10 @@ export default async function InvoiceDetailsPage({
 
   const invoice = await prisma.invoice.findFirst({
     where: {
-      id,
-      orgId,
-    },
+  id,
+  orgId,
+  archivedAt: null,
+},
     include: {
       customer: true,
       job: true,

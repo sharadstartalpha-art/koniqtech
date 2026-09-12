@@ -266,7 +266,7 @@ export default async function InvoicePdfPage({
                 </td>
 
                 <td className="p-4 border text-right">
-                  ₹{Number(invoice.subtotal).toLocaleString()}
+                  ${Number(invoice.subtotal).toLocaleString()}
                 </td>
 
               </tr>
@@ -288,7 +288,7 @@ export default async function InvoicePdfPage({
               </span>
 
               <span>
-                ₹{Number(invoice.subtotal).toLocaleString()}
+                ${Number(invoice.subtotal).toLocaleString()}
               </span>
 
             </div>
@@ -300,7 +300,7 @@ export default async function InvoicePdfPage({
               </span>
 
               <span>
-                ₹{Number(invoice.tax).toLocaleString()}
+                ${Number(invoice.tax).toLocaleString()}
               </span>
 
             </div>
@@ -312,7 +312,7 @@ export default async function InvoicePdfPage({
               </span>
 
               <span>
-                ₹{Number(invoice.total).toLocaleString()}
+                ${Number(invoice.total).toLocaleString()}
               </span>
 
             </div>

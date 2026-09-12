@@ -16,16 +16,18 @@ export default function BrandingForm({
   const [loading, setLoading] = useState(false);
 
   async function saveBranding() {
-    if (!logo) {
-      alert("Please upload a company logo.");
-      return;
-    }
+   if (!logo && !tenantName.trim()) {
+  alert("Please enter a company display name or upload a logo.");
+  return;
+}
 
     setLoading(true);
 
     const formData = new FormData();
 
-    formData.append("logo", logo);
+    if (logo) {
+  formData.append("logo", logo);
+}
     formData.append("tenantName", tenantName);
     formData.append("primaryColor", primaryColor);
 

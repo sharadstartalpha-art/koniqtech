@@ -27,15 +27,17 @@ export default async function InvoicePdfPage({
   const { id } = await params
 
   const invoice = await prisma.invoice.findFirst({
-    where: {
-      id,
-      orgId,
-    },
-    include: {
-      customer: true,
-      job: true,
-    },
-  })
+  where: {
+    id,
+    orgId,
+    archivedAt: null,
+  },
+  include: {
+    customer: true,
+    job: true,
+    organization: true,
+  },
+})
 
   if (!invoice) {
     notFound()
@@ -80,15 +82,68 @@ export default async function InvoicePdfPage({
 
           <div className="text-right">
 
-            <h2 className="text-2xl font-bold">
-              KoniqTech
-            </h2>
+  {invoice.organization.logo && (
+    <img
+      src={invoice.organization.logo}
+      alt={invoice.organization.name}
+      className="ml-auto mb-4 max-h-20 max-w-[220px] object-contain"
+    />
+  )}
 
-            <p className="text-slate-500">
-              Professional Services
-            </p>
+  <h2 className="text-2xl font-bold">
+    {invoice.organization.name}
+  </h2>
 
-          </div>
+ 
+
+  {invoice.organization.phone && (
+    <p className="text-sm text-slate-500 mt-1">
+      {invoice.organization.phone}
+    </p>
+  )}
+
+  {invoice.organization.email && (
+    <p className="text-sm text-slate-500">
+      {invoice.organization.email}
+    </p>
+  )}
+
+  {invoice.organization.website && (
+    <p className="text-sm text-slate-500">
+      {invoice.organization.website}
+    </p>
+  )}
+
+
+  {(invoice.organization.address ||
+  invoice.organization.city ||
+  invoice.organization.state ||
+  invoice.organization.postalCode ||
+  invoice.organization.country) && (
+  <div className="text-sm text-slate-500 mt-2">
+    {invoice.organization.address && (
+      <div>{invoice.organization.address}</div>
+    )}
+
+    <div>
+      {[
+        invoice.organization.city,
+        invoice.organization.state,
+        invoice.organization.postalCode,
+      ]
+        .filter(Boolean)
+        .join(", ")}
+    </div>
+
+    {invoice.organization.country && (
+      <div>
+        {invoice.organization.country}
+      </div>
+    )}
+  </div>
+)}
+
+</div>
 
         </div>
 

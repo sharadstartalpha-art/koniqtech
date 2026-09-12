@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
   ],
 
   outputFileTracingIncludes: {
-    "/api/invoices/pdf/[id]": [
-      "./node_modules/@sparticuz/chromium/**",
+    "/**": [
+      "./node_modules/@sparticuz/chromium/bin/**",
     ],
   },
 };

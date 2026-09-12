@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-
+import SendInvoiceButton from "./SendInvoiceButton"
 export const dynamic = "force-dynamic"
 
 export default async function SendInvoicePage({
@@ -276,47 +276,32 @@ export default async function SendInvoicePage({
       {/* ACTIONS */}
 
       <div className="
-        flex
-        items-center
-        justify-end
-        gap-3
-      ">
+  flex
+  items-center
+  justify-end
+  gap-3
+">
 
-        <Link
-          href={`/invoices/${invoice.id}`}
-          className="
-            px-5
-            py-3
-            rounded-xl
-            border
-            hover:bg-slate-50
-          "
-        >
-          Cancel
-        </Link>
+  <Link
+    href={`/invoices/${invoice.id}`}
+    className="
+      px-5
+      py-3
+      rounded-xl
+      border
+      hover:bg-slate-50
+    "
+  >
+    Cancel
+  </Link>
 
+  {customerEmail && (
+    <SendInvoiceButton
+      invoiceId={invoice.id}
+    />
+  )}
 
-        {customerEmail && (
-
-          <button
-            type="button"
-            disabled
-            className="
-              px-6
-              py-3
-              rounded-xl
-              bg-blue-600
-              text-white
-              opacity-60
-              cursor-not-allowed
-            "
-          >
-            Send Invoice
-          </button>
-
-        )}
-
-      </div>
+</div>
 
     </div>
   )

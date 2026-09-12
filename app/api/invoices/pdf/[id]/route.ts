@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
 
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
@@ -640,13 +641,15 @@ body {
     // GENERATE PDF
     // --------------------------------------------------
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-      ],
-    });
+   const browser = await puppeteer.launch({
+  args: [
+    ...chromium.args,
+    "--no-sandbox",
+    "--disable-setuid-sandbox",
+  ],
+  executablePath: await chromium.executablePath(),
+  headless: true,
+});
 
     try {
       const page = await browser.newPage();

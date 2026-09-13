@@ -5,6 +5,11 @@ import {
   formatCrmContext,
 } from "@/shared/lib/ai/crm-context"
 
+import {
+  calculateAiCost,
+  roundAiCost,
+} from "@/shared/lib/ai/pricing"
+
 const DEFAULT_MODEL =
   process.env.OPENAI_MODEL ||
   "gpt-5.6-luna"
@@ -155,6 +160,7 @@ function extractUsage(
  * - build organization-scoped CRM context
  * - send protected instructions to OpenAI
  * - return normalized AI output
+ * - calculate estimated AI cost
  * - return token usage for centralized accounting
  */
 export async function runAiCore({
@@ -258,6 +264,38 @@ Do not invent CRM information.
     const usage =
       extractUsage(response)
 
+    // ------------------------------------------------
+    // COST CALCULATION
+    // ------------------------------------------------
+    //
+    // Current AI pricing is calculated from:
+    // - model
+    // - input tokens
+    // - output tokens
+    //
+    // Cached input tokens are currently zero because
+    // the core does not yet expose cached-token usage.
+    //
+
+    const cost =
+      calculateAiCost({
+        model: selectedModel,
+
+        inputTokens:
+          usage.inputTokens,
+
+        outputTokens:
+          usage.outputTokens,
+
+        cachedInputTokens:
+          0,
+      })
+
+    const estimatedCost =
+      roundAiCost(
+        cost.totalCost,
+      )
+
     return {
       answer,
 
@@ -276,12 +314,7 @@ Do not invent CRM information.
       totalTokens:
         usage.totalTokens,
 
-      /*
-       * Cost calculation is intentionally centralized
-       * outside the AI execution layer.
-       */
-      estimatedCost:
-        null,
+      estimatedCost,
 
       requestId:
         response.id || null,

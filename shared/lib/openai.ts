@@ -1,13 +1,13 @@
-import OpenAI
+import OpenAI from "openai"
 
-from "openai"
+const apiKey = process.env.OPENAI_API_KEY
 
-export const openai=
+if (!apiKey) {
+  throw new Error("OPENAI_API_KEY is not configured.")
+}
 
-new OpenAI({
-
-apiKey:
-
-process.env.OPENAI_API_KEY
-
+export const openai = new OpenAI({
+  apiKey,
 })
+
+export default openai

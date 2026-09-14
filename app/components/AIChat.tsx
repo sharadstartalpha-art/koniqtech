@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import {
   FormEvent,
+  ReactNode,
   useEffect,
   useRef,
   useState,
@@ -170,6 +171,209 @@ function getErrorMessage(data: AIResponse) {
     data.error ||
     "Unable to process your request. Please try again."
   )
+}
+
+
+function renderInlineMarkdown(text: string) {
+  const parts = text.split(
+    /(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g,
+  )
+
+  return parts.map((part, index) => {
+    if (!part) return null
+
+    if (
+      part.startsWith("**") &&
+      part.endsWith("**") &&
+      part.length > 4
+    ) {
+      return (
+        <strong
+          key={`bold-${index}`}
+          className="font-semibold text-slate-900"
+        >
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+
+    if (
+      part.startsWith("*") &&
+      part.endsWith("*") &&
+      !part.startsWith("**") &&
+      part.length > 2
+    ) {
+      return (
+        <em key={`italic-${index}`}>
+          {part.slice(1, -1)}
+        </em>
+      )
+    }
+
+    if (
+      part.startsWith("`") &&
+      part.endsWith("`") &&
+      part.length > 2
+    ) {
+      return (
+        <code
+          key={`code-${index}`}
+          className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[0.9em] text-slate-800"
+        >
+          {part.slice(1, -1)}
+        </code>
+      )
+    }
+
+    return (
+      <span key={`text-${index}`}>
+        {part}
+      </span>
+    )
+  })
+}
+
+function renderMarkdown(content: string) {
+  const lines = content.replace(/\r\n/g, "\n").split("\n")
+
+  const elements: ReactNode[] = []
+  let bulletItems: string[] = []
+  let numberedItems: string[] = []
+
+  function flushLists() {
+    if (bulletItems.length > 0) {
+      elements.push(
+        <ul
+          key={`ul-${elements.length}`}
+          className="my-3 list-disc space-y-1.5 pl-5"
+        >
+          {bulletItems.map((item, index) => (
+            <li key={`bullet-${index}`} className="pl-1">
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ul>,
+      )
+
+      bulletItems = []
+    }
+
+    if (numberedItems.length > 0) {
+      elements.push(
+        <ol
+          key={`ol-${elements.length}`}
+          className="my-3 list-decimal space-y-1.5 pl-5"
+        >
+          {numberedItems.map((item, index) => (
+            <li key={`number-${index}`} className="pl-1">
+              {renderInlineMarkdown(item)}
+            </li>
+          ))}
+        </ol>,
+      )
+
+      numberedItems = []
+    }
+  }
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim()
+
+    if (!trimmed) {
+      flushLists()
+      return
+    }
+
+    const headingMatch = trimmed.match(
+      /^(#{1,6})\s+(.+)$/,
+    )
+
+    if (headingMatch) {
+      flushLists()
+
+      const level = headingMatch[1].length
+      const headingText = headingMatch[2]
+
+      if (level === 1) {
+        elements.push(
+          <h1
+            key={`h1-${index}`}
+            className="mb-3 mt-1 text-xl font-bold tracking-tight text-slate-900"
+          >
+            {renderInlineMarkdown(headingText)}
+          </h1>,
+        )
+      } else if (level === 2) {
+        elements.push(
+          <h2
+            key={`h2-${index}`}
+            className="mb-2 mt-1 text-lg font-bold text-slate-900"
+          >
+            {renderInlineMarkdown(headingText)}
+          </h2>,
+        )
+      } else if (level === 3) {
+        elements.push(
+          <h3
+            key={`h3-${index}`}
+            className="mb-2 mt-1 text-base font-bold text-slate-900"
+          >
+            {renderInlineMarkdown(headingText)}
+          </h3>,
+        )
+      } else {
+        elements.push(
+          <h4
+            key={`h4-${index}`}
+            className="mb-2 mt-1 text-sm font-bold text-slate-900"
+          >
+            {renderInlineMarkdown(headingText)}
+          </h4>,
+        )
+      }
+
+      return
+    }
+
+    const bulletMatch = trimmed.match(/^[-*]\s+(.+)$/)
+
+    if (bulletMatch) {
+      if (numberedItems.length > 0) {
+        flushLists()
+      }
+
+      bulletItems.push(bulletMatch[1])
+      return
+    }
+
+    const numberedMatch = trimmed.match(
+      /^\d+\.\s+(.+)$/,
+    )
+
+    if (numberedMatch) {
+      if (bulletItems.length > 0) {
+        flushLists()
+      }
+
+      numberedItems.push(numberedMatch[1])
+      return
+    }
+
+    flushLists()
+
+    elements.push(
+      <p
+        key={`p-${index}`}
+        className="my-2 leading-6 text-slate-700"
+      >
+        {renderInlineMarkdown(trimmed)}
+      </p>,
+    )
+  })
+
+  flushLists()
+
+  return elements
 }
 
 export default function AIChat({
@@ -606,11 +810,17 @@ export default function AIChat({
                               : "rounded-bl-md border border-slate-200 bg-white text-slate-700 shadow-sm"
                           }`}
                         >
-                          <div className="whitespace-pre-wrap break-words">
-                            {
-                              message.content
-                            }
-                          </div>
+                          <div className="break-words">
+  {isUser ? (
+    <div className="whitespace-pre-wrap">
+      {message.content}
+    </div>
+  ) : (
+    <div className="space-y-1">
+      {renderMarkdown(message.content)}
+    </div>
+  )}
+</div>
                         </div>
 
                         <div

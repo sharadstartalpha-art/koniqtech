@@ -1,338 +1,733 @@
-import { NextRequest } from "next/server"
-
+import { NextResponse } from "next/server"
 import { auth } from "@/auth"
-import prisma from "@/shared/lib/prisma"
+import { prisma } from "@/shared/lib/prisma"
 
-import {
-  formatAiUsage,
-  getAiUsageByFeature,
-  getAiUsageByModel,
-  getOrganizationAiUsage,
-} from "@/shared/lib/ai/usage"
-
-export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-function jsonResponse(
-  data: unknown,
-  status = 200,
-): Response {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-      },
-    },
-  )
+type SessionUser = {
+  id?: string
+  orgId?: string | null
 }
 
-function jsonError(
-  message: string,
-  status: number,
-): Response {
-  return jsonResponse(
-    {
-      error: message,
-    },
-    status,
+type Period = "7d" | "30d" | "90d" | "all"
+
+function getSessionContext(
+  session: {
+    user?: SessionUser | null
+  },
+) {
+  const userId =
+    typeof session.user?.id === "string"
+      ? session.user.id.trim()
+      : ""
+
+  const orgId =
+    typeof session.user?.orgId === "string"
+      ? session.user.orgId.trim()
+      : ""
+
+  return {
+    userId,
+    orgId,
+  }
+}
+
+function parsePeriod(
+  value: string | null,
+): Period {
+  if (
+    value === "7d" ||
+    value === "30d" ||
+    value === "90d" ||
+    value === "all"
+  ) {
+    return value
+  }
+
+  return "30d"
+}
+
+function getStartDate(
+  period: Period,
+): Date | undefined {
+  if (period === "all") {
+    return undefined
+  }
+
+  const days =
+    period === "7d"
+      ? 7
+      : period === "90d"
+        ? 90
+        : 30
+
+  const date =
+    new Date()
+
+  date.setDate(
+    date.getDate() - days,
   )
+
+  return date
+}
+
+function toNumber(
+  value: unknown,
+): number {
+  if (
+    typeof value === "number"
+  ) {
+    return Number.isFinite(value)
+      ? value
+      : 0
+  }
+
+  if (
+    typeof value === "string"
+  ) {
+    const parsed =
+      Number(value)
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : 0
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "toString" in value
+  ) {
+    const parsed =
+      Number(
+        String(value),
+      )
+
+    return Number.isFinite(parsed)
+      ? parsed
+      : 0
+  }
+
+  return 0
 }
 
 /**
  * GET /api/ai/usage
  *
- * Returns organization-scoped AI usage for the
- * current calendar month.
+ * Organization-scoped AI usage information.
  *
- * This endpoint is read-only.
+ * Query parameters:
  *
- * It returns:
- * - request count
- * - input tokens
- * - output tokens
- * - total tokens
- * - estimated cost
- * - monthly credit limit
- * - remaining credits
- * - monthly spend limit
- * - remaining spend
- * - limit status
- * - usage percentages
- * - usage by feature
- * - usage by model
+ *   ?period=7d
+ *   ?period=30d
+ *   ?period=90d
+ *   ?period=all
+ *
+ * Optional:
+ *
+ *   ?userId=...
+ *   ?model=...
+ *   ?feature=...
+ *
+ * Security:
+ *
+ * The organization always comes from the
+ * authenticated session. A browser cannot
+ * supply an arbitrary organization ID.
  */
 export async function GET(
-  _request: NextRequest,
-): Promise<Response> {
+  request: Request,
+) {
   try {
-    /*
-     * ------------------------------------------------------------
-     * 1. AUTHENTICATION
-     * ------------------------------------------------------------
-     */
+    const session =
+      await auth()
 
-    const session = await auth()
-
-    if (!session?.user) {
-      return jsonError(
-        "You must be signed in to view AI usage.",
-        401,
-      )
-    }
-
-    const email =
-      session.user.email
-        ?.trim()
-        .toLowerCase()
-
-    if (!email) {
-      return jsonError(
-        "Authenticated user email is unavailable.",
-        401,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 2. RESOLVE DATABASE USER
-     * ------------------------------------------------------------
-     *
-     * Never accept orgId from the browser.
-     *
-     * The organization is always resolved from the
-     * authenticated database user.
-     */
-
-    const dbUser =
-      await prisma.user.findUnique({
-        where: {
-          email,
+    if (
+      !session?.user?.id
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
         },
+        {
+          status: 401,
+        },
+      )
+    }
+
+    const {
+      userId,
+      orgId,
+    } = getSessionContext(
+      session,
+    )
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        },
+      )
+    }
+
+    if (!orgId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Organization context is required.",
+        },
+        {
+          status: 403,
+        },
+      )
+    }
+
+    const {
+      searchParams,
+    } = new URL(
+      request.url,
+    )
+
+    const period =
+      parsePeriod(
+        searchParams.get(
+          "period",
+        ),
+      )
+
+    const startDate =
+      getStartDate(period)
+
+    const requestedUserId =
+      searchParams
+        .get("userId")
+        ?.trim() || ""
+
+    const model =
+      searchParams
+        .get("model")
+        ?.trim() || ""
+
+    const feature =
+      searchParams
+        .get("feature")
+        ?.trim() || ""
+
+    /**
+     * Never allow a caller to query a user
+     * outside the authenticated organization.
+     */
+    let scopedUserId:
+      | string
+      | undefined
+
+    if (requestedUserId) {
+      const organizationUser =
+        await prisma.user.findFirst({
+          where: {
+            id:
+              requestedUserId,
+            orgId,
+          },
+          select: {
+            id: true,
+          },
+        })
+
+      if (!organizationUser) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "User not found in this organization.",
+          },
+          {
+            status: 404,
+          },
+        )
+      }
+
+      scopedUserId =
+        organizationUser.id
+    }
+
+    /**
+     * Build the organization-scoped filter.
+     */
+    const where = {
+      orgId,
+
+      ...(startDate
+        ? {
+            createdAt: {
+              gte: startDate,
+            },
+          }
+        : {}),
+
+      ...(scopedUserId
+        ? {
+            userId:
+              scopedUserId,
+          }
+        : {}),
+
+      ...(model
+        ? {
+            model,
+          }
+        : {}),
+
+      ...(feature
+        ? {
+            feature,
+          }
+        : {}),
+    }
+
+    /**
+     * Load usage records.
+     *
+     * We keep the individual records available
+     * for recent usage/activity displays.
+     */
+    const usage =
+      await prisma.aiUsage.findMany({
+        where,
+
+        orderBy: {
+          createdAt: "desc",
+        },
+
+        take: 500,
+
         select: {
           id: true,
           orgId: true,
-          status: true,
+          userId: true,
+          model: true,
+          feature: true,
+          inputTokens: true,
+          outputTokens: true,
+          totalTokens: true,
+          estimatedCost: true,
+          creditsUsed: true,
+          createdAt: true,
         },
       })
 
-    if (!dbUser) {
-      return jsonError(
-        "User account was not found.",
-        404,
+    /**
+     * Aggregate usage.
+     */
+    let inputTokens = 0
+    let outputTokens = 0
+    let totalTokens = 0
+    let estimatedCost = 0
+    let creditsUsed = 0
+
+    for (const item of usage) {
+      inputTokens +=
+        item.inputTokens ?? 0
+
+      outputTokens +=
+        item.outputTokens ?? 0
+
+      totalTokens +=
+        item.totalTokens ?? 0
+
+      estimatedCost +=
+        toNumber(
+          item.estimatedCost,
+        )
+
+      creditsUsed +=
+        toNumber(
+          item.creditsUsed,
+        )
+    }
+
+    /**
+     * Usage by model.
+     */
+    const byModel =
+      new Map<
+        string,
+        {
+          model: string
+          requests: number
+          inputTokens: number
+          outputTokens: number
+          totalTokens: number
+          estimatedCost: number
+          creditsUsed: number
+        }
+      >()
+
+    /**
+     * Usage by feature.
+     */
+    const byFeature =
+      new Map<
+        string,
+        {
+          feature: string
+          requests: number
+          inputTokens: number
+          outputTokens: number
+          totalTokens: number
+          estimatedCost: number
+          creditsUsed: number
+        }
+      >()
+
+    for (const item of usage) {
+      const modelName =
+        item.model ||
+        "unknown"
+
+      const featureName =
+        item.feature ||
+        "unknown"
+
+      const modelEntry =
+        byModel.get(
+          modelName,
+        ) ?? {
+          model:
+            modelName,
+          requests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          estimatedCost: 0,
+          creditsUsed: 0,
+        }
+
+      modelEntry.requests += 1
+      modelEntry.inputTokens +=
+        item.inputTokens ?? 0
+      modelEntry.outputTokens +=
+        item.outputTokens ?? 0
+      modelEntry.totalTokens +=
+        item.totalTokens ?? 0
+      modelEntry.estimatedCost +=
+        toNumber(
+          item.estimatedCost,
+        )
+      modelEntry.creditsUsed +=
+        toNumber(
+          item.creditsUsed,
+        )
+
+      byModel.set(
+        modelName,
+        modelEntry,
+      )
+
+      const featureEntry =
+        byFeature.get(
+          featureName,
+        ) ?? {
+          feature:
+            featureName,
+          requests: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          estimatedCost: 0,
+          creditsUsed: 0,
+        }
+
+      featureEntry.requests += 1
+      featureEntry.inputTokens +=
+        item.inputTokens ?? 0
+      featureEntry.outputTokens +=
+        item.outputTokens ?? 0
+      featureEntry.totalTokens +=
+        item.totalTokens ?? 0
+      featureEntry.estimatedCost +=
+        toNumber(
+          item.estimatedCost,
+        )
+      featureEntry.creditsUsed +=
+        toNumber(
+          item.creditsUsed,
+        )
+
+      byFeature.set(
+        featureName,
+        featureEntry,
       )
     }
 
-    /*
-     * ------------------------------------------------------------
-     * 3. ACCOUNT STATUS
-     * ------------------------------------------------------------
+    /**
+     * Usage by user.
      */
+    const byUser =
+      new Map<
+        string,
+        {
+          userId: string
+          requests: number
+          inputTokens: number
+          outputTokens: number
+          totalTokens: number
+          estimatedCost: number
+          creditsUsed: number
+        }
+      >()
 
-    if (
-      dbUser.status &&
-      String(dbUser.status).toLowerCase() !==
-        "active"
-    ) {
-      return jsonError(
-        "Your account is not active.",
-        403,
-      )
+   for (const item of usage) {
+  /**
+   * AiUsage.userId is nullable because some
+   * usage records may be generated without
+   * a specific authenticated user.
+   *
+   * Use a stable display key for those records
+   * instead of passing null into Map<string, ...>.
+   */
+  const usageUserId =
+    item.userId ?? "unknown"
+
+  const entry =
+    byUser.get(
+      usageUserId,
+    ) ?? {
+      userId:
+        usageUserId,
+      requests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      estimatedCost: 0,
+      creditsUsed: 0,
     }
 
-    /*
-     * ------------------------------------------------------------
-     * 4. ORGANIZATION
-     * ------------------------------------------------------------
+  entry.requests += 1
+
+  entry.inputTokens +=
+    item.inputTokens ?? 0
+
+  entry.outputTokens +=
+    item.outputTokens ?? 0
+
+  entry.totalTokens +=
+    item.totalTokens ?? 0
+
+  entry.estimatedCost +=
+    toNumber(
+      item.estimatedCost,
+    )
+
+  entry.creditsUsed +=
+    toNumber(
+      item.creditsUsed,
+    )
+
+  byUser.set(
+    usageUserId,
+    entry,
+  )
+}
+    /**
+     * Recent activity.
      */
+    const recentUsage =
+      usage
+        .slice(0, 50)
+        .map(
+          (item) => ({
+            id: item.id,
+            userId:
+              item.userId,
+            model:
+              item.model,
+            feature:
+              item.feature,
+            inputTokens:
+              item.inputTokens ?? 0,
+            outputTokens:
+              item.outputTokens ?? 0,
+            totalTokens:
+              item.totalTokens ?? 0,
+            estimatedCost:
+              toNumber(
+                item.estimatedCost,
+              ),
+            creditsUsed:
+              toNumber(
+                item.creditsUsed,
+              ),
+            createdAt:
+              item.createdAt,
+          }),
+        )
 
-    const orgId =
-      dbUser.orgId?.trim()
-
-    if (!orgId) {
-      return jsonError(
-        "Your account is not associated with an organization.",
-        403,
+    /**
+     * Round monetary values for API output.
+     */
+    const roundedCost =
+      Number(
+        estimatedCost.toFixed(
+          8,
+        ),
       )
-    }
 
-    /*
-     * ------------------------------------------------------------
-     * 5. CHECK AI ACCESS
-     * ------------------------------------------------------------
-     */
-
-    const settings =
-      await prisma.organizationSettings.findUnique({
-        where: {
-          orgId,
-        },
-        select: {
-          aiEnabled: true,
-        },
-      })
-
-    const aiEnabled =
-      settings?.aiEnabled ?? true
-
-    if (!aiEnabled) {
-      return jsonError(
-        "AI features are disabled for this organization.",
-        403,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 6. LOAD USAGE
-     * ------------------------------------------------------------
-     *
-     * getOrganizationAiUsage() automatically:
-     * - determines the current month
-     * - reads AI logs
-     * - calculates tokens
-     * - calculates estimated spend
-     * - loads configured organization limits
-     */
-
-    const usage =
-      await getOrganizationAiUsage(
-        orgId,
+    const roundedCredits =
+      Number(
+        creditsUsed.toFixed(
+          4,
+        ),
       )
 
-    /*
-     * ------------------------------------------------------------
-     * 7. LOAD BREAKDOWNS
-     * ------------------------------------------------------------
-     */
-
-    const [
-      byFeature,
-      byModel,
-    ] = await Promise.all([
-      getAiUsageByFeature(orgId),
-      getAiUsageByModel(orgId),
-    ])
-
-    /*
-     * ------------------------------------------------------------
-     * 8. RETURN SAFE API RESPONSE
-     * ------------------------------------------------------------
-     *
-     * Dates are converted to ISO strings so the response
-     * is safe for browser/client consumption.
-     */
-
-    return jsonResponse({
+    const response = {
       success: true,
 
-      period: {
-        start:
-          usage.periodStart.toISOString(),
+      period,
 
-        end:
-          usage.periodEnd.toISOString(),
-      },
+      startDate:
+        startDate
+          ?.toISOString() ??
+        null,
 
-      usage: {
-        requestCount:
-          usage.requestCount,
+      generatedAt:
+        new Date().toISOString(),
 
-        inputTokens:
-          usage.inputTokens,
+      summary: {
+        requests:
+          usage.length,
 
-        outputTokens:
-          usage.outputTokens,
+        inputTokens,
 
-        totalTokens:
-          usage.totalTokens,
+        outputTokens,
+
+        totalTokens,
 
         estimatedCost:
-          usage.estimatedCost,
+          roundedCost,
 
-        monthlyCreditLimit:
-          usage.monthlyCreditLimit,
-
-        remainingCredits:
-          usage.remainingCredits,
-
-        monthlySpendLimit:
-          usage.monthlySpendLimit,
-
-        remainingSpend:
-          usage.remainingSpend,
-
-        creditsExceeded:
-          usage.creditsExceeded,
-
-        spendExceeded:
-          usage.spendExceeded,
-
-        limitExceeded:
-          usage.limitExceeded,
+        creditsUsed:
+          roundedCredits,
       },
 
-      status: {
-        creditsExceeded:
-          usage.creditsExceeded,
+      byModel:
+        Array.from(
+          byModel.values(),
+        )
+          .map(
+            (item) => ({
+              ...item,
+              estimatedCost:
+                Number(
+                  item.estimatedCost.toFixed(
+                    8,
+                  ),
+                ),
+              creditsUsed:
+                Number(
+                  item.creditsUsed.toFixed(
+                    4,
+                  ),
+                ),
+            }),
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              b.totalTokens -
+              a.totalTokens,
+          ),
 
-        spendExceeded:
-          usage.spendExceeded,
+      byFeature:
+        Array.from(
+          byFeature.values(),
+        )
+          .map(
+            (item) => ({
+              ...item,
+              estimatedCost:
+                Number(
+                  item.estimatedCost.toFixed(
+                    8,
+                  ),
+                ),
+              creditsUsed:
+                Number(
+                  item.creditsUsed.toFixed(
+                    4,
+                  ),
+                ),
+            }),
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              b.totalTokens -
+              a.totalTokens,
+          ),
 
-        limitExceeded:
-          usage.limitExceeded,
-      },
+      byUser:
+        Array.from(
+          byUser.values(),
+        )
+          .map(
+            (item) => ({
+              ...item,
+              estimatedCost:
+                Number(
+                  item.estimatedCost.toFixed(
+                    8,
+                  ),
+                ),
+              creditsUsed:
+                Number(
+                  item.creditsUsed.toFixed(
+                    4,
+                  ),
+                ),
+            }),
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              b.totalTokens -
+              a.totalTokens,
+          ),
 
-      formatted:
-        formatAiUsage(usage),
+      recent:
+        recentUsage,
+    }
 
-      byFeature,
-
-      byModel,
-    })
+    return NextResponse.json(
+      response,
+    )
   } catch (error) {
-    /*
-     * ------------------------------------------------------------
-     * GLOBAL ERROR HANDLER
-     * ------------------------------------------------------------
-     */
-
     console.error(
-      "[AI Usage] Failed to load AI usage:",
+      "[AI_USAGE_GET]",
       error,
     )
 
-    return jsonError(
-      "Unable to load AI usage right now.",
-      500,
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Unable to load AI usage.",
+      },
+      {
+        status: 500,
+      },
     )
   }
-}
-
-/**
- * AI usage is currently read-only.
- *
- * Usage cannot be modified through this endpoint.
- */
-export async function POST(): Promise<Response> {
-  return jsonError(
-    "Method not allowed.",
-    405,
-  )
-}
-
-export async function PUT(): Promise<Response> {
-  return jsonError(
-    "Method not allowed.",
-    405,
-  )
-}
-
-export async function DELETE(): Promise<Response> {
-  return jsonError(
-    "Method not allowed.",
-    405,
-  )
 }

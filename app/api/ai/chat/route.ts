@@ -1,416 +1,714 @@
-import { NextRequest } from "next/server"
-
+import { NextResponse } from "next/server"
 import { auth } from "@/auth"
-import prisma from "@/shared/lib/prisma"
-
+import { prisma } from "@/shared/lib/prisma"
 import {
-  checkAiUsage,
-} from "@/shared/lib/ai/usage"
+  sendChatMessage,
+} from "@/shared/lib/ai/chat"
 
-import {
-  runAiCore,
-} from "@/shared/lib/ai/core"
-
-export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-const MAX_PROMPT_LENGTH = 4000
-const FEATURE_NAME = "chat"
-
-function jsonError(
-  message: string,
-  status: number,
-): Response {
-  return new Response(
-    JSON.stringify({
-      error: message,
-    }),
-    {
-      status,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    },
-  )
+type SessionUser = {
+  id?: string
+  orgId?: string | null
 }
 
-function textResponse(
-  text: string,
-  status = 200,
-): Response {
-  return new Response(text, {
-    status,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  })
+type ChatRequest = {
+  message?: unknown
+  prompt?: unknown
+  conversationId?: unknown
+  model?: unknown
 }
 
-function sanitizePrompt(
+function getSessionContext(
+  session: {
+    user?: SessionUser | null
+  },
+) {
+  const userId =
+    typeof session.user?.id === "string"
+      ? session.user.id.trim()
+      : ""
+
+  const orgId =
+    typeof session.user?.orgId === "string"
+      ? session.user.orgId.trim()
+      : ""
+
+  return {
+    userId,
+    orgId,
+  }
+}
+
+function normalizeMessage(
   value: unknown,
-): string {
-  if (typeof value !== "string") {
+) {
+  if (
+    typeof value !== "string"
+  ) {
     return ""
   }
 
-  return value
-    .replace(/\u0000/g, "")
-    .trim()
-    .slice(0, MAX_PROMPT_LENGTH)
+  return value.trim()
 }
 
-function toNumber(
+function normalizeOptionalString(
   value: unknown,
-): number | null {
-  if (value === null || value === undefined) {
-    return null
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : null
-  }
-
+  maxLength: number,
+) {
   if (
-    typeof value === "object" &&
-    value !== null &&
-    "toNumber" in value &&
-    typeof (value as { toNumber?: unknown }).toNumber === "function"
+    typeof value !== "string"
   ) {
-    const numberValue = (
-      value as {
-        toNumber: () => number
-      }
-    ).toNumber()
-
-    return Number.isFinite(numberValue)
-      ? numberValue
-      : null
+    return undefined
   }
 
-  const parsed = Number(value)
+  const normalized =
+    value.trim()
 
-  return Number.isFinite(parsed)
-    ? parsed
-    : null
+  if (!normalized) {
+    return undefined
+  }
+
+  return normalized.slice(
+    0,
+    maxLength,
+  )
 }
 
+/**
+ * POST /api/ai/chat
+ *
+ * Main conversational AI endpoint.
+ *
+ * Body:
+ *
+ * {
+ *   "message": "How many open leads do we have?"
+ * }
+ *
+ * Optional:
+ *
+ * {
+ *   "message": "...",
+ *   "conversationId": "...",
+ *   "model": "gpt-5.6-luna"
+ * }
+ *
+ * Security:
+ * - Authentication is required.
+ * - orgId always comes from the session.
+ * - Conversation ownership is enforced
+ *   by the chat service.
+ */
 export async function POST(
-  request: NextRequest,
-): Promise<Response> {
+  request: Request,
+) {
+  const requestId =
+    crypto.randomUUID()
+
   try {
-    /*
-     * ------------------------------------------------------------
-     * 1. AUTHENTICATION
-     * ------------------------------------------------------------
+    const session =
+      await auth()
+
+    if (
+      !session?.user?.id
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+          requestId,
+        },
+        {
+          status: 401,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    const {
+      userId,
+      orgId,
+    } = getSessionContext(
+      session,
+    )
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+          requestId,
+        },
+        {
+          status: 401,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    if (!orgId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Organization context is required.",
+          requestId,
+        },
+        {
+          status: 403,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    /**
+     * Parse JSON body safely.
      */
+    let body: ChatRequest
 
-    const session = await auth()
+    try {
+      const parsed =
+        await request.json()
 
-    if (!session?.user) {
-      return jsonError(
-        "You must be signed in to use the AI assistant.",
-        401,
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Request body must be a JSON object.",
+            requestId,
+          },
+          {
+            status: 400,
+            headers: {
+              "X-Request-Id":
+                requestId,
+            },
+          },
+        )
+      }
+
+      body =
+        parsed as ChatRequest
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Invalid JSON request body.",
+          requestId,
+        },
+        {
+          status: 400,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
       )
     }
 
-    const email = session.user.email
-      ?.trim()
-      .toLowerCase()
+    /**
+     * Support both "message" and the older
+     * "prompt" property.
+     */
+    const message =
+      normalizeMessage(
+        body.message,
+      ) ||
+      normalizeMessage(
+        body.prompt,
+      )
 
-    if (!email) {
-      return jsonError(
-        "Authenticated user email is unavailable.",
-        401,
+    if (!message) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "message is required.",
+          requestId,
+        },
+        {
+          status: 400,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
       )
     }
 
-    /*
-     * ------------------------------------------------------------
-     * 2. LOAD DATABASE USER
-     * ------------------------------------------------------------
+    /**
+     * Keep the API request bounded.
      *
-     * We resolve the user again from the database instead of
-     * trusting organization information from the client.
+     * The core AI layer has its own limit too,
+     * but validating at the HTTP boundary prevents
+     * unnecessarily large requests from reaching
+     * the service.
      */
+    if (
+      message.length >
+      4000
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Message cannot exceed 4000 characters.",
+          requestId,
+        },
+        {
+          status: 413,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
 
-    const dbUser = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-      select: {
-        id: true,
-        orgId: true,
-        status: true,
-      },
-    })
+    const conversationId =
+      normalizeOptionalString(
+        body.conversationId,
+        200,
+      )
 
-    if (!dbUser) {
-      return jsonError(
-        "User account was not found.",
-        404,
+    const model =
+      normalizeOptionalString(
+        body.model,
+        100,
+      )
+
+    /**
+     * If a conversation ID is supplied, verify
+     * it belongs to the current organization and
+     * authenticated user before calling the AI
+     * service.
+     *
+     * This gives us an early authorization check
+     * at the API boundary in addition to the
+     * service-layer check.
+     */
+    if (conversationId) {
+      const conversation =
+        await prisma.aiConversation.findFirst(
+          {
+            where: {
+              id:
+                conversationId,
+              orgId,
+              userId,
+            },
+
+            select: {
+              id: true,
+              status: true,
+              model: true,
+            },
+          },
+        )
+
+      if (!conversation) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Conversation not found.",
+            requestId,
+          },
+          {
+            status: 404,
+            headers: {
+              "X-Request-Id":
+                requestId,
+            },
+          },
+        )
+      }
+
+      if (
+        conversation.status ===
+        "archived"
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              "Archived conversations cannot receive new messages.",
+            requestId,
+          },
+          {
+            status: 409,
+            headers: {
+              "X-Request-Id":
+                requestId,
+            },
+          },
+        )
+      }
+    }
+
+    /**
+     * Send the message through the service layer.
+     *
+     * The service is responsible for:
+     * - conversation creation
+     * - CRM context
+     * - OpenAI request
+     * - message persistence
+     * - usage information
+     */
+    const result =
+      await sendChatMessage({
+        orgId,
+        userId,
+        message,
+        conversationId,
+        model,
+      })
+
+    /**
+     * Fetch the conversation again so the API
+     * response contains the canonical persisted
+     * message history.
+     *
+     * We intentionally don't assume that
+     * sendChatMessage exposes messages/usage
+     * directly on its return type.
+     */
+    const conversation =
+      await prisma.aiConversation.findFirst(
+        {
+          where: {
+            id:
+              result.conversation.id,
+            orgId,
+            userId,
+          },
+
+          select: {
+            id: true,
+            orgId: true,
+            userId: true,
+            title: true,
+            status: true,
+            model: true,
+            createdAt: true,
+            updatedAt: true,
+
+            messages: {
+              orderBy: {
+                createdAt:
+                  "asc",
+              },
+
+              take: 100,
+
+              select: {
+                id: true,
+                conversationId:
+                  true,
+                role: true,
+                content: true,
+                model: true,
+                inputTokens:
+                  true,
+                outputTokens:
+                  true,
+                totalTokens:
+                  true,
+                metadata: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
+      )
+
+    if (!conversation) {
+      /**
+       * This should never happen because the
+       * service just created/updated this
+       * conversation. Keep the defensive check
+       * so the API never returns incomplete data.
+       */
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Conversation could not be loaded after processing.",
+          requestId,
+        },
+        {
+          status: 500,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+
+        answer:
+          result.answer,
+
+        text:
+          result.answer,
+
+        conversation,
+
+        conversationId:
+          conversation.id,
+
+        messages:
+          conversation.messages,
+
+        requestId:
+          "requestId" in result &&
+          typeof result.requestId ===
+            "string"
+            ? result.requestId
+            : requestId,
+      },
+      {
+        status: 200,
+        headers: {
+          "X-Request-Id":
+            requestId,
+        },
+      },
+    )
+  } catch (error) {
+    console.error(
+      "[AI_CHAT_POST]",
+      {
+        requestId,
+        error,
+      },
+    )
+
+    /**
+     * Don't expose raw OpenAI, Prisma, or
+     * internal server errors to the browser.
+     */
+    const message =
+      error instanceof Error
+        ? error.message
+        : ""
+
+    const normalizedError =
+      message.toLowerCase()
+
+    /**
+     * Translate common service-level
+     * conditions into useful HTTP responses.
+     */
+    if (
+      normalizedError.includes(
+        "archived",
+      )
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Archived conversations cannot receive new messages.",
+          requestId,
+        },
+        {
+          status: 409,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
       )
     }
 
     if (
-      dbUser.status &&
-      String(dbUser.status).toLowerCase() !== "active"
+      normalizedError.includes(
+        "openai_api_key",
+      ) ||
+      normalizedError.includes(
+        "api key",
+      )
     ) {
-      return jsonError(
-        "Your account is not active.",
-        403,
-      )
-    }
-
-    const orgId = dbUser.orgId?.trim()
-
-    if (!orgId) {
-      return jsonError(
-        "Your account is not associated with an organization.",
-        403,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 3. ORGANIZATION AI SETTINGS
-     * ------------------------------------------------------------
-     */
-
-    const settings =
-      await prisma.organizationSettings.findUnique({
-        where: {
-          orgId,
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "AI service configuration is unavailable.",
+          requestId,
         },
-        select: {
-          aiEnabled: true,
-          aiDefaultModel: true,
-          aiMonthlyCreditLimit: true,
-          aiMonthlySpendLimit: true,
-          aiRequireApproval: true,
-        },
-      })
-
-    const aiEnabled =
-      settings?.aiEnabled ?? true
-
-    if (!aiEnabled) {
-      return jsonError(
-        "AI features are disabled for this organization.",
-        403,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 4. PARSE REQUEST
-     * ------------------------------------------------------------
-     */
-
-    let body: unknown
-
-    try {
-      body = await request.json()
-    } catch {
-      return jsonError(
-        "Invalid JSON request body.",
-        400,
-      )
-    }
-
-    const prompt = sanitizePrompt(
-      typeof body === "object" &&
-        body !== null &&
-        "prompt" in body
-        ? (body as { prompt?: unknown }).prompt
-        : undefined,
-    )
-
-    if (!prompt) {
-      return jsonError(
-        "Please provide a prompt.",
-        400,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 5. CHECK MONTHLY AI USAGE
-     * ------------------------------------------------------------
-     *
-     * Centralized through shared/lib/ai/usage.ts.
-     *
-     * This checks:
-     * - monthly token/credit usage
-     * - monthly estimated spend
-     * - organization limits
-     */
-
-    const usageCheck = await checkAiUsage(
-      orgId,
-      {
-        monthlyCreditLimit:
-          settings?.aiMonthlyCreditLimit ?? null,
-
-        monthlySpendLimit:
-          toNumber(
-            settings?.aiMonthlySpendLimit,
-          ),
-      },
-    )
-
-    if (!usageCheck.allowed) {
-      if (
-        usageCheck.reason ===
-        "credit_limit"
-      ) {
-        return jsonError(
-          "Your organization's monthly AI credit limit has been reached.",
-          429,
-        )
-      }
-
-      if (
-        usageCheck.reason ===
-        "spend_limit"
-      ) {
-        return jsonError(
-          "Your organization's monthly AI spending limit has been reached.",
-          429,
-        )
-      }
-
-      return jsonError(
-        "AI usage is currently unavailable.",
-        429,
-      )
-    }
-
-    /*
-     * ------------------------------------------------------------
-     * 6. RUN AI
-     * ------------------------------------------------------------
-     */
-
-    const result = await runAiCore({
-      prompt,
-      model:
-        settings?.aiDefaultModel ||
-        undefined,
-      orgId,
-    })
-
-    /*
-     * ------------------------------------------------------------
-     * 7. LOG AI REQUEST
-     * ------------------------------------------------------------
-     *
-     * We record the request after a successful AI response.
-     *
-     * This powers:
-     * - usage dashboard
-     * - monthly limits
-     * - feature reporting
-     * - model reporting
-     * - cost tracking
-     */
-
-    try {
-      await prisma.aiLog.create({
-        data: {
-          orgId,
-          userId: dbUser.id,
-
-          prompt,
-
-          response: result.answer,
-
-          tokens:
-            result.totalTokens,
-
-          inputTokens:
-            result.inputTokens,
-
-          outputTokens:
-            result.outputTokens,
-
-          model:
-            result.model,
-
-          estimatedCost:
-            result.estimatedCost,
-
-          feature:
-            FEATURE_NAME,
-
-          metadata: {
-            requestId:
-              result.requestId ?? null,
-
-            aiRequireApproval:
-              settings?.aiRequireApproval ?? true,
-
-            source:
-              "crm_assistant",
+        {
+          status: 503,
+          headers: {
+            "X-Request-Id":
+              requestId,
           },
         },
-      })
-    } catch (logError) {
-      /*
-       * The AI request succeeded, but usage logging failed.
-       *
-       * We deliberately do not expose database details to the
-       * client. The error is logged server-side so it can be
-       * investigated.
-       */
-
-      console.error(
-        "[AI] Failed to record AI usage:",
-        logError,
-      )
-
-      return jsonError(
-        "The AI response was generated, but usage could not be recorded. Please try again.",
-        500,
       )
     }
 
-    /*
-     * ------------------------------------------------------------
-     * 8. RETURN AI RESPONSE
-     * ------------------------------------------------------------
-     *
-     * The current client already reads the response body as a
-     * stream. A normal text response is still compatible with
-     * that implementation.
-     */
-
-    return textResponse(
-      result.answer,
-      200,
-    )
-  } catch (error) {
-    /*
-     * ------------------------------------------------------------
-     * GLOBAL ERROR HANDLER
-     * ------------------------------------------------------------
-     */
-
-    console.error(
-      "[AI] Chat route error:",
-      error,
-    )
-
-    return jsonError(
-      "The AI Assistant is temporarily unavailable. Please try again.",
-      500,
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          "Unable to process AI chat request.",
+        requestId,
+      },
+      {
+        status: 500,
+        headers: {
+          "X-Request-Id":
+            requestId,
+        },
+      },
     )
   }
 }
 
-export async function GET(): Promise<Response> {
-  return jsonError(
-    "Method not allowed.",
-    405,
-  )
+/**
+ * GET /api/ai/chat
+ *
+ * Lightweight health/availability endpoint.
+ *
+ * Does not make an OpenAI request.
+ */
+export async function GET() {
+  const requestId =
+    crypto.randomUUID()
+
+  try {
+    const session =
+      await auth()
+
+    if (
+      !session?.user?.id
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          available: false,
+          error: "Unauthorized",
+          requestId,
+        },
+        {
+          status: 401,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    const {
+      orgId,
+    } = getSessionContext(
+      session,
+    )
+
+    if (!orgId) {
+      return NextResponse.json(
+        {
+          success: false,
+          available: false,
+          error:
+            "Organization context is required.",
+          requestId,
+        },
+        {
+          status: 403,
+          headers: {
+            "X-Request-Id":
+              requestId,
+          },
+        },
+      )
+    }
+
+    const settings =
+      await prisma.organizationSettings.findFirst(
+        {
+          where: {
+            orgId,
+          },
+
+          select: {
+            aiEnabled: true,
+            aiDefaultModel:
+              true,
+          },
+        },
+      )
+
+    const available =
+      settings?.aiEnabled ??
+      true
+
+    return NextResponse.json(
+      {
+        success: true,
+        available,
+
+        model:
+          settings?.aiDefaultModel ??
+          process.env.OPENAI_MODEL ??
+          "gpt-5.6-luna",
+
+        requestId,
+      },
+      {
+        status: 200,
+        headers: {
+          "X-Request-Id":
+            requestId,
+        },
+      },
+    )
+  } catch (error) {
+    console.error(
+      "[AI_CHAT_GET]",
+      {
+        requestId,
+        error,
+      },
+    )
+
+    return NextResponse.json(
+      {
+        success: false,
+        available: false,
+        error:
+          "Unable to check AI availability.",
+        requestId,
+      },
+      {
+        status: 500,
+        headers: {
+          "X-Request-Id":
+            requestId,
+        },
+      },
+    )
+  }
 }

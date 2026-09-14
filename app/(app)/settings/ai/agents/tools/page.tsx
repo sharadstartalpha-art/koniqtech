@@ -251,72 +251,105 @@ export default function AIAgentToolsPage() {
       }
     }, [])
 
-  const loadTools =
-    useCallback(async () => {
-      setLoading(true)
-      setError("")
+    const loadTools = useCallback(async () => {
+    setLoading(true)
+    setError("")
 
-      try {
-        const query =
-          selectedAgentId ===
-          "all"
-            ? ""
-            : `?agentId=${encodeURIComponent(
-                selectedAgentId,
-              )}`
+    try {
+      /*
+       * The tools API requires an agentId for every GET request.
+       * When "All Agents" is selected, load each agent's tools
+       * separately and merge the results for the UI.
+       */
+      const agentIds =
+        selectedAgentId === "all"
+          ? agents.map((agent) => agent.id)
+          : [selectedAgentId]
 
-        const response =
-          await fetch(
-            `/api/ai/tools${query}`,
+      if (agentIds.length === 0) {
+        setTools([])
+        return
+      }
+
+      const responses = await Promise.all(
+        agentIds.map(async (currentAgentId) => {
+          const response = await fetch(
+            `/api/ai/tools?agentId=${encodeURIComponent(
+              currentAgentId,
+            )}`,
             {
               method: "GET",
               cache: "no-store",
             },
           )
 
-        const data =
-          (await response.json()) as ApiResponse
+          let data: ApiResponse
 
-        if (
-          !response.ok ||
-          !data.success
-        ) {
-          throw new Error(
-            getErrorMessage(
-              data,
-              "Unable to load AI tools.",
-            ),
-          )
-        }
+          try {
+            data =
+              (await response.json()) as ApiResponse
+          } catch {
+            throw new Error(
+              "The AI tools service returned an invalid response.",
+            )
+          }
 
-        setTools(
-          Array.isArray(
-            data.tools,
-          )
+          if (!response.ok || !data.success) {
+            throw new Error(
+              getErrorMessage(
+                data,
+                "Unable to load AI tools.",
+              ),
+            )
+          }
+
+          return Array.isArray(data.tools)
             ? data.tools
-            : [],
-        )
-      } catch (
-        caughtError
-      ) {
-        setError(
-          caughtError instanceof
-            Error
-            ? caughtError.message
-            : "Unable to load AI tools.",
-        )
-      } finally {
-        setLoading(false)
-      }
-    }, [selectedAgentId])
+            : []
+        }),
+      )
 
-  useEffect(() => {
+      /*
+       * Multiple agents should not normally return the same
+       * assignment, but deduplicate defensively by tool ID.
+       */
+      const mergedTools = responses
+        .flat()
+        .filter(
+          (tool, index, array) =>
+            array.findIndex(
+              (item) => item.id === tool.id,
+            ) === index,
+        )
+
+      setTools(mergedTools)
+    } catch (caughtError) {
+      setTools([])
+
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to load AI tools.",
+      )
+    } finally {
+      setLoading(false)
+    }
+  }, [agents, selectedAgentId])
+
+
+   useEffect(() => {
     void loadAgents()
   }, [loadAgents])
 
   useEffect(() => {
+    if (agents.length === 0) {
+      setTools([])
+      setLoading(false)
+      return
+    }
+
     void loadTools()
-  }, [loadTools])
+  }, [agents, loadTools])
 
   const counts =
     useMemo(() => {

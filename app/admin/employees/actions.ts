@@ -263,9 +263,16 @@ function readEmployeeInput(
     ),
 
     /*
-     * IMPORTANT:
-     * This is an OrganizationRole ID,
-     * not the role name.
+     * Platform role comes from the EmployeeForm
+     * as the OrganizationRole name, for example:
+     *
+     * super_admin
+     * platform_manager
+     * platform_sales
+     * data_entry
+     *
+     * The server resolves this name to the
+     * actual OrganizationRole database ID.
      */
     organizationRoleId: roleValue,
 
@@ -580,23 +587,50 @@ async function validateReferences(
 ========================================================= */
 
 async function validateOrganizationRole(
-  organizationRoleId: string
+  organizationRoleName: string,
+  organizationId: string
 ) {
+  const normalizedName = String(
+    organizationRoleName ?? ""
+  )
+    .trim()
+    .toLowerCase()
+
+  if (!normalizedName) {
+    throw new Error(
+      "Platform role is required."
+    )
+  }
+
+  if (
+    !INTERNAL_PLATFORM_ROLES.has(
+      normalizedName
+    )
+  ) {
+    throw new Error(
+      "Selected platform role is invalid."
+    )
+  }
+
   const selectedRole =
     await prisma.organizationRole.findUnique({
       where: {
-        id: organizationRoleId,
+        orgId_name: {
+          orgId: organizationId,
+          name: normalizedName,
+        },
       },
 
       select: {
         id: true,
         name: true,
+        orgId: true,
       },
     })
 
   if (!selectedRole) {
     throw new Error(
-      "Selected platform role does not exist."
+      "Selected platform role does not exist for the KoniqTech organization."
     )
   }
 
@@ -619,6 +653,7 @@ async function validateOrganizationRole(
   return {
     id: selectedRole.id,
     name: roleName,
+    orgId: selectedRole.orgId,
   }
 }
 
@@ -681,12 +716,20 @@ export async function createEmployeeAction(
     }
 
     /* ---------------------------------------------------------
-       Validate platform role
+       Get KoniqTech organization
+    --------------------------------------------------------- */
+
+    const koniqTechOrganization =
+      await getKoniqTechOrganization()
+
+    /* ---------------------------------------------------------
+       Validate selected platform role
     --------------------------------------------------------- */
 
     const selectedRole =
       await validateOrganizationRole(
-        input.organizationRoleId
+        input.organizationRoleId,
+        koniqTechOrganization.id
       )
 
     /*
@@ -720,13 +763,6 @@ export async function createEmployeeAction(
       input.roleId,
       input.managerId
     )
-
-    /* ---------------------------------------------------------
-       Get KoniqTech organization
-    --------------------------------------------------------- */
-
-    const koniqTechOrganization =
-      await getKoniqTechOrganization()
 
     /*
      * The selected department must belong
@@ -854,7 +890,7 @@ export async function createEmployeeAction(
                   input.departmentId,
 
                 organizationRoleId:
-                  input.organizationRoleId,
+                  selectedRole.id,
 
                 status:
                   input.active
@@ -1112,12 +1148,20 @@ export async function updateEmployeeAction(
     }
 
     /* ---------------------------------------------------------
+       Get KoniqTech organization
+    --------------------------------------------------------- */
+
+    const koniqTechOrganization =
+      await getKoniqTechOrganization()
+
+    /* ---------------------------------------------------------
        Validate selected platform role
     --------------------------------------------------------- */
 
     const selectedRole =
       await validateOrganizationRole(
-        input.organizationRoleId
+        input.organizationRoleId,
+        koniqTechOrganization.id
       )
 
     if (
@@ -1148,13 +1192,6 @@ export async function updateEmployeeAction(
       input.managerId,
       employeeId
     )
-
-    /* ---------------------------------------------------------
-       Get KoniqTech organization
-    --------------------------------------------------------- */
-
-    const koniqTechOrganization =
-      await getKoniqTechOrganization()
 
     if (
       department.orgId !==
@@ -1299,7 +1336,7 @@ export async function updateEmployeeAction(
                 passwordHash,
 
                 organizationRoleId:
-                  input.organizationRoleId,
+                  selectedRole.id,
 
                 phone:
                   input.phone,
@@ -1331,7 +1368,7 @@ export async function updateEmployeeAction(
               input.phone,
 
             organizationRoleId:
-              input.organizationRoleId,
+              selectedRole.id,
 
             departmentId:
               input.departmentId,

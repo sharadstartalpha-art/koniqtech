@@ -40,8 +40,10 @@ export default async function TeamsPage() {
   }
 
   const currentRole = String(
-    session.user.organizationRole ?? ""
-  )
+  (session.user as any).role ?? ""
+)
+  .trim()
+  .toLowerCase()
 
   if (!ALLOWED_ROLES.has(currentRole)) {
     redirect("/admin/dashboard")

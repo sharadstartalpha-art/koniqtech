@@ -2,41 +2,32 @@
 
 import bcrypt from "bcryptjs"
 
-
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 
-import {
-  revalidatePath
-} from "next/cache"
-
-import {
-  redirect
-} from "next/navigation"
+import { revalidatePath } from "next/cache"
 
 /* =========================================================
    INTERNAL PLATFORM ROLES
 ========================================================= */
 
 const INTERNAL_PLATFORM_ROLES = new Set([
- "super_admin",
-"platform_manager",
-"platform_sales",
-"support",
-"finance",
-"developer",
-"qa",
-"customer_success",
-"marketing",
-"data_entry",
+  "super_admin",
+  "platform_manager",
+  "platform_sales",
+  "support",
+  "finance",
+  "developer",
+  "qa",
+  "customer_success",
+  "marketing",
+  "data_entry",
 ])
 
 const EMPLOYEE_MANAGEMENT_ROLES = new Set([
-    "super_admin",
-    "platform_manager",
+  "super_admin",
+  "platform_manager",
 ])
-
-
 
 /* =========================================================
    ACTION RESULT
@@ -97,6 +88,28 @@ type EmployeeInput = {
 }
 
 /* =========================================================
+   SESSION ROLE
+========================================================= */
+
+/**
+ * Internal platform authorization must use session.user.role.
+ *
+ * employeeRole is the HR/employee role and is intentionally
+ * not used for platform-level authorization.
+ */
+function getSessionRole(session: {
+  user: unknown
+}) {
+  const user = session.user as {
+    role?: unknown
+  }
+
+  return String(user.role ?? "")
+    .trim()
+    .toLowerCase()
+}
+
+/* =========================================================
    AUTHORIZATION HELPERS
 ========================================================= */
 
@@ -107,26 +120,18 @@ async function requireEmployeeManager() {
     throw new Error("UNAUTHENTICATED")
   }
 
-  const EMPLOYEE_MANAGEMENT_ROLES = new Set([
-    "Super Admin",
-    "Platform Manager",
-  ])
+  const role = getSessionRole(session)
 
-  const employeeRole = session.user.employeeRole
-
-  if (
-    !employeeRole ||
-    !EMPLOYEE_MANAGEMENT_ROLES.has(employeeRole)
-  ) {
+  if (!EMPLOYEE_MANAGEMENT_ROLES.has(role)) {
     throw new Error("FORBIDDEN")
   }
 
   return {
     session,
-    employeeRole,
-    organizationRole: session.user.organizationRole,
+    role,
   }
 }
+
 async function requireSuperAdmin() {
   const session = await auth()
 
@@ -134,16 +139,14 @@ async function requireSuperAdmin() {
     throw new Error("UNAUTHENTICATED")
   }
 
-  const role = session.user.employeeRole
+  const role = getSessionRole(session)
 
-if (role !== "super_admin") {
+  if (role !== "super_admin") {
     throw new Error("FORBIDDEN")
   }
 
   return session
 }
-
-
 
 /* =========================================================
    FORM HELPERS
@@ -259,6 +262,11 @@ function readEmployeeInput(
       "phone"
     ),
 
+    /*
+     * IMPORTANT:
+     * This is an OrganizationRole ID,
+     * not the role name.
+     */
     organizationRoleId: roleValue,
 
     departmentId: getRequiredString(
@@ -266,6 +274,9 @@ function readEmployeeInput(
       "departmentId"
     ),
 
+    /*
+     * This is EmployeeRole ID.
+     */
     roleId: getRequiredString(
       formData,
       "roleId"
@@ -432,13 +443,20 @@ function validateEmployeeInput(
       "Employee role is required."
   }
 
+  /*
+   * Do NOT validate organizationRoleId
+   * against INTERNAL_PLATFORM_ROLES here.
+   *
+   * organizationRoleId is a database ID.
+   * The actual OrganizationRole is validated
+   * against the database later.
+   */
+
   if (
-    !INTERNAL_PLATFORM_ROLES.has(
-      input.organizationRoleId
-    )
+    !input.organizationRoleId
   ) {
     errors.userRole =
-      "Select a valid internal platform role."
+      "Platform role is required."
   }
 
   if (
@@ -540,11 +558,93 @@ async function validateReferences(
     )
   }
 
+  if (
+    managerId &&
+    manager &&
+    !manager.active
+  ) {
+    throw new Error(
+      "An inactive employee cannot be assigned as manager."
+    )
+  }
+
   return {
     department,
     employeeRole,
     manager,
   }
+}
+
+/* =========================================================
+   VALIDATE ORGANIZATION ROLE
+========================================================= */
+
+async function validateOrganizationRole(
+  organizationRoleId: string
+) {
+  const selectedRole =
+    await prisma.organizationRole.findUnique({
+      where: {
+        id: organizationRoleId,
+      },
+
+      select: {
+        id: true,
+        name: true,
+      },
+    })
+
+  if (!selectedRole) {
+    throw new Error(
+      "Selected platform role does not exist."
+    )
+  }
+
+  const roleName = String(
+    selectedRole.name ?? ""
+  )
+    .trim()
+    .toLowerCase()
+
+  if (
+    !INTERNAL_PLATFORM_ROLES.has(
+      roleName
+    )
+  ) {
+    throw new Error(
+      "Selected platform role is invalid."
+    )
+  }
+
+  return {
+    id: selectedRole.id,
+    name: roleName,
+  }
+}
+
+/* =========================================================
+   GET KONIQTECH ORGANIZATION
+========================================================= */
+
+async function getKoniqTechOrganization() {
+  const organization =
+    await prisma.organization.findUnique({
+      where: {
+        slug: "koniqtech",
+      },
+
+      select: {
+        id: true,
+      },
+    })
+
+  if (!organization) {
+    throw new Error(
+      "KoniqTech organization was not found."
+    )
+  }
+
+  return organization
 }
 
 /* =========================================================
@@ -555,13 +655,10 @@ export async function createEmployeeAction(
   formData: FormData
 ): Promise<EmployeeActionState> {
   try {
-   const {
-  session,
-  employeeRole,
-  organizationRole: currentOrganizationRole,
-} = await requireEmployeeManager()
-
-
+    const {
+      session,
+      role: currentRole,
+    } = await requireEmployeeManager()
 
     const input =
       readEmployeeInput(formData)
@@ -572,7 +669,9 @@ export async function createEmployeeAction(
         "create"
       )
 
-    if (Object.keys(errors).length > 0) {
+    if (
+      Object.keys(errors).length > 0
+    ) {
       return {
         success: false,
         message:
@@ -581,31 +680,39 @@ export async function createEmployeeAction(
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Only Super Admin can create another Super Admin.
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Validate platform role
+    --------------------------------------------------------- */
 
     const selectedRole =
-    await prisma.organizationRole.findUnique({
-        where: {
-            id: input.organizationRoleId,
-        },
-    })
+      await validateOrganizationRole(
+        input.organizationRoleId
+      )
 
-
-    
-if (
-    selectedRole?.name === "super_admin" &&
-    currentOrganizationRole !== "super_admin"
-) {
-    return {
+    /*
+     * Only Super Admin can create another
+     * Super Admin account.
+     */
+    if (
+      selectedRole.name ===
+        "super_admin" &&
+      currentRole !== "super_admin"
+    ) {
+      return {
         success: false,
         message:
-            "Only Super Admin can create another Super Admin account.",
+          "Only Super Admin can create another Super Admin account.",
+        errors: {
+          userRole:
+            "Only Super Admin can assign the Super Admin role.",
+        },
+      }
     }
-}
+
+    /* ---------------------------------------------------------
+       Validate internal references
+    --------------------------------------------------------- */
+
     const {
       department,
     } = await validateReferences(
@@ -614,31 +721,17 @@ if (
       input.managerId
     )
 
-    /*
-    ---------------------------------------------------------
-    Ensure department belongs to KoniqTech organization
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Get KoniqTech organization
+    --------------------------------------------------------- */
 
     const koniqTechOrganization =
-      await prisma.organization.findUnique({
-        where: {
-          slug: "koniqtech",
-        },
+      await getKoniqTechOrganization()
 
-        select: {
-          id: true,
-        },
-      })
-
-    if (!koniqTechOrganization) {
-      return {
-        success: false,
-        message:
-          "KoniqTech organization was not found.",
-      }
-    }
-
+    /*
+     * The selected department must belong
+     * to the internal KoniqTech organization.
+     */
     if (
       department.orgId !==
       koniqTechOrganization.id
@@ -650,11 +743,9 @@ if (
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Check unique values
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Check unique values
+    --------------------------------------------------------- */
 
     const [
       existingUser,
@@ -701,6 +792,7 @@ if (
         success: false,
         message:
           "An account with this email address already exists.",
+
         errors: {
           email:
             "This email address is already in use.",
@@ -713,6 +805,7 @@ if (
         success: false,
         message:
           "Employee code already exists.",
+
         errors: {
           employeeCode:
             "This employee code is already in use.",
@@ -720,39 +813,69 @@ if (
       }
     }
 
+    /* ---------------------------------------------------------
+       Hash password
+    --------------------------------------------------------- */
+
     const passwordHash =
       await bcrypt.hash(
         input.password!,
         10
       )
 
-    /*
-    ---------------------------------------------------------
-    USER + EMPLOYEE TRANSACTION
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       USER + EMPLOYEE TRANSACTION
+    --------------------------------------------------------- */
 
     const employee =
       await prisma.$transaction(
         async (tx) => {
-          const user = await tx.user.create({
-    data: {
-        orgId: koniqTechOrganization.id,
-        name: `${input.firstName} ${input.lastName}`,
-        email: input.email,
-        passwordHash,
-        phone: input.phone,
-        departmentId: input.departmentId,
-        organizationRoleId: input.organizationRoleId,
-        status: input.active ? "active" : "inactive",
-        emailVerified: false,
-        phoneVerified: false,
-    },
-})
+          /*
+           * Create login account first.
+           */
+          const user =
+            await tx.user.create({
+              data: {
+                orgId:
+                  koniqTechOrganization.id,
 
+                name:
+                  `${input.firstName} ${input.lastName}`,
+
+                email:
+                  input.email,
+
+                passwordHash,
+
+                phone:
+                  input.phone,
+
+                departmentId:
+                  input.departmentId,
+
+                organizationRoleId:
+                  input.organizationRoleId,
+
+                status:
+                  input.active
+                    ? "active"
+                    : "inactive",
+
+                emailVerified:
+                  false,
+
+                phoneVerified:
+                  false,
+              },
+            })
+
+          /*
+           * Create employee profile.
+           */
           return tx.employee.create({
             data: {
-              userId: user.id,
+              userId:
+                user.id,
 
               employeeCode:
                 input.employeeCode,
@@ -763,9 +886,11 @@ if (
               lastName:
                 input.lastName,
 
-              email: input.email,
+              email:
+                input.email,
 
-              phone: input.phone,
+              phone:
+                input.phone,
 
               departmentId:
                 input.departmentId,
@@ -837,18 +962,17 @@ if (
         }
       )
 
-    /*
-    ---------------------------------------------------------
-    Record internal employee activity
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Record employee activity
+    --------------------------------------------------------- */
 
     if (session.user.email) {
       const actorEmployee =
         await prisma.employee.findUnique({
           where: {
             email:
-              session.user.email.toLowerCase(),
+              session.user.email
+                .toLowerCase(),
           },
 
           select: {
@@ -874,6 +998,10 @@ if (
         })
       }
     }
+
+    /* ---------------------------------------------------------
+       Revalidate
+    --------------------------------------------------------- */
 
     revalidateEmployeePaths(
       employee.id
@@ -908,8 +1036,8 @@ export async function updateEmployeeAction(
 ): Promise<EmployeeActionState> {
   try {
     const {
-  organizationRole: currentOrganizationRole,
-} = await requireEmployeeManager()
+      role: currentRole,
+    } = await requireEmployeeManager()
 
     const input =
       readEmployeeInput(formData)
@@ -920,7 +1048,9 @@ export async function updateEmployeeAction(
         "update"
       )
 
-    if (Object.keys(errors).length > 0) {
+    if (
+      Object.keys(errors).length > 0
+    ) {
       return {
         success: false,
         message:
@@ -929,19 +1059,24 @@ export async function updateEmployeeAction(
       }
     }
 
+    /* ---------------------------------------------------------
+       Load employee
+    --------------------------------------------------------- */
+
     const existingEmployee =
-  await prisma.employee.findUnique({
-    where: {
-      id: employeeId,
-    },
-    include: {
-      user: {
-        include: {
-          organizationRole: true,
+      await prisma.employee.findUnique({
+        where: {
+          id: employeeId,
         },
-      },
-    },
-  })
+
+        include: {
+          user: {
+            include: {
+              organizationRole: true,
+            },
+          },
+        },
+      })
 
     if (!existingEmployee) {
       return {
@@ -951,41 +1086,59 @@ export async function updateEmployeeAction(
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Protect Super Admin role changes
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Protect existing Super Admin
+    --------------------------------------------------------- */
 
-   if (
-  existingEmployee?.user?.organizationRole?.name === "super_admin" &&
-  currentOrganizationRole !== "super_admin"
-) {
-  return {
-    success: false,
-    message:
-      "Only Super Admin can modify a Super Admin employee.",
-  }
-}
+    const existingRoleName =
+      String(
+        existingEmployee.user
+          ?.organizationRole
+          ?.name ?? ""
+      )
+        .trim()
+        .toLowerCase()
 
-const selectedRole = await prisma.organizationRole.findUnique({
-  where: {
-    id: input.organizationRoleId,
-  },
-})
+    if (
+      existingRoleName ===
+        "super_admin" &&
+      currentRole !== "super_admin"
+    ) {
+      return {
+        success: false,
+        message:
+          "Only Super Admin can modify a Super Admin employee.",
+      }
+    }
 
-if (
-  selectedRole?.name === "super_admin" &&
-  currentOrganizationRole !== "super_admin"
-) {
-  return {
-    success: false,
-    message:
-      "Only Super Admin can assign the Super Admin role.",
-  }
-}
+    /* ---------------------------------------------------------
+       Validate selected platform role
+    --------------------------------------------------------- */
 
-    
+    const selectedRole =
+      await validateOrganizationRole(
+        input.organizationRoleId
+      )
+
+    if (
+      selectedRole.name ===
+        "super_admin" &&
+      currentRole !== "super_admin"
+    ) {
+      return {
+        success: false,
+        message:
+          "Only Super Admin can assign the Super Admin role.",
+        errors: {
+          userRole:
+            "Only Super Admin can assign the Super Admin role.",
+        },
+      }
+    }
+
+    /* ---------------------------------------------------------
+       Validate internal references
+    --------------------------------------------------------- */
 
     const {
       department,
@@ -996,24 +1149,12 @@ if (
       employeeId
     )
 
+    /* ---------------------------------------------------------
+       Get KoniqTech organization
+    --------------------------------------------------------- */
+
     const koniqTechOrganization =
-      await prisma.organization.findUnique({
-        where: {
-          slug: "koniqtech",
-        },
-
-        select: {
-          id: true,
-        },
-      })
-
-    if (!koniqTechOrganization) {
-      return {
-        success: false,
-        message:
-          "KoniqTech organization was not found.",
-      }
-    }
+      await getKoniqTechOrganization()
 
     if (
       department.orgId !==
@@ -1026,11 +1167,9 @@ if (
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Unique email/code validation
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Unique email/code validation
+    --------------------------------------------------------- */
 
     const [
       emailUser,
@@ -1078,6 +1217,7 @@ if (
         success: false,
         message:
           "Another login account already uses this email address.",
+
         errors: {
           email:
             "This email address is already in use.",
@@ -1094,6 +1234,7 @@ if (
         success: false,
         message:
           "Another employee already uses this email address.",
+
         errors: {
           email:
             "This email address is already in use.",
@@ -1110,6 +1251,7 @@ if (
         success: false,
         message:
           "Another employee already uses this employee code.",
+
         errors: {
           employeeCode:
             "This employee code is already in use.",
@@ -1117,11 +1259,9 @@ if (
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    UPDATE TRANSACTION
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       UPDATE TRANSACTION
+    --------------------------------------------------------- */
 
     await prisma.$transaction(
       async (tx) => {
@@ -1129,11 +1269,8 @@ if (
           existingEmployee.userId
 
         /*
-        -----------------------------------------------------
-        Repair legacy Employee without User account
-        -----------------------------------------------------
-        */
-
+         * Repair legacy Employee without User.
+         */
         if (!userId) {
           if (!input.password) {
             throw new Error(
@@ -1162,7 +1299,7 @@ if (
                 passwordHash,
 
                 organizationRoleId:
-    input.organizationRoleId,
+                  input.organizationRoleId,
 
                 phone:
                   input.phone,
@@ -1179,6 +1316,10 @@ if (
 
           userId = newUser.id
         } else {
+          /*
+           * Update existing login account.
+           */
+
           const userUpdateData = {
             name:
               `${input.firstName} ${input.lastName}`,
@@ -1189,7 +1330,8 @@ if (
             phone:
               input.phone,
 
-            organizationRoleId: input.organizationRoleId,
+            organizationRoleId:
+              input.organizationRoleId,
 
             departmentId:
               input.departmentId,
@@ -1219,6 +1361,10 @@ if (
               userUpdateData,
           })
         }
+
+        /*
+         * Update employee profile.
+         */
 
         await tx.employee.update({
           where: {
@@ -1313,6 +1459,10 @@ if (
       }
     )
 
+    /* ---------------------------------------------------------
+       Revalidate
+    --------------------------------------------------------- */
+
     revalidateEmployeePaths(
       employeeId
     )
@@ -1344,59 +1494,61 @@ export async function deleteEmployeeAction(
   employeeId: string
 ): Promise<EmployeeActionState> {
   try {
-    const session = await requireSuperAdmin()
+    const session =
+      await requireSuperAdmin()
 
-    const employee = await prisma.employee.findUnique({
-      where: {
-        id: employeeId,
-      },
+    const employee =
+      await prisma.employee.findUnique({
+        where: {
+          id: employeeId,
+        },
 
-      select: {
-        id: true,
-        userId: true,
-        email: true,
+        select: {
+          id: true,
+          userId: true,
+          email: true,
 
-        user: {
-          select: {
-            id: true,
+          user: {
+            select: {
+              id: true,
 
-            organizationRole: {
-              select: {
-                name: true,
+              organizationRole: {
+                select: {
+                  name: true,
+                },
               },
             },
           },
-        },
 
-        _count: {
-          select: {
-            subordinates: true,
-            tasks: true,
-            attendances: true,
-            leaves: true,
-            documents: true,
+          _count: {
+            select: {
+              subordinates: true,
+              tasks: true,
+              attendances: true,
+              leaves: true,
+              documents: true,
+            },
           },
         },
-      },
-    })
+      })
 
     if (!employee) {
       return {
         success: false,
-        message: "Employee was not found.",
+        message:
+          "Employee was not found.",
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Prevent self deletion
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Prevent self deletion
+    --------------------------------------------------------- */
 
     if (
       session.user.email &&
       employee.email.toLowerCase() ===
-        session.user.email.toLowerCase()
+        session.user.email
+          .toLowerCase()
     ) {
       return {
         success: false,
@@ -1405,14 +1557,22 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Prevent deleting Super Admin account
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Prevent deleting Super Admin
+    --------------------------------------------------------- */
+
+    const employeeRoleName =
+      String(
+        employee.user
+          ?.organizationRole
+          ?.name ?? ""
+      )
+        .trim()
+        .toLowerCase()
 
     if (
-      employee.user?.organizationRole?.name === "super_admin"
+      employeeRoleName ===
+      "super_admin"
     ) {
       return {
         success: false,
@@ -1421,13 +1581,14 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Prevent manager deletion while subordinates exist
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Prevent deleting manager with subordinates
+    --------------------------------------------------------- */
 
-    if (employee._count.subordinates > 0) {
+    if (
+      employee._count.subordinates >
+      0
+    ) {
       return {
         success: false,
         message:
@@ -1435,29 +1596,31 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    DELETE EMPLOYEE + USER
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       DELETE EMPLOYEE + USER
+    --------------------------------------------------------- */
 
-    await prisma.$transaction(async (tx) => {
-      await tx.employee.delete({
-        where: {
-          id: employeeId,
-        },
-      })
-
-      if (employee.userId) {
-        await tx.user.delete({
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.employee.delete({
           where: {
-            id: employee.userId,
+            id: employeeId,
           },
         })
-      }
-    })
 
-    revalidatePath("/admin/employees")
+        if (employee.userId) {
+          await tx.user.delete({
+            where: {
+              id: employee.userId,
+            },
+          })
+        }
+      }
+    )
+
+    revalidatePath(
+      "/admin/employees"
+    )
 
     return {
       success: true,
@@ -1477,6 +1640,7 @@ export async function deleteEmployeeAction(
     }
   }
 }
+
 /* =========================================================
    TOGGLE EMPLOYEE STATUS
 ========================================================= */
@@ -1487,56 +1651,56 @@ export async function toggleEmployeeStatusAction(
   try {
     await requireEmployeeManager()
 
-    const employee = await prisma.employee.findUnique({
-      where: {
-        id: employeeId,
-      },
+    const employee =
+      await prisma.employee.findUnique({
+        where: {
+          id: employeeId,
+        },
 
-      select: {
-        id: true,
-        active: true, // <-- Missing in your code
-        userId: true,
-        email: true,
+        select: {
+          id: true,
+          active: true,
+          userId: true,
+          email: true,
 
-        user: {
-          select: {
-            id: true,
+          user: {
+            select: {
+              id: true,
 
-            organizationRole: {
-              select: {
-                name: true,
+              organizationRole: {
+                select: {
+                  name: true,
+                },
               },
             },
           },
         },
-
-        _count: {
-          select: {
-            subordinates: true,
-            tasks: true,
-            attendances: true,
-            leaves: true,
-            documents: true,
-          },
-        },
-      },
-    })
+      })
 
     if (!employee) {
       return {
         success: false,
-        message: "Employee was not found.",
+        message:
+          "Employee was not found.",
       }
     }
 
-    /*
-    ---------------------------------------------------------
-    Prevent changing Super Admin status
-    ---------------------------------------------------------
-    */
+    /* ---------------------------------------------------------
+       Prevent changing Super Admin status
+    --------------------------------------------------------- */
+
+    const employeeRoleName =
+      String(
+        employee.user
+          ?.organizationRole
+          ?.name ?? ""
+      )
+        .trim()
+        .toLowerCase()
 
     if (
-      employee.user?.organizationRole?.name === "super_admin"
+      employeeRoleName ===
+      "super_admin"
     ) {
       return {
         success: false,
@@ -1545,31 +1709,46 @@ export async function toggleEmployeeStatusAction(
       }
     }
 
-    const newStatus = !employee.active
+    const newStatus =
+      !employee.active
 
-    await prisma.$transaction(async (tx) => {
-      await tx.employee.update({
-        where: {
-          id: employeeId,
-        },
-        data: {
-          active: newStatus,
-        },
-      })
+    /* ---------------------------------------------------------
+       Update Employee + User together
+    --------------------------------------------------------- */
 
-      if (employee.userId) {
-        await tx.user.update({
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.employee.update({
           where: {
-            id: employee.userId,
+            id: employeeId,
           },
+
           data: {
-            status: newStatus ? "active" : "inactive",
+            active:
+              newStatus,
           },
         })
-      }
-    })
 
-    revalidateEmployeePaths(employeeId)
+        if (employee.userId) {
+          await tx.user.update({
+            where: {
+              id: employee.userId,
+            },
+
+            data: {
+              status:
+                newStatus
+                  ? "active"
+                  : "inactive",
+            },
+          })
+        }
+      }
+    )
+
+    revalidateEmployeePaths(
+      employeeId
+    )
 
     return {
       success: true,
@@ -1585,10 +1764,12 @@ export async function toggleEmployeeStatusAction(
 
     return {
       success: false,
-      message: getActionErrorMessage(error),
+      message:
+        getActionErrorMessage(error),
     }
   }
 }
+
 /* =========================================================
    REVALIDATE EMPLOYEE PATHS
 ========================================================= */
@@ -1663,6 +1844,14 @@ function getActionErrorMessage(
       )
     ) {
       return "A record with the same unique value already exists."
+    }
+
+    if (
+      error.message.includes(
+        "Foreign key constraint"
+      )
+    ) {
+      return "This record cannot be changed because it is referenced by another record."
     }
 
     return error.message

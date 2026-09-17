@@ -24,13 +24,15 @@ export default async function NewEmployeePage() {
     redirect("/login")
   }
 
-  const role = String(
-    session.user.organizationRole ?? ""
-  ).toLowerCase()
+ const role = String(
+  (session.user as any).role ?? ""
+)
+  .trim()
+  .toLowerCase()
 
-  if (role !== "super_admin") {
-    redirect("/admin/employees")
-  }
+if (role !== "super_admin") {
+  redirect("/admin/employees")
+}
 
   const [
     departments,

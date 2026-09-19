@@ -412,15 +412,16 @@ export default function EmployeeDataTable({
 
                       {openMenu === employee.id && (
                         <div className="absolute right-5 top-12 z-30 w-48 rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl">
-                          {canEdit && (
-                            <Link
-  href={`/admin/employees/${employee.id}/edit`}
-  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-orange-600 hover:bg-orange-50"
->
-  <Edit3 size={16} />
-  Edit employee
-</Link>
-                          )}
+                         {canEdit && (
+  <Link
+    href={`/admin/employees/${employee.id}/edit`}
+    onClick={() => setOpenMenu(null)}
+    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+  >
+    <Edit3 size={16} />
+    Edit employee
+  </Link>
+)}
 
                           {canChangeStatus && (
                            <button

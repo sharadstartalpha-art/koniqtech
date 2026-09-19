@@ -3,18 +3,18 @@ import { notFound, redirect } from "next/navigation"
 
 import {
   ArrowLeft,
-  UserCog
+  UserCog,
 } from "lucide-react"
 
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 
 import EmployeeForm, {
-  type EmployeeFormValues
+  type EmployeeFormValues,
 } from "../../components/EmployeeForm"
 
 import {
-  updateEmployeeAction
+  updateEmployeeAction,
 } from "../../actions"
 
 /* =========================================================
@@ -24,12 +24,17 @@ import {
 export const dynamic = "force-dynamic"
 
 /* =========================================================
-   ALLOWED ROLES
+   INTERNAL PLATFORM ROLES
+
+   These are User.role values.
+
+   IMPORTANT:
+   Do NOT use organizationRole here.
 ========================================================= */
 
 const EMPLOYEE_MANAGEMENT_ROLES = new Set([
   "super_admin",
-  "platform_manager"
+  "platform_manager",
 ])
 
 /* =========================================================
@@ -55,9 +60,7 @@ function formatDateForInput(
     return null
   }
 
-  return value
-    .toISOString()
-    .slice(0, 10)
+  return value.toISOString().slice(0, 10)
 }
 
 /* =========================================================
@@ -65,10 +68,10 @@ function formatDateForInput(
 ========================================================= */
 
 export default async function EditEmployeePage({
-  params
+  params,
 }: PageProps) {
   /* =======================================================
-     AUTH
+     AUTHENTICATION
   ======================================================= */
 
   const session = await auth()
@@ -77,9 +80,24 @@ export default async function EditEmployeePage({
     redirect("/login")
   }
 
+  /* =======================================================
+     INTERNAL PLATFORM ROLE
+
+     IMPORTANT:
+     Internal platform authorization uses:
+
+       session.user.role
+
+     NOT:
+
+       session.user.organizationRole
+  ======================================================= */
+
   const currentRole = String(
-    session.user.organizationRole ?? ""
+    session.user.role ?? ""
   )
+    .trim()
+    .toLowerCase()
 
   if (
     !EMPLOYEE_MANAGEMENT_ROLES.has(
@@ -90,24 +108,69 @@ export default async function EditEmployeePage({
   }
 
   /* =======================================================
+     ORGANIZATION
+
+     Internal employees belong to the KoniqTech
+     Platform organization.
+
+     The org ID comes from the authenticated session.
+     Never trust an organization ID from the browser.
+  ======================================================= */
+
+  const sessionOrgId = String(
+    session.user.orgId ?? ""
+  ).trim()
+
+  if (!sessionOrgId) {
+    redirect("/admin/dashboard")
+  }
+
+  const organization =
+    await prisma.organization.findUnique({
+      where: {
+        id: sessionOrgId,
+      },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+      },
+    })
+
+  if (!organization) {
+    redirect("/admin/dashboard")
+  }
+
+  /* =======================================================
      PARAMS
   ======================================================= */
 
-  const {
-    id
-  } = await params
+  const { id } = await params
+
+  if (!id) {
+    notFound()
+  }
 
   /* =======================================================
      LOAD EMPLOYEE
 
      IMPORTANT:
-     user.role is required for Platform Access Role.
+     Employee is scoped to the authenticated organization.
+
+     Also load User.role separately from EmployeeRole.
+
+     User.role       = Platform access role
+     EmployeeRole    = HR/job role
   ======================================================= */
 
   const employee =
-    await prisma.employee.findUnique({
+    await prisma.employee.findFirst({
       where: {
-        id
+        id,
+
+        department: {
+          orgId: organization.id,
+        },
       },
 
       select: {
@@ -158,12 +221,16 @@ export default async function EditEmployeePage({
         user: {
           select: {
             id: true,
-            organizationRole: true,
-            
-            status: true
-          }
-        }
-      }
+
+            /*
+             * INTERNAL PLATFORM ACCESS ROLE
+             */
+            role: true,
+
+            status: true,
+          },
+        },
+      },
     })
 
   if (!employee) {
@@ -177,70 +244,109 @@ export default async function EditEmployeePage({
   const [
     departments,
     roles,
-    managers
+    managers,
   ] = await Promise.all([
+    /* -------------------------------------------------------
+       DEPARTMENTS
+
+       Only departments belonging to the current
+       internal organization.
+    ------------------------------------------------------- */
+
     prisma.department.findMany({
+      where: {
+        orgId: organization.id,
+      },
+
       orderBy: {
-        name: "asc"
+        name: "asc",
       },
 
       select: {
         id: true,
-        name: true
-      }
+        name: true,
+      },
     }),
+
+    /* -------------------------------------------------------
+       EMPLOYEE ROLES
+
+       EmployeeRole is the HR/job role.
+
+       Example:
+       - Data Entry
+       - Developer
+       - QA
+       - Sales Executive
+    ------------------------------------------------------- */
 
     prisma.employeeRole.findMany({
       orderBy: {
-        name: "asc"
+        name: "asc",
       },
 
       select: {
         id: true,
-        name: true
-      }
+        name: true,
+      },
     }),
+
+    /* -------------------------------------------------------
+       MANAGERS
+
+       Only active employees from the same
+       internal organization.
+    ------------------------------------------------------- */
 
     prisma.employee.findMany({
       where: {
         active: true,
 
         id: {
-          not: employee.id
-        }
+          not: employee.id,
+        },
+
+        department: {
+          orgId: organization.id,
+        },
       },
 
       orderBy: [
         {
-          firstName: "asc"
+          firstName: "asc",
         },
         {
-          lastName: "asc"
-        }
+          lastName: "asc",
+        },
       ],
 
       select: {
         id: true,
         firstName: true,
         lastName: true,
-        employeeCode: true
-      }
-    })
+        employeeCode: true,
+      },
+    }),
   ])
 
   /* =======================================================
      FORM DATA
 
-     userRole comes from linked User record.
+     IMPORTANT:
 
-     roleId comes from EmployeeRole.
+     userRole
+       -> User.role
+       -> platform access
 
-     These are intentionally separate.
+     roleId
+       -> EmployeeRole
+       -> HR/job role
+
+     These remain completely separate.
   ======================================================= */
 
   const formEmployee: EmployeeFormValues = {
-    id:
-      employee.id,
+    id: employee.id,
 
     employeeCode:
       employee.employeeCode,
@@ -258,7 +364,9 @@ export default async function EditEmployeePage({
       employee.phone,
 
     userRole:
-  employee.user?.organizationRole?.name ?? null,
+      employee.user?.role
+        ? String(employee.user.role)
+        : null,
 
     departmentId:
       employee.departmentId,
@@ -307,7 +415,7 @@ export default async function EditEmployeePage({
       employee.emergencyContactName,
 
     emergencyContactPhone:
-      employee.emergencyContactPhone
+      employee.emergencyContactPhone,
   }
 
   /* =======================================================
@@ -350,7 +458,7 @@ export default async function EditEmployeePage({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
             <UserCog size={22} />
           </div>
 

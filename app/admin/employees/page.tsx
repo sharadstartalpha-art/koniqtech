@@ -16,35 +16,51 @@ import EmployeeDataTable from "./components/EmployeeDataTable"
 
 export const dynamic = "force-dynamic"
 
+/* ============================================================
+   INTERNAL PLATFORM ROLES
+
+   These are KoniqTech internal administration roles.
+
+   They are intentionally separate from customer CRM roles
+   such as owner, manager, sales, technician, etc.
+============================================================ */
+
 const INTERNAL_EMPLOYEE_ROLES = [
   "super_admin",
   "platform_manager",
+  "platform_sales",
+  "support",
   "finance",
   "developer",
   "qa",
   "customer_success",
+  "marketing",
+  "data_entry",
 ]
 
-export default async function AdminEmployeesPage() {
-  const session = await auth()
+/* ============================================================
+   PAGE
+============================================================ */
 
+export default async function AdminEmployeesPage() {
   /* ==========================================================
      AUTHENTICATION
   ========================================================== */
+
+  const session = await auth()
 
   if (!session?.user) {
     redirect("/login")
   }
 
   /* ==========================================================
-     INTERNAL PLATFORM ROLE
-     
-     IMPORTANT:
-     Use session.user.role for internal platform roles.
+     CURRENT INTERNAL PLATFORM ROLE
 
-     Do NOT use organizationRole here.
-     organizationRole belongs to the customer/organization
-     role system.
+     IMPORTANT:
+     Internal platform role comes from session.user.role.
+
+     organizationRole is the customer/organization role and
+     should NOT be used for this internal admin authorization.
   ========================================================== */
 
   const currentRole = String(
@@ -62,43 +78,121 @@ export default async function AdminEmployeesPage() {
   }
 
   /* ==========================================================
-     EMPLOYEE DATA
+     GET KONIQTECH ORGANIZATION
+
+     Do not hard-code the organization UUID.
   ========================================================== */
 
-  const employees = await prisma.employee.findMany({
-    include: {
-      department: {
-        select: {
-          id: true,
-          name: true,
+  const koniqTechOrganization =
+    await prisma.organization.findFirst({
+      where: {
+        slug: "koniqtech",
+      },
+      select: {
+        id: true,
+        slug: true,
+      },
+    })
+
+  /* ==========================================================
+     ORGANIZATION SAFETY
+
+     If the internal KoniqTech organization cannot be found,
+     do not accidentally display records from another tenant.
+  ========================================================== */
+
+  if (!koniqTechOrganization) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+            Employees
+          </h1>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Manage KoniqTech internal employees, roles,
+            departments and reporting structure.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+          <h2 className="font-semibold text-red-900">
+            KoniqTech organization not found
+          </h2>
+
+          <p className="mt-1 text-sm text-red-700">
+            The internal KoniqTech organization could not be
+            found. Please verify the organization configuration
+            before managing employees.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  /* ==========================================================
+     LOAD DATA
+
+     Employees are filtered through their department so that
+     only employees belonging to the KoniqTech organization
+     are displayed.
+
+     Departments are counted directly from Department.
+     This is important because the employee table can be empty
+     while departments already exist.
+  ========================================================== */
+
+  const [
+    employees,
+    departmentCount,
+  ] = await Promise.all([
+    prisma.employee.findMany({
+      where: {
+        department: {
+          orgId: koniqTechOrganization.id,
         },
       },
 
-      role: {
-        select: {
-          id: true,
-          name: true,
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        role: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+
+        manager: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
         },
       },
 
-      manager: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
+      orderBy: [
+        {
+          active: "desc",
         },
-      },
-    },
+        {
+          createdAt: "desc",
+        },
+      ],
+    }),
 
-    orderBy: [
-      {
-        active: "desc",
+    prisma.department.count({
+      where: {
+        orgId: koniqTechOrganization.id,
       },
-      {
-        createdAt: "desc",
-      },
-    ],
-  })
+    }),
+  ])
 
   /* ==========================================================
      STATISTICS
@@ -110,12 +204,20 @@ export default async function AdminEmployeesPage() {
     (employee) => employee.active
   ).length
 
-  const departments = new Set(
-    employees.map(
-      (employee) => employee.departmentId
-    )
-  ).size
+  /*
+   * IMPORTANT:
+   *
+   * Do NOT calculate departments from employees.
+   *
+   * The database can contain departments even when there
+   * are currently zero employees assigned to them.
+   */
+  const departments = departmentCount
 
+  /*
+   * A manager is an employee who has at least one employee
+   * reporting to them.
+   */
   const managers = employees.filter(
     (employee) =>
       employees.some(
@@ -135,8 +237,17 @@ export default async function AdminEmployeesPage() {
     currentRole === "super_admin" ||
     currentRole === "platform_manager"
 
+  const canDelete =
+    currentRole === "super_admin"
+
+  const canChangeStatus =
+    currentRole === "super_admin"
+
   /* ==========================================================
      TABLE DATA
+
+     Convert Date objects to strings before passing them into
+     the client component.
   ========================================================== */
 
   const tableRows = employees.map(
@@ -186,7 +297,7 @@ export default async function AdminEmployeesPage() {
     <div className="space-y-6">
 
       {/* ======================================================
-          HEADER
+          PAGE HEADER
       ====================================================== */}
 
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -198,11 +309,15 @@ export default async function AdminEmployeesPage() {
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage KoniqTech internal employees,
-            roles, departments and reporting structure.
+            Manage KoniqTech internal employees, roles,
+            departments and reporting structure.
           </p>
 
         </div>
+
+        {/* ====================================================
+            ADD EMPLOYEE
+        ==================================================== */}
 
         {isSuperAdmin && (
           <Link
@@ -221,6 +336,10 @@ export default async function AdminEmployeesPage() {
               text-white
               transition
               hover:bg-blue-700
+              focus:outline-none
+              focus:ring-2
+              focus:ring-blue-500
+              focus:ring-offset-2
             "
           >
             <Plus size={17} />
@@ -240,25 +359,33 @@ export default async function AdminEmployeesPage() {
         <StatCard
           label="Total Employees"
           value={totalEmployees}
-          icon={<UsersRound size={20} />}
+          icon={
+            <UsersRound size={20} />
+          }
         />
 
         <StatCard
           label="Active Employees"
           value={activeEmployees}
-          icon={<UserCheck size={20} />}
+          icon={
+            <UserCheck size={20} />
+          }
         />
 
         <StatCard
           label="Departments"
           value={departments}
-          icon={<BriefcaseBusiness size={20} />}
+          icon={
+            <BriefcaseBusiness size={20} />
+          }
         />
 
         <StatCard
           label="Managers"
           value={managers}
-          icon={<UserRound size={20} />}
+          icon={
+            <UserRound size={20} />
+          }
         />
 
       </div>
@@ -269,10 +396,22 @@ export default async function AdminEmployeesPage() {
 
       <EmployeeDataTable
         employees={tableRows}
-        canCreate={isSuperAdmin}
-        canEdit={canEdit}
-        canDelete={isSuperAdmin}
-        canChangeStatus={isSuperAdmin}
+
+        canCreate={
+          isSuperAdmin
+        }
+
+        canEdit={
+          canEdit
+        }
+
+        canDelete={
+          canDelete
+        }
+
+        canChangeStatus={
+          canChangeStatus
+        }
       />
 
     </div>
@@ -293,7 +432,15 @@ function StatCard({
   icon: React.ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+    <div
+      className="
+        rounded-2xl
+        border
+        border-slate-200
+        bg-white
+        p-5
+      "
+    >
 
       <div className="flex items-start justify-between">
 
@@ -303,7 +450,15 @@ function StatCard({
             {label}
           </p>
 
-          <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+          <p
+            className="
+              mt-2
+              text-3xl
+              font-bold
+              tracking-tight
+              text-slate-950
+            "
+          >
             {value}
           </p>
 

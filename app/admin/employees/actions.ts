@@ -587,38 +587,35 @@ async function validateReferences(
 ========================================================= */
 
 async function validateOrganizationRole(
-  organizationRoleName: string,
+  organizationRoleValue: string,
   organizationId: string
 ) {
-  const normalizedName = String(
-    organizationRoleName ?? ""
+  const value = String(
+    organizationRoleValue ?? ""
   )
     .trim()
-    .toLowerCase()
 
-  if (!normalizedName) {
+  if (!value) {
     throw new Error(
       "Platform role is required."
     )
   }
 
-  if (
-    !INTERNAL_PLATFORM_ROLES.has(
-      normalizedName
-    )
-  ) {
-    throw new Error(
-      "Selected platform role is invalid."
-    )
-  }
+  /*
+   * ---------------------------------------------------------
+   * First try the value as an OrganizationRole ID.
+   *
+   * This supports forms that submit:
+   *
+   *   <option value={role.id}>
+   *
+   * ---------------------------------------------------------
+   */
 
-  const selectedRole =
+  let selectedRole =
     await prisma.organizationRole.findUnique({
       where: {
-        orgId_name: {
-          orgId: organizationId,
-          name: normalizedName,
-        },
+        id: value,
       },
 
       select: {
@@ -628,11 +625,82 @@ async function validateOrganizationRole(
       },
     })
 
+  /*
+   * ---------------------------------------------------------
+   * If no role was found by ID, try it as a role name.
+   *
+   * This supports forms that submit:
+   *
+   *   <option value="super_admin">
+   *
+   * ---------------------------------------------------------
+   */
+
+  if (!selectedRole) {
+    const normalizedName =
+      value.toLowerCase()
+
+    if (
+      !INTERNAL_PLATFORM_ROLES.has(
+        normalizedName
+      )
+    ) {
+      throw new Error(
+        "Selected platform role is invalid."
+      )
+    }
+
+    selectedRole =
+      await prisma.organizationRole.findUnique({
+        where: {
+          orgId_name: {
+            orgId: organizationId,
+            name: normalizedName,
+          },
+        },
+
+        select: {
+          id: true,
+          name: true,
+          orgId: true,
+        },
+      })
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * Role must exist.
+   * ---------------------------------------------------------
+   */
+
   if (!selectedRole) {
     throw new Error(
       "Selected platform role does not exist for the KoniqTech organization."
     )
   }
+
+  /*
+   * ---------------------------------------------------------
+   * Tenant / organization isolation.
+   *
+   * Never allow a role belonging to another organization.
+   * ---------------------------------------------------------
+   */
+
+  if (
+    selectedRole.orgId !==
+    organizationId
+  ) {
+    throw new Error(
+      "Selected platform role does not belong to the KoniqTech organization."
+    )
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * Normalize and validate the actual role name.
+   * ---------------------------------------------------------
+   */
 
   const roleName = String(
     selectedRole.name ?? ""

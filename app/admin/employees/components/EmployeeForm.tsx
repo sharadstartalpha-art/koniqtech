@@ -6,7 +6,7 @@ import {
   useState,
   useTransition,
   type FormEvent,
-  type ReactNode
+  type ReactNode,
 } from "react"
 
 import {
@@ -16,11 +16,11 @@ import {
   Loader2,
   Save,
   ShieldCheck,
-  UserRound
+  UserRound,
 } from "lucide-react"
 
 import type {
-  EmployeeActionState
+  EmployeeActionState,
 } from "../actions"
 
 /* =========================================================
@@ -57,6 +57,14 @@ export type EmployeeFormValues = {
   email?: string
   phone?: string | null
 
+  /*
+   * Internal KoniqTech platform access.
+   *
+   * Valid values:
+   *
+   *   super_admin
+   *   user
+   */
   userRole?: string | null
 
   departmentId?: string
@@ -102,53 +110,29 @@ type Props = {
 }
 
 /* =========================================================
-   INTERNAL PLATFORM ROLE OPTIONS
-
-   IMPORTANT:
-   These values must match Prisma UserRole enum exactly.
+   INTERNAL PLATFORM ACCESS ROLES
 ========================================================= */
 
+/*
+ * IMPORTANT
+ *
+ * These are NOT OrganizationRole records.
+ *
+ * They map directly to User.role for internal
+ * KoniqTech platform accounts.
+ *
+ * Customer CRM OrganizationRole is intentionally
+ * not used here.
+ */
 const INTERNAL_PLATFORM_ROLES = [
   {
+    value: "user",
+    label: "Platform User",
+  },
+  {
     value: "super_admin",
-    label: "Super Admin"
+    label: "Super Admin",
   },
-  {
-    value: "platform_manager",
-    label: "Platform Manager"
-  },
-  {
-    value: "platform_sales",
-    label: "Sales"
-  },
-  {
-    value: "marketing",
-    label: "Marketing"
-  },
-  {
-    value: "finance",
-    label: "Accountant / Finance"
-  },
-  {
-    value: "support",
-    label: "Support"
-  },
-  {
-    value: "data_entry",
-    label: "Data Entry"
-  },
-  {
-    value: "developer",
-    label: "Developer"
-  },
-  {
-    value: "qa",
-    label: "QA"
-  },
-  {
-    value: "customer_success",
-    label: "Customer Success"
-  }
 ] as const
 
 /* =========================================================
@@ -161,7 +145,7 @@ export default function EmployeeForm({
   departments,
   roles,
   managers,
-  action
+  action,
 }: Props) {
   const router = useRouter()
 
@@ -196,7 +180,8 @@ export default function EmployeeForm({
 
     startTransition(async () => {
       try {
-        const result = await action(formData)
+        const result =
+          await action(formData)
 
         if (!result.success) {
           setMessage(
@@ -218,7 +203,10 @@ export default function EmployeeForm({
               : "Employee updated successfully.")
         )
 
-        router.push("/admin/employees")
+        router.push(
+          "/admin/employees"
+        )
+
         router.refresh()
       } catch (error) {
         console.error(
@@ -430,7 +418,8 @@ export default function EmployeeForm({
             label="Platform Access Role"
             name="userRole"
             defaultValue={
-              employee?.userRole ?? ""
+              employee?.userRole ??
+              "user"
             }
             required
             error={
@@ -467,7 +456,7 @@ export default function EmployeeForm({
             }
           >
             <option value="">
-              Select role
+              Select employee role
             </option>
 
             {roles.map((role) => (
@@ -499,7 +488,8 @@ export default function EmployeeForm({
             {managers
               .filter(
                 (manager) =>
-                  manager.id !== employee?.id
+                  manager.id !==
+                  employee?.id
               )
               .map((manager) => (
                 <option
@@ -694,6 +684,16 @@ export default function EmployeeForm({
                 employee?.address ?? ""
               }
               placeholder="Employee address"
+              aria-invalid={
+                fieldErrors.address
+                  ? true
+                  : undefined
+              }
+              aria-describedby={
+                fieldErrors.address
+                  ? "employee-address-error"
+                  : undefined
+              }
               className={`w-full resize-none rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 ${
                 fieldErrors.address
                   ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100"
@@ -702,7 +702,10 @@ export default function EmployeeForm({
             />
 
             {fieldErrors.address && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+              <p
+                id="employee-address-error"
+                className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600"
+              >
                 <AlertCircle size={13} />
 
                 {fieldErrors.address}
@@ -798,7 +801,7 @@ function FormSection({
   icon,
   title,
   description,
-  children
+  children,
 }: {
   icon: ReactNode
   title: string
@@ -843,7 +846,7 @@ function FormField({
   defaultValue,
   placeholder,
   required = false,
-  error
+  error,
 }: {
   label: string
   name: string
@@ -853,7 +856,8 @@ function FormField({
   required?: boolean
   error?: string
 }) {
-  const fieldId = `employee-${name}`
+  const fieldId =
+    `employee-${name}`
 
   return (
     <div>
@@ -918,7 +922,7 @@ function SelectField({
   defaultValue,
   required = false,
   error,
-  children
+  children,
 }: {
   label: string
   name: string
@@ -927,7 +931,8 @@ function SelectField({
   error?: string
   children: ReactNode
 }) {
-  const fieldId = `employee-${name}`
+  const fieldId =
+    `employee-${name}`
 
   return (
     <div>

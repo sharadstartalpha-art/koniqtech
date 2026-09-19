@@ -1,32 +1,50 @@
 "use server"
 
 import bcrypt from "bcryptjs"
+import { revalidatePath } from "next/cache"
 
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
 
-import { revalidatePath } from "next/cache"
-
 /* =========================================================
-   INTERNAL PLATFORM ROLES
+   INTERNAL PLATFORM CONFIGURATION
 ========================================================= */
 
-const INTERNAL_PLATFORM_ROLES = new Set([
+/*
+ * KoniqTech has a separate internal platform organization.
+ *
+ * IMPORTANT:
+ * Internal platform access uses User.role:
+ *
+ *   super_admin
+ *   user
+ *
+ * It does NOT use OrganizationRole.
+ *
+ * OrganizationRole belongs to customer CRM tenants.
+ */
+const KONIQTECH_PLATFORM_SLUG = "platform"
+
+/*
+ * PlatformRole in Prisma currently contains only:
+ *
+ *   super_admin
+ *   user
+ */
+const PLATFORM_ROLES = new Set([
   "super_admin",
-  "platform_manager",
-  "platform_sales",
-  "support",
-  "finance",
-  "developer",
-  "qa",
-  "customer_success",
-  "marketing",
-  "data_entry",
+  "user",
 ])
 
+/*
+ * Employee management is currently restricted to
+ * KoniqTech Super Admin because PlatformRole contains
+ * only super_admin/user.
+ *
+ * Do NOT use EmployeeRole for platform authorization.
+ */
 const EMPLOYEE_MANAGEMENT_ROLES = new Set([
   "super_admin",
-  "platform_manager",
 ])
 
 /* =========================================================
@@ -40,7 +58,7 @@ export type EmployeeActionState = {
 }
 
 /* =========================================================
-   FORM DATA TYPE
+   FORM INPUT
 ========================================================= */
 
 type EmployeeInput = {
@@ -50,8 +68,22 @@ type EmployeeInput = {
   email: string
   phone: string | null
 
-  organizationRoleId: string
+  /*
+   * Platform access role.
+   *
+   * This maps to User.role.
+   *
+   * Allowed:
+   *   super_admin
+   *   user
+   */
+  platformRole: string
 
+  /*
+   * Internal HR/employee role.
+   *
+   * This maps to Employee.roleId.
+   */
   departmentId: string
   roleId: string
   managerId: string | null
@@ -92,10 +124,13 @@ type EmployeeInput = {
 ========================================================= */
 
 /**
- * Internal platform authorization must use session.user.role.
+ * Internal platform authorization MUST use
+ * session.user.role.
  *
- * employeeRole is the HR/employee role and is intentionally
- * not used for platform-level authorization.
+ * It must NOT use:
+ *
+ *   organizationRole
+ *   EmployeeRole
  */
 function getSessionRole(session: {
   user: unknown
@@ -110,7 +145,7 @@ function getSessionRole(session: {
 }
 
 /* =========================================================
-   AUTHORIZATION HELPERS
+   AUTHORIZATION
 ========================================================= */
 
 async function requireEmployeeManager() {
@@ -131,6 +166,10 @@ async function requireEmployeeManager() {
     role,
   }
 }
+
+/* =========================================================
+   SUPER ADMIN
+========================================================= */
 
 async function requireSuperAdmin() {
   const session = await auth()
@@ -213,11 +252,46 @@ function getBoolean(
 }
 
 /* =========================================================
-   NORMALIZE EMAIL
+   EMAIL NORMALIZATION
 ========================================================= */
 
 function normalizeEmail(value: string) {
   return value
+    .trim()
+    .toLowerCase()
+}
+
+/* =========================================================
+   PLATFORM ROLE NORMALIZATION
+========================================================= */
+
+/**
+ * EmployeeForm should eventually submit:
+ *
+ *   userRole="user"
+ *
+ * or:
+ *
+ *   userRole="super_admin"
+ *
+ * For backwards compatibility, this helper also accepts
+ * "platformRole".
+ */
+function getPlatformRole(
+  formData: FormData
+) {
+  const directValue =
+    formData.get("platformRole")
+
+  const legacyValue =
+    formData.get("userRole")
+
+  const value =
+    directValue ??
+    legacyValue ??
+    ""
+
+  return String(value)
     .trim()
     .toLowerCase()
 }
@@ -229,115 +303,124 @@ function normalizeEmail(value: string) {
 function readEmployeeInput(
   formData: FormData
 ): EmployeeInput {
-  const roleValue = getRequiredString(
-    formData,
-    "userRole"
-  )
-
   return {
-    employeeCode: getRequiredString(
-      formData,
-      "employeeCode"
-    ),
-
-    firstName: getRequiredString(
-      formData,
-      "firstName"
-    ),
-
-    lastName: getRequiredString(
-      formData,
-      "lastName"
-    ),
-
-    email: normalizeEmail(
+    employeeCode:
       getRequiredString(
         formData,
-        "email"
-      )
-    ),
+        "employeeCode"
+      ),
 
-    phone: getOptionalString(
-      formData,
-      "phone"
-    ),
+    firstName:
+      getRequiredString(
+        formData,
+        "firstName"
+      ),
+
+    lastName:
+      getRequiredString(
+        formData,
+        "lastName"
+      ),
+
+    email:
+      normalizeEmail(
+        getRequiredString(
+          formData,
+          "email"
+        )
+      ),
+
+    phone:
+      getOptionalString(
+        formData,
+        "phone"
+      ),
 
     /*
-     * Platform role comes from the EmployeeForm
-     * as the OrganizationRole name, for example:
+     * Internal platform access.
      *
-     * super_admin
-     * platform_manager
-     * platform_sales
-     * data_entry
-     *
-     * The server resolves this name to the
-     * actual OrganizationRole database ID.
+     * This becomes User.role.
      */
-    organizationRoleId: roleValue,
-
-    departmentId: getRequiredString(
-      formData,
-      "departmentId"
-    ),
+    platformRole:
+      getPlatformRole(formData),
 
     /*
-     * This is EmployeeRole ID.
+     * Internal department.
      */
-    roleId: getRequiredString(
-      formData,
-      "roleId"
-    ),
+    departmentId:
+      getRequiredString(
+        formData,
+        "departmentId"
+      ),
 
-    managerId: getOptionalString(
-      formData,
-      "managerId"
-    ),
+    /*
+     * EmployeeRole ID.
+     */
+    roleId:
+      getRequiredString(
+        formData,
+        "roleId"
+      ),
 
-    designation: getOptionalString(
-      formData,
-      "designation"
-    ),
+    managerId:
+      getOptionalString(
+        formData,
+        "managerId"
+      ),
 
-    joiningDate: getOptionalDate(
-      formData,
-      "joiningDate"
-    ),
+    designation:
+      getOptionalString(
+        formData,
+        "designation"
+      ),
 
-    dateOfBirth: getOptionalDate(
-      formData,
-      "dateOfBirth"
-    ),
+    joiningDate:
+      getOptionalDate(
+        formData,
+        "joiningDate"
+      ),
 
-    gender: getOptionalString(
-      formData,
-      "gender"
-    ),
+    dateOfBirth:
+      getOptionalDate(
+        formData,
+        "dateOfBirth"
+      ),
 
-    address: getOptionalString(
-      formData,
-      "address"
-    ),
+    gender:
+      getOptionalString(
+        formData,
+        "gender"
+      ),
 
-    city: getOptionalString(
-      formData,
-      "city"
-    ),
+    address:
+      getOptionalString(
+        formData,
+        "address"
+      ),
 
-    state: getOptionalString(
-      formData,
-      "state"
-    ),
+    city:
+      getOptionalString(
+        formData,
+        "city"
+      ),
 
-    country: getOptionalString(
-      formData,
-      "country"
-    ),
+    state:
+      getOptionalString(
+        formData,
+        "state"
+      ),
 
-    postalCode: getOptionalString(
-      formData,
-      "postalCode"
-    ),
+    country:
+      getOptionalString(
+        formData,
+        "country"
+      ),
+
+    postalCode:
+      getOptionalString(
+        formData,
+        "postalCode"
+      ),
 
     emergencyContactName:
       getOptionalString(
@@ -351,10 +434,11 @@ function readEmployeeInput(
         "emergencyContactPhone"
       ),
 
-    bloodGroup: getOptionalString(
-      formData,
-      "bloodGroup"
-    ),
+    bloodGroup:
+      getOptionalString(
+        formData,
+        "bloodGroup"
+      ),
 
     employmentType:
       getOptionalString(
@@ -362,41 +446,48 @@ function readEmployeeInput(
         "employmentType"
       ),
 
-    salaryType: getOptionalString(
-      formData,
-      "salaryType"
-    ),
+    salaryType:
+      getOptionalString(
+        formData,
+        "salaryType"
+      ),
 
-    bankName: getOptionalString(
-      formData,
-      "bankName"
-    ),
+    bankName:
+      getOptionalString(
+        formData,
+        "bankName"
+      ),
 
-    accountNumber: getOptionalString(
-      formData,
-      "accountNumber"
-    ),
+    accountNumber:
+      getOptionalString(
+        formData,
+        "accountNumber"
+      ),
 
-    ifscCode: getOptionalString(
-      formData,
-      "ifscCode"
-    ),
+    ifscCode:
+      getOptionalString(
+        formData,
+        "ifscCode"
+      ),
 
-    upiId: getOptionalString(
-      formData,
-      "upiId"
-    ),
+    upiId:
+      getOptionalString(
+        formData,
+        "upiId"
+      ),
 
-    active: getBoolean(
-      formData,
-      "active",
-      true
-    ),
+    active:
+      getBoolean(
+        formData,
+        "active",
+        true
+      ),
 
-    password: getOptionalString(
-      formData,
-      "password"
-    ),
+    password:
+      getOptionalString(
+        formData,
+        "password"
+      ),
   }
 }
 
@@ -408,7 +499,10 @@ function validateEmployeeInput(
   input: EmployeeInput,
   mode: "create" | "update"
 ): Record<string, string> {
-  const errors: Record<string, string> = {}
+  const errors: Record<
+    string,
+    string
+  > = {}
 
   if (!input.employeeCode) {
     errors.employeeCode =
@@ -450,20 +544,19 @@ function validateEmployeeInput(
       "Employee role is required."
   }
 
-  /*
-   * Do NOT validate organizationRoleId
-   * against INTERNAL_PLATFORM_ROLES here.
-   *
-   * organizationRoleId is a database ID.
-   * The actual OrganizationRole is validated
-   * against the database later.
-   */
+  if (!input.platformRole) {
+    errors.userRole =
+      "Platform access role is required."
+  }
 
   if (
-    !input.organizationRoleId
+    input.platformRole &&
+    !PLATFORM_ROLES.has(
+      input.platformRole
+    )
   ) {
     errors.userRole =
-      "Platform role is required."
+      "Invalid platform access role."
   }
 
   if (
@@ -488,21 +581,56 @@ function validateEmployeeInput(
 }
 
 /* =========================================================
-   VERIFY INTERNAL REFERENCES
+   GET KONIQTECH PLATFORM ORGANIZATION
 ========================================================= */
 
-async function validateReferences(
+async function getKoniqTechOrganization() {
+  const organization =
+    await prisma.organization.findUnique({
+      where: {
+        slug:
+          KONIQTECH_PLATFORM_SLUG,
+      },
+
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        active: true,
+      },
+    })
+
+  if (!organization) {
+    throw new Error(
+      "KoniqTech Platform organization was not found."
+    )
+  }
+
+  if (!organization.active) {
+    throw new Error(
+      "KoniqTech Platform organization is inactive."
+    )
+  }
+
+  return organization
+}
+
+/* =========================================================
+   VALIDATE DEPARTMENT
+========================================================= */
+
+/**
+ * Department belongs to an organization.
+ *
+ * Internal employees must always use departments
+ * belonging to the KoniqTech Platform organization.
+ */
+async function validateDepartment(
   departmentId: string,
-  roleId: string,
-  managerId: string | null,
-  currentEmployeeId?: string
+  organizationId: string
 ) {
-  const [
-    department,
-    employeeRole,
-    manager,
-  ] = await Promise.all([
-    prisma.department.findUnique({
+  const department =
+    await prisma.department.findUnique({
       where: {
         id: departmentId,
       },
@@ -510,32 +638,10 @@ async function validateReferences(
       select: {
         id: true,
         orgId: true,
+        name: true,
+        active: true,
       },
-    }),
-
-    prisma.employeeRole.findUnique({
-      where: {
-        id: roleId,
-      },
-
-      select: {
-        id: true,
-      },
-    }),
-
-    managerId
-      ? prisma.employee.findUnique({
-          where: {
-            id: managerId,
-          },
-
-          select: {
-            id: true,
-            active: true,
-          },
-        })
-      : Promise.resolve(null),
-  ])
+    })
 
   if (!department) {
     throw new Error(
@@ -543,20 +649,72 @@ async function validateReferences(
     )
   }
 
-  if (!employeeRole) {
+  if (
+    department.orgId !==
+    organizationId
+  ) {
+    throw new Error(
+      "Selected department does not belong to the KoniqTech Platform organization."
+    )
+  }
+
+  if (!department.active) {
+    throw new Error(
+      "Selected department is inactive."
+    )
+  }
+
+  return department
+}
+
+/* =========================================================
+   VALIDATE EMPLOYEE ROLE
+========================================================= */
+
+/**
+ * EmployeeRole is intentionally separate from
+ * OrganizationRole.
+ *
+ * EmployeeRole has no orgId in the current Prisma schema,
+ * therefore it is validated only by its ID.
+ */
+async function validateEmployeeRole(
+  roleId: string
+) {
+  const role =
+    await prisma.employeeRole.findUnique({
+      where: {
+        id: roleId,
+      },
+
+      select: {
+        id: true,
+        name: true,
+      },
+    })
+
+  if (!role) {
     throw new Error(
       "Selected employee role does not exist."
     )
   }
 
-  if (managerId && !manager) {
-    throw new Error(
-      "Selected manager does not exist."
-    )
+  return role
+}
+
+/* =========================================================
+   VALIDATE MANAGER
+========================================================= */
+
+async function validateManager(
+  managerId: string | null,
+  currentEmployeeId?: string
+) {
+  if (!managerId) {
+    return null
   }
 
   if (
-    managerId &&
     currentEmployeeId &&
     managerId === currentEmployeeId
   ) {
@@ -565,209 +723,72 @@ async function validateReferences(
     )
   }
 
-  if (
-    managerId &&
-    manager &&
-    !manager.active
-  ) {
+  const manager =
+    await prisma.employee.findUnique({
+      where: {
+        id: managerId,
+      },
+
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        employeeCode: true,
+        active: true,
+      },
+    })
+
+  if (!manager) {
+    throw new Error(
+      "Selected manager does not exist."
+    )
+  }
+
+  if (!manager.active) {
     throw new Error(
       "An inactive employee cannot be assigned as manager."
     )
   }
+
+  return manager
+}
+
+/* =========================================================
+   VALIDATE INTERNAL REFERENCES
+========================================================= */
+
+async function validateReferences(
+  departmentId: string,
+  roleId: string,
+  managerId: string | null,
+  organizationId: string,
+  currentEmployeeId?: string
+) {
+  const [
+    department,
+    employeeRole,
+    manager,
+  ] = await Promise.all([
+    validateDepartment(
+      departmentId,
+      organizationId
+    ),
+
+    validateEmployeeRole(
+      roleId
+    ),
+
+    validateManager(
+      managerId,
+      currentEmployeeId
+    ),
+  ])
 
   return {
     department,
     employeeRole,
     manager,
   }
-}
-
-/* =========================================================
-   VALIDATE ORGANIZATION ROLE
-========================================================= */
-
-async function validateOrganizationRole(
-  organizationRoleValue: string,
-  organizationId: string
-) {
-  const value = String(
-    organizationRoleValue ?? ""
-  )
-    .trim()
-
-  if (!value) {
-    throw new Error(
-      "Platform role is required."
-    )
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * First try the value as an OrganizationRole ID.
-   *
-   * This supports forms that submit:
-   *
-   *   <option value={role.id}>
-   *
-   * ---------------------------------------------------------
-   */
-
-  let selectedRole =
-    await prisma.organizationRole.findUnique({
-      where: {
-        id: value,
-      },
-
-      select: {
-        id: true,
-        name: true,
-        orgId: true,
-      },
-    })
-
-  /*
-   * ---------------------------------------------------------
-   * If no role was found by ID, try it as a role name.
-   *
-   * This supports forms that submit:
-   *
-   *   <option value="super_admin">
-   *
-   * ---------------------------------------------------------
-   */
-
-  if (!selectedRole) {
-    const normalizedName =
-      value.toLowerCase()
-
-    if (
-      !INTERNAL_PLATFORM_ROLES.has(
-        normalizedName
-      )
-    ) {
-      throw new Error(
-        "Selected platform role is invalid."
-      )
-    }
-
-    selectedRole =
-      await prisma.organizationRole.findUnique({
-        where: {
-          orgId_name: {
-            orgId: organizationId,
-            name: normalizedName,
-          },
-        },
-
-        select: {
-          id: true,
-          name: true,
-          orgId: true,
-        },
-      })
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * Role must exist.
-   * ---------------------------------------------------------
-   */
-
-  if (!selectedRole) {
-    throw new Error(
-      "Selected platform role does not exist for the KoniqTech organization."
-    )
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * Tenant / organization isolation.
-   *
-   * Never allow a role belonging to another organization.
-   * ---------------------------------------------------------
-   */
-
-  if (
-    selectedRole.orgId !==
-    organizationId
-  ) {
-    throw new Error(
-      "Selected platform role does not belong to the KoniqTech organization."
-    )
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * Normalize and validate the actual role name.
-   * ---------------------------------------------------------
-   */
-
-  const roleName = String(
-    selectedRole.name ?? ""
-  )
-    .trim()
-    .toLowerCase()
-
-  if (
-    !INTERNAL_PLATFORM_ROLES.has(
-      roleName
-    )
-  ) {
-    throw new Error(
-      "Selected platform role is invalid."
-    )
-  }
-
-  return {
-    id: selectedRole.id,
-    name: roleName,
-    orgId: selectedRole.orgId,
-  }
-}
-
-/* =========================================================
-   GET CURRENT PLATFORM ORGANIZATION
-========================================================= */
-
-async function getCurrentOrganization(
-  session: {
-    user: unknown
-  }
-) {
-  const user = session.user as {
-    orgId?: unknown
-  }
-
-  const organizationId = String(
-    user.orgId ?? ""
-  ).trim()
-
-  if (!organizationId) {
-    throw new Error(
-      "Your administrator account is not linked to an organization."
-    )
-  }
-
-  const organization =
-    await prisma.organization.findUnique({
-      where: {
-        id: organizationId,
-      },
-
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-      },
-    })
-
-  if (!organization) {
-    throw new Error(
-      "The organization linked to your administrator account was not found."
-    )
-  }
-
-  return organization
 }
 
 /* =========================================================
@@ -781,7 +802,8 @@ export async function createEmployeeAction(
     const {
       session,
       role: currentRole,
-    } = await requireEmployeeManager()
+    } =
+      await requireEmployeeManager()
 
     const input =
       readEmployeeInput(formData)
@@ -803,31 +825,22 @@ export async function createEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
-       Get KoniqTech organization
-    --------------------------------------------------------- */
+    /* -------------------------------------------------------
+       KoniqTech Platform organization
+    ------------------------------------------------------- */
 
-   const koniqTechOrganization =
-  await getCurrentOrganization(session)
+    const organization =
+      await getKoniqTechOrganization()
 
-    /* ---------------------------------------------------------
-       Validate selected platform role
-    --------------------------------------------------------- */
+    /* -------------------------------------------------------
+       Super Admin protection
+    ------------------------------------------------------- */
 
-    const selectedRole =
-      await validateOrganizationRole(
-        input.organizationRoleId,
-        koniqTechOrganization.id
-      )
-
-    /*
-     * Only Super Admin can create another
-     * Super Admin account.
-     */
     if (
-      selectedRole.name ===
+      input.platformRole ===
         "super_admin" &&
-      currentRole !== "super_admin"
+      currentRole !==
+        "super_admin"
     ) {
       return {
         success: false,
@@ -835,41 +848,29 @@ export async function createEmployeeAction(
           "Only Super Admin can create another Super Admin account.",
         errors: {
           userRole:
-            "Only Super Admin can assign the Super Admin role.",
+            "Only Super Admin can assign the Super Admin platform access role.",
         },
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Validate internal references
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const {
       department,
-    } = await validateReferences(
-      input.departmentId,
-      input.roleId,
-      input.managerId
-    )
+      employeeRole,
+    } =
+      await validateReferences(
+        input.departmentId,
+        input.roleId,
+        input.managerId,
+        organization.id
+      )
 
-    /*
-     * The selected department must belong
-     * to the internal KoniqTech organization.
-     */
-    if (
-      department.orgId !==
-      koniqTechOrganization.id
-    ) {
-      return {
-        success: false,
-        message:
-          "Selected department does not belong to the KoniqTech organization.",
-      }
-    }
-
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Check unique values
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const [
       existingUser,
@@ -937,9 +938,9 @@ export async function createEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Hash password
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const passwordHash =
       await bcrypt.hash(
@@ -947,21 +948,22 @@ export async function createEmployeeAction(
         10
       )
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        USER + EMPLOYEE TRANSACTION
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const employee =
       await prisma.$transaction(
         async (tx) => {
-          /*
-           * Create login account first.
-           */
+          /* -------------------------------------------------
+             Create internal platform login
+          ------------------------------------------------- */
+
           const user =
             await tx.user.create({
               data: {
                 orgId:
-                  koniqTechOrganization.id,
+                  organization.id,
 
                 name:
                   `${input.firstName} ${input.lastName}`,
@@ -974,11 +976,25 @@ export async function createEmployeeAction(
                 phone:
                   input.phone,
 
-                departmentId:
-                  input.departmentId,
+                /*
+                 * Internal platform role.
+                 *
+                 * IMPORTANT:
+                 * This is User.role.
+                 *
+                 * organizationRoleId remains NULL.
+                 */
+                role:
+                  input.platformRole ===
+                  "super_admin"
+                    ? "super_admin"
+                    : "user",
 
                 organizationRoleId:
-                  selectedRole.id,
+                  null,
+
+                departmentId:
+                  department.id,
 
                 status:
                   input.active
@@ -993,9 +1009,10 @@ export async function createEmployeeAction(
               },
             })
 
-          /*
-           * Create employee profile.
-           */
+          /* -------------------------------------------------
+             Create employee profile
+          ------------------------------------------------- */
+
           return tx.employee.create({
             data: {
               userId:
@@ -1017,10 +1034,10 @@ export async function createEmployeeAction(
                 input.phone,
 
               departmentId:
-                input.departmentId,
+                department.id,
 
               roleId:
-                input.roleId,
+                employeeRole.id,
 
               managerId:
                 input.managerId,
@@ -1086,9 +1103,9 @@ export async function createEmployeeAction(
         }
       )
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Record employee activity
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     if (session.user.email) {
       const actorEmployee =
@@ -1096,6 +1113,7 @@ export async function createEmployeeAction(
           where: {
             email:
               session.user.email
+                .trim()
                 .toLowerCase(),
           },
 
@@ -1123,9 +1141,9 @@ export async function createEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Revalidate
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     revalidateEmployeePaths(
       employee.id
@@ -1160,9 +1178,9 @@ export async function updateEmployeeAction(
 ): Promise<EmployeeActionState> {
   try {
     const {
-  session,
-  role: currentRole,
-} = await requireEmployeeManager()
+      role: currentRole,
+    } =
+      await requireEmployeeManager()
 
     const input =
       readEmployeeInput(formData)
@@ -1184,9 +1202,16 @@ export async function updateEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
+       Get KoniqTech Platform organization
+    ------------------------------------------------------- */
+
+    const organization =
+      await getKoniqTechOrganization()
+
+    /* -------------------------------------------------------
        Load employee
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const existingEmployee =
       await prisma.employee.findUnique({
@@ -1196,8 +1221,12 @@ export async function updateEmployeeAction(
 
         include: {
           user: {
-            include: {
-              organizationRole: true,
+            select: {
+              id: true,
+              orgId: true,
+              role: true,
+              organizationRoleId: true,
+              email: true,
             },
           },
         },
@@ -1211,23 +1240,39 @@ export async function updateEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
-       Protect existing Super Admin
-    --------------------------------------------------------- */
+    /* -------------------------------------------------------
+       Validate existing user organization
+    ------------------------------------------------------- */
 
-    const existingRoleName =
+    if (
+      existingEmployee.user &&
+      existingEmployee.user.orgId !==
+        organization.id
+    ) {
+      return {
+        success: false,
+        message:
+          "This employee does not belong to the KoniqTech Platform organization.",
+      }
+    }
+
+    /* -------------------------------------------------------
+       Protect existing Super Admin
+    ------------------------------------------------------- */
+
+    const existingRole =
       String(
         existingEmployee.user
-          ?.organizationRole
-          ?.name ?? ""
+          ?.role ?? ""
       )
         .trim()
         .toLowerCase()
 
     if (
-      existingRoleName ===
+      existingRole ===
         "super_admin" &&
-      currentRole !== "super_admin"
+      currentRole !==
+        "super_admin"
     ) {
       return {
         success: false,
@@ -1236,65 +1281,47 @@ export async function updateEmployeeAction(
       }
     }
 
-   /* ---------------------------------------------------------
-   Get current KoniqTech organization
---------------------------------------------------------- */
+    /* -------------------------------------------------------
+       Protect assignment of Super Admin
+    ------------------------------------------------------- */
 
-const koniqTechOrganization =
-  await getCurrentOrganization(session)
-
-/* ---------------------------------------------------------
-   Validate selected platform role
---------------------------------------------------------- */
-
-const selectedRole =
-  await validateOrganizationRole(
-    input.organizationRoleId,
-    koniqTechOrganization.id
-  )
     if (
-      selectedRole.name ===
+      input.platformRole ===
         "super_admin" &&
-      currentRole !== "super_admin"
+      currentRole !==
+        "super_admin"
     ) {
       return {
         success: false,
         message:
-          "Only Super Admin can assign the Super Admin role.",
+          "Only Super Admin can assign the Super Admin platform access role.",
+
         errors: {
           userRole:
-            "Only Super Admin can assign the Super Admin role.",
+            "Only Super Admin can assign the Super Admin platform access role.",
         },
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Validate internal references
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const {
       department,
-    } = await validateReferences(
-      input.departmentId,
-      input.roleId,
-      input.managerId,
-      employeeId
-    )
+      employeeRole,
+    } =
+      await validateReferences(
+        input.departmentId,
+        input.roleId,
+        input.managerId,
+        organization.id,
+        employeeId
+      )
 
-    if (
-      department.orgId !==
-      koniqTechOrganization.id
-    ) {
-      return {
-        success: false,
-        message:
-          "Selected department does not belong to the KoniqTech organization.",
-      }
-    }
-
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Unique email/code validation
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const [
       emailUser,
@@ -1384,18 +1411,19 @@ const selectedRole =
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        UPDATE TRANSACTION
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     await prisma.$transaction(
       async (tx) => {
         let userId =
           existingEmployee.userId
 
-        /*
-         * Repair legacy Employee without User.
-         */
+        /* ---------------------------------------------------
+           Repair legacy Employee without User
+        --------------------------------------------------- */
+
         if (!userId) {
           if (!input.password) {
             throw new Error(
@@ -1413,7 +1441,7 @@ const selectedRole =
             await tx.user.create({
               data: {
                 orgId:
-                  koniqTechOrganization.id,
+                  organization.id,
 
                 name:
                   `${input.firstName} ${input.lastName}`,
@@ -1423,73 +1451,98 @@ const selectedRole =
 
                 passwordHash,
 
-                organizationRoleId:
-                  selectedRole.id,
-
                 phone:
                   input.phone,
 
+                role:
+                  input.platformRole ===
+                  "super_admin"
+                    ? "super_admin"
+                    : "user",
+
+                /*
+                 * Internal employee accounts
+                 * must not use customer
+                 * OrganizationRole.
+                 */
+                organizationRoleId:
+                  null,
+
                 departmentId:
-                  input.departmentId,
+                  department.id,
 
                 status:
                   input.active
                     ? "active"
                     : "inactive",
+
+                emailVerified:
+                  false,
+
+                phoneVerified:
+                  false,
               },
             })
 
-          userId = newUser.id
+          userId =
+            newUser.id
         } else {
-          /*
-           * Update existing login account.
-           */
-
-          const userUpdateData = {
-            name:
-              `${input.firstName} ${input.lastName}`,
-
-            email:
-              input.email,
-
-            phone:
-              input.phone,
-
-            organizationRoleId:
-              selectedRole.id,
-
-            departmentId:
-              input.departmentId,
-
-            status:
-              input.active
-                ? "active"
-                : "inactive",
-
-            ...(input.password
-              ? {
-                  passwordHash:
-                    await bcrypt.hash(
-                      input.password,
-                      10
-                    ),
-                }
-              : {}),
-          }
+          /* -------------------------------------------------
+             Update existing login account
+          ------------------------------------------------- */
 
           await tx.user.update({
             where: {
               id: userId,
             },
 
-            data:
-              userUpdateData,
+            data: {
+              name:
+                `${input.firstName} ${input.lastName}`,
+
+              email:
+                input.email,
+
+              phone:
+                input.phone,
+
+              role:
+                input.platformRole ===
+                "super_admin"
+                  ? "super_admin"
+                  : "user",
+
+              /*
+               * Explicitly remove any legacy
+               * customer OrganizationRole assignment.
+               */
+              organizationRoleId:
+                null,
+
+              departmentId:
+                department.id,
+
+              status:
+                input.active
+                  ? "active"
+                  : "inactive",
+
+              ...(input.password
+                ? {
+                    passwordHash:
+                      await bcrypt.hash(
+                        input.password,
+                        10
+                      ),
+                  }
+                : {}),
+            },
           })
         }
 
-        /*
-         * Update employee profile.
-         */
+        /* ---------------------------------------------------
+           Update employee profile
+        --------------------------------------------------- */
 
         await tx.employee.update({
           where: {
@@ -1515,10 +1568,10 @@ const selectedRole =
               input.phone,
 
             departmentId:
-              input.departmentId,
+              department.id,
 
             roleId:
-              input.roleId,
+              employeeRole.id,
 
             managerId:
               input.managerId,
@@ -1584,9 +1637,9 @@ const selectedRole =
       }
     )
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Revalidate
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     revalidateEmployeePaths(
       employeeId
@@ -1622,6 +1675,9 @@ export async function deleteEmployeeAction(
     const session =
       await requireSuperAdmin()
 
+    const organization =
+      await getKoniqTechOrganization()
+
     const employee =
       await prisma.employee.findUnique({
         where: {
@@ -1636,12 +1692,8 @@ export async function deleteEmployeeAction(
           user: {
             select: {
               id: true,
-
-              organizationRole: {
-                select: {
-                  name: true,
-                },
-              },
+              orgId: true,
+              role: true,
             },
           },
 
@@ -1665,14 +1717,33 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
+       Verify organization
+    ------------------------------------------------------- */
+
+    if (
+      employee.user &&
+      employee.user.orgId !==
+        organization.id
+    ) {
+      return {
+        success: false,
+        message:
+          "This employee does not belong to the KoniqTech Platform organization.",
+      }
+    }
+
+    /* -------------------------------------------------------
        Prevent self deletion
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     if (
       session.user.email &&
-      employee.email.toLowerCase() ===
+      employee.email
+        .trim()
+        .toLowerCase() ===
         session.user.email
+          .trim()
           .toLowerCase()
     ) {
       return {
@@ -1682,15 +1753,14 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Prevent deleting Super Admin
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const employeeRoleName =
       String(
-        employee.user
-          ?.organizationRole
-          ?.name ?? ""
+        employee.user?.role ??
+          ""
       )
         .trim()
         .toLowerCase()
@@ -1706,13 +1776,13 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Prevent deleting manager with subordinates
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     if (
-      employee._count.subordinates >
-      0
+      employee._count
+        .subordinates > 0
     ) {
       return {
         success: false,
@@ -1721,9 +1791,9 @@ export async function deleteEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        DELETE EMPLOYEE + USER
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     await prisma.$transaction(
       async (tx) => {
@@ -1733,6 +1803,14 @@ export async function deleteEmployeeAction(
           },
         })
 
+        /*
+         * Employee.userId is optional and uses
+         * onDelete: SetNull.
+         *
+         * We explicitly delete the login account
+         * because this action is deleting the
+         * complete internal employee account.
+         */
         if (employee.userId) {
           await tx.user.delete({
             where: {
@@ -1776,6 +1854,9 @@ export async function toggleEmployeeStatusAction(
   try {
     await requireEmployeeManager()
 
+    const organization =
+      await getKoniqTechOrganization()
+
     const employee =
       await prisma.employee.findUnique({
         where: {
@@ -1791,12 +1872,8 @@ export async function toggleEmployeeStatusAction(
           user: {
             select: {
               id: true,
-
-              organizationRole: {
-                select: {
-                  name: true,
-                },
-              },
+              orgId: true,
+              role: true,
             },
           },
         },
@@ -1810,15 +1887,30 @@ export async function toggleEmployeeStatusAction(
       }
     }
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
+       Organization isolation
+    ------------------------------------------------------- */
+
+    if (
+      employee.user &&
+      employee.user.orgId !==
+        organization.id
+    ) {
+      return {
+        success: false,
+        message:
+          "This employee does not belong to the KoniqTech Platform organization.",
+      }
+    }
+
+    /* -------------------------------------------------------
        Prevent changing Super Admin status
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     const employeeRoleName =
       String(
-        employee.user
-          ?.organizationRole
-          ?.name ?? ""
+        employee.user?.role ??
+          ""
       )
         .trim()
         .toLowerCase()
@@ -1837,9 +1929,9 @@ export async function toggleEmployeeStatusAction(
     const newStatus =
       !employee.active
 
-    /* ---------------------------------------------------------
+    /* -------------------------------------------------------
        Update Employee + User together
-    --------------------------------------------------------- */
+    ------------------------------------------------------- */
 
     await prisma.$transaction(
       async (tx) => {
@@ -1946,9 +2038,7 @@ function revalidateEmployeePaths(
 function getActionErrorMessage(
   error: unknown
 ) {
-  if (
-    error instanceof Error
-  ) {
+  if (error instanceof Error) {
     if (
       error.message ===
       "UNAUTHENTICATED"
@@ -1977,6 +2067,14 @@ function getActionErrorMessage(
       )
     ) {
       return "This record cannot be changed because it is referenced by another record."
+    }
+
+    if (
+      error.message.includes(
+        "Record to delete does not exist"
+      )
+    ) {
+      return "The employee or login account no longer exists."
     }
 
     return error.message

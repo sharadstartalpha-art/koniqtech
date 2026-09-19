@@ -807,8 +807,8 @@ export async function createEmployeeAction(
        Get KoniqTech organization
     --------------------------------------------------------- */
 
-    const koniqTechOrganization =
-      await getKoniqTechOrganization()
+   const koniqTechOrganization =
+  await getCurrentOrganization(session)
 
     /* ---------------------------------------------------------
        Validate selected platform role
@@ -1160,8 +1160,9 @@ export async function updateEmployeeAction(
 ): Promise<EmployeeActionState> {
   try {
     const {
-      role: currentRole,
-    } = await requireEmployeeManager()
+  session,
+  role: currentRole,
+} = await requireEmployeeManager()
 
     const input =
       readEmployeeInput(formData)
@@ -1235,23 +1236,22 @@ export async function updateEmployeeAction(
       }
     }
 
-    /* ---------------------------------------------------------
-       Get KoniqTech organization
-    --------------------------------------------------------- */
+   /* ---------------------------------------------------------
+   Get current KoniqTech organization
+--------------------------------------------------------- */
 
-    const koniqTechOrganization =
-      await getKoniqTechOrganization()
+const koniqTechOrganization =
+  await getCurrentOrganization(session)
 
-    /* ---------------------------------------------------------
-       Validate selected platform role
-    --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   Validate selected platform role
+--------------------------------------------------------- */
 
-    const selectedRole =
-      await validateOrganizationRole(
-        input.organizationRoleId,
-        koniqTechOrganization.id
-      )
-
+const selectedRole =
+  await validateOrganizationRole(
+    input.organizationRoleId,
+    koniqTechOrganization.id
+  )
     if (
       selectedRole.name ===
         "super_admin" &&

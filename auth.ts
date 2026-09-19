@@ -4,14 +4,14 @@ import bcrypt from "bcryptjs"
 
 import prisma from "@/shared/lib/prisma"
 
-
 export const {
   handlers,
   auth,
   signIn,
   signOut,
 } = NextAuth({
-  secret: process.env.AUTH_SECRET,
+  secret:
+    process.env.AUTH_SECRET,
 
   trustHost: true,
 
@@ -27,131 +27,268 @@ export const {
       },
 
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          
+        /* =====================================================
+           VALIDATE INPUT
+        ===================================================== */
+
+        if (
+          !credentials?.email ||
+          !credentials?.password
+        ) {
           return null
         }
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: String(credentials.email),
-          },
+        const email =
+          String(
+            credentials.email
+          )
+            .trim()
+            .toLowerCase()
 
-          include: {
-            organization: {
-              include: {
-                subscriptions: true,
-              },
+        /* =====================================================
+           LOAD USER
+        ===================================================== */
+
+        const user =
+          await prisma.user.findUnique({
+            where: {
+              email,
             },
 
-           organizationRole: {
-  include: {
-    permissions: true,
-  },
-},
-            employee: {
-              include: {
-                role: true,
+            include: {
+              organization: {
+                include: {
+                  subscriptions: true,
+                },
+              },
+
+              organizationRole: {
+                include: {
+                  permissions: true,
+                },
+              },
+
+              employee: {
+                include: {
+                  role: true,
+                },
               },
             },
-          },
-        })
+          })
 
         if (!user) {
           return null
         }
 
-        const validPassword = await bcrypt.compare(
-          String(credentials.password),
-          user.passwordHash
-        )
+        /* =====================================================
+           PASSWORD
+        ===================================================== */
+
+        const validPassword =
+          await bcrypt.compare(
+            String(
+              credentials.password
+            ),
+            user.passwordHash
+          )
 
         if (!validPassword) {
           return null
         }
 
+        /* =====================================================
+           INTERNAL EMPLOYEE
+           
+           Internal employee requires:
+           
+           1. linked Employee
+           2. Employee.active = true
+           3. organization slug = platform
+        ===================================================== */
 
-const permissions =
-  user.organizationRole?.permissions ?? [];
+        const isInternalEmployee =
+          Boolean(
+            user.employee &&
+            user.employee.active &&
+            user.organization?.slug ===
+              "platform"
+          )
 
+        /* =====================================================
+           EMPLOYEE ROLE
+        ===================================================== */
 
+        const employeeRole =
+          isInternalEmployee
+            ? user.employee?.role?.name ??
+              null
+            : null
 
+        /* =====================================================
+           CUSTOMER ORGANIZATION ROLE
+        ===================================================== */
 
-       return {
-  id: user.id,
-  email: user.email,
-  name: user.name,
-  role: user.role,
-  orgId: user.orgId,
+        const organizationRole =
+          user.organizationRole?.name ??
+          null
 
-  organizationRole:
-    user.organizationRole?.name ?? null,
+        /* =====================================================
+           SUBSCRIPTION
+        ===================================================== */
 
-  employeeRole:
-    user.employee?.role?.name ?? null,
+        const subscriptionPlan =
+          user.organization
+            .subscriptions &&
+          user.organization
+            .subscriptions.status ===
+            "active"
+            ? user.organization
+                .subscriptions.plan
+            : user.organization.plan
 
-  employeeId:
-    user.employee?.id ?? null,
+        /* =====================================================
+           RETURN AUTH USER
+        ===================================================== */
 
-  subscriptionPlan:
-    user.organization.subscriptions &&
-    user.organization.subscriptions.status === "active"
-      ? user.organization.subscriptions.plan
-      : user.organization.plan,
+        return {
+          id:
+            user.id,
 
-  industry:
-    user.organization.industry,
-      
-}
+          email:
+            user.email,
+
+          name:
+            user.name,
+
+          role:
+            user.role,
+
+          orgId:
+            user.orgId,
+
+          organizationRole,
+
+          employeeRole,
+
+          employeeId:
+            isInternalEmployee
+              ? user.employee?.id ??
+                null
+              : null,
+
+          isInternalEmployee,
+
+          subscriptionPlan,
+
+          industry:
+            user.organization.industry,
+        }
       },
     }),
   ],
 
+  /* =========================================================
+     CALLBACKS
+  ========================================================= */
+
   callbacks: {
- async jwt({ token, user }) {
-  if (user) {
-    token.id = user.id
-    token.role = user.role
-    token.orgId = user.orgId
-    token.organizationRole = user.organizationRole
-    token.employeeRole = user.employeeRole
-    token.employeeId = user.employeeId
-    token.subscriptionPlan = user.subscriptionPlan
-    token.industry = user.industry
-    
-  }
+    /* =======================================================
+       JWT
+    ======================================================= */
 
-  return token
-},
+    async jwt({
+      token,
+      user,
+    }) {
+      if (user) {
+        token.id =
+          user.id
 
-    async session({ session, token }) {
-  if (session.user) {
-    session.user.id = token.id as string
-    session.user.role = token.role as "super_admin" | "user"
-    session.user.orgId = token.orgId as string
-    session.user.organizationRole =
-      token.organizationRole as string | null
+        token.role =
+          user.role
 
-    session.user.employeeRole =
-      token.employeeRole as string | null
+        token.orgId =
+          user.orgId
 
-    session.user.employeeId =
-      token.employeeId as string | null
+        token.organizationRole =
+          user.organizationRole
 
-    session.user.subscriptionPlan =
-      token.subscriptionPlan as any
+        token.employeeRole =
+          user.employeeRole
 
-    session.user.industry =
-      token.industry as any
+        token.employeeId =
+          user.employeeId
 
-     
-  }
+        token.isInternalEmployee =
+          user.isInternalEmployee
 
-  return session
-},
+        token.subscriptionPlan =
+          user.subscriptionPlan
+
+        token.industry =
+          user.industry
+      }
+
+      return token
+    },
+
+    /* =======================================================
+       SESSION
+    ======================================================= */
+
+    async session({
+      session,
+      token,
+    }) {
+      if (session.user) {
+        session.user.id =
+          token.id as string
+
+        session.user.role =
+          token.role as
+            | "super_admin"
+            | "user"
+
+        session.user.orgId =
+          token.orgId as string
+
+        session.user.organizationRole =
+          token.organizationRole as
+            | string
+            | null
+
+        session.user.employeeRole =
+          token.employeeRole as
+            | string
+            | null
+
+        session.user.employeeId =
+          token.employeeId as
+            | string
+            | null
+
+        session.user.isInternalEmployee =
+          Boolean(
+            token.isInternalEmployee
+          )
+
+        session.user.subscriptionPlan =
+          token.subscriptionPlan as any
+
+        session.user.industry =
+          token.industry as any
+      }
+
+      return session
+    },
   },
 
+  /* =========================================================
+     PAGES
+  ========================================================= */
+
   pages: {
-    signIn: "/login",
+    signIn:
+      "/login",
   },
 })

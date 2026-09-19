@@ -41,8 +41,13 @@ export default async function NewEmployeePage() {
      Do NOT use organizationRole here.
   ========================================================== */
 
+  const user = session.user as {
+    role?: unknown
+    orgId?: unknown
+  }
+
   const currentRole = String(
-    (session.user as any).role ?? ""
+    user.role ?? ""
   )
     .trim()
     .toLowerCase()
@@ -58,29 +63,30 @@ export default async function NewEmployeePage() {
   }
 
   /* ==========================================================
-     GET KONIQTECH ORGANIZATION
+     GET ORGANIZATION FROM SESSION
 
-     Do not hard-code the organization UUID.
+     IMPORTANT:
+     Do NOT search using:
+
+       slug: "koniqtech"
+
+     The authenticated admin already has the correct
+     organization ID in the session.
+
+     This is also consistent with /admin/employees/page.tsx.
   ========================================================== */
 
-  const koniqTechOrganization =
-    await prisma.organization.findFirst({
-      where: {
-        slug: "koniqtech",
-      },
-      select: {
-        id: true,
-        slug: true,
-      },
-    })
+  const sessionOrgId = String(
+    user.orgId ?? ""
+  ).trim()
 
-  /* ==========================================================
-     ORGANIZATION SAFETY
-  ========================================================== */
-
-  if (!koniqTechOrganization) {
+  if (!sessionOrgId) {
     return (
       <div className="space-y-6">
+
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
 
         <div>
           <Link
@@ -98,7 +104,6 @@ export default async function NewEmployeePage() {
             "
           >
             <ArrowLeft size={16} />
-
             Back to Employees
           </Link>
 
@@ -142,6 +147,10 @@ export default async function NewEmployeePage() {
           </div>
         </div>
 
+        {/* ======================================================
+            ORGANIZATION ERROR
+        ====================================================== */}
+
         <div
           className="
             rounded-xl
@@ -152,14 +161,133 @@ export default async function NewEmployeePage() {
           "
         >
           <h2 className="font-semibold text-red-900">
-            KoniqTech organization not found
+            Organization is not configured
           </h2>
 
           <p className="mt-1 text-sm text-red-700">
-            The internal KoniqTech organization could not
-            be found. Please verify the organization
-            configuration before creating an employee.
+            Your administrator account is not linked
+            to an organization. Please verify the
+            administrator account configuration.
           </p>
+        </div>
+
+      </div>
+    )
+  }
+
+  /* ==========================================================
+     LOAD ORGANIZATION
+  ========================================================== */
+
+  const koniqTechOrganization =
+    await prisma.organization.findUnique({
+      where: {
+        id: sessionOrgId,
+      },
+
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+      },
+    })
+
+  /* ==========================================================
+     ORGANIZATION SAFETY
+  ========================================================== */
+
+  if (!koniqTechOrganization) {
+    return (
+      <div className="space-y-6">
+
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
+
+        <div>
+
+          <Link
+            href="/admin/employees"
+            className="
+              mb-4
+              inline-flex
+              items-center
+              gap-2
+              text-sm
+              font-medium
+              text-slate-500
+              transition
+              hover:text-blue-600
+            "
+          >
+            <ArrowLeft size={16} />
+            Back to Employees
+          </Link>
+
+          <div className="flex items-start gap-3">
+
+            <div
+              className="
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-xl
+                bg-blue-50
+                text-blue-600
+              "
+            >
+              <UserPlus size={21} />
+            </div>
+
+            <div>
+
+              <h1
+                className="
+                  text-2xl
+                  font-bold
+                  tracking-tight
+                  text-slate-950
+                "
+              >
+                Add Employee
+              </h1>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Create a new KoniqTech internal staff
+                account and assign its operational role.
+              </p>
+
+            </div>
+
+          </div>
+        </div>
+
+        {/* ======================================================
+            ORGANIZATION ERROR
+        ====================================================== */}
+
+        <div
+          className="
+            rounded-xl
+            border
+            border-red-200
+            bg-red-50
+            p-5
+          "
+        >
+
+          <h2 className="font-semibold text-red-900">
+            Organization not found
+          </h2>
+
+          <p className="mt-1 text-sm text-red-700">
+            The organization linked to your administrator
+            account could not be found. Please verify the
+            administrator account and organization configuration.
+          </p>
+
         </div>
 
       </div>
@@ -170,14 +298,14 @@ export default async function NewEmployeePage() {
      LOAD FORM DATA
 
      Departments:
-       Only KoniqTech departments.
+       Only departments belonging to the authenticated
+       KoniqTech organization.
 
      Employee Roles:
-       EmployeeRole is a global internal-role table and does
-       not contain orgId according to the current schema.
+       EmployeeRole is a global internal role table.
 
      Managers:
-       Only active employees belonging to KoniqTech.
+       Only active employees belonging to this organization.
   ========================================================== */
 
   const [
@@ -192,7 +320,8 @@ export default async function NewEmployeePage() {
 
     prisma.department.findMany({
       where: {
-        orgId: koniqTechOrganization.id,
+        orgId:
+          koniqTechOrganization.id,
       },
 
       orderBy: {
@@ -206,7 +335,7 @@ export default async function NewEmployeePage() {
     }),
 
     /* ========================================================
-       INTERNAL EMPLOYEE ROLES
+       EMPLOYEE ROLES
     ======================================================== */
 
     prisma.employeeRole.findMany({
@@ -221,10 +350,7 @@ export default async function NewEmployeePage() {
     }),
 
     /* ========================================================
-       ACTIVE MANAGERS / EMPLOYEES
-
-       Only employees whose department belongs to the
-       KoniqTech organization are available.
+       ACTIVE EMPLOYEES / MANAGERS
     ======================================================== */
 
     prisma.employee.findMany({
@@ -232,7 +358,8 @@ export default async function NewEmployeePage() {
         active: true,
 
         department: {
-          orgId: koniqTechOrganization.id,
+          orgId:
+            koniqTechOrganization.id,
         },
       },
 
@@ -290,7 +417,6 @@ export default async function NewEmployeePage() {
           "
         >
           <ArrowLeft size={16} />
-
           Back to Employees
         </Link>
 
@@ -361,7 +487,7 @@ export default async function NewEmployeePage() {
           </p>
 
           {/* ==================================================
-              SHOW EXACTLY WHAT IS MISSING
+              EXACT MISSING ITEMS
           ================================================== */}
 
           <div className="mt-4 space-y-2 text-sm">
@@ -379,6 +505,10 @@ export default async function NewEmployeePage() {
             )}
 
           </div>
+
+          {/* ==================================================
+              SETUP LINKS
+          ================================================== */}
 
           <div className="mt-4 flex flex-wrap gap-3">
 

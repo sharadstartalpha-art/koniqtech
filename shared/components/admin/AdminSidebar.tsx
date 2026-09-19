@@ -16,10 +16,12 @@ import { getSession } from "next-auth/react"
 import clsx from "clsx"
 
 import {
+  Search,
   ChevronRight,
   ChevronDown,
   Building2,
-  } from "lucide-react"
+  Command,
+} from "lucide-react"
 
 import SidebarFooter from "./SidebarFooter"
 
@@ -40,7 +42,105 @@ type SidebarUser = {
   name?: string
   email?: string
   image?: string
-  role?: AdminRole
+  role?: string | null
+  employeeRole?: string | null
+  employeeId?: string | null
+}
+
+/* ==========================================================
+   NORMALIZE EMPLOYEE ROLE
+========================================================== */
+
+function normalizeEmployeeRole(
+  value?: string | null
+): string {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_")
+}
+
+/* ==========================================================
+   RESOLVE MENU ROLE
+========================================================== */
+
+function resolveMenuRole(
+  userRole?: string | null,
+  employeeRole?: string | null
+): AdminRole {
+
+  const normalizedUserRole =
+    String(userRole ?? "")
+      .trim()
+      .toLowerCase()
+
+  /*
+   * SUPER ADMIN
+   *
+   * Only a real super_admin gets the
+   * complete platform administration menu.
+   */
+  if (
+    normalizedUserRole ===
+    "super_admin"
+  ) {
+    return ROLE.SUPER_ADMIN
+  }
+
+  /*
+   * INTERNAL EMPLOYEE
+   *
+   * Internal employees now use:
+   *
+   * User.role = user
+   *
+   * Employee.role = Data Entry / Sales / etc.
+   *
+   * Therefore we resolve the sidebar from
+   * EmployeeRole.
+   */
+
+  const normalizedEmployeeRole =
+    normalizeEmployeeRole(
+      employeeRole
+    )
+
+  switch (
+    normalizedEmployeeRole
+  ) {
+
+    case "data_entry":
+      return ROLE.DATA_ENTRY
+
+    case "sales":
+    case "platform_sales":
+      return ROLE.PLATFORM_SALES
+
+    case "marketing":
+      return ROLE.MARKETING
+
+    case "support":
+      return ROLE.SUPPORT
+
+    case "accountant":
+    case "finance":
+      return ROLE.FINANCE
+
+    case "platform_manager":
+    case "manager":
+      return ROLE.PLATFORM_MANAGER
+
+    default:
+      /*
+       * IMPORTANT:
+       *
+       * Never fall back to Super Admin.
+       *
+       * Unknown / restricted users get the
+       * safest internal menu instead.
+       */
+      return ROLE.DATA_ENTRY
+  }
 }
 
 /* ==========================================================
@@ -49,12 +149,16 @@ type SidebarUser = {
 
 export default function AdminSidebar() {
 
-  const pathname = usePathname()
+  const pathname =
+    usePathname()
 
   const [user, setUser] =
     useState<SidebarUser>({})
 
-    const [loading, setLoading] =
+  const [search, setSearch] =
+    useState("")
+
+  const [loading, setLoading] =
     useState(true)
 
   const [expanded, setExpanded] =
@@ -62,70 +166,103 @@ export default function AdminSidebar() {
       "Platform",
       "People",
     ])
-useEffect(() => {
-  localStorage.setItem(
-    "admin-sidebar-expanded",
-    JSON.stringify(expanded)
-  )
-}, [expanded])
-/* ==========================================================
-   COLLAPSE SIDEBAR (DESKTOP)
-========================================================== */
 
-const [collapsed, setCollapsed] =
-  useState(false)
+  const [collapsed, setCollapsed] =
+    useState(false)
+
+  /* ========================================================
+     SAVE EXPANDED STATE
+  ======================================================== */
 
   useEffect(() => {
 
-  const savedExpanded =
-    localStorage.getItem(
-      "admin-sidebar-expanded"
+    localStorage.setItem(
+      "admin-sidebar-expanded",
+      JSON.stringify(expanded)
     )
 
-  if (savedExpanded) {
+  }, [expanded])
 
-    try {
+  /* ========================================================
+     LOAD LOCAL STORAGE
+  ======================================================== */
 
-      setExpanded(
-        JSON.parse(savedExpanded)
+  useEffect(() => {
+
+    const savedExpanded =
+      localStorage.getItem(
+        "admin-sidebar-expanded"
       )
 
-    } catch {}
+    if (savedExpanded) {
 
-  }
+      try {
 
-  
+        setExpanded(
+          JSON.parse(
+            savedExpanded
+          )
+        )
 
-}, [])
+      } catch {
+        // Ignore invalid local storage
+      }
 
-useEffect(() => {
+    }
 
-  const saved =
-    localStorage.getItem(
-      "admin-sidebar-collapsed"
+    const savedSearch =
+      localStorage.getItem(
+        "admin-sidebar-search"
+      )
+
+    if (savedSearch) {
+
+      setSearch(
+        savedSearch
+      )
+
+    }
+
+    const savedCollapsed =
+      localStorage.getItem(
+        "admin-sidebar-collapsed"
+      )
+
+    if (savedCollapsed) {
+
+      setCollapsed(
+        savedCollapsed === "true"
+      )
+
+    }
+
+  }, [])
+
+  /* ========================================================
+     SAVE COLLAPSED STATE
+  ======================================================== */
+
+  useEffect(() => {
+
+    localStorage.setItem(
+      "admin-sidebar-collapsed",
+      String(collapsed)
     )
 
-  if (saved) {
+  }, [collapsed])
 
-    setCollapsed(
-      saved === "true"
+  /* ========================================================
+     SAVE SEARCH
+  ======================================================== */
+
+  useEffect(() => {
+
+    localStorage.setItem(
+      "admin-sidebar-search",
+      search
     )
 
-  }
-
-}, [])
-
-useEffect(() => {
-
-  localStorage.setItem(
-
-    "admin-sidebar-collapsed",
-
-    String(collapsed)
-
-  )
-
-}, [collapsed])
+  }, [search])
 
   /* ========================================================
      LOAD SESSION
@@ -133,174 +270,444 @@ useEffect(() => {
 
   useEffect(() => {
 
+    let mounted = true
+
     async function loadSession() {
 
-      const session =
-        await getSession()
+      try {
 
-      if (session?.user) {
+        const session =
+          await getSession()
 
-        setUser({
+        if (
+          mounted &&
+          session?.user
+        ) {
 
-          id:
-            (session.user as any).id,
+          const sessionUser =
+            session.user as any
 
-          name:
-            (session.user as any).name,
+    setUser({
+  id: (session.user as any).id,
 
-          email:
-            session.user.email ?? "",
+  name: (session.user as any).name,
 
-          image:
-            (session.user as any).image,
+  email: session.user.email ?? "",
 
-          role:
-            ((session.user as any).role ??
-              ROLE.SUPER_ADMIN) as AdminRole,
+  image: (session.user as any).image,
 
-        })
+  role:
+    (session.user as any).role ?? null,
+
+  employeeRole:
+    (session.user as any).employeeRole ?? null,
+
+  employeeId:
+    (session.user as any).employeeId ?? null,
+})
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Failed to load admin session:",
+          error
+        )
+
+      } finally {
+
+        if (mounted) {
+          setLoading(false)
+        }
 
       }
-
-      setLoading(false)
 
     }
 
     loadSession()
 
+    return () => {
+      mounted = false
+    }
+
   }, [])
 
   /* ========================================================
-     CURRENT ROLE
+     RESOLVE MENU ROLE
   ======================================================== */
 
-  const role: AdminRole =
-    user.role ??
-    ROLE.SUPER_ADMIN
+  /* ==========================================================
+   RESOLVE ADMIN MENU ROLE
+========================================================== */
+
+
+/* ==========================================================
+   CURRENT MENU ROLE
+========================================================== */
+
+const menuRole =
+  (() => {
+    const userRole =
+      String(user.role ?? "")
+        .trim()
+        .toLowerCase()
+
+    // SUPER ADMIN
+    if (userRole === "super_admin") {
+      return ROLE.SUPER_ADMIN
+    }
+
+    // INTERNAL EMPLOYEE
+    if (user.employeeId) {
+      const employeeRole =
+        normalizeEmployeeRole(user.employeeRole)
+
+      switch (employeeRole) {
+        case "data_entry":
+          return ROLE.DATA_ENTRY
+
+        case "marketing":
+          return ROLE.MARKETING
+
+        case "sales":
+        case "sales_executive":
+        case "sales_manager":
+        case "platform_sales":
+          return ROLE.PLATFORM_SALES
+
+        case "support":
+          return ROLE.SUPPORT
+
+        case "finance":
+        case "accounting":
+        case "accountant":
+          return ROLE.FINANCE
+
+        case "developer":
+          return ROLE.DEVELOPER
+
+        case "qa":
+          return ROLE.QA
+
+        case "customer_success":
+          return ROLE.CUSTOMER_SUCCESS
+
+        case "platform_manager":
+        case "manager":
+          return ROLE.PLATFORM_MANAGER
+
+        default:
+          return null
+      }
+    }
+
+    // CUSTOMER CRM USER
+    return null
+  })()
+/* ==========================================================
+   ROLE MENU
+========================================================== */
+
+const sections: AdminMenuSection[] =
+  menuRole
+    ? (
+        MENU_BY_ROLE[
+          menuRole
+        ] ?? []
+      )
+    : []
+  /* ========================================================
+     SEARCH FILTER
+  ======================================================== */
+
+  const filteredSections =
+    useMemo(() => {
+
+      const query =
+        search
+          .trim()
+          .toLowerCase()
+
+      if (!query) {
+        return sections
+      }
+
+      return sections
+        .map(
+          (
+            section
+          ) => {
+
+            const items =
+              section.items.filter(
+                (item) => {
+
+                  const label =
+                    item.label
+                      .toLowerCase()
+
+                  const href =
+                    item.href
+                      ?.toLowerCase() ??
+                    ""
+
+                  return (
+                    label.includes(
+                      query
+                    ) ||
+                    href.includes(
+                      query
+                    )
+                  )
+
+                }
+              )
+
+            return {
+              ...section,
+              items,
+            }
+
+          }
+        )
+        .filter(
+          (
+            section
+          ) =>
+            section.items.length >
+            0
+        )
+
+    }, [
+      sections,
+      search,
+    ])
 
   /* ========================================================
-     ROLE MENU
+     TOGGLE SECTION
   ======================================================== */
-
-  const sections =
-    MENU_BY_ROLE[role] ??
-    MENU_BY_ROLE[ROLE.SUPER_ADMIN]
-
- 
-  /* ==========================================================
-     EXPAND / COLLAPSE
-  ========================================================== */
 
   function toggleSection(
     title: string
   ) {
 
-    setExpanded((prev) =>
+    setExpanded(
+      (current) => {
 
-      prev.includes(title)
+        if (
+          current.includes(
+            title
+          )
+        ) {
 
-        ? prev.filter(
-            (x) => x !== title
+          return current.filter(
+            (item) =>
+              item !== title
           )
 
-        : [...prev, title]
+        }
 
+        return [
+          ...current,
+          title,
+        ]
+
+      }
     )
 
   }
 
- 
+  /* ========================================================
+     ACTIVE ROUTE
+  ======================================================== */
 
-  /* ==========================================================
-     OPEN GROUP OF ACTIVE PAGE
-  ========================================================== */
+  function isActive(
+    href?: string
+  ) {
 
-  useEffect(() => {
+    if (!href) {
+      return false
+    }
 
-    const openGroups: string[] = []
+    if (
+      href ===
+      "/admin/dashboard"
+    ) {
 
-    sections.forEach((section) => {
-
-      section.items.forEach((item) => {
-
-        if (!item.children) return
-
-        const active =
-          item.children.some((child) => {
-
-            if (!child.href)
-              return false
-
-            return pathname.startsWith(
-              child.href
-            )
-
-          })
-
-        if (active) {
-
-          if (
-            !openGroups.includes(
-              section.title
-            )
-          ) {
-
-            openGroups.push(
-              section.title
-            )
-
-          }
-
-        }
-
-      })
-
-    })
-
-    if (openGroups.length) {
-
-      setExpanded((prev) => [
-
-        ...new Set([
-          ...prev,
-          ...openGroups,
-        ]),
-
-      ])
+      return (
+        pathname ===
+        href
+      )
 
     }
 
-  }, [
-    pathname,
-    sections,
-  ])
+    return (
+      pathname === href ||
+      pathname.startsWith(
+        `${href}/`
+      )
+    )
 
-  /* ==========================================================
-     LOADING
-  ========================================================== */
+  }
+
+  /* ========================================================
+     MENU ITEM
+  ======================================================== */
+
+  function renderMenuItem(
+    item: AdminMenuItem
+  ) {
+
+    const active =
+      isActive(
+        item.href
+      )
+
+    if (
+      item.children &&
+      item.children.length >
+        0
+    ) {
+
+      return (
+        <div
+          key={
+            item.label
+          }
+          className="space-y-1"
+        >
+
+          <div
+            className={clsx(
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
+              "text-slate-700"
+            )}
+          >
+
+            <item.icon
+              size={18}
+              className="shrink-0"
+            />
+
+            {!collapsed && (
+              <span>
+                {item.label}
+              </span>
+            )}
+
+          </div>
+
+          {!collapsed && (
+            <div className="ml-5 space-y-1">
+
+              {item.children.map(
+                (
+                  child
+                ) =>
+                  renderMenuItem(
+                    child
+                  )
+              )}
+
+            </div>
+          )}
+
+        </div>
+      )
+
+    }
+
+    return (
+      <Link
+        key={
+          item.label
+        }
+        href={
+          item.href ??
+          "#"
+        }
+        className={clsx(
+          "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+          active
+            ? "bg-orange-50 text-orange-600"
+            : "text-slate-700 hover:bg-slate-50 hover:text-orange-600"
+        )}
+      >
+
+        <item.icon
+          size={18}
+          className={clsx(
+            "shrink-0",
+            active
+              ? "text-orange-500"
+              : "text-slate-500 group-hover:text-orange-500"
+          )}
+        />
+
+        {!collapsed && (
+          <span className="truncate">
+            {item.label}
+          </span>
+        )}
+
+        {!collapsed &&
+          item.badge && (
+            <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+              {item.badge}
+            </span>
+          )}
+
+      </Link>
+    )
+
+  }
+
+  /* ========================================================
+     LOADING STATE
+  ======================================================== */
 
   if (loading) {
 
     return (
       <aside
-        className="
-          flex
-          h-screen
-          w-[300px]
-          items-center
-          justify-center
-          border-r
-          bg-white
-        "
+        className={clsx(
+          "flex h-screen shrink-0 flex-col border-r border-slate-200 bg-white",
+          collapsed
+            ? "w-[76px]"
+            : "w-[300px]"
+        )}
       >
 
-        <div
-          className="
-            text-sm
-            text-slate-500
-          "
-        >
-          Loading...
+        <div className="flex h-[88px] items-center border-b border-slate-200 px-5">
+
+          <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
+
+          {!collapsed && (
+            <div className="ml-3 space-y-2">
+
+              <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
+
+              <div className="h-3 w-36 animate-pulse rounded bg-slate-100" />
+
+            </div>
+          )}
+
+        </div>
+
+        <div className="space-y-3 p-4">
+
+          {Array.from({
+            length: 8,
+          }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="h-10 animate-pulse rounded-xl bg-slate-50"
+              />
+            )
+          )}
+
         </div>
 
       </aside>
@@ -308,569 +715,234 @@ useEffect(() => {
 
   }
 
-  /* ==========================================================
-     PART 3 CONTINUES HERE
-  ========================================================== */
-    /* ==========================================================
-     START RENDER
-  ========================================================== */
+  /* ========================================================
+     SIDEBAR
+  ======================================================== */
 
   return (
-
     <aside
-      className="
-        flex
-        h-screen
-        w-[300px]
-        shrink-0
-        flex-col
-        overflow-hidden
-        border-r
-        bg-white
-        dark:border-slate-800
-        dark:bg-slate-950
-      "
+      className={clsx(
+        "flex h-screen shrink-0 flex-col border-r border-slate-200 bg-white",
+        collapsed
+          ? "w-[76px]"
+          : "w-[300px]"
+      )}
     >
 
-      {/* ===============================================
-          LOGO
-      =============================================== */}
-
-      <div
-        className="
-          flex
-          h-20
-          items-center
-          gap-4
-          border-b
-          px-6
-          dark:border-slate-800
-        "
-      >
-
-        <Image
-          src="/logo.png"
-          alt="KoniqTech"
-          width={42}
-          height={42}
-          priority
-        />
-
-        <div>
-
-          <h1
-            className="
-              text-xl
-              font-bold
-              tracking-tight
-            "
-          >
-            KoniqTech
-          </h1>
-
-          <p
-            className="
-              text-xs
-              text-slate-500
-            "
-          >
-            Platform Administration
-          </p>
-
-        </div>
-
-      </div>
-
-      
-
-
-      {/* ===============================================
-          NAVIGATION
-      =============================================== */}
-
-      <div
-    className="
-    flex-1
-    overflow-y-auto
-    px-3
-    pb-6
-    scrollbar-thin
-    "
->
-
-
-             {sections.map(
-  (
-    section: AdminMenuSection,
-    sectionIndex: number
-  ) => {
-
-    const isFlatSection =
-      !section.title?.trim()
-
-    const sectionOpen =
-      isFlatSection ||
-      expanded.includes(
-        section.title
-      )
-
-
-    return (
-
-      <div
-        key={
-          section.title ||
-          `flat-section-${sectionIndex}`
-        }
-        className="mb-2"
-      >
-
-        {/* =====================================
-            SECTION HEADER
-
-            Empty title:
-            Do not render dropdown header.
-
-            Normal title:
-            Keep existing dropdown behavior.
-        ===================================== */}
-
-        {!isFlatSection && (
-
-          <button
-            type="button"
-            onClick={() =>
-              toggleSection(
-                section.title
-              )
-            }
-            className="
-              mb-1
-              flex
-              h-10
-              w-full
-              items-center
-              justify-between
-              rounded-xl
-              px-3
-              text-xs
-              font-semibold
-              uppercase
-              tracking-wider
-              text-slate-500
-              transition
-              hover:bg-slate-100
-              dark:hover:bg-slate-800
-            "
-          >
-
-            <span>
-              {section.title}
-            </span>
-
-
-            {sectionOpen ? (
-
-              <ChevronDown
-                size={15}
-              />
-
-            ) : (
-
-              <ChevronRight
-                size={15}
-              />
-
-            )}
-
-          </button>
-
-        )}
-
-
-        {/* =====================================
-            SECTION ITEMS
-
-            Flat section:
-            Always visible.
-
-            Normal section:
-            Visible only when expanded.
-        ===================================== */}
-
-        {sectionOpen && (
-
-          <div className="space-y-1">
-
-            {section.items.map(
-              (
-                item: AdminMenuItem
-              ) => {
-
-                const Icon =
-                  item.icon
-
-
-                const hasChildren =
-                  !!item.children?.length
-
-
-                const active =
-                  item.href
-                    ? (
-                        pathname ===
-                          item.href ||
-
-                        (
-                          item.href !==
-                            "/admin/data-entry" &&
-
-                          pathname.startsWith(
-                            `${item.href}/`
-                          )
-                        )
-                      )
-                    : (
-                        item.children?.some(
-                          (child) =>
-                            child.href &&
-                            (
-                              pathname ===
-                                child.href ||
-
-                              pathname.startsWith(
-                                `${child.href}/`
-                              )
-                            )
-                        ) ?? false
-                      )
-
-
-                return (
-
-                  <div
-                    key={
-                      item.href ||
-                      item.label
-                    }
-                    className="space-y-1"
-                  >
-
-                    {/* ==========================
-                        SINGLE ITEM
-                    ========================== */}
-
-                    {!hasChildren && (
-
-                      <Link
-                        href={
-                          item.href!
-                        }
-                        className={clsx(
-
-                          `
-                            flex
-                            h-11
-                            items-center
-                            gap-3
-                            rounded-xl
-                            px-4
-                            transition
-                          `,
-
-                          active
-                            ? `
-                                bg-orange-50
-                                font-medium
-                                text-orange-600
-                                dark:bg-orange-950/30
-                              `
-                            : `
-                                text-slate-700
-                                hover:bg-slate-100
-                                dark:text-slate-300
-                                dark:hover:bg-slate-800
-                              `
-
-                        )}
-                      >
-
-                        <Icon
-                          size={18}
-                        />
-
-
-                        <span className="flex-1">
-
-                          {item.label}
-
-                        </span>
-
-
-                        {item.badge && (
-
-                          <span
-                            className="
-                              rounded-full
-                              bg-red-500
-                              px-2
-                              py-0.5
-                              text-[10px]
-                              font-semibold
-                              text-white
-                            "
-                          >
-
-                            {item.badge}
-
-                          </span>
-
-                        )}
-
-                      </Link>
-
-                    )}
-
-
-                    {/* ==========================
-                        GROUP
-                    ========================== */}
-
-                    {hasChildren && (
-
-                      <>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            toggleSection(
-                              item.label
-                            )
-                          }
-                          className={clsx(
-
-                            `
-                              flex
-                              h-11
-                              w-full
-                              items-center
-                              justify-between
-                              rounded-xl
-                              px-4
-                              transition
-                            `,
-
-                            active
-                              ? `
-                                  bg-orange-50
-                                  text-orange-600
-                                  dark:bg-orange-950/30
-                                `
-                              : `
-                                  hover:bg-slate-100
-                                  dark:hover:bg-slate-800
-                                `
-
-                          )}
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              gap-3
-                            "
-                          >
-
-                            <Icon
-                              size={18}
-                            />
-
-
-                            <span>
-
-                              {item.label}
-
-                            </span>
-
-                          </div>
-
-
-                          {expanded.includes(
-                            item.label
-                          ) ? (
-
-                            <ChevronDown
-                              size={16}
-                            />
-
-                          ) : (
-
-                            <ChevronRight
-                              size={16}
-                            />
-
-                          )}
-
-                        </button>
-
-
-                        {/* ======================
-                            CHILDREN
-                        ====================== */}
-
-                        {expanded.includes(
-                          item.label
-                        ) && (
-
-                          <div
-                            className="
-                              ml-6
-                              border-l
-                              border-slate-200
-                              pl-4
-                              dark:border-slate-700
-                            "
-                          >
-
-                            {item.children!.map(
-                              (child) => {
-
-                                const childActive =
-                                  pathname ===
-                                    child.href ||
-
-                                  (
-                                    child.href
-                                      ? pathname.startsWith(
-                                          `${child.href}/`
-                                        )
-                                      : false
-                                  )
-
-
-                                return (
-
-                                  <Link
-                                    key={
-                                      child.href
-                                    }
-                                    href={
-                                      child.href!
-                                    }
-                                    className={clsx(
-
-                                      `
-                                        flex
-                                        h-10
-                                        items-center
-                                        rounded-lg
-                                        px-3
-                                        text-sm
-                                        transition
-                                      `,
-
-                                      childActive
-                                        ? `
-                                            bg-orange-100
-                                            font-medium
-                                            text-orange-700
-                                            dark:bg-orange-950/40
-                                            dark:text-orange-300
-                                          `
-                                        : `
-                                            text-slate-600
-                                            hover:bg-slate-100
-                                            dark:text-slate-400
-                                            dark:hover:bg-slate-800
-                                          `
-
-                                    )}
-                                  >
-
-                                    <span className="flex-1">
-
-                                      {child.label}
-
-                                    </span>
-
-
-                                    {child.badge && (
-
-                                      <span
-                                        className="
-                                          rounded-full
-                                          bg-orange-600
-                                          px-2
-                                          py-0.5
-                                          text-[10px]
-                                          font-semibold
-                                          text-white
-                                        "
-                                      >
-
-                                        {child.badge}
-
-                                      </span>
-
-                                    )}
-
-                                  </Link>
-
-                                )
-
-                              }
-                            )}
-
-                          </div>
-
-                        )}
-
-                      </>
-
-                    )}
-
-                  </div>
-
-                )
-
-              }
-            )}
+      {/* ==================================================
+          BRAND
+      ================================================== */}
+
+      <div className="flex h-[88px] shrink-0 items-center border-b border-slate-200 px-5">
+
+        <Link
+          href={
+            menuRole ===
+            ROLE.SUPER_ADMIN
+              ? "/admin/dashboard"
+              : "/admin/data-entry/dashboard"
+          }
+          className="flex min-w-0 items-center gap-3"
+        >
+
+          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white">
+
+            <Image
+              src="/logo.png"
+              alt="KoniqTech"
+              fill
+              sizes="44px"
+              className="object-contain"
+            />
 
           </div>
 
+          {!collapsed && (
+            <div className="min-w-0">
+
+              <div className="truncate text-lg font-bold text-slate-950">
+                KoniqTech
+              </div>
+
+              <div className="truncate text-xs text-slate-500">
+                Platform Administration
+              </div>
+
+            </div>
+          )}
+
+        </Link>
+
+      </div>
+
+      {/* ==================================================
+          SEARCH
+      ================================================== */}
+
+      {!collapsed && (
+        <div className="shrink-0 border-b border-slate-100 p-4">
+
+          <div className="relative">
+
+            <Search
+              size={17}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+
+            <input
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Search menu..."
+              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition focus:border-orange-300 focus:bg-white"
+            />
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ==================================================
+          MENU
+      ================================================== */}
+
+      <nav className="min-h-0 flex-1 overflow-y-auto p-3">
+
+        <div className="space-y-5">
+
+          {filteredSections.map(
+            (
+              section
+            ) => {
+
+              const open =
+                expanded.includes(
+                  section.title
+                )
+
+              return (
+                <div
+                  key={
+                    section.title
+                  }
+                >
+
+                  {/* SECTION HEADER */}
+
+                  {!collapsed && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleSection(
+                          section.title
+                        )
+                      }
+                      className="mb-1 flex w-full items-center justify-between px-3 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                    >
+
+                      <span>
+                        {
+                          section.title
+                        }
+                      </span>
+
+                      {open ? (
+                        <ChevronDown
+                          size={14}
+                        />
+                      ) : (
+                        <ChevronRight
+                          size={14}
+                        />
+                      )}
+
+                    </button>
+                  )}
+
+                  {/* ITEMS */}
+
+                  {(collapsed ||
+                    open) && (
+                    <div className="space-y-1">
+
+                      {section.items.map(
+                        (
+                          item
+                        ) =>
+                          renderMenuItem(
+                            item
+                          )
+                      )}
+
+                    </div>
+                  )}
+
+                </div>
+              )
+
+            }
+          )}
+
+        </div>
+
+        {/* =================================================
+            NO RESULTS
+        ================================================= */}
+
+        {filteredSections.length ===
+          0 && (
+          <div className="px-3 py-8 text-center text-sm text-slate-400">
+            No menu items found.
+          </div>
         )}
 
+      </nav>
+
+      {/* ==================================================
+          FOOTER
+      ================================================== */}
+
+      <div className="shrink-0 border-t border-slate-200">
+<SidebarFooter />
+
       </div>
 
-    )
+      {/* ==================================================
+          COLLAPSE CONTROL
+      ================================================== */}
 
-  }
-)}
-
-           </div>   
-
-      {/* ==========================================================
-          FOOTER
-      ========================================================== */}
-
-      <div
-        className="
-          shrink-0
-          border-t
-          bg-white
-          dark:bg-slate-950
-          dark:border-slate-800
-        "
+      <button
+        type="button"
+        onClick={() =>
+          setCollapsed(
+            (value) =>
+              !value
+          )
+        }
+        className="absolute bottom-24 left-[calc(100%-14px)] z-20 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-orange-600"
+        aria-label={
+          collapsed
+            ? "Expand sidebar"
+            : "Collapse sidebar"
+        }
       >
 
-       <SidebarFooter />
+        {collapsed ? (
+          <ChevronRight
+            size={15}
+          />
+        ) : (
+          <ChevronRight
+            size={15}
+            className="rotate-180"
+          />
+        )}
 
-      </div>
+      </button>
 
     </aside>
-
   )
-
 }
-

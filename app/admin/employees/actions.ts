@@ -1,10 +1,13 @@
 "use server"
 
 import bcrypt from "bcryptjs"
-import { revalidatePath } from "next/cache"
-
+import {
+  PlatformRole,
+} from "@prisma/client"
 import { auth } from "@/auth"
 import prisma from "@/shared/lib/prisma"
+
+import { revalidatePath } from "next/cache"
 
 /* =========================================================
    INTERNAL PLATFORM CONFIGURATION
@@ -260,6 +263,7 @@ function normalizeEmail(value: string) {
     .trim()
     .toLowerCase()
 }
+
 
 /* =========================================================
    PLATFORM ROLE NORMALIZATION
@@ -960,54 +964,46 @@ export async function createEmployeeAction(
           ------------------------------------------------- */
 
           const user =
-            await tx.user.create({
-              data: {
-                orgId:
-                  organization.id,
+  await tx.user.create({
+    data: {
+      orgId:
+        organization.id,
 
-                name:
-                  `${input.firstName} ${input.lastName}`,
+      name:
+        `${input.firstName} ${input.lastName}`,
 
-                email:
-                  input.email,
+      email:
+        input.email,
 
-                passwordHash,
+      passwordHash,
 
-                phone:
-                  input.phone,
+      phone:
+        input.phone,
 
-                /*
-                 * Internal platform role.
-                 *
-                 * IMPORTANT:
-                 * This is User.role.
-                 *
-                 * organizationRoleId remains NULL.
-                 */
-                role:
-                  input.platformRole ===
-                  "super_admin"
-                    ? "super_admin"
-                    : "user",
+      role:
+  input.platformRole === "super_admin"
+    ? PlatformRole.super_admin
+    : PlatformRole.user,
 
-                organizationRoleId:
-                  null,
+      departmentId:
+        input.departmentId,
 
-                departmentId:
-                  department.id,
+      // Internal platform employees do not use customer OrganizationRole.
+      organizationRoleId:
+        null,
 
-                status:
-                  input.active
-                    ? "active"
-                    : "inactive",
+      status:
+        input.active
+          ? "active"
+          : "inactive",
 
-                emailVerified:
-                  false,
+      emailVerified:
+        false,
 
-                phoneVerified:
-                  false,
-              },
-            })
+      phoneVerified:
+        false,
+    },
+  })
 
           /* -------------------------------------------------
              Create employee profile
@@ -1438,52 +1434,40 @@ export async function updateEmployeeAction(
             )
 
           const newUser =
-            await tx.user.create({
-              data: {
-                orgId:
-                  organization.id,
+  await tx.user.create({
+    data: {
+      orgId:
+        organization.id,
 
-                name:
-                  `${input.firstName} ${input.lastName}`,
+      name:
+        `${input.firstName} ${input.lastName}`,
 
-                email:
-                  input.email,
+      email:
+        input.email,
 
-                passwordHash,
+      passwordHash,
 
-                phone:
-                  input.phone,
+      role:
+  input.platformRole === "super_admin"
+    ? PlatformRole.super_admin
+    : PlatformRole.user,
 
-                role:
-                  input.platformRole ===
-                  "super_admin"
-                    ? "super_admin"
-                    : "user",
+      // Internal platform employees do not use customer OrganizationRole.
+      organizationRoleId:
+        null,
 
-                /*
-                 * Internal employee accounts
-                 * must not use customer
-                 * OrganizationRole.
-                 */
-                organizationRoleId:
-                  null,
+      phone:
+        input.phone,
 
-                departmentId:
-                  department.id,
+      departmentId:
+        input.departmentId,
 
-                status:
-                  input.active
-                    ? "active"
-                    : "inactive",
-
-                emailVerified:
-                  false,
-
-                phoneVerified:
-                  false,
-              },
-            })
-
+      status:
+        input.active
+          ? "active"
+          : "inactive",
+    },
+  })
           userId =
             newUser.id
         } else {

@@ -18,11 +18,6 @@ export const dynamic = "force-dynamic"
 
 /* ============================================================
    INTERNAL PLATFORM ROLES
-
-   These are KoniqTech internal administration roles.
-
-   They are intentionally separate from customer CRM roles
-   such as owner, manager, sales, technician, etc.
 ============================================================ */
 
 const INTERNAL_EMPLOYEE_ROLES = [
@@ -57,14 +52,19 @@ export default async function AdminEmployeesPage() {
      CURRENT INTERNAL PLATFORM ROLE
 
      IMPORTANT:
-     Internal platform role comes from session.user.role.
+     Internal platform authorization uses session.user.role.
 
-     organizationRole is the customer/organization role and
-     should NOT be used for this internal admin authorization.
+     Do NOT use organizationRole here.
   ========================================================== */
 
+  const user = session.user as {
+    role?: unknown
+    orgId?: unknown
+    email?: unknown
+  }
+
   const currentRole = String(
-    (session.user as any).role ?? ""
+    user.role ?? ""
   )
     .trim()
     .toLowerCase()
@@ -73,32 +73,81 @@ export default async function AdminEmployeesPage() {
      AUTHORIZATION
   ========================================================== */
 
-  if (!INTERNAL_EMPLOYEE_ROLES.includes(currentRole)) {
+  if (
+    !INTERNAL_EMPLOYEE_ROLES.includes(
+      currentRole
+    )
+  ) {
     redirect("/admin/dashboard")
   }
 
   /* ==========================================================
-     GET KONIQTECH ORGANIZATION
+     GET ORGANIZATION FROM AUTHENTICATED SESSION
 
-     Do not hard-code the organization UUID.
+     IMPORTANT:
+     Do NOT assume the organization slug.
+
+     The authenticated internal admin already belongs
+     to the KoniqTech organization, so use session.user.orgId.
+
+     This is safer and avoids failures when the organization
+     slug is different in production.
+  ========================================================== */
+
+  const sessionOrgId = String(
+    user.orgId ?? ""
+  ).trim()
+
+  if (!sessionOrgId) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+            Employees
+          </h1>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Manage KoniqTech internal employees,
+            roles, departments and reporting structure.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5">
+          <h2 className="font-semibold text-red-900">
+            Organization is not configured
+          </h2>
+
+          <p className="mt-1 text-sm text-red-700">
+            Your administrator account is not linked
+            to an organization. Please verify the
+            administrator account configuration.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  /* ==========================================================
+     LOAD ORGANIZATION
+
+     The ID comes from the authenticated session.
   ========================================================== */
 
   const koniqTechOrganization =
-    await prisma.organization.findFirst({
+    await prisma.organization.findUnique({
       where: {
-        slug: "koniqtech",
+        id: sessionOrgId,
       },
+
       select: {
         id: true,
         slug: true,
+        name: true,
       },
     })
 
   /* ==========================================================
      ORGANIZATION SAFETY
-
-     If the internal KoniqTech organization cannot be found,
-     do not accidentally display records from another tenant.
   ========================================================== */
 
   if (!koniqTechOrganization) {
@@ -110,20 +159,20 @@ export default async function AdminEmployeesPage() {
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage KoniqTech internal employees, roles,
-            departments and reporting structure.
+            Manage KoniqTech internal employees,
+            roles, departments and reporting structure.
           </p>
         </div>
 
         <div className="rounded-xl border border-red-200 bg-red-50 p-5">
           <h2 className="font-semibold text-red-900">
-            KoniqTech organization not found
+            Organization not found
           </h2>
 
           <p className="mt-1 text-sm text-red-700">
-            The internal KoniqTech organization could not be
-            found. Please verify the organization configuration
-            before managing employees.
+            The organization linked to your administrator
+            account could not be found. Please verify the
+            administrator account and organization configuration.
           </p>
         </div>
       </div>
@@ -131,15 +180,15 @@ export default async function AdminEmployeesPage() {
   }
 
   /* ==========================================================
-     LOAD DATA
+     LOAD EMPLOYEES + DEPARTMENT COUNT
 
-     Employees are filtered through their department so that
-     only employees belonging to the KoniqTech organization
-     are displayed.
+     Employees are filtered through their department so
+     only employees belonging to this organization appear.
 
      Departments are counted directly from Department.
-     This is important because the employee table can be empty
-     while departments already exist.
+
+     This is important because departments can exist even
+     when there are zero employees.
   ========================================================== */
 
   const [
@@ -149,7 +198,8 @@ export default async function AdminEmployeesPage() {
     prisma.employee.findMany({
       where: {
         department: {
-          orgId: koniqTechOrganization.id,
+          orgId:
+            koniqTechOrganization.id,
         },
       },
 
@@ -189,7 +239,8 @@ export default async function AdminEmployeesPage() {
 
     prisma.department.count({
       where: {
-        orgId: koniqTechOrganization.id,
+        orgId:
+          koniqTechOrganization.id,
       },
     }),
   ])
@@ -198,33 +249,39 @@ export default async function AdminEmployeesPage() {
      STATISTICS
   ========================================================== */
 
-  const totalEmployees = employees.length
+  const totalEmployees =
+    employees.length
 
-  const activeEmployees = employees.filter(
-    (employee) => employee.active
-  ).length
+  const activeEmployees =
+    employees.filter(
+      (employee) =>
+        employee.active
+    ).length
 
   /*
    * IMPORTANT:
+   * Count departments directly from the database.
    *
-   * Do NOT calculate departments from employees.
-   *
-   * The database can contain departments even when there
-   * are currently zero employees assigned to them.
+   * Do NOT derive this from employees.
    */
-  const departments = departmentCount
+
+  const departments =
+    departmentCount
 
   /*
-   * A manager is an employee who has at least one employee
-   * reporting to them.
+   * A manager is an employee who has at least
+   * one employee reporting to them.
    */
-  const managers = employees.filter(
-    (employee) =>
-      employees.some(
-        (otherEmployee) =>
-          otherEmployee.managerId === employee.id
-      )
-  ).length
+
+  const managers =
+    employees.filter(
+      (employee) =>
+        employees.some(
+          (otherEmployee) =>
+            otherEmployee.managerId ===
+            employee.id
+        )
+    ).length
 
   /* ==========================================================
      PERMISSIONS
@@ -234,60 +291,63 @@ export default async function AdminEmployeesPage() {
     currentRole === "super_admin"
 
   const canEdit =
-    currentRole === "super_admin" ||
-    currentRole === "platform_manager"
+    currentRole ===
+      "super_admin" ||
+    currentRole ===
+      "platform_manager"
 
   const canDelete =
-    currentRole === "super_admin"
+    isSuperAdmin
 
   const canChangeStatus =
-    currentRole === "super_admin"
+    isSuperAdmin
 
   /* ==========================================================
      TABLE DATA
 
-     Convert Date objects to strings before passing them into
-     the client component.
+     Convert Date objects to strings before passing
+     them to the client component.
   ========================================================== */
 
-  const tableRows = employees.map(
-    (employee) => ({
-      id: employee.id,
+  const tableRows =
+    employees.map(
+      (employee) => ({
+        id: employee.id,
 
-      employeeCode:
-        employee.employeeCode,
+        employeeCode:
+          employee.employeeCode,
 
-      firstName:
-        employee.firstName,
+        firstName:
+          employee.firstName,
 
-      lastName:
-        employee.lastName,
+        lastName:
+          employee.lastName,
 
-      email:
-        employee.email,
+        email:
+          employee.email,
 
-      phone:
-        employee.phone,
+        phone:
+          employee.phone,
 
-      designation:
-        employee.designation,
+        designation:
+          employee.designation,
 
-      active:
-        employee.active,
+        active:
+          employee.active,
 
-      department:
-        employee.department,
+        department:
+          employee.department,
 
-      role:
-        employee.role,
+        role:
+          employee.role,
 
-      manager:
-        employee.manager,
+        manager:
+          employee.manager,
 
-      createdAt:
-        employee.createdAt.toISOString(),
-    })
-  )
+        createdAt:
+          employee.createdAt.toISOString(),
+      })
+    )
 
   /* ==========================================================
      RENDER
@@ -303,16 +363,14 @@ export default async function AdminEmployeesPage() {
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
         <div>
-
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">
             Employees
           </h1>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage KoniqTech internal employees, roles,
-            departments and reporting structure.
+            Manage KoniqTech internal employees,
+            roles, departments and reporting structure.
           </p>
-
         </div>
 
         {/* ====================================================
@@ -376,7 +434,9 @@ export default async function AdminEmployeesPage() {
           label="Departments"
           value={departments}
           icon={
-            <BriefcaseBusiness size={20} />
+            <BriefcaseBusiness
+              size={20}
+            />
           }
         />
 
@@ -396,19 +456,9 @@ export default async function AdminEmployeesPage() {
 
       <EmployeeDataTable
         employees={tableRows}
-
-        canCreate={
-          isSuperAdmin
-        }
-
-        canEdit={
-          canEdit
-        }
-
-        canDelete={
-          canDelete
-        }
-
+        canCreate={isSuperAdmin}
+        canEdit={canEdit}
+        canDelete={canDelete}
         canChangeStatus={
           canChangeStatus
         }
@@ -441,11 +491,9 @@ function StatCard({
         p-5
       "
     >
-
       <div className="flex items-start justify-between">
 
         <div>
-
           <p className="text-sm text-slate-500">
             {label}
           </p>
@@ -461,7 +509,6 @@ function StatCard({
           >
             {value}
           </p>
-
         </div>
 
         <div
@@ -480,7 +527,6 @@ function StatCard({
         </div>
 
       </div>
-
     </div>
   )
 }

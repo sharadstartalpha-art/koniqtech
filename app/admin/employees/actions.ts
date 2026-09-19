@@ -726,24 +726,44 @@ async function validateOrganizationRole(
 }
 
 /* =========================================================
-   GET KONIQTECH ORGANIZATION
+   GET CURRENT PLATFORM ORGANIZATION
 ========================================================= */
 
-async function getKoniqTechOrganization() {
+async function getCurrentOrganization(
+  session: {
+    user: unknown
+  }
+) {
+  const user = session.user as {
+    orgId?: unknown
+  }
+
+  const organizationId = String(
+    user.orgId ?? ""
+  ).trim()
+
+  if (!organizationId) {
+    throw new Error(
+      "Your administrator account is not linked to an organization."
+    )
+  }
+
   const organization =
     await prisma.organization.findUnique({
       where: {
-        slug: "koniqtech",
+        id: organizationId,
       },
 
       select: {
         id: true,
+        slug: true,
+        name: true,
       },
     })
 
   if (!organization) {
     throw new Error(
-      "KoniqTech organization was not found."
+      "The organization linked to your administrator account was not found."
     )
   }
 

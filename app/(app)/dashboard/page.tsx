@@ -51,39 +51,46 @@ const permissions: Permission[] =
     dbUser.organizationRole?.permissions ?? [];
 
 const isOwner =
-dbUser?.organizationRole?.name === "Owner";
+    dbUser?.organizationRole?.name?.toLowerCase() === "owner";
 
- 
-console.log(
-  permissions.find(
-    (p: any) => p.module === "Dashboard"
-  )
-);
-
-
-
- if (!canView(permissions, "Dashboard", isOwner)) {
-  redirect("/unauthorized");
-}
-const role=
-
-(session.user as any)
-?.role
-
-if(
-
-role===
-
-"super_admin"
-
-){
-
-redirect(
-"/admin/dashboard"
+const role = String(
+    (session.user as any)?.role ?? ""
 )
+    .trim()
+    .toLowerCase();
 
+/*
+|--------------------------------------------------------------------------
+| INTERNAL PLATFORM SUPER ADMIN
+|--------------------------------------------------------------------------
+| Super Admin must never enter the customer CRM dashboard.
+| Handle this BEFORE customer CRM permission checks.
+*/
+if (role === "super_admin") {
+    redirect("/admin/dashboard");
 }
 
+/*
+|--------------------------------------------------------------------------
+| CUSTOMER CRM DASHBOARD
+|--------------------------------------------------------------------------
+| Normal CRM users are identified by their organization role.
+| Dashboard is the base CRM landing page, so do not block a valid
+| CRM team member merely because their Dashboard permission record
+| is missing.
+|
+| Individual CRM modules are still protected below using canView().
+|--------------------------------------------------------------------------
+*/
+
+const hasCustomerRole =
+    Boolean(
+        dbUser.organizationRole?.name
+    );
+
+if (!hasCustomerRole) {
+    redirect("/unauthorized");
+}
 
 
 const [

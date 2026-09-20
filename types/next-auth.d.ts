@@ -1,6 +1,4 @@
-import type {
-  DefaultSession,
-} from "next-auth"
+import type { DefaultSession } from "next-auth"
 
 import type {
   PlatformRole,
@@ -16,6 +14,8 @@ declare module "next-auth" {
 
       orgId: string
 
+      status: string
+
       organizationRole:
         | string
         | null
@@ -28,8 +28,7 @@ declare module "next-auth" {
         | string
         | null
 
-      isInternalEmployee:
-        | boolean
+      isInternalEmployee: boolean
 
       subscriptionPlan:
         | SubscriptionPlan
@@ -61,6 +60,8 @@ declare module "next-auth" {
 
     orgId: string
 
+    status: string
+
     organizationRole:
       | string
       | null
@@ -73,8 +74,7 @@ declare module "next-auth" {
       | string
       | null
 
-    isInternalEmployee:
-      | boolean
+    isInternalEmployee: boolean
 
     subscriptionPlan:
       | SubscriptionPlan
@@ -95,6 +95,8 @@ declare module "next-auth/jwt" {
 
     orgId?: string
 
+    status?: string
+
     organizationRole?:
       | string
       | null
@@ -107,8 +109,7 @@ declare module "next-auth/jwt" {
       | string
       | null
 
-    isInternalEmployee?:
-      | boolean
+    isInternalEmployee?: boolean
 
     subscriptionPlan?:
       | SubscriptionPlan

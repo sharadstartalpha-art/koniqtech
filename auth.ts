@@ -10,8 +10,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  secret:
-    process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET,
 
   trustHost: true,
 
@@ -27,10 +26,6 @@ export const {
       },
 
       async authorize(credentials) {
-        /* =====================================================
-           VALIDATE INPUT
-        ===================================================== */
-
         if (
           !credentials?.email ||
           !credentials?.password
@@ -38,16 +33,15 @@ export const {
           return null
         }
 
-        const email =
-          String(
-            credentials.email
-          )
-            .trim()
-            .toLowerCase()
+        const email = String(
+          credentials.email
+        )
+          .trim()
+          .toLowerCase()
 
-        /* =====================================================
-           LOAD USER
-        ===================================================== */
+        const password = String(
+          credentials.password
+        )
 
         const user =
           await prisma.user.findUnique({
@@ -76,19 +70,25 @@ export const {
             },
           })
 
+        /*
+        --------------------------------------------------
+        USER NOT FOUND
+        --------------------------------------------------
+        */
+
         if (!user) {
           return null
         }
 
-        /* =====================================================
-           PASSWORD
-        ===================================================== */
+        /*
+        --------------------------------------------------
+        PASSWORD CHECK
+        --------------------------------------------------
+        */
 
         const validPassword =
           await bcrypt.compare(
-            String(
-              credentials.password
-            ),
+            password,
             user.passwordHash
           )
 
@@ -96,85 +96,84 @@ export const {
           return null
         }
 
-        /* =====================================================
-           INTERNAL EMPLOYEE
-           
-           Internal employee requires:
-           
-           1. linked Employee
-           2. Employee.active = true
-           3. organization slug = platform
-        ===================================================== */
+        /*
+        --------------------------------------------------
+        INACTIVE USER CHECK
+        --------------------------------------------------
+
+        This is the important part.
+
+        An inactive user MUST NOT receive
+        an authenticated session.
+        --------------------------------------------------
+        */
+
+        if (
+          String(user.status)
+            .trim()
+            .toLowerCase() !== "active"
+        ) {
+          return null
+        }
+
+        /*
+        --------------------------------------------------
+        INTERNAL EMPLOYEE CHECK
+        --------------------------------------------------
+
+        Employee records belong to the internal
+        KoniqTech platform.
+
+        Customer CRM users use organizationRole.
+        --------------------------------------------------
+        */
 
         const isInternalEmployee =
-          Boolean(
-            user.employee &&
-            user.employee.active &&
-            user.organization?.slug ===
-              "platform"
-          )
+          Boolean(user.employee)
 
-        /* =====================================================
-           EMPLOYEE ROLE
-        ===================================================== */
-
-        const employeeRole =
-          isInternalEmployee
-            ? user.employee?.role?.name ??
-              null
-            : null
-
-        /* =====================================================
-           CUSTOMER ORGANIZATION ROLE
-        ===================================================== */
-
-        const organizationRole =
-          user.organizationRole?.name ??
-          null
-
-        /* =====================================================
-           SUBSCRIPTION
-        ===================================================== */
+        /*
+        --------------------------------------------------
+        SUBSCRIPTION PLAN
+        --------------------------------------------------
+        */
 
         const subscriptionPlan =
-          user.organization
-            .subscriptions &&
-          user.organization
-            .subscriptions.status ===
+          user.organization.subscriptions &&
+          user.organization.subscriptions.status ===
             "active"
-            ? user.organization
-                .subscriptions.plan
+            ? user.organization.subscriptions.plan
             : user.organization.plan
 
-        /* =====================================================
-           RETURN AUTH USER
-        ===================================================== */
+        /*
+        --------------------------------------------------
+        RETURN AUTH USER
+        --------------------------------------------------
+        */
 
         return {
-          id:
-            user.id,
+          id: user.id,
 
-          email:
-            user.email,
+          email: user.email,
 
-          name:
-            user.name,
+          name: user.name,
 
-          role:
-            user.role,
+          role: user.role,
 
-          orgId:
-            user.orgId,
+          orgId: user.orgId,
 
-          organizationRole,
+          status: user.status,
 
-          employeeRole,
+          organizationRole:
+            user.organizationRole?.name ??
+            null,
+
+          employeeRole:
+            user.employee?.role?.name ??
+            null,
 
           employeeId:
-            isInternalEmployee
-              ? user.employee?.id ??
-                null
-              : null,
+            user.employee?.id ??
+            null,
 
           isInternalEmployee,
 
@@ -187,28 +186,25 @@ export const {
     }),
   ],
 
-  /* =========================================================
-     CALLBACKS
-  ========================================================= */
-
   callbacks: {
-    /* =======================================================
-       JWT
-    ======================================================= */
+    /*
+    --------------------------------------------------
+    JWT CALLBACK
+    --------------------------------------------------
+    */
 
     async jwt({
       token,
       user,
     }) {
       if (user) {
-        token.id =
-          user.id
+        token.id = user.id
 
-        token.role =
-          user.role
+        token.role = user.role
 
-        token.orgId =
-          user.orgId
+        token.orgId = user.orgId
+
+        token.status = user.status
 
         token.organizationRole =
           user.organizationRole
@@ -232,9 +228,11 @@ export const {
       return token
     },
 
-    /* =======================================================
-       SESSION
-    ======================================================= */
+    /*
+    --------------------------------------------------
+    SESSION CALLBACK
+    --------------------------------------------------
+    */
 
     async session({
       session,
@@ -245,12 +243,15 @@ export const {
           token.id as string
 
         session.user.role =
-          token.role as
-            | "super_admin"
-            | "user"
+          token.role as "super_admin" | "user"
 
         session.user.orgId =
           token.orgId as string
+
+        session.user.status =
+          String(
+            token.status ?? "inactive"
+          )
 
         session.user.organizationRole =
           token.organizationRole as
@@ -276,19 +277,16 @@ export const {
           token.subscriptionPlan as any
 
         session.user.industry =
-          token.industry as any
+          token.industry as
+            | string
+            | null
       }
 
       return session
     },
   },
 
-  /* =========================================================
-     PAGES
-  ========================================================= */
-
   pages: {
-    signIn:
-      "/login",
+    signIn: "/login",
   },
 })

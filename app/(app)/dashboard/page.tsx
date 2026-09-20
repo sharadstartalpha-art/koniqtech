@@ -71,24 +71,35 @@ if (role === "super_admin") {
 }
 
 /*
+/*
 |--------------------------------------------------------------------------
-| CUSTOMER CRM DASHBOARD
+| CUSTOMER CRM DASHBOARD ACCESS
 |--------------------------------------------------------------------------
-| Normal CRM users are identified by their organization role.
-| Dashboard is the base CRM landing page, so do not block a valid
-| CRM team member merely because their Dashboard permission record
-| is missing.
+| Dashboard is a protected CRM module.
 |
-| Individual CRM modules are still protected below using canView().
+| Access rules:
+| 1. Internal Super Admin belongs to /admin/*
+| 2. Customer Owner always has dashboard access
+| 3. Other CRM users must have Dashboard -> View permission
+| 4. Users without Dashboard permission are redirected to /unauthorized
 |--------------------------------------------------------------------------
 */
 
-const hasCustomerRole =
-    Boolean(
-        dbUser.organizationRole?.name
-    );
+const hasCustomerRole = Boolean(
+    dbUser.organizationRole?.name
+);
 
 if (!hasCustomerRole) {
+    redirect("/unauthorized");
+}
+
+const canViewDashboard = canView(
+    permissions,
+    "Dashboard",
+    isOwner
+);
+
+if (!canViewDashboard) {
     redirect("/unauthorized");
 }
 

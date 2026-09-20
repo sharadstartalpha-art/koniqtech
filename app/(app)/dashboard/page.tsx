@@ -48,61 +48,56 @@ if (!dbUser) {
 
 
 const permissions: Permission[] =
-    dbUser.organizationRole?.permissions ?? [];
+  dbUser.organizationRole?.permissions ?? []
 
 const isOwner =
-    dbUser?.organizationRole?.name?.toLowerCase() === "owner";
+  dbUser.organizationRole?.name?.toLowerCase() === "owner"
 
 const role = String(
-    (session.user as any)?.role ?? ""
+  (session.user as any)?.role ?? ""
 )
-    .trim()
-    .toLowerCase();
+  .trim()
+  .toLowerCase()
 
 /*
 |--------------------------------------------------------------------------
-| INTERNAL PLATFORM SUPER ADMIN
+| INTERNAL PLATFORM
 |--------------------------------------------------------------------------
-| Super Admin must never enter the customer CRM dashboard.
-| Handle this BEFORE customer CRM permission checks.
 */
+
 if (role === "super_admin") {
-    redirect("/admin/dashboard");
+  redirect("/admin/dashboard")
 }
 
 /*
-/*
 |--------------------------------------------------------------------------
-| CUSTOMER CRM DASHBOARD ACCESS
+| CUSTOMER CRM
 |--------------------------------------------------------------------------
-| Dashboard is a protected CRM module.
 |
-| Access rules:
-| 1. Internal Super Admin belongs to /admin/*
-| 2. Customer Owner always has dashboard access
-| 3. Other CRM users must have Dashboard -> View permission
-| 4. Users without Dashboard permission are redirected to /unauthorized
-|--------------------------------------------------------------------------
+| Owner:
+|   Always has dashboard access.
+|
+| Other CRM users:
+|   Must have Dashboard -> View permission.
+|
 */
 
-const hasCustomerRole = Boolean(
-    dbUser.organizationRole?.name
-);
+const hasCustomerRole =
+  Boolean(dbUser.organizationRole?.name)
 
 if (!hasCustomerRole) {
-    redirect("/unauthorized");
+  redirect("/unauthorized")
 }
 
 const canViewDashboard = canView(
-    permissions,
-    "Dashboard",
-    isOwner
-);
+  permissions,
+  "Dashboard",
+  isOwner
+)
 
 if (!canViewDashboard) {
-    redirect("/unauthorized");
+  redirect("/unauthorized")
 }
-
 
 const [
     leads,

@@ -23,6 +23,7 @@ import {
 } from "@/shared/config/role-dashboard"
 
 export default function LoginPage() {
+
   const [email, setEmail] =
     useState("")
 
@@ -39,6 +40,7 @@ export default function LoginPage() {
   async function submit(
     e: React.FormEvent
   ) {
+
     e.preventDefault()
 
     if (loading) {
@@ -48,6 +50,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+
       /* =====================================================
          SIGN IN
       ===================================================== */
@@ -63,12 +66,12 @@ export default function LoginPage() {
 
             password,
 
-            redirect:
-              false,
+            redirect: false,
           }
         )
 
       if (!res?.ok) {
+
         alert(
           "Invalid credentials"
         )
@@ -86,12 +89,12 @@ export default function LoginPage() {
         await fetch(
           "/api/auth/session",
           {
-            cache:
-              "no-store",
+            cache: "no-store",
           }
         )
 
       if (!sessionRes.ok) {
+
         alert(
           "Unable to load your session. Please try again."
         )
@@ -110,8 +113,7 @@ export default function LoginPage() {
 
       const role =
         String(
-          session?.user?.role ??
-            ""
+          session?.user?.role ?? ""
         )
           .trim()
           .toLowerCase()
@@ -125,8 +127,7 @@ export default function LoginPage() {
       const employeeRole =
         String(
           session?.user
-            ?.employeeRole ??
-            ""
+            ?.employeeRole ?? ""
         )
           .trim()
           .toLowerCase()
@@ -136,9 +137,9 @@ export default function LoginPage() {
       ===================================================== */
 
       if (
-        role ===
-        "super_admin"
+        role === "super_admin"
       ) {
+
         window.location.replace(
           getDashboardForRole(
             role
@@ -149,13 +150,14 @@ export default function LoginPage() {
       }
 
       /* =====================================================
-         INTERNAL EMPLOYEE
+         INTERNAL PLATFORM EMPLOYEE
       ===================================================== */
 
       if (
         role === "user" &&
         isInternalEmployee
       ) {
+
         window.location.replace(
           getDashboardForEmployeeRole(
             employeeRole
@@ -167,12 +169,50 @@ export default function LoginPage() {
 
       /* =====================================================
          CUSTOMER CRM USER
+         
+         IMPORTANT:
+         Do NOT blindly redirect every customer user
+         to /dashboard.
+
+         The server endpoint checks the user's actual
+         organization-role permissions.
       ===================================================== */
 
+      const redirectRes =
+        await fetch(
+          "/api/auth/post-login",
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        )
+
+      if (!redirectRes.ok) {
+
+        alert(
+          "Unable to determine your access permissions. Please try again."
+        )
+
+        setLoading(false)
+
+        return
+      }
+
+      const redirectData =
+        await redirectRes.json()
+
+      const destination =
+        typeof redirectData?.redirectTo ===
+        "string"
+          ? redirectData.redirectTo
+          : "/dashboard"
+
       window.location.replace(
-        "/dashboard"
+        destination
       )
+
     } catch (error) {
+
       console.error(
         "Login error:",
         error
@@ -194,6 +234,7 @@ export default function LoginPage() {
         lg:grid-cols-2
       "
     >
+
       {/* ===================================================
           LEFT
       =================================================== */}
@@ -210,6 +251,7 @@ export default function LoginPage() {
           to-black
         "
       >
+
         <div
           className="
             absolute
@@ -239,6 +281,7 @@ export default function LoginPage() {
             text-white
           "
         >
+
           <div
             className="
               flex
@@ -246,6 +289,7 @@ export default function LoginPage() {
               gap-4
             "
           >
+
             <img
               src="/logo.png"
               className="
@@ -256,6 +300,7 @@ export default function LoginPage() {
             />
 
             <div>
+
               <h1
                 className="
                   text-3xl
@@ -272,10 +317,13 @@ export default function LoginPage() {
               >
                 Field Service CRM
               </p>
+
             </div>
+
           </div>
 
           <div>
+
             <div
               className="
                 inline-flex
@@ -288,11 +336,13 @@ export default function LoginPage() {
                 text-orange-300
               "
             >
+
               <Sparkles
                 size={16}
               />
 
               AI Powered Platform
+
             </div>
 
             <h1
@@ -303,6 +353,7 @@ export default function LoginPage() {
                 mt-8
               "
             >
+
               Run Your Entire
 
               <span
@@ -313,6 +364,7 @@ export default function LoginPage() {
               >
                 Service Business
               </span>
+
             </h1>
 
             <p
@@ -337,6 +389,7 @@ export default function LoginPage() {
                 mt-12
               "
             >
+
               <Metric
                 value="42%"
                 label="Revenue Growth"
@@ -351,6 +404,7 @@ export default function LoginPage() {
                 value="AI"
                 label="Dispatch Engine"
               />
+
             </div>
 
             <div
@@ -359,6 +413,7 @@ export default function LoginPage() {
                 space-y-4
               "
             >
+
               <Feature
                 text="Lead Management"
               />
@@ -374,9 +429,13 @@ export default function LoginPage() {
               <Feature
                 text="AI Automation"
               />
+
             </div>
+
           </div>
+
         </div>
+
       </div>
 
       {/* ===================================================
@@ -393,6 +452,7 @@ export default function LoginPage() {
           px-10
         "
       >
+
         <form
           onSubmit={submit}
           className="
@@ -405,6 +465,7 @@ export default function LoginPage() {
             shadow-[0_20px_80px_rgba(0,0,0,0.08)]
           "
         >
+
           <div
             className="
               lg:hidden
@@ -414,6 +475,7 @@ export default function LoginPage() {
               mb-8
             "
           >
+
             <img
               src="/logo.png"
               className="
@@ -424,6 +486,7 @@ export default function LoginPage() {
             />
 
             <div>
+
               <h2
                 className="
                   font-bold
@@ -440,7 +503,9 @@ export default function LoginPage() {
               >
                 Field Service CRM
               </p>
+
             </div>
+
           </div>
 
           <p
@@ -477,6 +542,7 @@ export default function LoginPage() {
               mt-10
             "
           >
+
             {/* EMAIL */}
 
             <div
@@ -484,6 +550,7 @@ export default function LoginPage() {
                 relative
               "
             >
+
               <Mail
                 size={18}
                 className="
@@ -520,6 +587,7 @@ export default function LoginPage() {
                   focus:ring-orange-100
                 "
               />
+
             </div>
 
             {/* PASSWORD */}
@@ -529,6 +597,7 @@ export default function LoginPage() {
                 relative
               "
             >
+
               <Lock
                 size={18}
                 className="
@@ -565,6 +634,7 @@ export default function LoginPage() {
                   focus:ring-orange-100
                 "
               />
+
             </div>
 
             {/* BUTTON */}
@@ -592,9 +662,11 @@ export default function LoginPage() {
                 disabled:opacity-60
               "
             >
+
               {loading
                 ? "Signing in..."
                 : "Continue"}
+
             </button>
 
             {/* LINKS */}
@@ -608,6 +680,7 @@ export default function LoginPage() {
                 text-slate-500
               "
             >
+
               <Link
                 href="/register"
                 className="
@@ -627,6 +700,7 @@ export default function LoginPage() {
               >
                 Forgot password?
               </Link>
+
             </div>
 
             {/* TRUST */}
@@ -641,6 +715,7 @@ export default function LoginPage() {
                 text-slate-500
               "
             >
+
               <span>
                 256-bit SSL
               </span>
@@ -652,10 +727,15 @@ export default function LoginPage() {
               <span>
                 99.9% Uptime
               </span>
+
             </div>
+
           </div>
+
         </form>
+
       </div>
+
     </div>
   )
 }
@@ -671,6 +751,7 @@ function Metric({
   value: string
   label: string
 }) {
+
   return (
     <div
       className="
@@ -679,6 +760,7 @@ function Metric({
         p-5
       "
     >
+
       <div
         className="
           text-3xl
@@ -697,6 +779,7 @@ function Metric({
       >
         {label}
       </div>
+
     </div>
   )
 }
@@ -710,6 +793,7 @@ function Feature({
 }: {
   text: string
 }) {
+
   return (
     <div
       className="
@@ -718,6 +802,7 @@ function Feature({
         gap-3
       "
     >
+
       <CheckCircle2
         size={18}
         className="
@@ -732,6 +817,7 @@ function Feature({
       >
         {text}
       </span>
+
     </div>
   )
 }

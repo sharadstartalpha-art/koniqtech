@@ -82,175 +82,183 @@ export default async function CreateInvoicePage() {
 
   ]);
 
-  async function createInvoice(
-    formData: FormData,
+ async function createInvoice(
+  formData: FormData,
+) {
+  "use server";
+
+  const session =
+    await auth();
+
+  if (!session?.user?.orgId) {
+    redirect("/login");
+  }
+
+  const orgId =
+    session.user.orgId;
+
+  const invoiceNumber =
+    formData
+      .get("invoiceNumber")
+      ?.toString()
+      .trim() ?? "";
+
+  const customerId =
+    formData.get("customerId")?.toString() ?? "";
+
+  const jobId =
+    formData.get("jobId")?.toString() ?? "";
+
+  const subtotal =
+    Number(
+      formData.get("subtotal") ?? 0
+    );
+
+  const tax =
+    Number(
+      formData.get("tax") ?? 0
+    );
+
+  const total =
+    Number(
+      formData.get("total") ?? 0
+    );
+
+  const dueDateValue =
+    formData.get("dueDate")?.toString() ?? "";
+
+  const statusValue =
+    formData.get("status")?.toString() ?? "draft";
+
+  if (!invoiceNumber) {
+    throw new Error(
+      "Invoice number is required."
+    );
+  }
+
+  if (!customerId) {
+    throw new Error(
+      "Customer is required."
+    );
+  }
+
+  if (!jobId) {
+    throw new Error(
+      "Job is required."
+    );
+  }
+
+  if (
+    Number.isNaN(subtotal) ||
+    Number.isNaN(tax) ||
+    Number.isNaN(total)
   ) {
-    "use server";
+    throw new Error(
+      "Amounts must be valid numbers."
+    );
+  }
 
-    const session =
-      await auth();
+  if (
+    subtotal < 0 ||
+    tax < 0 ||
+    total < 0
+  ) {
+    throw new Error(
+      "Amounts cannot be negative."
+    );
+  }
 
-    if (!session?.user?.orgId) {
-      redirect("/login");
-    }
+  if (
+    !Object.values(InvoiceStatus).includes(
+      statusValue as InvoiceStatus
+    )
+  ) {
+    throw new Error(
+      "Invalid invoice status."
+    );
+  }
 
-    const orgId =
-      session.user.orgId;
+  const status =
+    statusValue as InvoiceStatus;
 
-    const invoiceNumber =
-      formData.get("invoiceNumber")?.toString().trim() ?? "";
+  const dueDate =
+    dueDateValue
+      ? new Date(dueDateValue)
+      : null;
 
-    const customerId =
-      formData.get("customerId")?.toString() ?? "";
+  if (
+    dueDate &&
+    Number.isNaN(dueDate.getTime())
+  ) {
+    throw new Error(
+      "Invalid due date."
+    );
+  }
 
-    const jobId =
-      formData.get("jobId")?.toString() ?? "";
-
-    const subtotal =
-      Number(
-        formData.get("subtotal") ?? 0
-      );
-
-    const tax =
-      Number(
-        formData.get("tax") ?? 0
-      );
-
-    const total =
-      Number(
-        formData.get("total") ?? 0
-      );
-
-    const dueDateValue =
-      formData.get("dueDate")?.toString() ?? "";
-
-    const status =
-      formData.get("status")?.toString() ??
-      "draft";
-
-    if (!invoiceNumber) {
-      throw new Error(
-        "Invoice number is required."
-      );
-    }
-
-    if (!customerId) {
-      throw new Error(
-        "Customer is required."
-      );
-    }
-
-    if (!jobId) {
-      throw new Error(
-        "Job is required."
-      );
-    }
-
-    if (
-      Number.isNaN(subtotal) ||
-      Number.isNaN(tax) ||
-      Number.isNaN(total)
-    ) {
-      throw new Error(
-        "Amounts must be valid numbers."
-      );
-    }
-
-    const dueDate =
-      dueDateValue
-        ? new Date(dueDateValue)
-        : null;
-
-    if (
-      dueDate &&
-      Number.isNaN(dueDate.getTime())
-    ) {
-      throw new Error(
-        "Invalid due date."
-      );
-    }
-
-
-        const customer =
-      await prisma.customer.findFirst({
-
-        where: {
-
-          id: customerId,
-
-          orgId,
-
-        },
-
-        select: {
-
-          id: true,
-
-        },
-
-      });
-
-    if (!customer) {
-      throw new Error(
-        "Customer not found."
-      );
-    }
-
-    const job =
-      await prisma.job.findFirst({
-
-        where: {
-
-          id: jobId,
-
-          orgId,
-
-        },
-
-        select: {
-
-          id: true,
-
-        },
-
-      });
-
-    if (!job) {
-      throw new Error(
-        "Job not found."
-      );
-    }
-
-    await prisma.invoice.create({
-
-      data: {
-
+  const customer =
+    await prisma.customer.findFirst({
+      where: {
+        id: customerId,
         orgId,
-
-        invoiceNumber,
-
-        customerId,
-
-        jobId,
-
-        subtotal,
-
-        tax,
-
-        total,
-
-        dueDate,
-
-         status:
-        status as InvoiceStatus,
-
       },
 
+      select: {
+        id: true,
+        locationId: true,
+      },
     });
 
-    redirect("/billing");
-
+  if (!customer) {
+    throw new Error(
+      "Customer not found."
+    );
   }
+
+  const job =
+    await prisma.job.findFirst({
+      where: {
+        id: jobId,
+        orgId,
+      },
+
+      select: {
+        id: true,
+        locationId: true,
+      },
+    });
+
+  if (!job) {
+    throw new Error(
+      "Job not found."
+    );
+  }
+
+  if (
+    customer.locationId !==
+    job.locationId
+  ) {
+    throw new Error(
+      "Customer and job must belong to the same location."
+    );
+  }
+
+  await prisma.invoice.create({
+    data: {
+      orgId,
+      locationId: job.locationId,
+      invoiceNumber,
+      customerId,
+      jobId,
+      subtotal,
+      tax,
+      total,
+      dueDate,
+      status,
+    },
+  });
+
+  redirect("/billing");
+}
 
   return (
 

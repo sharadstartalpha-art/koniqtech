@@ -434,15 +434,18 @@ export default async function OrganizationPage({
         id,
       },
 
-      include: {
-        users: {
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
+     include: {
+  users: {
+    orderBy: {
+      createdAt: "desc",
+    },
+    include: {
+      organizationRole: true,
+    },
+  },
 
-        subscriptions: true,
-      },
+  subscriptions: true,
+},
     });
 
   if (!organization) {
@@ -884,7 +887,7 @@ console.log("Active:", subscriptionActive);
 
                       <td className="px-6 py-5">
                         <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-700">
-                         user.organizationRole?.name.replaceAll("_", " ") ?? "No Role"
+                        {user.organizationRole?.name?.replaceAll("_", " ") ?? "No Role"}
                         </span>
                       </td>
 

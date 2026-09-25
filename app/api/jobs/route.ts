@@ -45,85 +45,68 @@ jobs
 }
 
 export async function POST(
+  req: Request
+) {
+  const body = await req.json()
 
-req:Request
+  const store = await cookies()
 
-){
+  const email = store.get(
+    "token"
+  )?.value
 
-const body=
+  const user = await prisma.user.findUnique({
+    where: { email }
+  })
 
-await req.json()
+  if (!user) {
+    return NextResponse.json(
+      {
+        error: "Unauthorized"
+      },
+      {
+        status: 401
+      }
+    )
+  }
 
-const store=
+  // Get the organization's active default location
+  const location = await prisma.organizationLocation.findFirst({
+    where: {
+      orgId: user.orgId,
+      active: true
+    },
+    orderBy: [
+      { isDefault: "desc" },
+      { createdAt: "asc" }
+    ],
+    select: {
+      id: true
+    }
+  })
 
-await cookies()
+  if (!location) {
+    return NextResponse.json(
+      {
+        error: "No active location is configured for this organization."
+      },
+      {
+        status: 400
+      }
+    )
+  }
 
-const email=
+  const job = await prisma.job.create({
+    data: {
+      orgId: user.orgId,
+      locationId: location.id,
+      customerId: body.customerId,
+      title: body.title || "Job",
+      status: body.status || "scheduled"
+    }
+  })
 
-store.get(
-
-"token"
-
-)?.value
-
-const user=
-
-await prisma.user.findUnique({
-
-where:{email}
-
-})
-
-
-if(!user){
-
-return NextResponse.json(
-
-{
-error:"Unauthorized"
-},
-
-{
-status:401
-}
-
-)
-
-}
-
-
-const job=
-
-await prisma.job.create({
-
-data:{
-
-orgId:user.orgId,
-
-customerId:
-
-body.customerId,
-
-title:
-
-body.title ||
-
-"Job",
-
-status:
-
-body.status ||
-
-"scheduled"
-
-}
-
-})
-
-return NextResponse.json(
-
-job
-
-)
-
+  return NextResponse.json(
+    job
+  )
 }

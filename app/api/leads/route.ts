@@ -96,55 +96,72 @@ status:401
 
 }
 
-const lead=
+// Get the organization's active default location
+const location = await prisma.organizationLocation.findFirst({
+  where: {
+    orgId: user.orgId,
+    active: true
+  },
+  orderBy: [
+    { isDefault: "desc" },
+    { createdAt: "asc" }
+  ],
+  select: {
+    id: true
+  }
+})
 
-await prisma.lead.create({
-
-data:{
-
-orgId:user.orgId,
-
-firstName:
-
-body.firstName ||
-
-body.name ||
-
-"Lead",
-
-lastName:
-
-body.lastName ||
-
-"",
-
-email:
-
-body.email ||
-
-null,
-
-phone:
-
-body.phone ||
-
-null,
-
-status:
-
-body.status ||
-
-"new",
-
-source:
-
-body.source ||
-
-"website"
-
+if (!location) {
+  return NextResponse.json(
+    {
+      error: "No active location is configured for this organization."
+    },
+    {
+      status: 400
+    }
+  )
 }
 
+const lead =
+await prisma.lead.create({
+
+  data: {
+
+    orgId: user.orgId,
+
+    locationId: location.id,
+
+    firstName:
+      body.firstName ||
+      body.name ||
+      "Lead",
+
+    lastName:
+      body.lastName ||
+      "",
+
+    email:
+      body.email ||
+      null,
+
+    phone:
+      body.phone ||
+      null,
+
+    status:
+      body.status ||
+      "new",
+
+    source:
+      body.source ||
+      "website"
+
+  }
+
 })
+
+
+
 
 return NextResponse.json(
 

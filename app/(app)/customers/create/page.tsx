@@ -24,11 +24,36 @@ async function createCustomer(formData: FormData) {
     throw new Error("First name is required.")
   }
 
+const location =
+  await prisma.organizationLocation.findFirst({
+    where: {
+      orgId,
+      active: true,
+    },
+    orderBy: [
+      {
+        isDefault: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+    },
+  });
+
+if (!location) {
+  throw new Error(
+    "No active location is configured for this organization."
+  );
+}
+
   
 await prisma.customer.create({
   data: {
     orgId,
-
+    locationId: location.id,
     firstName,
 
     lastName: lastName || null,

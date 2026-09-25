@@ -44,12 +44,13 @@ if(existingCustomer){
 
     data: {
 
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      email: lead.email,
-      phone: lead.phone,
-      orgId: lead.orgId,
-      leadId: lead.id
+    firstName: lead.firstName,
+    lastName: lead.lastName,
+    email: lead.email,
+    phone: lead.phone,
+    orgId: lead.orgId,
+    leadId: lead.id,
+    locationId: lead.locationId
 
     }
 

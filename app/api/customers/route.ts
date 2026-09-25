@@ -96,56 +96,76 @@ status:401
 
 }
 
+const location =
+  await prisma.organizationLocation.findFirst({
+    where: {
+      orgId: user.orgId,
+      active: true,
+    },
+    orderBy: [
+      {
+        isDefault: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+    },
+  });
 
-const customer=
-
-await prisma.customer.create({
-
-data:{
-
-orgId:user.orgId,
-
-firstName:
-
-body.firstName ||
-
-body.name ||
-
-"Customer",
-
-lastName:
-
-body.lastName ||
-
-"",
-
-email:
-
-body.email ||
-
-null,
-
-phone:
-
-body.phone ||
-
-null,
-
-address:
-
-body.address ||
-
-null,
-
-notes:
-
-body.notes ||
-
-null
-
+if (!location) {
+  return NextResponse.json(
+    {
+      error:
+        "No active location is configured for this organization.",
+    },
+    {
+      status: 400,
+    }
+  );
 }
 
-})
+const customer =
+  await prisma.customer.create({
+
+    data: {
+
+      orgId: user.orgId,
+
+      locationId: location.id,
+
+      firstName:
+        body.firstName ||
+        body.name ||
+        "Customer",
+
+      lastName:
+        body.lastName ||
+        "",
+
+      email:
+        body.email ||
+        null,
+
+      phone:
+        body.phone ||
+        null,
+
+      address:
+        body.address ||
+        null,
+
+      notes:
+        body.notes ||
+        null,
+
+    }
+
+  });
+
+
 
 return NextResponse.json(
 

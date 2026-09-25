@@ -700,9 +700,34 @@ export async function createLeadAction(
     // the LeadForm should submit exact enum values.
     // --------------------------------------------------------
 
+const location =
+  await prisma.organizationLocation.findFirst({
+    where: {
+      orgId,
+      active: true,
+    },
+    orderBy: [
+      {
+        isDefault: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+    },
+  });
+
+if (!location) {
+  throw new Error(
+    "No active location is configured for this organization."
+  );
+}
+
    const createData: Prisma.LeadUncheckedCreateInput = {
   orgId,
-
+  locationId: location.id,
   source: parsed.data.source,
 
   firstName: parsed.data.firstName,

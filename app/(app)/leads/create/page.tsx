@@ -25,13 +25,98 @@ if (!firstName) {
   throw new Error("First name is required")
 }
 
+const location =
+  await prisma.organizationLocation.findFirst({
+    where: {
+      orgId,
+      active: true,
+    },
+    orderBy: [
+      {
+        isDefault: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+    },
+  });
+
+if (!location) {
+  throw new Error(
+    "No active location is configured for this organization."
+  );
+}
+
+await prisma.lead.create({
+
+  data: {
+
+    orgId,
+
+    locationId: location.id,
+
+    source: String(
+      formData.get("source")
+    ),
+
+    firstName,
+
+    lastName: String(
+      formData.get("lastName")
+    ),
+
+    email: String(
+      formData.get("email")
+    ),
+
+    phone: String(
+      formData.get("phone")
+    ),
+
+    companyName: String(
+      formData.get("companyName")
+    ),
+
+    address: String(
+      formData.get("address")
+    ),
+
+    budget: Number(
+      formData.get("budget")
+    ) || 0,
+
+    priority: String(
+      formData.get("priority")
+    ),
+
+    tags: String(
+      formData.get("tags")
+    ),
+
+    assignedToId:
+      String(
+        formData.get("assignedTo")
+      ) || null,
+
+  }
+
+});
+
+if (!location) {
+  throw new Error(
+    "No active location is configured for this organization."
+  );
+}
 
   await prisma.lead.create({
 
     data:{
 
       orgId,
-
+      locationId: location.id,
       source:String(
         formData.get("source")
       ),

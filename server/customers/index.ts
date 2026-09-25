@@ -1,37 +1,48 @@
 import prisma from "@/shared/lib/prisma"
 
 export async function createCustomer(
-data:any
-){
+  data: any
+) {
+  const location = await prisma.organizationLocation.findFirst({
+    where: {
+      orgId: data.orgId,
+      active: true
+    },
+    orderBy: [
+      { isDefault: "desc" },
+      { createdAt: "asc" }
+    ],
+    select: {
+      id: true
+    }
+  })
 
-return prisma.customer.create({
+  if (!location) {
+    throw new Error(
+      "No active location is configured for this organization."
+    )
+  }
 
-data:{
+  return prisma.customer.create({
+    data: {
+      orgId: data.orgId,
 
-orgId:data.orgId,
+      locationId: location.id,
 
-firstName:
+      firstName:
+        data.firstName,
 
-data.firstName,
+      lastName:
+        data.lastName,
 
-lastName:
+      email:
+        data.email,
 
-data.lastName,
+      phone:
+        data.phone,
 
-email:
-
-data.email,
-
-phone:
-
-data.phone,
-
-address:
-
-data.address
-
-}
-
-})
-
+      address:
+        data.address
+    }
+  })
 }

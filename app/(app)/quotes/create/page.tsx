@@ -253,42 +253,44 @@ const unit =
 
     await prisma.$transaction(async (tx) => {
 
-      const quote =
-        await tx.quote.create({
+     const quote =
+  await tx.quote.create({
 
-          data: {
+    data: {
 
-  orgId,
+      orgId,
 
-  customerId,
+      locationId: customer.locationId,
 
-  createdById: userId,
+      customerId,
 
-  updatedById: userId,
+      createdById: userId,
 
-  quoteNumber,
+      updatedById: userId,
 
-  status: QuoteStatus.draft,
+      quoteNumber,
 
-  validUntil: validUntilValue
-    ? new Date(validUntilValue)
-    : null,
+      status: QuoteStatus.draft,
 
-  notes,
+      validUntil: validUntilValue
+        ? new Date(validUntilValue)
+        : null,
 
-  terms,
+      notes,
 
-  discount: new Prisma.Decimal(discount),
+      terms,
 
-  subtotal: new Prisma.Decimal(subtotal),
+      discount: new Prisma.Decimal(discount),
 
-  tax: new Prisma.Decimal(tax),
+      subtotal: new Prisma.Decimal(subtotal),
 
-  total: new Prisma.Decimal(total),
+      tax: new Prisma.Decimal(tax),
 
-},
+      total: new Prisma.Decimal(total),
 
-        });
+    },
+
+  });
 
       await tx.quoteItem.createMany({
 

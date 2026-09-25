@@ -161,31 +161,32 @@ export default async function CreateInvoicePage({
 
     await prisma.invoice.create({
 
-      data: {
+  data: {
 
-        orgId,
+    orgId,
 
-        customerId,
+    locationId: job.locationId,
 
-        jobId: job.id,
+    customerId,
 
-        invoiceNumber,
+    jobId: job.id,
 
-        subtotal,
+    invoiceNumber,
 
-        tax,
+    subtotal,
 
-        total,
+    tax,
 
-        dueDate,
+    total,
 
-        status:
-  status as InvoiceStatus,
+    dueDate,
 
+    status:
+      status as InvoiceStatus,
 
-      },
+  },
 
-    })
+})
 
     redirect(
       `/jobs/${job.id}/invoices`

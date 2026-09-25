@@ -289,7 +289,7 @@ export async function POST(
         data: {
 
           orgId,
-
+           locationId: job.locationId,
           customerId,
 
           jobId,

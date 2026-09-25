@@ -35,34 +35,49 @@ const session=await auth()
 
 const orgId=(session?.user as any)?.orgId
 
-await prisma.job.create({
+const location =
+  await prisma.organizationLocation.findFirst({
+    where: {
+      orgId,
+      active: true,
+    },
+    orderBy: [
+      {
+        isDefault: "desc",
+      },
+      {
+        createdAt: "asc",
+      },
+    ],
+    select: {
+      id: true,
+    },
+  });
 
-data:{
-
-orgId,
-
-customerId:
-String(
-formData.get(
-"customerId"
-)
-),
-
-title:
-String(
-formData.get(
-"title"
-)
-),
-
-status:
-formData.get(
-"status"
-) as any
-
+if (!location) {
+  throw new Error(
+    "No active location is configured for this organization."
+  );
 }
 
-})
+await prisma.job.create({
+  data: {
+    orgId,
+
+    locationId: location.id,
+
+    customerId: String(
+      formData.get("customerId")
+    ),
+
+    title: String(
+      formData.get("title")
+    ),
+
+    status:
+      formData.get("status") as any,
+  },
+});
 
 redirect("/jobs")
 

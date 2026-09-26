@@ -14,26 +14,25 @@ signOut
 } from "next-auth/react"
 
 import {
-
-LayoutDashboard,
-Users,
-GitBranch,
-Briefcase,
-Calendar,
-MessageSquare,
-CreditCard,
-Truck,
-BarChart3,
-Brain,
-Bell,
-Settings,
-Search,
-ChevronDown,
-CheckSquare,
-LogOut,
-MoreHorizontal,
-User
-
+  LayoutDashboard,
+  Users,
+  GitBranch,
+  Briefcase,
+  Calendar,
+  MessageSquare,
+  CreditCard,
+  Truck,
+  BarChart3,
+  Brain,
+  Bell,
+  Settings,
+  Search,
+  ChevronDown,
+  CheckSquare,
+  LogOut,
+  MoreHorizontal,
+  User,
+  MapPin
 } from "lucide-react"
 
 import { getMenuForPlan } from "@/shared/lib/get-menu";
@@ -43,19 +42,23 @@ import {
   type Permission,
 } from "@/shared/lib/permissions";
 
-
+type AppLocation = {
+  id: string
+  name: string
+  city: string
+  state: string | null
+  country: string | null
+  isDefault: boolean
+}
 
 export default function AppLayout({
+  children,
+  locations = [],
+}: {
+  children: React.ReactNode
+  locations?: AppLocation[]
+}) {
 
-
-
-children
-
-}:{
-
-children:React.ReactNode
-
-}){
 
 
 
@@ -92,6 +95,12 @@ useState("")
 
 const [name,setName]=
 useState("User")
+
+const [activeLocationId, setActiveLocationId] =
+  useState("")
+
+const [locationOpen, setLocationOpen] =
+  useState(false)
 
 const [open,setOpen]=
 useState(false)
@@ -141,6 +150,42 @@ useEffect(() => {
   load()
 
   loadNotifications()
+
+useEffect(() => {
+  if (!locations.length) {
+    setActiveLocationId("")
+    return
+  }
+
+  const savedLocationId =
+    window.localStorage.getItem("koniqtech_active_location")
+
+  const savedLocationExists =
+    savedLocationId &&
+    locations.some(
+      (location) => location.id === savedLocationId
+    )
+
+  if (savedLocationExists) {
+    setActiveLocationId(savedLocationId)
+    return
+  }
+
+  const defaultLocation =
+    locations.find(
+      (location) => location.isDefault
+    ) || locations[0]
+
+  if (defaultLocation) {
+    setActiveLocationId(defaultLocation.id)
+
+    window.localStorage.setItem(
+      "koniqtech_active_location",
+      defaultLocation.id
+    )
+  }
+}, [locations])
+
 
   const interval =
     setInterval(
@@ -242,6 +287,29 @@ setIndustry(
 }
 
 
+function selectLocation(locationId: string) {
+  setActiveLocationId(locationId)
+
+  window.localStorage.setItem(
+    "koniqtech_active_location",
+    locationId
+  )
+
+  document.cookie =
+    `koniqtech_active_location=${encodeURIComponent(locationId)}; path=/; max-age=31536000; SameSite=Lax`
+
+  setLocationOpen(false)
+
+  window.dispatchEvent(
+    new CustomEvent("koniqtech-location-changed", {
+      detail: {
+        locationId,
+      },
+    })
+  )
+}
+
+
 return(
 
 <div className="h-screen flex bg-[#f8f8f8]">
@@ -284,6 +352,181 @@ Koniqtech
 </div>
 
 </div>
+
+
+{locations.length > 0 && (
+  <div className="px-4 pt-4 pb-2">
+    <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-2 px-1">
+      Location
+    </div>
+
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() =>
+          setLocationOpen(!locationOpen)
+        }
+        className="
+          w-full
+          min-h-[52px]
+          px-3
+          rounded-xl
+          border
+          bg-white
+          hover:bg-orange-50
+          hover:border-orange-200
+          flex
+          items-center
+          justify-between
+          gap-3
+          transition
+        "
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="
+              w-9
+              h-9
+              rounded-lg
+              bg-orange-50
+              text-orange-600
+              flex
+              items-center
+              justify-center
+              shrink-0
+            "
+          >
+            <MapPin size={17} />
+          </div>
+
+          <div className="text-left min-w-0">
+            <div className="text-sm font-medium text-slate-900 truncate">
+              {
+                locations.find(
+                  (location) =>
+                    location.id === activeLocationId
+                )?.name || "Select location"
+              }
+            </div>
+
+            <div className="text-xs text-slate-500 truncate">
+              {
+                locations.find(
+                  (location) =>
+                    location.id === activeLocationId
+                )?.city || ""
+              }
+            </div>
+          </div>
+        </div>
+
+        <ChevronDown
+          size={16}
+          className={`shrink-0 transition ${
+            locationOpen
+              ? "rotate-180"
+              : ""
+          }`}
+        />
+      </button>
+
+      {locationOpen && (
+        <div
+          className="
+            absolute
+            left-0
+            right-0
+            top-[58px]
+            bg-white
+            border
+            rounded-2xl
+            shadow-xl
+            overflow-hidden
+            z-[100]
+          "
+        >
+          <div className="px-4 py-3 border-b">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Your Locations
+            </p>
+          </div>
+
+          <div className="max-h-[280px] overflow-y-auto p-2">
+            {locations.map((location) => {
+              const active =
+                location.id === activeLocationId
+
+              return (
+                <button
+                  key={location.id}
+                  type="button"
+                  onClick={() =>
+                    selectLocation(location.id)
+                  }
+                  className={`
+                    w-full
+                    flex
+                    items-center
+                    gap-3
+                    px-3
+                    py-3
+                    rounded-xl
+                    text-left
+                    transition
+                    ${
+                      active
+                        ? "bg-orange-50 text-orange-600"
+                        : "hover:bg-slate-50 text-slate-700"
+                    }
+                  `}
+                >
+                  <div
+                    className={`
+                      w-8
+                      h-8
+                      rounded-lg
+                      flex
+                      items-center
+                      justify-center
+                      shrink-0
+                      ${
+                        active
+                          ? "bg-orange-100 text-orange-600"
+                          : "bg-slate-100 text-slate-500"
+                      }
+                    `}
+                  >
+                    <MapPin size={15} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">
+                      {location.name}
+                    </div>
+
+                    <div className="text-xs text-slate-500 truncate">
+                      {location.city}
+                      {location.state
+                        ? `, ${location.state}`
+                        : ""}
+                    </div>
+                  </div>
+
+                  {active && (
+                    <span className="text-xs font-semibold">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+)}
+
 
 <div
   className="

@@ -1,2060 +1,1369 @@
-import prisma from "@/shared/lib/prisma"
-import Link from "next/link"
-import { auth } from "@/auth"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
+"use client";
 
-export const dynamic = "force-dynamic"
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AlertCircle,
+  Building2,
+  Check,
+  ChevronDown,
+  Edit3,
+  Globe2,
+  Loader2,
+  MapPin,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  RefreshCw,
+  Star,
+  Trash2,
+  X,
+} from "lucide-react";
 
-interface Props {
-  searchParams: Promise<{
-    created?: string
-    error?: string
-  }>
+type LocationStatus = "ACTIVE" | "INACTIVE";
+
+type Location = {
+  id: string;
+  name: string;
+
+  addressLine1?: string | null;
+  addressLine2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+
+  phone?: string | null;
+  email?: string | null;
+  timezone?: string | null;
+
+  status: LocationStatus;
+  isDefault: boolean;
+
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type LocationResponse = {
+  locations: Location[];
+  plan?: string | null;
+  maxLocations?: number | null;
+};
+
+type FormState = {
+  name: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  phone: string;
+  email: string;
+  timezone: string;
+  status: LocationStatus;
+  isDefault: boolean;
+};
+
+const EMPTY_FORM: FormState = {
+  name: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  country: "United States",
+  phone: "",
+  email: "",
+  timezone: "America/New_York",
+  status: "ACTIVE",
+  isDefault: false,
+};
+
+const TIMEZONES = [
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Phoenix",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Europe/London",
+  "Europe/Paris",
+  "Asia/Dubai",
+  "Asia/Kolkata",
+  "Australia/Sydney",
+];
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Something went wrong. Please try again.";
 }
 
-function normalizePlan(plan: unknown) {
-  return String(plan ?? "")
-    .trim()
-    .toLowerCase()
+function formatAddress(location: Location): string {
+  return [
+    location.addressLine1,
+    location.addressLine2,
+    location.city,
+    location.state,
+    location.postalCode,
+    location.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
-export default async function LocationsPage({
-  searchParams,
-}: Props) {
-  const params = await searchParams
-
-  /* ============================================================
-     AUTH
-  ============================================================ */
-
-  const session = await auth()
-
-  if (!session?.user?.id) {
-    redirect("/login")
+function getPlanLabel(plan?: string | null): string {
+  if (!plan) {
+    return "Current Plan";
   }
 
-  const orgId = session.user.orgId
+  return plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase();
+}
 
-  if (!orgId) {
-    redirect("/dashboard")
+function getFallbackLimit(plan?: string | null): number | null {
+  const normalized = plan?.toLowerCase();
+
+  if (normalized === "enterprise") {
+    return null;
   }
 
-  /* ============================================================
-     CURRENT USER
-  ============================================================ */
+  return 1;
+}
 
-  const currentUser = await prisma.user.findUnique({
-    where: {
-      id: session.user.id,
-    },
-    include: {
-      organizationRole: {
-        include: {
-          permissions: true,
-        },
-      },
-    },
-  })
+function isEnterprisePlan(plan?: string | null): boolean {
+  return plan?.toLowerCase() === "enterprise";
+}
 
-  if (!currentUser) {
-    redirect("/login")
+function formatDate(date?: string): string {
+  if (!date) {
+    return "";
   }
 
-  /* ============================================================
-     ORGANIZATION
-  ============================================================ */
+  const parsed = new Date(date);
 
-  const organization = await prisma.organization.findUnique({
-    where: {
-      id: orgId,
-    },
-    select: {
-      id: true,
-      name: true,
-      plan: true,
-    },
-  })
-
-  if (!organization) {
-    redirect("/dashboard")
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
   }
 
-  /* ============================================================
-     PERMISSIONS
-  ============================================================ */
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
-  const organizationRole =
-    currentUser.organizationRole?.name
-      ?.trim()
-      .toLowerCase() ?? ""
+export default function LocationsPage() {
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [plan, setPlan] = useState<string | null>(null);
+  const [maxLocations, setMaxLocations] = useState<number | null>(1);
 
-  const isOwner = organizationRole === "owner"
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const locationPermission =
-    currentUser.organizationRole?.permissions.find(
-      (permission) =>
-        permission.module.toLowerCase() === "locations"
-    )
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingLocation, setEditingLocation] =
+    useState<Location | null>(null);
 
-  /*
-   * Owner always has access.
-   *
-   * For other users, use the Locations permission if it exists.
-   *
-   * This also keeps the page safe if the permission has not yet
-   * been configured in the customer's role.
-   */
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
 
-  const canView =
-    isOwner ||
-    Boolean(locationPermission?.canView)
+  const [saving, setSaving] = useState(false);
 
-  const canCreate =
-    isOwner ||
-    Boolean(locationPermission?.canCreate)
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const canEdit =
-    isOwner ||
-    Boolean(locationPermission?.canEdit)
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
 
-  const canDelete =
-    isOwner ||
-    Boolean(locationPermission?.canDelete)
+  const [deleteLocation, setDeleteLocation] =
+    useState<Location | null>(null);
 
-  if (!canView) {
-    redirect("/dashboard")
-  }
+  const [deleting, setDeleting] = useState(false);
 
-  /* ============================================================
-     PLAN
-  ============================================================ */
+  const resolvedMaxLocations = useMemo(() => {
+    if (maxLocations === null) {
+      return getFallbackLimit(plan);
+    }
 
-  const plan = normalizePlan(organization.plan)
+    if (typeof maxLocations === "number") {
+      return maxLocations;
+    }
 
-  const isEnterprise =
-    plan === "enterprise"
+    return getFallbackLimit(plan);
+  }, [maxLocations, plan]);
 
-  const isProfessional =
-    plan === "professional" ||
-    plan === "pro"
+  const locationLimitReached =
+    resolvedMaxLocations !== null &&
+    locations.length >= resolvedMaxLocations;
 
-  /*
-   * Professional:
-   *   Maximum 1 active location.
-   *
-   * Enterprise:
-   *   Unlimited locations.
-   *
-   * Employees are NOT limited by plan.
-   */
+  const enterprise = isEnterprisePlan(plan);
 
-  const locationLimit =
-    isEnterprise
-      ? null
-      : 1
+  const fetchLocations = useCallback(
+    async (isRefresh = false) => {
+      try {
+        if (isRefresh) {
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
 
-  /* ============================================================
-     LOAD LOCATIONS
-  ============================================================ */
+        setError("");
 
-  const locations =
-    await prisma.organizationLocation.findMany({
-      where: {
-        orgId,
-      },
-      include: {
-        userLocations: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                status: true,
-              },
-            },
+        const response = await fetch("/api/settings/locations", {
+          method: "GET",
+          cache: "no-store",
+          headers: {
+            Accept: "application/json",
           },
-        },
-      },
-      orderBy: [
-        {
-          isDefault: "desc",
-        },
-        {
-          active: "desc",
-        },
-        {
-          createdAt: "asc",
-        },
-      ],
-    })
+        });
 
-  const activeLocations =
-    locations.filter(
-      (location) => location.active
-    )
+        const data = await response.json().catch(() => null);
 
-  /* ============================================================
-     LOAD TEAM MEMBERS
-  ============================================================ */
+        if (!response.ok) {
+          throw new Error(
+            data?.error || "Unable to load locations."
+          );
+        }
 
-  const teamMembers =
-    await prisma.user.findMany({
-      where: {
-        orgId,
-        status: "active",
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    })
+        const payload = data as LocationResponse;
 
-  /* ============================================================
-     CREATE LOCATION
-  ============================================================ */
+        setLocations(
+          Array.isArray(payload.locations)
+            ? payload.locations
+            : []
+        );
 
-  async function createLocation(
-    formData: FormData
-  ) {
-    "use server"
+        setPlan(payload.plan ?? null);
 
-    const session = await auth()
+        if (
+          payload.maxLocations === null ||
+          typeof payload.maxLocations === "number"
+        ) {
+          setMaxLocations(payload.maxLocations);
+        } else {
+          setMaxLocations(getFallbackLimit(payload.plan));
+        }
+      } catch (err) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    []
+  );
 
-    if (!session?.user?.id) {
-      redirect("/login")
+  useEffect(() => {
+    void fetchLocations();
+  }, [fetchLocations]);
+
+  useEffect(() => {
+    if (!success) {
+      return;
     }
 
-    const sessionOrgId = session.user.orgId
+    const timer = window.setTimeout(() => {
+      setSuccess("");
+    }, 4000);
 
-    if (!sessionOrgId) {
-      redirect("/dashboard")
+    return () => window.clearTimeout(timer);
+  }, [success]);
+
+  const openCreateModal = () => {
+    if (locationLimitReached) {
+      setError(
+        enterprise
+          ? "You have reached the location limit."
+          : `Your ${getPlanLabel(
+              plan
+            )} plan includes 1 location. Upgrade to Enterprise to add additional locations.`
+      );
+
+      return;
     }
 
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      })
+    setEditingLocation(null);
 
-    if (!currentUser) {
-      redirect("/login")
+    setForm({
+      ...EMPTY_FORM,
+      isDefault: locations.length === 0,
+    });
+
+    setError("");
+    setSuccess("");
+    setMenuOpen(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (location: Location) => {
+    setEditingLocation(location);
+
+    setForm({
+      name: location.name ?? "",
+      addressLine1: location.addressLine1 ?? "",
+      addressLine2: location.addressLine2 ?? "",
+      city: location.city ?? "",
+      state: location.state ?? "",
+      postalCode: location.postalCode ?? "",
+      country: location.country ?? "United States",
+      phone: location.phone ?? "",
+      email: location.email ?? "",
+      timezone:
+        location.timezone ?? "America/New_York",
+      status: location.status ?? "ACTIVE",
+      isDefault: location.isDefault,
+    });
+
+    setError("");
+    setSuccess("");
+    setMenuOpen(null);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (saving) {
+      return;
     }
 
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
+    setModalOpen(false);
+    setEditingLocation(null);
+    setForm(EMPTY_FORM);
+    setError("");
+  };
 
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
+  const updateField = <K extends keyof FormState>(
+    field: K,
+    value: FormState[K]
+  ) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canCreate)
+  const handleSave = async () => {
+    setError("");
+    setSuccess("");
 
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to create locations."
-      )
-    }
-
-    /* ----------------------------------------------------------
-       Organization / plan
-    ---------------------------------------------------------- */
-
-    const organization =
-      await prisma.organization.findUnique({
-        where: {
-          id: sessionOrgId,
-        },
-        select: {
-          id: true,
-          plan: true,
-        },
-      })
-
-    if (!organization) {
-      throw new Error(
-        "Organization not found."
-      )
-    }
-
-    const normalizedPlan =
-      normalizePlan(
-        organization.plan
-      )
-
-    const enterprise =
-      normalizedPlan === "enterprise"
-
-    const existingActiveCount =
-      await prisma.organizationLocation.count({
-        where: {
-          orgId: sessionOrgId,
-          active: true,
-        },
-      })
-
-    /*
-     * Professional = one active location.
-     */
-
-    if (
-      !enterprise &&
-      existingActiveCount >= 1
-    ) {
-      redirect(
-        "/settings/locations?error=upgrade"
-      )
-    }
-
-    /* ----------------------------------------------------------
-       Form values
-    ---------------------------------------------------------- */
-
-    const name =
-      String(
-        formData.get("name") ?? ""
-      ).trim()
-
-    const address =
-      String(
-        formData.get("address") ?? ""
-      ).trim()
-
-    const city =
-      String(
-        formData.get("city") ?? ""
-      ).trim()
-
-    const state =
-      String(
-        formData.get("state") ?? ""
-      ).trim()
-
-    const country =
-      String(
-        formData.get("country") ?? ""
-      ).trim()
-
-    const postalCode =
-      String(
-        formData.get("postalCode") ?? ""
-      ).trim()
-
-    const phone =
-      String(
-        formData.get("phone") ?? ""
-      ).trim()
-
-    const email =
-      String(
-        formData.get("email") ?? ""
-      ).trim()
-
-    const timezone =
-      String(
-        formData.get("timezone") ?? "UTC"
-      ).trim()
+    const name = form.name.trim();
+    const addressLine1 = form.addressLine1.trim();
+    const addressLine2 = form.addressLine2.trim();
+    const city = form.city.trim();
+    const state = form.state.trim();
+    const postalCode = form.postalCode.trim();
+    const country = form.country.trim();
+    const phone = form.phone.trim();
+    const email = form.email.trim();
+    const timezone = form.timezone.trim();
 
     if (!name) {
-      throw new Error(
-        "Location name is required."
-      )
+      setError("Location name is required.");
+      return;
+    }
+
+    if (name.length > 100) {
+      setError(
+        "Location name must be 100 characters or less."
+      );
+      return;
+    }
+
+    if (!addressLine1) {
+      setError("Address is required.");
+      return;
     }
 
     if (!city) {
-      throw new Error(
-        "City is required."
-      )
+      setError("City is required.");
+      return;
     }
 
-    /* ----------------------------------------------------------
-       First location becomes default.
-    ---------------------------------------------------------- */
-
-    const shouldBeDefault =
-      existingActiveCount === 0
-
-    await prisma.organizationLocation.create({
-      data: {
-        orgId: sessionOrgId,
-
-        name,
-
-        address:
-          address || null,
-
-        city,
-
-        state:
-          state || null,
-
-        country:
-          country || null,
-
-        postalCode:
-          postalCode || null,
-
-        phone:
-          phone || null,
-
-        email:
-          email || null,
-
-        timezone:
-          timezone || "UTC",
-
-        currency: "USD",
-
-        isDefault:
-          shouldBeDefault,
-
-        active: true,
-      },
-    })
-
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations?created=1"
-    )
-  }
-
-  /* ============================================================
-     SET DEFAULT LOCATION
-  ============================================================ */
-
-  async function setDefaultLocation(
-    formData: FormData
-  ) {
-    "use server"
-
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      redirect("/login")
+    if (!state) {
+      setError("State is required.");
+      return;
     }
 
-    const sessionOrgId =
-      session.user.orgId
-
-    if (!sessionOrgId) {
-      redirect("/dashboard")
+    if (!postalCode) {
+      setError("ZIP / Postal code is required.");
+      return;
     }
 
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      })
-
-    if (!currentUser) {
-      redirect("/login")
+    if (!country) {
+      setError("Country is required.");
+      return;
     }
 
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
+    if (email) {
+      const emailValid =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
-
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canEdit)
-
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to modify locations."
-      )
+      if (!emailValid) {
+        setError("Please enter a valid email address.");
+        return;
+      }
     }
 
-    const locationId =
-      String(
-        formData.get("locationId") ?? ""
-      ).trim()
+    if (phone) {
+      const phoneValid = /^[0-9+().\-\s]{7,25}$/.test(phone);
 
-    if (!locationId) {
-      throw new Error(
-        "Location ID is required."
-      )
+      if (!phoneValid) {
+        setError("Please enter a valid phone number.");
+        return;
+      }
     }
 
-    /*
-     * Verify location belongs to this organization.
-     */
-
-    const location =
-      await prisma.organizationLocation.findFirst({
-        where: {
-          id: locationId,
-          orgId: sessionOrgId,
-          active: true,
-        },
-        select: {
-          id: true,
-        },
-      })
-
-    if (!location) {
-      throw new Error(
-        "Location not found."
-      )
+    if (!timezone) {
+      setError("Timezone is required.");
+      return;
     }
-
-    await prisma.$transaction([
-      prisma.organizationLocation.updateMany({
-        where: {
-          orgId: sessionOrgId,
-        },
-        data: {
-          isDefault: false,
-        },
-      }),
-
-      prisma.organizationLocation.update({
-        where: {
-          id: locationId,
-        },
-        data: {
-          isDefault: true,
-        },
-      }),
-    ])
-
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations"
-    )
-  }
-
-  /* ============================================================
-     DEACTIVATE LOCATION
-  ============================================================ */
-
-  async function deactivateLocation(
-    formData: FormData
-  ) {
-    "use server"
-
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      redirect("/login")
-    }
-
-    const sessionOrgId =
-      session.user.orgId
-
-    if (!sessionOrgId) {
-      redirect("/dashboard")
-    }
-
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      })
-
-    if (!currentUser) {
-      redirect("/login")
-    }
-
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
-
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
-
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canDelete)
-
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to deactivate locations."
-      )
-    }
-
-    const locationId =
-      String(
-        formData.get("locationId") ?? ""
-      ).trim()
-
-    const location =
-      await prisma.organizationLocation.findFirst({
-        where: {
-          id: locationId,
-          orgId: sessionOrgId,
-        },
-        select: {
-          id: true,
-          isDefault: true,
-        },
-      })
-
-    if (!location) {
-      throw new Error(
-        "Location not found."
-      )
-    }
-
-    /*
-     * Do not allow the default location
-     * to be deactivated.
-     */
-
-    if (location.isDefault) {
-      throw new Error(
-        "Set another location as default before deactivating this location."
-      )
-    }
-
-    await prisma.organizationLocation.update({
-      where: {
-        id: locationId,
-      },
-      data: {
-        active: false,
-      },
-    })
-
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations"
-    )
-  }
-
-  /* ============================================================
-     REACTIVATE LOCATION
-  ============================================================ */
-
-  async function activateLocation(
-    formData: FormData
-  ) {
-    "use server"
-
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      redirect("/login")
-    }
-
-    const sessionOrgId =
-      session.user.orgId
-
-    if (!sessionOrgId) {
-      redirect("/dashboard")
-    }
-
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      })
-
-    if (!currentUser) {
-      redirect("/login")
-    }
-
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
-
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
-
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canCreate)
-
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to activate locations."
-      )
-    }
-
-    const locationId =
-      String(
-        formData.get("locationId") ?? ""
-      ).trim()
-
-    const organization =
-      await prisma.organization.findUnique({
-        where: {
-          id: sessionOrgId,
-        },
-        select: {
-          plan: true,
-        },
-      })
-
-    if (!organization) {
-      throw new Error(
-        "Organization not found."
-      )
-    }
-
-    const enterprise =
-      normalizePlan(
-        organization.plan
-      ) === "enterprise"
-
-    const activeCount =
-      await prisma.organizationLocation.count({
-        where: {
-          orgId: sessionOrgId,
-          active: true,
-        },
-      })
-
-    /*
-     * Professional cannot reactivate a second
-     * active location.
-     */
 
     if (
-      !enterprise &&
-      activeCount >= 1
+      !editingLocation &&
+      resolvedMaxLocations !== null &&
+      locations.length >= resolvedMaxLocations
     ) {
-      redirect(
-        "/settings/locations?error=upgrade"
-      )
+      setError(
+        `Your ${getPlanLabel(
+          plan
+        )} plan has reached its location limit.`
+      );
+      return;
     }
 
-    const location =
-      await prisma.organizationLocation.findFirst({
-        where: {
-          id: locationId,
-          orgId: sessionOrgId,
-        },
-      })
+    setSaving(true);
 
-    if (!location) {
-      throw new Error(
-        "Location not found."
-      )
-    }
+    try {
+      const method = editingLocation ? "PATCH" : "POST";
 
-    await prisma.organizationLocation.update({
-      where: {
-        id: locationId,
-      },
-      data: {
-        active: true,
-      },
-    })
+      const body = {
+        ...(editingLocation
+          ? { id: editingLocation.id }
+          : {}),
+        name,
+        addressLine1,
+        addressLine2: addressLine2 || null,
+        city,
+        state,
+        postalCode,
+        country,
+        phone: phone || null,
+        email: email || null,
+        timezone,
+        status: form.status,
+        isDefault: form.isDefault,
+      };
 
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations"
-    )
-  }
-
-  /* ============================================================
-     ASSIGN USER TO LOCATION
-  ============================================================ */
-
-  async function assignUser(
-    formData: FormData
-  ) {
-    "use server"
-
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      redirect("/login")
-    }
-
-    const sessionOrgId =
-      session.user.orgId
-
-    if (!sessionOrgId) {
-      redirect("/dashboard")
-    }
-
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
+      const response = await fetch(
+        "/api/settings/locations",
+        {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
-        },
-      })
+          body: JSON.stringify(body),
+        }
+      );
 
-    if (!currentUser) {
-      redirect("/login")
+      const data = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            "Unable to save the location."
+        );
+      }
+
+      await fetchLocations(true);
+
+      setModalOpen(false);
+      setEditingLocation(null);
+      setForm(EMPTY_FORM);
+
+      setSuccess(
+        editingLocation
+          ? "Location updated successfully."
+          : "Location created successfully."
+      );
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSetDefault = async (
+    location: Location
+  ) => {
+    if (location.isDefault) {
+      setMenuOpen(null);
+      return;
     }
 
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
+    setError("");
+    setSuccess("");
+    setMenuOpen(null);
 
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
-
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canEdit)
-
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to assign users to locations."
-      )
-    }
-
-    const locationId =
-      String(
-        formData.get("locationId") ?? ""
-      ).trim()
-
-    const userId =
-      String(
-        formData.get("userId") ?? ""
-      ).trim()
-
-    if (!locationId || !userId) {
-      throw new Error(
-        "Location and user are required."
-      )
-    }
-
-    /*
-     * Verify both belong to this organization.
-     */
-
-    const [location, user] =
-      await Promise.all([
-        prisma.organizationLocation.findFirst({
-          where: {
-            id: locationId,
-            orgId: sessionOrgId,
-            active: true,
+    try {
+      const response = await fetch(
+        "/api/settings/locations",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
-        }),
+          body: JSON.stringify({
+            id: location.id,
+            isDefault: true,
+          }),
+        }
+      );
 
-        prisma.user.findFirst({
-          where: {
-            id: userId,
-            orgId: sessionOrgId,
+      const data = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            "Unable to change the default location."
+        );
+      }
+
+      await fetchLocations(true);
+
+      setSuccess(
+        `${location.name} is now the default location.`
+      );
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteLocation) {
+      return;
+    }
+
+    setDeleting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        "/api/settings/locations",
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
-        }),
-      ])
+          body: JSON.stringify({
+            id: deleteLocation.id,
+          }),
+        }
+      );
 
-    if (!location || !user) {
-      throw new Error(
-        "Invalid location or user."
-      )
+      const data = await response
+        .json()
+        .catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+            "Unable to delete the location."
+        );
+      }
+
+      setDeleteLocation(null);
+
+      await fetchLocations(true);
+
+      setSuccess("Location deleted successfully.");
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setDeleting(false);
     }
-
-    await prisma.userLocation.upsert({
-      where: {
-        userId_locationId: {
-          userId,
-          locationId,
-        },
-      },
-      update: {},
-
-      create: {
-        userId,
-        locationId,
-      },
-    })
-
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations"
-    )
-  }
-
-  /* ============================================================
-     REMOVE USER FROM LOCATION
-  ============================================================ */
-
-  async function removeUser(
-    formData: FormData
-  ) {
-    "use server"
-
-    const session = await auth()
-
-    if (!session?.user?.id) {
-      redirect("/login")
-    }
-
-    const sessionOrgId =
-      session.user.orgId
-
-    if (!sessionOrgId) {
-      redirect("/dashboard")
-    }
-
-    const currentUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      })
-
-    if (!currentUser) {
-      redirect("/login")
-    }
-
-    const role =
-      currentUser.organizationRole?.name
-        ?.trim()
-        .toLowerCase() ?? ""
-
-    const permission =
-      currentUser.organizationRole?.permissions.find(
-        (p) =>
-          p.module.toLowerCase() ===
-          "locations"
-      )
-
-    const allowed =
-      role === "owner" ||
-      Boolean(permission?.canEdit)
-
-    if (!allowed) {
-      throw new Error(
-        "You do not have permission to modify location access."
-      )
-    }
-
-    const locationId =
-      String(
-        formData.get("locationId") ?? ""
-      ).trim()
-
-    const userId =
-      String(
-        formData.get("userId") ?? ""
-      ).trim()
-
-    const location =
-      await prisma.organizationLocation.findFirst({
-        where: {
-          id: locationId,
-          orgId: sessionOrgId,
-        },
-        select: {
-          id: true,
-        },
-      })
-
-    const user =
-      await prisma.user.findFirst({
-        where: {
-          id: userId,
-          orgId: sessionOrgId,
-        },
-        select: {
-          id: true,
-        },
-      })
-
-    if (!location || !user) {
-      throw new Error(
-        "Invalid location or user."
-      )
-    }
-
-    await prisma.userLocation.deleteMany({
-      where: {
-        userId,
-        locationId,
-      },
-    })
-
-    revalidatePath(
-      "/settings/locations"
-    )
-
-    redirect(
-      "/settings/locations"
-    )
-  }
-
-  /* ============================================================
-     UI
-  ============================================================ */
-
-  const atLimit =
-    locationLimit !== null &&
-    activeLocations.length >=
-      locationLimit
+  };
 
   return (
-    <div className="space-y-8">
-
-      {/* ========================================================
-         HEADER
-      ======================================================== */}
-
-      <div className="flex items-start justify-between gap-6">
-
-        <div>
-
-          <h1 className="text-4xl font-bold">
-            Locations
-          </h1>
-
-          <p className="text-slate-500 mt-2">
-            Manage your business locations and
-            team access.
-          </p>
-
-        </div>
-
-        {canCreate && !atLimit && (
-
-          <a
-            href="#add-location"
-            className="
-              px-5
-              py-3
-              rounded-2xl
-              bg-orange-600
-              text-white
-              font-medium
-              hover:bg-orange-700
-              transition
-            "
-          >
-            + Add Location
-          </a>
-
-        )}
-
-      </div>
-
-      {/* ========================================================
-         SUCCESS
-      ======================================================== */}
-
-      {params.created && (
-
-        <div
-          className="
-            rounded-2xl
-            border
-            border-green-200
-            bg-green-50
-            px-5
-            py-4
-            text-green-700
-          "
-        >
-          Location created successfully.
-        </div>
-
-      )}
-
-      {/* ========================================================
-         PROFESSIONAL UPGRADE MESSAGE
-      ======================================================== */}
-
-      {params.error === "upgrade" && (
-
-        <div
-          className="
-            rounded-2xl
-            border
-            border-orange-200
-            bg-orange-50
-            p-6
-          "
-        >
-
-          <div className="flex items-start justify-between gap-6">
-
-            <div>
-
-              <h2 className="font-semibold text-orange-900">
-                Additional locations require Enterprise
-              </h2>
-
-              <p className="mt-2 text-sm text-orange-800">
-                Your Professional plan includes
-                one location. Upgrade to Enterprise
-                to add multiple cities, branches,
-                or offices.
-              </p>
-
+    <div className="min-h-full bg-[#f8fafc] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="mb-2 flex items-center gap-2 text-sm text-slate-500">
+              <span>Settings</span>
+              <span>/</span>
+              <span className="text-slate-700">
+                Locations
+              </span>
             </div>
 
-            <Link
-              href="/billing"
-              className="
-                shrink-0
-                px-5
-                py-2.5
-                rounded-xl
-                bg-orange-600
-                text-white
-                font-medium
-                hover:bg-orange-700
-              "
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+              Locations
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Manage your business locations and
+              operating addresses.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void fetchLocations(true)}
+              disabled={refreshing || loading}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Upgrade Plan
-            </Link>
+              <RefreshCw
+                className={`h-4 w-4 ${
+                  refreshing ? "animate-spin" : ""
+                }`}
+              />
+              Refresh
+            </button>
 
+            <button
+              type="button"
+              onClick={openCreateModal}
+              disabled={locationLimitReached}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              <Plus className="h-4 w-4" />
+              Add Location
+            </button>
           </div>
-
         </div>
 
-      )}
+        {/* Plan information */}
+        <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50">
+                <Building2 className="h-5 w-5 text-orange-500" />
+              </div>
 
-      {/* ========================================================
-         PLAN CARD
-      ======================================================== */}
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Current Plan
+                </p>
 
-      <div
-        className="
-          bg-white
-          border
-          rounded-3xl
-          p-6
-        "
-      >
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <span className="text-lg font-semibold text-slate-950">
+                    {getPlanLabel(plan)}
+                  </span>
 
-        <div className="flex items-center justify-between">
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    {enterprise
+                      ? "Multiple locations"
+                      : "1 location"}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          <div>
+            <div className="text-left lg:text-right">
+              <p className="text-sm text-slate-500">
+                Locations
+              </p>
 
-            <p className="text-sm text-slate-500">
-              Current Plan
-            </p>
-
-            <h2 className="text-2xl font-bold mt-1 capitalize">
-              {plan}
-            </h2>
-
+              <p className="mt-1 text-lg font-semibold text-slate-950">
+                {locations.length}
+                <span className="ml-1 text-sm font-normal text-slate-400">
+                  {resolvedMaxLocations === null
+                    ? " / Unlimited"
+                    : ` / ${resolvedMaxLocations}`}
+                </span>
+              </p>
+            </div>
           </div>
 
-          <div className="text-right">
+          {!enterprise && locationLimitReached && (
+            <div className="mt-4 flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
 
-            <p className="text-sm text-slate-500">
-              Active Locations
-            </p>
+              <div className="text-sm text-orange-800">
+                <p className="font-semibold">
+                  Location limit reached
+                </p>
 
-            <p className="text-2xl font-bold mt-1">
+                <p className="mt-0.5">
+                  Your {getPlanLabel(plan)} plan includes
+                  one location. Upgrade to Enterprise to
+                  add additional locations.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
 
-              {activeLocations.length}
+        {/* Alerts */}
+        {error && !modalOpen && (
+          <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
 
-              <span className="text-slate-400">
+            <div className="flex-1 text-sm text-red-800">
+              {error}
+            </div>
 
-                {" / "}
-
-                {locationLimit === null
-                  ? "∞"
-                  : locationLimit}
-
-              </span>
-
-            </p>
-
+            <button
+              type="button"
+              onClick={() => setError("")}
+              className="text-red-500 hover:text-red-700"
+              aria-label="Dismiss error"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
+        )}
 
-        </div>
+        {success && (
+          <div className="mb-5 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4">
+            <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
 
-        <div
-          className="
-            mt-5
-            h-2
-            rounded-full
-            bg-slate-100
-            overflow-hidden
-          "
-        >
+            <div className="flex-1 text-sm font-medium text-green-800">
+              {success}
+            </div>
 
-          <div
-            className="
-              h-full
-              rounded-full
-              bg-orange-500
-            "
-            style={{
-              width:
-                locationLimit === null
-                  ? "35%"
-                  : `${Math.min(
-                      100,
-                      (activeLocations.length /
-                        locationLimit) *
-                        100
-                    )}%`,
-            }}
-          />
+            <button
+              type="button"
+              onClick={() => setSuccess("")}
+              className="text-green-500 hover:text-green-700"
+              aria-label="Dismiss success message"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
-        </div>
+        {/* Content */}
+        {loading ? (
+          <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-slate-200 bg-white">
+            <div className="flex flex-col items-center gap-3 text-slate-500">
+              <Loader2 className="h-7 w-7 animate-spin" />
+              <p className="text-sm">
+                Loading locations...
+              </p>
+            </div>
+          </div>
+        ) : locations.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-orange-50">
+              <MapPin className="h-7 w-7 text-orange-500" />
+            </div>
 
-        <p className="text-sm text-slate-500 mt-3">
-
-          {isEnterprise
-            ? "Enterprise includes unlimited business locations."
-            : "Professional includes one business location. Upgrade to Enterprise for multiple locations."}
-
-        </p>
-
-      </div>
-
-      {/* ========================================================
-         LOCATIONS
-      ======================================================== */}
-
-      <div className="space-y-5">
-
-        {locations.length === 0 && (
-
-          <div
-            className="
-              bg-white
-              border
-              rounded-3xl
-              p-10
-              text-center
-            "
-          >
-
-            <h2 className="text-xl font-semibold">
+            <h2 className="mt-5 text-xl font-semibold text-slate-950">
               No locations yet
             </h2>
 
-            <p className="text-slate-500 mt-2">
-              Add your first business location
-              to get started.
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              Add your first business location to start
+              managing jobs, customers, crews and
+              operations for this location.
             </p>
 
-          </div>
-
-        )}
-
-        {locations.map((location) => (
-
-          <div
-            key={location.id}
-            className="
-              bg-white
-              border
-              rounded-3xl
-              overflow-hidden
-            "
-          >
-
-            {/* Location header */}
-
-            <div
-              className="
-                p-6
-                border-b
-                flex
-                items-start
-                justify-between
-                gap-6
-              "
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="mt-6 inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600"
             >
+              <Plus className="h-4 w-4" />
+              Add Your First Location
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {locations.map((location) => (
+              <div
+                key={location.id}
+                className="relative rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md"
+              >
+                {/* Card header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                      <Building2 className="h-5 w-5 text-slate-600" />
+                    </div>
 
-              <div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-base font-semibold text-slate-950">
+                          {location.name}
+                        </h2>
 
-                <div className="flex items-center gap-3">
+                        {location.isDefault && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
+                            <Star className="h-3 w-3 fill-current" />
+                            Default
+                          </span>
+                        )}
+                      </div>
 
-                  <h2 className="text-xl font-semibold">
-                    {location.name}
-                  </h2>
+                      <span
+                        className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          location.status === "ACTIVE"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {location.status}
+                      </span>
+                    </div>
+                  </div>
 
-                  {location.isDefault && (
-
-                    <span
-                      className="
-                        px-2.5
-                        py-1
-                        rounded-full
-                        bg-blue-100
-                        text-blue-700
-                        text-xs
-                        font-medium
-                      "
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMenuOpen(
+                          menuOpen === location.id
+                            ? null
+                            : location.id
+                        )
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                      aria-label={`Actions for ${location.name}`}
                     >
-                      Default
-                    </span>
+                      <MoreHorizontal className="h-5 w-5" />
+                    </button>
 
-                  )}
+                    {menuOpen === location.id && (
+                      <div className="absolute right-0 top-9 z-20 w-48 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openEditModal(location)
+                          }
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          Edit Location
+                        </button>
 
-                  {!location.active && (
+                        {!location.isDefault && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void handleSetDefault(
+                                location
+                              )
+                            }
+                            className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                          >
+                            <Star className="h-4 w-4" />
+                            Make Default
+                          </button>
+                        )}
 
-                    <span
-                      className="
-                        px-2.5
-                        py-1
-                        rounded-full
-                        bg-red-100
-                        text-red-700
-                        text-xs
-                        font-medium
-                      "
-                    >
-                      Inactive
-                    </span>
-
-                  )}
-
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuOpen(null);
+                            setDeleteLocation(
+                              location
+                            );
+                          }}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete Location
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <p className="text-slate-500 mt-2">
+                {/* Address */}
+                <div className="mt-5 flex items-start gap-3">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
 
-                  {[
-                    location.address,
-                    location.city,
-                    location.state,
-                    location.country,
-                    location.postalCode,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-
-                </p>
-
-                {(location.phone ||
-                  location.email) && (
-
-                  <p className="text-sm text-slate-500 mt-2">
-
-                    {location.phone}
-
-                    {location.phone &&
-                      location.email &&
-                      " • "}
-
-                    {location.email}
-
+                  <p className="text-sm leading-6 text-slate-600">
+                    {formatAddress(location) ||
+                      "No address provided"}
                   </p>
+                </div>
 
+                {/* Phone */}
+                {location.phone && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <Phone className="h-4 w-4 shrink-0 text-slate-400" />
+
+                    <span className="text-sm text-slate-600">
+                      {location.phone}
+                    </span>
+                  </div>
                 )}
 
-              </div>
+                {/* Email */}
+                {location.email && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <Globe2 className="h-4 w-4 shrink-0 text-slate-400" />
 
-              <div className="flex items-center gap-2">
+                    <span className="truncate text-sm text-slate-600">
+                      {location.email}
+                    </span>
+                  </div>
+                )}
 
-                {canEdit &&
-                  location.active &&
-                  !location.isDefault && (
-
-                    <form
-                      action={setDefaultLocation}
-                    >
-
-                      <input
-                        type="hidden"
-                        name="locationId"
-                        value={location.id}
-                      />
-
-                      <button
-                        type="submit"
-                        className="
-                          px-3
-                          py-2
-                          rounded-xl
-                          bg-blue-50
-                          text-blue-700
-                          text-sm
-                          font-medium
-                          hover:bg-blue-100
-                        "
-                      >
-                        Make Default
-                      </button>
-
-                    </form>
-
-                  )}
-
-                {canDelete &&
-                  location.active &&
-                  !location.isDefault && (
-
-                    <form
-                      action={deactivateLocation}
-                    >
-
-                      <input
-                        type="hidden"
-                        name="locationId"
-                        value={location.id}
-                      />
-
-                      <button
-                        type="submit"
-                        className="
-                          px-3
-                          py-2
-                          rounded-xl
-                          bg-red-50
-                          text-red-700
-                          text-sm
-                          font-medium
-                          hover:bg-red-100
-                        "
-                      >
-                        Deactivate
-                      </button>
-
-                    </form>
-
-                  )}
-
-                {canCreate &&
-                  !location.active && (
-
-                    <form
-                      action={activateLocation}
-                    >
-
-                      <input
-                        type="hidden"
-                        name="locationId"
-                        value={location.id}
-                      />
-
-                      <button
-                        type="submit"
-                        className="
-                          px-3
-                          py-2
-                          rounded-xl
-                          bg-green-50
-                          text-green-700
-                          text-sm
-                          font-medium
-                          hover:bg-green-100
-                        "
-                      >
-                        Activate
-                      </button>
-
-                    </form>
-
-                  )}
-
-              </div>
-
-            </div>
-
-            {/* Team access */}
-
-            {location.active && (
-
-              <div className="p-6">
-
-                <div className="flex items-center justify-between mb-4">
-
-                  <div>
-
-                    <h3 className="font-semibold">
-                      Team Access
-                    </h3>
-
-                    <p className="text-sm text-slate-500 mt-1">
-                      Team members assigned to this location.
+                {/* Timezone */}
+                {location.timezone && (
+                  <div className="mt-4 border-t border-slate-100 pt-4">
+                    <p className="text-xs text-slate-400">
+                      Timezone
                     </p>
 
+                    <p className="mt-1 text-sm font-medium text-slate-700">
+                      {location.timezone}
+                    </p>
                   </div>
-
-                  {canEdit && (
-
-                    <form
-                      action={assignUser}
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                      "
-                    >
-
-                      <input
-                        type="hidden"
-                        name="locationId"
-                        value={location.id}
-                      />
-
-                      <select
-                        name="userId"
-                        required
-                        className="
-                          h-10
-                          px-3
-                          rounded-xl
-                          border
-                          bg-white
-                          text-sm
-                        "
-                      >
-
-                        <option value="">
-                          Add team member...
-                        </option>
-
-                        {teamMembers
-                          .filter(
-                            (member) =>
-                              !location.userLocations.some(
-                                (assignment) =>
-                                  assignment.user.id ===
-                                  member.id
-                              )
-                          )
-                          .map((member) => (
-
-                            <option
-                              key={member.id}
-                              value={member.id}
-                            >
-                              {member.name ||
-                                member.email}
-                            </option>
-
-                          ))}
-
-                      </select>
-
-                      <button
-                        type="submit"
-                        className="
-                          h-10
-                          px-4
-                          rounded-xl
-                          bg-slate-900
-                          text-white
-                          text-sm
-                          font-medium
-                        "
-                      >
-                        Assign
-                      </button>
-
-                    </form>
-
-                  )}
-
-                </div>
-
-                {location.userLocations.length ===
-                  0 ? (
-
-                  <div
-                    className="
-                      rounded-2xl
-                      border
-                      border-dashed
-                      p-5
-                      text-center
-                      text-sm
-                      text-slate-500
-                    "
-                  >
-                    No team members assigned yet.
-                  </div>
-
-                ) : (
-
-                  <div className="space-y-2">
-
-                    {location.userLocations.map(
-                      (assignment) => (
-
-                        <div
-                          key={assignment.id}
-                          className="
-                            flex
-                            items-center
-                            justify-between
-                            rounded-2xl
-                            border
-                            px-4
-                            py-3
-                          "
-                        >
-
-                          <div>
-
-                            <p className="font-medium">
-                              {assignment.user.name ||
-                                "Unnamed User"}
-                            </p>
-
-                            <p className="text-sm text-slate-500">
-                              {assignment.user.email}
-                            </p>
-
-                          </div>
-
-                          {canEdit && (
-
-                            <form
-                              action={removeUser}
-                            >
-
-                              <input
-                                type="hidden"
-                                name="locationId"
-                                value={location.id}
-                              />
-
-                              <input
-                                type="hidden"
-                                name="userId"
-                                value={
-                                  assignment.user.id
-                                }
-                              />
-
-                              <button
-                                type="submit"
-                                className="
-                                  text-sm
-                                  text-red-600
-                                  hover:text-red-700
-                                  font-medium
-                                "
-                              >
-                                Remove
-                              </button>
-
-                            </form>
-
-                          )}
-
-                        </div>
-
-                      )
-                    )}
-
-                  </div>
-
                 )}
 
+                {location.createdAt && (
+                  <p className="mt-3 text-xs text-slate-400">
+                    Added {formatDate(location.createdAt)}
+                  </p>
+                )}
               </div>
-
-            )}
-
+            ))}
           </div>
-
-        ))}
-
+        )}
       </div>
 
-      {/* ========================================================
-         ADD LOCATION
-      ======================================================== */}
-
-      {canCreate && !atLimit && (
-
-        <div
-          id="add-location"
-          className="
-            bg-white
-            border
-            rounded-3xl
-            p-8
-          "
-        >
-
-          <div className="mb-6">
-
-            <h2 className="text-xl font-semibold">
-              Add Business Location
-            </h2>
-
-            <p className="text-sm text-slate-500 mt-1">
-              Add another office, branch, or city.
-            </p>
-
-          </div>
-
-          <form
-            action={createLocation}
-            className="space-y-6"
-          >
-
-            <div className="grid md:grid-cols-2 gap-5">
-
+      {/* Create / Edit Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Modal header */}
+            <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5">
               <div>
+                <h2 className="text-xl font-semibold text-slate-950">
+                  {editingLocation
+                    ? "Edit Location"
+                    : "Add Location"}
+                </h2>
 
-                <label className="block text-sm font-medium mb-2">
-                  Location Name
-                </label>
-
-                <input
-                  name="name"
-                  required
-                  placeholder="Dallas Office"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
+                <p className="mt-1 text-sm text-slate-500">
+                  {editingLocation
+                    ? "Update the details for this business location."
+                    : "Add a business location for your organization."}
+                </p>
               </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  City
-                </label>
-
-                <input
-                  name="city"
-                  required
-                  placeholder="Dallas"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-            </div>
-
-            <div>
-
-              <label className="block text-sm font-medium mb-2">
-                Address
-              </label>
-
-              <input
-                name="address"
-                placeholder="123 Main Street"
-                className="
-                  w-full
-                  h-12
-                  px-4
-                  rounded-xl
-                  border
-                "
-              />
-
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-5">
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  State
-                </label>
-
-                <input
-                  name="state"
-                  placeholder="Texas"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Country
-                </label>
-
-                <input
-                  name="country"
-                  defaultValue="USA"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Postal Code
-                </label>
-
-                <input
-                  name="postalCode"
-                  placeholder="75001"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-5">
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Phone
-                </label>
-
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder="+1 555 555 5555"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label className="block text-sm font-medium mb-2">
-                  Location Email
-                </label>
-
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="dallas@example.com"
-                  className="
-                    w-full
-                    h-12
-                    px-4
-                    rounded-xl
-                    border
-                  "
-                />
-
-              </div>
-
-            </div>
-
-            <div>
-
-              <label className="block text-sm font-medium mb-2">
-                Timezone
-              </label>
-
-              <input
-                name="timezone"
-                defaultValue="America/Chicago"
-                className="
-                  w-full
-                  h-12
-                  px-4
-                  rounded-xl
-                  border
-                "
-              />
-
-            </div>
-
-            <div className="pt-2">
 
               <button
-                type="submit"
-                className="
-                  px-6
-                  py-3
-                  rounded-xl
-                  bg-orange-600
-                  text-white
-                  font-medium
-                  hover:bg-orange-700
-                "
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-50"
+                aria-label="Close"
               >
-                Create Location
+                <X className="h-5 w-5" />
               </button>
-
             </div>
 
-          </form>
+            {/* Modal body */}
+            <div className="overflow-y-auto px-6 py-6">
+              {error && (
+                <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
 
-        </div>
+                  <p className="text-sm text-red-800">
+                    {error}
+                  </p>
+                </div>
+              )}
 
-      )}
+              <div className="grid gap-5 sm:grid-cols-2">
+                {/* Location name */}
+                <div className="sm:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Location Name
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
 
-      {/* ========================================================
-         PROFESSIONAL LIMIT
-      ======================================================== */}
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(event) =>
+                      updateField(
+                        "name",
+                        event.target.value
+                      )
+                    }
+                    placeholder="e.g. Charlotte Office"
+                    maxLength={100}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
 
-      {canCreate && atLimit && !isEnterprise && (
+                {/* Address */}
+                <div className="sm:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Address
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
 
-        <div
-          className="
-            bg-white
-            border
-            rounded-3xl
-            p-8
-            text-center
-          "
-        >
+                  <input
+                    type="text"
+                    value={form.addressLine1}
+                    onChange={(event) =>
+                      updateField(
+                        "addressLine1",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Street address"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
 
-          <div
-            className="
-              mx-auto
-              w-14
-              h-14
-              rounded-2xl
-              bg-orange-100
-              flex
-              items-center
-              justify-center
-              text-orange-600
-              text-2xl
-            "
-          >
-            ↑
+                <div className="sm:col-span-2">
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Address Line 2
+                  </label>
+
+                  <input
+                    type="text"
+                    value={form.addressLine2}
+                    onChange={(event) =>
+                      updateField(
+                        "addressLine2",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Suite, unit, building, etc."
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* City */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    City
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={form.city}
+                    onChange={(event) =>
+                      updateField(
+                        "city",
+                        event.target.value
+                      )
+                    }
+                    placeholder="Charlotte"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* State */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    State / Province
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={form.state}
+                    onChange={(event) =>
+                      updateField(
+                        "state",
+                        event.target.value
+                      )
+                    }
+                    placeholder="North Carolina"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* Postal */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    ZIP / Postal Code
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={form.postalCode}
+                    onChange={(event) =>
+                      updateField(
+                        "postalCode",
+                        event.target.value
+                      )
+                    }
+                    placeholder="28202"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Country
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={form.country}
+                    onChange={(event) =>
+                      updateField(
+                        "country",
+                        event.target.value
+                      )
+                    }
+                    placeholder="United States"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Phone
+                  </label>
+
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(event) =>
+                      updateField(
+                        "phone",
+                        event.target.value
+                      )
+                    }
+                    placeholder="+1 (704) 555-0100"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Location Email
+                  </label>
+
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(event) =>
+                      updateField(
+                        "email",
+                        event.target.value
+                      )
+                    }
+                    placeholder="office@example.com"
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+
+                {/* Timezone */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Timezone
+                    <span className="ml-1 text-red-500">
+                      *
+                    </span>
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      value={form.timezone}
+                      onChange={(event) =>
+                        updateField(
+                          "timezone",
+                          event.target.value
+                        )
+                      }
+                      className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    >
+                      {TIMEZONES.map((timezone) => (
+                        <option
+                          key={timezone}
+                          value={timezone}
+                        >
+                          {timezone}
+                        </option>
+                      ))}
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-5 w-5 text-slate-400" />
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                    Status
+                  </label>
+
+                  <div className="relative">
+                    <select
+                      value={form.status}
+                      onChange={(event) =>
+                        updateField(
+                          "status",
+                          event.target
+                            .value as LocationStatus
+                        )
+                      }
+                      className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+                    >
+                      <option value="ACTIVE">
+                        Active
+                      </option>
+
+                      <option value="INACTIVE">
+                        Inactive
+                      </option>
+                    </select>
+
+                    <ChevronDown className="pointer-events-none absolute right-3 top-3 h-5 w-5 text-slate-400" />
+                  </div>
+                </div>
+
+                {/* Default */}
+                <div className="sm:col-span-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50">
+                    <input
+                      type="checkbox"
+                      checked={form.isDefault}
+                      onChange={(event) =>
+                        updateField(
+                          "isDefault",
+                          event.target.checked
+                        )
+                      }
+                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500"
+                    />
+
+                    <span>
+                      <span className="block text-sm font-medium text-slate-800">
+                        Set as default location
+                      </span>
+
+                      <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+                        The default location will be used
+                        where a location is required but
+                        has not been explicitly selected.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+                className="h-10 rounded-lg border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleSave()}
+                disabled={saving}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {saving && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+
+                {saving
+                  ? "Saving..."
+                  : editingLocation
+                  ? "Save Changes"
+                  : "Create Location"}
+              </button>
+            </div>
           </div>
-
-          <h2 className="text-xl font-semibold mt-4">
-            Need another city?
-          </h2>
-
-          <p className="text-slate-500 mt-2 max-w-xl mx-auto">
-            Your Professional plan includes one
-            location. Upgrade to Enterprise to
-            manage multiple cities, offices, and
-            branches.
-          </p>
-
-          <Link
-            href="/billing"
-            className="
-              inline-flex
-              mt-5
-              px-6
-              py-3
-              rounded-xl
-              bg-orange-600
-              text-white
-              font-medium
-              hover:bg-orange-700
-            "
-          >
-            Upgrade to Enterprise
-          </Link>
-
         </div>
-
       )}
 
+      {/* Delete Confirmation */}
+      {deleteLocation && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+
+            <h2 className="mt-5 text-xl font-semibold text-slate-950">
+              Delete Location?
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              Are you sure you want to delete{" "}
+              <strong className="font-semibold text-slate-800">
+                {deleteLocation.name}
+              </strong>
+              ? This action cannot be undone.
+            </p>
+
+            {deleteLocation.isDefault && (
+              <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                This is currently the default location.
+                Your system may require another location
+                to become the default before deletion.
+              </div>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setDeleteLocation(null)
+                }
+                disabled={deleting}
+                className="h-10 rounded-lg border border-slate-200 bg-white px-5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {deleting && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+
+                {deleting
+                  ? "Deleting..."
+                  : "Delete Location"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

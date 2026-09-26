@@ -541,6 +541,55 @@ model OrganizationRole {
   @@index([orgId])
 }
 
+model TeamInvitation {
+  id String @id @default(uuid())
+
+  orgId String
+
+  email String
+  name  String?
+
+  roleId String
+  teamId String?
+
+  invitedById String
+
+  token String @unique
+
+  status String @default("pending")
+
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  role OrganizationRole @relation(fields: [roleId], references: [id])
+
+  team Team? @relation(fields: [teamId], references: [id])
+
+  invitedBy User @relation("InvitationSender", fields: [invitedById], references: [id])
+
+  locations TeamInvitationLocation[]
+
+  @@index([orgId])
+}
+
+model TeamInvitationLocation {
+  id String @id @default(uuid())
+
+  invitationId String
+  locationId   String
+
+  invitation TeamInvitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  location OrganizationLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, locationId])
+  @@index([invitationId])
+  @@index([locationId])
+}
+
 model OrganizationLocation {
   id String @id @default(uuid())
 
@@ -568,12 +617,14 @@ model OrganizationLocation {
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  userLocations UserLocation[]
-  leads         Lead[]
-  customers     Customer[]
-  jobs          Job[]
-  quotes        Quote[]
-  invoices      Invoice[]
+  userLocations       UserLocation[]
+  invitationLocations TeamInvitationLocation[]
+
+  leads     Lead[]
+  customers Customer[]
+  jobs      Job[]
+  quotes    Quote[]
+  invoices  Invoice[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -3272,41 +3323,6 @@ model UserReporting {
   manager User @relation("ReportingManager", fields: [managerId], references: [id], onDelete: Cascade)
 
   @@unique([userId])
-}
-
-model TeamInvitation {
-  id String @id @default(uuid())
-
-  orgId String
-
-  email String
-
-  name String?
-
-  roleId String
-
-  teamId String?
-
-  invitedById String
-
-  token String @unique
-
-  status String @default("pending")
-
-  expiresAt DateTime
-
-  acceptedAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  organization Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  role         OrganizationRole @relation(fields: [roleId], references: [id]) // ← ADD THIS
-
-  team Team? @relation(fields: [teamId], references: [id])
-
-  invitedBy User @relation("InvitationSender", fields: [invitedById], references: [id])
-
-  @@index([orgId])
 }
 
 model UserTask {

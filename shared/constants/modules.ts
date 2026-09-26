@@ -23,6 +23,7 @@ export const MODULES = [
   "Settings",
   "Company",
   "Organization",
+  "Locations",
   "Branding",
   "Invitations",
   "Roles & Permissions",

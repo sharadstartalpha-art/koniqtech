@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   LucideIcon,
   ShoppingCart,
+  MapPin,
 } from "lucide-react";
 
 import type { ModuleName } from "@/shared/constants/modules";
@@ -597,6 +598,12 @@ export const MENU: MenuSection[] = [
             icon: Building,
           },
           
+          {
+  label: "Locations",
+  href: "/settings/locations",
+  permission: "Locations",
+  icon: MapPin,
+},
           {
             label: "Branding",
             href: "/settings/branding",

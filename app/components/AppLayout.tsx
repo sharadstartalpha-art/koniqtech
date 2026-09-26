@@ -146,10 +146,29 @@ async function loadNotifications() {
 }
 
 useEffect(() => {
-
   load()
-
   loadNotifications()
+
+  const interval = setInterval(
+    loadNotifications,
+    30000
+  )
+
+  document.addEventListener(
+    "mousedown",
+    outside
+  )
+
+  return () => {
+    clearInterval(interval)
+
+    document.removeEventListener(
+      "mousedown",
+      outside
+    )
+  }
+}, [])
+
 
 useEffect(() => {
   if (!locations.length) {
@@ -158,12 +177,15 @@ useEffect(() => {
   }
 
   const savedLocationId =
-    window.localStorage.getItem("koniqtech_active_location")
+    window.localStorage.getItem(
+      "koniqtech_active_location"
+    )
 
   const savedLocationExists =
     savedLocationId &&
     locations.some(
-      (location) => location.id === savedLocationId
+      (location) =>
+        location.id === savedLocationId
     )
 
   if (savedLocationExists) {
@@ -173,11 +195,14 @@ useEffect(() => {
 
   const defaultLocation =
     locations.find(
-      (location) => location.isDefault
+      (location) =>
+        location.isDefault
     ) || locations[0]
 
   if (defaultLocation) {
-    setActiveLocationId(defaultLocation.id)
+    setActiveLocationId(
+      defaultLocation.id
+    )
 
     window.localStorage.setItem(
       "koniqtech_active_location",
@@ -185,31 +210,6 @@ useEffect(() => {
     )
   }
 }, [locations])
-
-
-  const interval =
-    setInterval(
-      loadNotifications,
-      30000
-    )
-
-  document.addEventListener(
-    "mousedown",
-    outside
-  )
-
-  return () => {
-
-    clearInterval(interval)
-
-    document.removeEventListener(
-      "mousedown",
-      outside
-    )
-
-  }
-
-}, [])
 
 function outside(
 e:any

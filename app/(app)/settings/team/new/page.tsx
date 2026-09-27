@@ -1190,22 +1190,18 @@ export default async function NewTeamMemberPage() {
                   "
                 >
 
-                  <input
-                    type={
-                      isEnterprise
-                        ? "checkbox"
-                        : "radio"
-                    }
-                    name="locationIds"
-                    value={location.id}
-                    required
-                    className="
-                      mt-1
-                      h-4
-                      w-4
-                      accent-orange-600
-                    "
-                  />
+                 <input
+  type={isEnterprise ? "checkbox" : "radio"}
+  name="locationIds"
+  value={location.id}
+  required={!isEnterprise}
+  className="
+    mt-1
+    h-4
+    w-4
+    accent-orange-600
+  "
+/>
 
                   <div className="min-w-0">
 

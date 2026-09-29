@@ -1,475 +1,282 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
-import { useFormStatus } from "react-dom"
+import { FormEvent, useState } from "react"
 
 import {
-  Building2,
   CheckCircle2,
-  Globe,
-  Mail,
-  MessageSquare,
-  Phone,
+  Loader2,
   Send,
-  User,
-  Users
 } from "lucide-react"
 
-import {
-  sendContactForm,
-  type ContactFormState
-} from "../actions"
-
-const initialState: ContactFormState = {
-  success: false,
-  message: ""
-}
-
-const industries = [
-  "Roofing",
-  "HVAC",
-  "Plumbing",
-  "Landscaping",
-  "Electrical",
-  "Cleaning",
-  "General Contractor",
-  "Pest Control",
-  "Other"
-]
-
-const companySizes = [
-  "1-5 Employees",
-  "6-20 Employees",
-  "21-50 Employees",
-  "51-100 Employees",
-  "100+ Employees"
-]
-
-const subjects = [
-  "General Question",
-  "Book Demo",
-  "Sales",
-  "Pricing",
-  "Technical Support",
-  "Billing",
-  "Partnership",
-  "Other"
-]
+type FormState = "idle" | "submitting" | "success" | "error"
 
 export default function ContactForm() {
+  const [status, setStatus] = useState<FormState>("idle")
+  const [errorMessage, setErrorMessage] = useState("")
 
-  const [state, formAction] =
-    useActionState(sendContactForm, initialState)
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
 
-  useEffect(() => {
+    setStatus("submitting")
+    setErrorMessage("")
 
-    if (state.success) {
+    const form = event.currentTarget
+    const formData = new FormData(form)
 
-      const form =
-        document.getElementById(
-          "contact-form"
-        ) as HTMLFormElement | null
+    const payload = {
+      name: String(formData.get("name") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      company: String(formData.get("company") ?? "").trim(),
+      phone: String(formData.get("phone") ?? "").trim(),
+      industry: String(formData.get("industry") ?? "").trim(),
+      message: String(formData.get("message") ?? "").trim(),
 
-      form?.reset()
-
+      // Honeypot
+      website: String(formData.get("website") ?? "").trim(),
     }
 
-  }, [state])
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
 
-  return (
+      const data = await response.json()
 
-    <form
-      id="contact-form"
-      action={formAction}
-      className="
-      rounded-[40px]
-      border
-      bg-white
-      p-10
-      shadow-xl
-      "
-    >
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Unable to send your message."
+        )
+      }
 
-      <div className="grid gap-6 md:grid-cols-2">
+      setStatus("success")
+      form.reset()
+    } catch (error) {
+      console.error("[CONTACT_FORM]", error)
 
-        <Input
-          icon={<User className="h-5 w-5" />}
-          label="First Name *"
-          name="firstName"
-          required
-        />
+      setStatus("error")
 
-        <Input
-          icon={<User className="h-5 w-5" />}
-          label="Last Name"
-          name="lastName"
-        />
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again."
+      )
+    }
+  }
 
-      </div>
+  if (status === "success") {
+    return (
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <CheckCircle2 className="h-7 w-7 text-green-600" />
+        </div>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <h3 className="mt-5 text-2xl font-bold text-slate-900">
+          Message Sent!
+        </h3>
 
-        <Input
-          icon={<Building2 className="h-5 w-5" />}
-          label="Business Name"
-          name="business"
-        />
+        <p className="mx-auto mt-3 max-w-md leading-7 text-slate-600">
+          Thanks for contacting KoniqTech. Our team will review your message
+          and get back to you as soon as possible.
+        </p>
 
-        <Select
-          icon={<Users className="h-5 w-5" />}
-          label="Company Size"
-          name="companySize"
-          options={companySizes}
-        />
-
-      </div>
-
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-
-        <Select
-          icon={<Building2 className="h-5 w-5" />}
-          label="Industry *"
-          name="industry"
-          required
-          options={industries}
-        />
-
-        <Input
-          icon={<Globe className="h-5 w-5" />}
-          label="Country"
-          name="country"
-        />
-
-      </div>
-
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-
-        <Input
-          icon={<Mail className="h-5 w-5" />}
-          label="Email *"
-          type="email"
-          name="email"
-          required
-        />
-
-        <Input
-          icon={<Phone className="h-5 w-5" />}
-          label="Phone"
-          name="phone"
-        />
-
-      </div>
-
-      <div className="mt-6">
-
-        <Select
-          icon={<MessageSquare className="h-5 w-5" />}
-          label="Subject *"
-          name="subject"
-          required
-          options={subjects}
-        />
-
-      </div>
-
-      <div className="mt-6">
-
-        <label className="block">
-
-          <span className="mb-2 block font-semibold text-slate-700">
-
-            Message *
-
-          </span>
-
-          <textarea
-            required
-            name="message"
-            rows={6}
-            className="
-            w-full
-            rounded-2xl
-            border
-            border-slate-300
-            px-5
-            py-4
-            outline-none
-            transition
-            focus:border-blue-500
-            focus:ring-4
-            focus:ring-blue-100
-            "
-            placeholder="How can we help you?"
-          />
-
-        </label>
-
-      </div>
-
-      <div className="mt-8 space-y-4">
-
-        <label className="flex items-center gap-3">
-
-          <input
-            type="checkbox"
-            name="demo"
-            className="h-5 w-5 rounded"
-          />
-
-          <span>
-
-            I would like to schedule a live demo.
-
-          </span>
-
-        </label>
-
-        <label className="flex items-center gap-3">
-
-          <input
-            required
-            type="checkbox"
-            name="privacy"
-            className="h-5 w-5 rounded"
-          />
-
-          <span>
-
-            I agree to the Privacy Policy.
-
-          </span>
-
-        </label>
-
-      </div>
-
-      {state.message && (
-
-        <div
-          className={`
-          mt-8
-          rounded-2xl
-          p-5
-
-          ${
-            state.success
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }
-          `}
+        <button
+          type="button"
+          onClick={() => setStatus("idle")}
+          className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
         >
-
-          <div className="flex items-center gap-3">
-
-            <CheckCircle2 className="h-6 w-6" />
-
-            <span className="font-medium">
-
-              {state.message}
-
-            </span>
-
-          </div>
-
-        </div>
-
-      )}
-
-      <div className="mt-10">
-
-        <SubmitButton />
-
+          Send Another Message
+        </button>
       </div>
-
-    </form>
-
-  )
-
-}
-
-function SubmitButton() {
-
-  const { pending } = useFormStatus()
+    )
+  }
 
   return (
-
-    <button
-      disabled={pending}
-      className="
-      inline-flex
-      items-center
-      gap-2
-
-      rounded-2xl
-
-      bg-orange-500
-
-      px-8
-      py-4
-
-      font-semibold
-      text-white
-
-      transition
-
-      hover:bg-orange-600
-
-      disabled:cursor-not-allowed
-      disabled:opacity-70
-      "
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5"
     >
-
-      <Send className="h-5 w-5" />
-
-      {pending
-        ? "Sending..."
-        : "Send Message"}
-
-    </button>
-
-  )
-
-}
-
-function Input({
-  label,
-  icon,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-  label: string
-  icon: React.ReactNode
-}) {
-
-  return (
-
-    <label className="block">
-
-      <span className="mb-2 block font-semibold text-slate-700">
-
-        {label}
-
-      </span>
-
+      {/* Honeypot */}
       <div
-        className="
-        flex
-        items-center
-
-        rounded-2xl
-        border
-        border-slate-300
-
-        px-4
-        "
+        className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+        aria-hidden="true"
       >
-
-        <div className="text-slate-400">
-
-          {icon}
-
-        </div>
+        <label htmlFor="website">
+          Website
+        </label>
 
         <input
-          {...props}
-          className="
-          w-full
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
 
-          bg-transparent
-
-          px-3
-          py-4
-
-          outline-none
-          "
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field
+          label="Full Name"
+          name="name"
+          placeholder="John Smith"
+          required
         />
 
+        <Field
+          label="Email Address"
+          name="email"
+          type="email"
+          placeholder="john@company.com"
+          required
+        />
       </div>
 
-    </label>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field
+          label="Company"
+          name="company"
+          placeholder="Your Company"
+        />
 
-  )
+        <Field
+          label="Phone"
+          name="phone"
+          type="tel"
+          placeholder="+1 555 123 4567"
+        />
+      </div>
 
-}
-
-function Select({
-  label,
-  icon,
-  options,
-  ...props
-}: React.SelectHTMLAttributes<HTMLSelectElement> & {
-  label: string
-  icon: React.ReactNode
-  options: string[]
-}) {
-
-  return (
-
-    <label className="block">
-
-      <span className="mb-2 block font-semibold text-slate-700">
-
-        {label}
-
-      </span>
-
-      <div
-        className="
-        flex
-        items-center
-
-        rounded-2xl
-        border
-        border-slate-300
-
-        px-4
-        "
-      >
-
-        <div className="text-slate-400">
-
-          {icon}
-
-        </div>
+      <div>
+        <label
+          htmlFor="industry"
+          className="mb-2 block text-sm font-semibold text-slate-700"
+        >
+          Industry
+        </label>
 
         <select
-          {...props}
-          className="
-          w-full
-
-          bg-transparent
-
-          px-3
-          py-4
-
-          outline-none
-          "
+          id="industry"
+          name="industry"
+          defaultValue=""
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
         >
-
           <option value="">
-
-            Select
-
+            Select your industry
           </option>
 
-          {options.map(option => (
+          <option value="Roofing">
+            Roofing
+          </option>
 
-            <option
-              key={option}
-              value={option}
-            >
+          <option value="HVAC">
+            HVAC
+          </option>
 
-              {option}
+          <option value="Plumbing">
+            Plumbing
+          </option>
 
-            </option>
+          <option value="Landscaping">
+            Landscaping
+          </option>
 
-          ))}
+          <option value="Other Field Service">
+            Other Field Service
+          </option>
 
+          <option value="Other">
+            Other
+          </option>
         </select>
-
       </div>
 
-    </label>
+      <div>
+        <label
+          htmlFor="message"
+          className="mb-2 block text-sm font-semibold text-slate-700"
+        >
+          How Can We Help?
+        </label>
 
+        <textarea
+          id="message"
+          name="message"
+          required
+          rows={5}
+          placeholder="Tell us what you'd like to know about KoniqTech..."
+          className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
+      {status === "error" && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={status === "submitting"}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {status === "submitting" ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Sending Message...
+          </>
+        ) : (
+          <>
+            <Send className="h-5 w-5" />
+            Send Message
+          </>
+        )}
+      </button>
+
+      <p className="text-center text-xs leading-5 text-slate-500">
+        Your information is only used to respond to your enquiry.
+      </p>
+    </form>
   )
+}
 
+function Field({
+  label,
+  name,
+  placeholder,
+  type = "text",
+  required = false,
+}: {
+  label: string
+  name: string
+  placeholder: string
+  type?: string
+  required?: boolean
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={name}
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        {label}
+        {required && (
+          <span className="ml-1 text-orange-500">
+            *
+          </span>
+        )}
+      </label>
+
+      <input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+      />
+    </div>
+  )
 }

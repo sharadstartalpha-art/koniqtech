@@ -3,1000 +3,456 @@ import Link from "next/link"
 
 import {
   ArrowRight,
-  Sparkles,
-  Mail,
-  Phone,
+  CheckCircle2,
   Clock3,
   Globe,
   Headphones,
+  Mail,
+  MessageSquare,
   Users,
-  Building2,
-  BarChart3,
-  CheckCircle2
 } from "lucide-react"
 
 import ContactForm from "./components/ContactForm"
 
-
-
 export const metadata: Metadata = {
-  title: "Contact KoniqTech | Sales, Support & Demo",
+  title: "Contact KoniqTech | AI-Powered Field Service CRM",
   description:
-    "Contact KoniqTech for sales, product demos, support, partnerships or general questions. Our team is ready to help your business grow."
+    "Contact KoniqTech for product questions, pricing, demos, support, partnerships or general enquiries. Built for roofing, HVAC, plumbing and landscaping businesses.",
+  keywords: [
+    "KoniqTech contact",
+    "field service CRM",
+    "HVAC CRM",
+    "roofing CRM",
+    "plumbing CRM",
+    "landscaping CRM",
+    "AI CRM",
+  ],
+  openGraph: {
+    title: "Contact KoniqTech | AI-Powered Field Service CRM",
+    description:
+      "Talk to KoniqTech about your field service business, product questions, pricing, demos or support.",
+    type: "website",
+  },
 }
-
-const stats = [
-  {
-    value: "<24h",
-    label: "Response Time"
-  },
-  {
-    value: "USA + EU",
-    label: "Markets Served"
-  },
-  {
-    value: "24/7",
-    label: "Email Support"
-  },
-  {
-    value: "100%",
-    label: "Business Focus"
-  }
-]
-
-const contacts = [
-  {
-    icon: Mail,
-    title: "General Enquiries",
-    value: "info@koniqtech.com",
-    description:
-      "Questions about KoniqTech, partnerships or general enquiries.",
-    color: "bg-blue-100 text-blue-600"
-  },
-  {
-    icon: Users,
-    title: "Sales Team",
-    value: "Book A Demo",
-    description:
-      "Speak with our product specialists to discover the right solution.",
-    color: "bg-orange-100 text-orange-600"
-  },
-  {
-    icon: Headphones,
-    title: "Customer Support",
-    value: "Fast Assistance",
-    description:
-      "Need help with the platform? Our support team is ready to assist.",
-    color: "bg-green-100 text-green-600"
-  },
-  {
-    icon: Globe,
-    title: "Business Hours",
-    value: "Online Worldwide",
-    description:
-      "Serving roofing, HVAC, plumbing and landscaping companies globally.",
-    color: "bg-purple-100 text-purple-600"
-  }
-]
-
 
 const departments = [
   {
     icon: Users,
-    title: "Sales Team",
-    color: "bg-orange-100 text-orange-600",
+    title: "Sales",
     description:
-      "Speak with our CRM specialists to discover how KoniqTech can streamline your field service business.",
+      "Learn how KoniqTech can help your field service business manage customers, jobs, teams and growth.",
     email: "sales@koniqtech.com",
-    action: "Book A Demo"
+    color: "bg-orange-100 text-orange-600",
   },
   {
     icon: Headphones,
     title: "Customer Support",
-    color: "bg-green-100 text-green-600",
     description:
-      "Need technical assistance? Our support specialists are here to help you quickly.",
+      "Already using KoniqTech? Contact our team for help with your account or platform.",
     email: "support@koniqtech.com",
-    action: "Get Support"
+    color: "bg-green-100 text-green-600",
   },
-  {
-    icon: Building2,
-    title: "Partnerships",
-    color: "bg-blue-100 text-blue-600",
-    description:
-      "Interested in technology partnerships, integrations or business opportunities?",
-    email: "info@koniqtech.com",
-    action: "Contact Us"
-  }
-]
-
-const officeInfo = [
   {
     icon: Globe,
-    title: "Primary Market",
-    value: "USA & Europe"
+    title: "Partnerships",
+    description:
+      "Interested in integrations, technology partnerships or business opportunities?",
+    email: "info@koniqtech.com",
+    color: "bg-blue-100 text-blue-600",
   },
-  {
-    icon: Mail,
-    title: "General Email",
-    value: "info@koniqtech.com"
-  },
-  {
-    icon: Clock3,
-    title: "Response Time",
-    value: "Within 24 Hours"
-  },
-  {
-    icon: Users,
-    title: "Support",
-    value: "Online"
-  }
 ]
 
 const faqs = [
   {
     question: "How quickly will I receive a response?",
     answer:
-      "Our team normally replies within one business day. Sales enquiries are usually answered much sooner."
+      "Our team normally responds within one business day. Sales enquiries are typically reviewed as quickly as possible.",
   },
   {
     question: "Can I request a personalized demo?",
     answer:
-      "Yes. Every demo is customized for your business, industry and workflow."
+      "Yes. You can request a demo and tell us about your business so we can focus on the workflows that matter to you.",
   },
   {
-    question: "Do you support businesses outside the United States?",
+    question: "What industries does KoniqTech support?",
     answer:
-      "Yes. KoniqTech serves customers across the USA and Europe."
+      "KoniqTech is designed for field service businesses including roofing, HVAC, plumbing and landscaping.",
   },
   {
-    question: "Can you help migrate data from my existing CRM?",
+    question: "Can I try KoniqTech before purchasing?",
     answer:
-      "Yes. We assist with importing customers, jobs, estimates and other important business information."
-  }
+      "Yes. KoniqTech offers a 3-day free trial so you can explore the platform before choosing a plan.",
+  },
 ]
-
-
 
 export default function ContactPage() {
   return (
     <main className="bg-white">
-
       {/* ====================================================== */}
-      {/* HERO */}
+      {/* HERO + CONTACT FORM */}
       {/* ====================================================== */}
 
-      <section className="relative overflow-hidden">
+      <section
+        id="contact"
+        className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-orange-50"
+      >
+        <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-blue-200/30 blur-3xl" />
+        <div className="absolute -right-32 top-32 h-80 w-80 rounded-full bg-orange-200/30 blur-3xl" />
 
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-orange-50" />
-
-        <div className="relative mx-auto max-w-7xl px-6 py-28">
-
-          <div className="grid items-center gap-16 lg:grid-cols-2">
-
+        <div className="relative mx-auto max-w-7xl px-6 py-16 md:py-24">
+          <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+            {/* LEFT SIDE */}
             <div>
-
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-5 py-2 text-blue-700">
-
-                <Sparkles className="h-4 w-4" />
-
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-5 py-2 text-sm font-semibold text-blue-700">
+                <MessageSquare className="h-4 w-4" />
                 We'd Love To Hear From You
-
               </div>
 
-              <h1 className="mt-8 text-5xl font-black tracking-tight text-slate-900 md:text-7xl">
-
-                Contact
-
+              <h1 className="mt-7 text-5xl font-black tracking-tight text-slate-900 md:text-6xl lg:text-7xl">
+                Let's Talk About
                 <span className="block text-orange-500">
-
-                  KoniqTech
-
+                  Your Business
                 </span>
-
               </h1>
 
-              <p className="mt-8 max-w-2xl text-xl leading-9 text-slate-600">
-
-                Whether you're looking for a product demo,
-                have questions about pricing,
-                need technical assistance
-                or want to explore partnerships,
-                our team is here to help.
-
+              <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600 md:text-xl">
+                Have a question about KoniqTech, pricing, features or your
+                field service workflow? Send us a message and our team will
+                get back to you.
               </p>
 
-              <div className="mt-12 flex flex-wrap gap-5">
+              <div className="mt-10 space-y-5">
+                <ContactHighlight
+                  icon={<Mail className="h-5 w-5" />}
+                  title="Email"
+                  value="info@koniqtech.com"
+                />
 
+                <ContactHighlight
+                  icon={<Clock3 className="h-5 w-5" />}
+                  title="Response"
+                  value="Within 1 business day"
+                />
+
+                <ContactHighlight
+                  icon={<Globe className="h-5 w-5" />}
+                  title="Markets"
+                  value="USA & Europe"
+                />
+              </div>
+
+              <div className="mt-10 flex flex-wrap gap-4">
                 <Link
-                  href="#contact-form"
-                  className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-8 py-4 font-semibold text-white transition hover:bg-orange-600"
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-semibold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600"
                 >
-
-                  Contact Us
-
-                  <ArrowRight className="h-5 w-5" />
-
+                  Start Free Trial
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
 
                 <Link
-                  href="/demo"
-                  className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
+                  href="/pricing"
+                  className="inline-flex items-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 font-semibold text-slate-700 transition hover:border-blue-300 hover:text-blue-600"
                 >
-
-                  Book Demo
-
+                  View Pricing
                 </Link>
-
               </div>
-
             </div>
 
-            <div className="rounded-[40px] border bg-white p-8 shadow-2xl">
-
-              <div className="rounded-3xl bg-slate-900 p-8 text-white">
-
-                <div className="flex items-center justify-between">
-
-                  <h3 className="text-2xl font-bold">
-
-                    Contact Center
-
-                  </h3>
-
-                  <Building2 className="h-8 w-8 text-orange-400" />
-
-                </div>
-
-                <div className="mt-10 space-y-5">
-
-                  <DashboardMetric
-                    title="Sales"
-                    value="Online"
-                  />
-
-                  <DashboardMetric
-                    title="Support"
-                    value="<24h"
-                  />
-
-                  <DashboardMetric
-                    title="Demo"
-                    value="Available"
-                  />
-
-                  <DashboardMetric
-                    title="Email"
-                    value="24/7"
-                  />
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ====================================================== */}
-      {/* STATS */}
-      {/* ====================================================== */}
-
-      <section className="pb-28">
-
-        <div className="mx-auto max-w-7xl px-6">
-
-          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-
-            {stats.map((item) => (
-
-              <StatCard
-                key={item.label}
-                value={item.value}
-                label={item.label}
-              />
-
-            ))}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ====================================================== */}
-      {/* CONTACT INFO */}
-      {/* ====================================================== */}
-
-      <section className="bg-slate-50 py-28">
-
-        <div className="mx-auto max-w-7xl px-6">
-
-          <div className="mx-auto max-w-3xl text-center">
-
-            <p className="font-semibold uppercase tracking-widest text-blue-600">
-
-              Get In Touch
-
-            </p>
-
-            <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-              We're Ready To Help
-
-            </h2>
-
-            <p className="mt-8 text-xl leading-9 text-slate-600">
-
-              Reach the right team quickly for sales,
-              product demonstrations,
-              technical support
-              or general enquiries.
-
-            </p>
-
-          </div>
-
-          <div className="mt-20 grid gap-8 lg:grid-cols-2">
-
-            {contacts.map((item) => {
-
-              const Icon = item.icon
-
-              return (
-
-                <div
-                  key={item.title}
-                  className="rounded-[36px] bg-white p-10 shadow-sm transition hover:-translate-y-2 hover:shadow-xl"
-                >
-
-                  <div className={`w-fit rounded-2xl p-4 ${item.color}`}>
-
-                    <Icon className="h-8 w-8" />
-
-                  </div>
-
-                  <h3 className="mt-8 text-3xl font-bold text-slate-900">
-
-                    {item.title}
-
-                  </h3>
-
-                  <p className="mt-4 text-xl font-semibold text-orange-600">
-
-                    {item.value}
-
-                  </p>
-
-                  <p className="mt-5 leading-8 text-slate-600">
-
-                    {item.description}
-
-                  </p>
-
-                </div>
-
-              )
-
-            })}
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* ====================================================== */}
-{/* CONTACT FORM */}
-{/* ====================================================== */}
-
-<section
-  id="contact-form"
-  className="py-28"
->
-
-  <div className="mx-auto max-w-5xl px-6">
-
-    <div className="mb-16 text-center">
-
-      <p className="font-semibold uppercase tracking-widest text-blue-600">
-
-        Send Us A Message
-
-      </p>
-
-      <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-        We'd Love To Hear From You
-
-      </h2>
-
-      <p className="mx-auto mt-6 max-w-3xl text-xl leading-9 text-slate-600">
-
-        Fill out the form below and our team will get back to you as soon as possible.
-
-      </p>
-
-    </div>
-
-    <ContactForm />
-
-  </div>
-
-</section>
-
-
-
-{/* ====================================================== */}
-{/* DEPARTMENTS */}
-{/* ====================================================== */}
-
-<section className="bg-slate-50 py-28">
-
-  <div className="mx-auto max-w-7xl px-6">
-
-    <div className="mx-auto max-w-3xl text-center">
-
-      <p className="font-semibold uppercase tracking-widest text-blue-600">
-
-        Talk To The Right Team
-
-      </p>
-
-      <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-        Sales, Support &
-        Partnerships
-
-      </h2>
-
-      <p className="mt-8 text-xl leading-9 text-slate-600">
-
-        Whether you're evaluating KoniqTech,
-        need technical assistance,
-        or want to discuss partnerships,
-        we'll connect you with the right specialists.
-
-      </p>
-
-    </div>
-
-    <div className="mt-20 grid gap-8 lg:grid-cols-3">
-
-      {departments.map((item) => {
-
-        const Icon = item.icon
-
-        return (
-
-          <div
-            key={item.title}
-            className="rounded-[36px] bg-white p-10 shadow-sm transition hover:-translate-y-2 hover:shadow-xl"
-          >
-
-            <div className={`w-fit rounded-2xl p-4 ${item.color}`}>
-
-              <Icon className="h-8 w-8" />
-
-            </div>
-
-            <h3 className="mt-8 text-3xl font-bold text-slate-900">
-
-              {item.title}
-
-            </h3>
-
-            <p className="mt-5 leading-8 text-slate-600">
-
-              {item.description}
-
-            </p>
-
-            <p className="mt-6 text-lg font-semibold text-orange-600">
-
-              {item.email}
-
-            </p>
-
-            <Link
-              href="#contact-form"
-              className="mt-8 inline-flex rounded-2xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-
-              {item.action}
-
-            </Link>
-
-          </div>
-
-        )
-
-      })}
-
-    </div>
-
-  </div>
-
-</section>
-
-
-{/* ====================================================== */}
-{/* OFFICE */}
-{/* ====================================================== */}
-
-<section className="py-28">
-
-  <div className="mx-auto max-w-7xl px-6">
-
-    <div className="grid gap-10 lg:grid-cols-2">
-
-      <div>
-
-        <p className="font-semibold uppercase tracking-widest text-green-600">
-
-          Office Information
-
-        </p>
-
-        <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-          Serving Businesses
-          Worldwide
-
-        </h2>
-
-        <p className="mt-8 text-xl leading-9 text-slate-600">
-
-          KoniqTech is a cloud-based platform serving roofing,
-          HVAC,
-          plumbing,
-          landscaping
-          and other field service companies throughout the USA and Europe.
-
-        </p>
-
-      </div>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-
-        {officeInfo.map((item) => {
-
-          const Icon = item.icon
-
-          return (
-
+            {/* CONTACT FORM */}
             <div
-              key={item.title}
-              className="rounded-[32px] border bg-white p-8 shadow-sm"
+              id="contact-form"
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-900/10 md:p-8"
             >
-
-              <div className="w-fit rounded-2xl bg-green-100 p-4">
-
-                <Icon className="h-8 w-8 text-green-600" />
-
-              </div>
-
-              <h3 className="mt-6 text-xl font-bold text-slate-900">
-
-                {item.title}
-
-              </h3>
-
-              <p className="mt-4 text-slate-600">
-
-                {item.value}
-
-              </p>
-
-            </div>
-
-          )
-
-        })}
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-{/* ====================================================== */}
-{/* FAQ */}
-{/* ====================================================== */}
-
-<section className="bg-slate-50 py-28">
-
-  <div className="mx-auto max-w-5xl px-6">
-
-    <div className="text-center">
-
-      <p className="font-semibold uppercase tracking-widest text-blue-600">
-
-        Frequently Asked Questions
-
-      </p>
-
-      <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-        Questions?
-        We've Got Answers.
-
-      </h2>
-
-    </div>
-
-    <div className="mt-20 space-y-8">
-
-      {faqs.map((faq) => (
-
-        <div
-          key={faq.question}
-          className="rounded-[32px] bg-white p-10 shadow-sm"
-        >
-
-          <h3 className="text-2xl font-bold text-slate-900">
-
-            {faq.question}
-
-          </h3>
-
-          <p className="mt-5 leading-8 text-slate-600">
-
-            {faq.answer}
-
-          </p>
-
-        </div>
-
-      ))}
-
-    </div>
-
-  </div>
-
-</section>
-
-
-      {/* ====================================================== */}
-      {/* TRUST */}
-      {/* ====================================================== */}
-
-      <section className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 py-28 text-white">
-
-        <div className="mx-auto max-w-6xl px-6 text-center">
-
-          <p className="font-semibold uppercase tracking-[0.3em] text-blue-200">
-
-            Why Businesses Trust KoniqTech
-
-          </p>
-
-          <h2 className="mt-6 text-5xl font-black">
-
-            Built For Modern
-            Field Service Companies
-
-          </h2>
-
-          <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-blue-100">
-
-            KoniqTech is designed specifically for roofing,
-            HVAC,
-            plumbing,
-            landscaping
-            and field service businesses looking to simplify operations,
-            improve customer satisfaction
-            and grow faster with AI-powered automation.
-
-          </p>
-
-          <div className="mt-16 grid gap-8 md:grid-cols-3">
-
-            <div className="rounded-[32px] bg-white/10 p-8 backdrop-blur">
-
-              <CheckCircle2 className="mx-auto h-10 w-10 text-green-300" />
-
-              <h3 className="mt-5 text-2xl font-bold">
-
-                AI-Powered CRM
-
-              </h3>
-
-              <p className="mt-4 text-blue-100">
-
-                Intelligent automation across your entire business.
-
-              </p>
-
-            </div>
-
-            <div className="rounded-[32px] bg-white/10 p-8 backdrop-blur">
-
-              <CheckCircle2 className="mx-auto h-10 w-10 text-green-300" />
-
-              <h3 className="mt-5 text-2xl font-bold">
-
-                Secure Cloud Platform
-
-              </h3>
-
-              <p className="mt-4 text-blue-100">
-
-                Enterprise-grade security with tenant isolation.
-
-              </p>
-
-            </div>
-
-            <div className="rounded-[32px] bg-white/10 p-8 backdrop-blur">
-
-              <CheckCircle2 className="mx-auto h-10 w-10 text-green-300" />
-
-              <h3 className="mt-5 text-2xl font-bold">
-
-                Industry Focused
-
-              </h3>
-
-              <p className="mt-4 text-blue-100">
-
-                Built specifically for field service businesses.
-
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-
-            {/* ====================================================== */}
-      {/* RESPONSE TIME */}
-      {/* ====================================================== */}
-
-      <section className="py-28">
-
-        <div className="mx-auto max-w-7xl px-6">
-
-          <div className="rounded-[40px] border bg-white p-12 shadow-xl">
-
-            <div className="grid gap-10 lg:grid-cols-2">
-
-              <div>
-
-                <p className="font-semibold uppercase tracking-widest text-green-600">
-
-                  Fast Response
-
+              <div className="mb-7">
+                <p className="text-sm font-bold uppercase tracking-widest text-blue-600">
+                  Contact KoniqTech
                 </p>
 
-                <h2 className="mt-4 text-5xl font-black text-slate-900">
-
-                  We Respond
-                  Quickly
-
+                <h2 className="mt-2 text-3xl font-black text-slate-900">
+                  Send Us A Message
                 </h2>
 
-                <p className="mt-8 text-xl leading-9 text-slate-600">
-
-                  Every enquiry is reviewed by our team.
-                  Whether you're interested in a demo,
-                  pricing,
-                  support
-                  or partnerships,
-                  we'll connect you with the right specialist.
-
+                <p className="mt-3 text-slate-600">
+                  Tell us a little about your business and how we can help.
                 </p>
-
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
-
-                <StatCard
-                  value="<24h"
-                  label="Email Response"
-                />
-
-                <StatCard
-                  value="3 Days"
-                  label="Free Trial"
-                />
-
-                <StatCard
-                  value="30 Min"
-                  label="Live Demo"
-                />
-
-                <StatCard
-                  value="USA & EU"
-                  label="Target Market"
-                />
-
-              </div>
-
+              <ContactForm />
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-
-            {/* ====================================================== */}
-      {/* CONTACT CTA */}
+      {/* ====================================================== */}
+      {/* TRUST STRIP */}
       {/* ====================================================== */}
 
-      <section className="pb-28">
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-6 px-6 py-8 sm:grid-cols-2 lg:grid-cols-4">
+          <TrustItem
+            title="AI-Powered CRM"
+            description="Built for field service"
+          />
 
-        <div className="mx-auto max-w-5xl px-6">
+          <TrustItem
+            title="3-Day Free Trial"
+            description="Explore before choosing"
+          />
 
-          <div className="rounded-[40px] bg-orange-500 px-10 py-20 text-center text-white shadow-xl">
+          <TrustItem
+            title="USA & Europe"
+            description="Focused on your market"
+          />
 
-            <Mail className="mx-auto h-14 w-14" />
+          <TrustItem
+            title="No Per-User Fees"
+            description="Unlimited employees"
+          />
+        </div>
+      </section>
 
-            <h2 className="mt-8 text-5xl font-black">
+      {/* ====================================================== */}
+      {/* DEPARTMENTS */}
+      {/* ====================================================== */}
 
-              Have Questions?
-
-            </h2>
-
-            <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-orange-100">
-
-              Send us a message today and our team will respond
-              as quickly as possible.
-
+      <section className="bg-slate-50 py-20 md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-semibold uppercase tracking-widest text-blue-600">
+              Need Something Specific?
             </p>
 
-            <div className="mt-12 flex flex-wrap justify-center gap-5">
+            <h2 className="mt-4 text-4xl font-black text-slate-900 md:text-5xl">
+              Talk To The Right Team
+            </h2>
+
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Whether you're evaluating KoniqTech, already using the platform,
+              or interested in a partnership, we're here to help.
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-6 md:grid-cols-3">
+            {departments.map((department) => {
+              const Icon = department.icon
+
+              return (
+                <div
+                  key={department.title}
+                  className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-xl ${department.color}`}
+                  >
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <h3 className="mt-6 text-2xl font-bold text-slate-900">
+                    {department.title}
+                  </h3>
+
+                  <p className="mt-4 leading-7 text-slate-600">
+                    {department.description}
+                  </p>
+
+                  <a
+                    href={`mailto:${department.email}`}
+                    className="mt-6 inline-flex font-semibold text-blue-600 hover:text-blue-700"
+                  >
+                    {department.email}
+                  </a>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ====================================================== */}
+      {/* INDUSTRIES */}
+      {/* ====================================================== */}
+
+      <section className="py-20 md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <p className="font-semibold uppercase tracking-widest text-orange-500">
+                Built For Field Service
+              </p>
+
+              <h2 className="mt-4 text-4xl font-black text-slate-900 md:text-5xl">
+                One CRM For Your Entire Operation
+              </h2>
+
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                KoniqTech brings customers, leads, estimates, jobs,
+                scheduling, technicians, billing and AI-powered workflows
+                together in one platform.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                <FeatureItem text="Roofing businesses" />
+                <FeatureItem text="HVAC companies" />
+                <FeatureItem text="Plumbing businesses" />
+                <FeatureItem text="Landscaping companies" />
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-slate-900 p-8 text-white shadow-2xl md:p-10">
+              <p className="text-sm font-bold uppercase tracking-widest text-orange-400">
+                KoniqTech CRM
+              </p>
+
+              <h3 className="mt-4 text-3xl font-black">
+                Have questions about your workflow?
+              </h3>
+
+              <p className="mt-5 leading-8 text-slate-300">
+                Tell us what you're currently using and what you want to
+                improve. Our team can help you understand how KoniqTech fits
+                your business.
+              </p>
 
               <Link
                 href="#contact-form"
-                className="rounded-2xl bg-white px-8 py-4 font-semibold text-orange-600 transition hover:bg-orange-50"
+                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 font-semibold text-white transition hover:bg-orange-600"
               >
-
-                Send Message
-
+                Talk To Us
+                <ArrowRight className="h-4 w-4" />
               </Link>
-
-              <Link
-                href="/demo"
-                className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
-              >
-
-                Book Demo
-
-              </Link>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
+      {/* ====================================================== */}
+      {/* FAQ */}
+      {/* ====================================================== */}
 
+      <section className="bg-slate-50 py-20 md:py-24">
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="text-center">
+            <p className="font-semibold uppercase tracking-widest text-blue-600">
+              Frequently Asked Questions
+            </p>
 
-            {/* ====================================================== */}
+            <h2 className="mt-4 text-4xl font-black text-slate-900 md:text-5xl">
+              Questions? We've Got Answers.
+            </h2>
+          </div>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-2">
+            {faqs.map((faq) => (
+              <div
+                key={faq.question}
+                className="rounded-2xl border border-slate-200 bg-white p-7"
+              >
+                <h3 className="text-xl font-bold text-slate-900">
+                  {faq.question}
+                </h3>
+
+                <p className="mt-4 leading-7 text-slate-600">
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ====================================================== */}
       {/* FINAL CTA */}
       {/* ====================================================== */}
 
-      <section className="pb-28">
+      <section className="px-6 py-20 md:py-24">
+        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-16 text-center text-white md:px-12">
+          <p className="font-semibold uppercase tracking-widest text-blue-200">
+            Ready To Get Started?
+          </p>
 
-        <div className="mx-auto max-w-7xl px-6">
+          <h2 className="mt-4 text-4xl font-black md:text-5xl">
+            Start Your 3-Day Free Trial
+          </h2>
 
-          <div className="rounded-[40px] bg-gradient-to-r from-green-600 to-blue-600 px-10 py-24 text-center text-white">
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-100">
+            Explore KoniqTech and see how an AI-powered CRM can simplify your
+            field service operation.
+          </p>
 
-            <h2 className="text-5xl font-black">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/register"
+              className="rounded-xl bg-orange-500 px-7 py-3.5 font-semibold text-white transition hover:bg-orange-600"
+            >
+              Start Free Trial
+            </Link>
 
-              Ready To Grow
-              Your Business?
-
-            </h2>
-
-            <p className="mx-auto mt-8 max-w-3xl text-xl leading-9 text-green-50">
-
-              Join businesses using KoniqTech to manage customers,
-              automate workflows,
-              schedule technicians
-              and deliver outstanding customer experiences.
-
-            </p>
-
-            <div className="mt-12 flex flex-wrap justify-center gap-5">
-
-              <Link
-                href="/register"
-                className="rounded-2xl bg-orange-500 px-8 py-4 font-semibold text-white transition hover:bg-orange-600"
-              >
-
-                Start Free Trial
-
-              </Link>
-
-              <Link
-                href="/pricing"
-                className="rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition hover:bg-blue-700"
-              >
-
-                View Pricing
-
-              </Link>
-
-            </div>
-
+            <Link
+              href="/pricing"
+              className="rounded-xl bg-white px-7 py-3.5 font-semibold text-blue-700 transition hover:bg-blue-50"
+            >
+              View Pricing
+            </Link>
           </div>
-
         </div>
-
       </section>
-
-
-
     </main>
   )
 }
 
-function StatCard({
-  value,
-  label
-}: {
-  value: string
-  label: string
-}) {
-  return (
-    <div className="rounded-[32px] border bg-white p-8 text-center shadow-sm">
+/* ====================================================== */
+/* SMALL COMPONENTS */
+/* ====================================================== */
 
-      <div className="text-5xl font-black text-blue-600">
-
-        {value}
-
-      </div>
-
-      <p className="mt-4 text-lg font-semibold text-slate-700">
-
-        {label}
-
-      </p>
-
-    </div>
-  )
-}
-
-function DashboardMetric({
+function ContactHighlight({
+  icon,
   title,
-  value
+  value,
 }: {
+  icon: React.ReactNode
   title: string
   value: string
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-slate-800 px-6 py-5">
+    <div className="flex items-center gap-4">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm ring-1 ring-slate-200">
+        {icon}
+      </div>
 
-      <span className="text-slate-300">
+      <div>
+        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <p className="font-semibold text-slate-900">{value}</p>
+      </div>
+    </div>
+  )
+}
 
-        {title}
+function TrustItem({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
 
-      </span>
+      <div>
+        <p className="font-bold text-slate-900">{title}</p>
+        <p className="text-sm text-slate-500">{description}</p>
+      </div>
+    </div>
+  )
+}
 
-      <span className="text-2xl font-bold text-orange-400">
+function FeatureItem({ text }: { text: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      <CheckCircle2 className="h-5 w-5 text-green-600" />
 
-        {value}
-
-      </span>
-
+      <span className="font-medium text-slate-700">{text}</span>
     </div>
   )
 }

@@ -1,231 +1,243 @@
 "use client"
 
-import { FormEvent, useState } from "react"
-
+import { useActionState } from "react"
 import {
   CheckCircle2,
   Loader2,
   Send,
 } from "lucide-react"
 
-type FormState = "idle" | "submitting" | "success" | "error"
+import {
+  sendContactForm,
+  type ContactFormState,
+} from "../actions"
+
+const initialState: ContactFormState = {
+  success: false,
+  message: "",
+}
 
 export default function ContactForm() {
-  const [status, setStatus] = useState<FormState>("idle")
-  const [errorMessage, setErrorMessage] = useState("")
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    setStatus("submitting")
-    setErrorMessage("")
-
-    const form = event.currentTarget
-    const formData = new FormData(form)
-
-    const payload = {
-      name: String(formData.get("name") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim(),
-      company: String(formData.get("company") ?? "").trim(),
-      phone: String(formData.get("phone") ?? "").trim(),
-      industry: String(formData.get("industry") ?? "").trim(),
-      message: String(formData.get("message") ?? "").trim(),
-
-      // Honeypot
-      website: String(formData.get("website") ?? "").trim(),
-    }
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          data?.message || "Unable to send your message."
-        )
-      }
-
-      setStatus("success")
-      form.reset()
-    } catch (error) {
-      console.error("[CONTACT_FORM]", error)
-
-      setStatus("error")
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again."
-      )
-    }
-  }
-
-  if (status === "success") {
-    return (
-      <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle2 className="h-7 w-7 text-green-600" />
-        </div>
-
-        <h3 className="mt-5 text-2xl font-bold text-slate-900">
-          Message Sent!
-        </h3>
-
-        <p className="mx-auto mt-3 max-w-md leading-7 text-slate-600">
-          Thanks for contacting KoniqTech. Our team will review your message
-          and get back to you as soon as possible.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => setStatus("idle")}
-          className="mt-6 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-        >
-          Send Another Message
-        </button>
-      </div>
-    )
-  }
+  const [state, formAction, pending] = useActionState(
+    sendContactForm,
+    initialState
+  )
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="space-y-5"
+      action={formAction}
+      className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-xl sm:p-8 lg:p-10"
     >
-      {/* Honeypot */}
-      <div
-        className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
-        aria-hidden="true"
-      >
-        <label htmlFor="website">
-          Website
+      <div className="grid gap-6 sm:grid-cols-2">
+
+        {/* NAME */}
+
+        <div>
+          <label
+            htmlFor="name"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            Full Name *
+          </label>
+
+          <input
+            id="name"
+            name="name"
+            type="text"
+            required
+            maxLength={100}
+            placeholder="Your name"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+
+        {/* EMAIL */}
+
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            Email Address *
+          </label>
+
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            maxLength={200}
+            placeholder="you@company.com"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+
+        {/* COMPANY */}
+
+        <div>
+          <label
+            htmlFor="company"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            Company
+          </label>
+
+          <input
+            id="company"
+            name="company"
+            type="text"
+            maxLength={150}
+            placeholder="Company name"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+
+        {/* PHONE */}
+
+        <div>
+          <label
+            htmlFor="phone"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            Phone
+          </label>
+
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="+1 555 123 4567"
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+
+        {/* INDUSTRY */}
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="industry"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            Industry *
+          </label>
+
+          <select
+            id="industry"
+            name="industry"
+            required
+            defaultValue=""
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          >
+            <option value="" disabled>
+              Select your industry
+            </option>
+
+            <option value="HVAC">
+              HVAC
+            </option>
+
+            <option value="Roofing">
+              Roofing
+            </option>
+
+            <option value="Plumbing">
+              Plumbing
+            </option>
+
+            <option value="Landscaping">
+              Landscaping
+            </option>
+
+            <option value="Other Field Service">
+              Other Field Service
+            </option>
+          </select>
+        </div>
+
+        {/* MESSAGE */}
+
+        <div className="sm:col-span-2">
+          <label
+            htmlFor="message"
+            className="mb-2 block text-sm font-semibold text-slate-900"
+          >
+            How Can We Help? *
+          </label>
+
+          <textarea
+            id="message"
+            name="message"
+            required
+            maxLength={5000}
+            rows={6}
+            placeholder="Tell us about your business or what you'd like to know about KoniqTech..."
+            className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+          />
+        </div>
+
+      </div>
+
+      {/* OPTIONS */}
+
+      <div className="mt-6 space-y-4">
+
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            name="demo"
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
+          />
+
+          <span className="text-sm leading-6 text-slate-600">
+            I'd like to request a product demo.
+          </span>
         </label>
 
-        <input
-          id="website"
-          name="website"
-          type="text"
-          tabIndex={-1}
-          autoComplete="off"
-        />
-      </div>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            name="privacy"
+            required
+            className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-400"
+          />
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field
-          label="Full Name"
-          name="name"
-          placeholder="John Smith"
-          required
-        />
-
-        <Field
-          label="Email Address"
-          name="email"
-          type="email"
-          placeholder="john@company.com"
-          required
-        />
-      </div>
-
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field
-          label="Company"
-          name="company"
-          placeholder="Your Company"
-        />
-
-        <Field
-          label="Phone"
-          name="phone"
-          type="tel"
-          placeholder="+1 555 123 4567"
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor="industry"
-          className="mb-2 block text-sm font-semibold text-slate-700"
-        >
-          Industry
+          <span className="text-sm leading-6 text-slate-600">
+            I agree to the KoniqTech Privacy Policy and
+            consent to being contacted regarding my enquiry.
+          </span>
         </label>
 
-        <select
-          id="industry"
-          name="industry"
-          defaultValue=""
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        >
-          <option value="">
-            Select your industry
-          </option>
-
-          <option value="Roofing">
-            Roofing
-          </option>
-
-          <option value="HVAC">
-            HVAC
-          </option>
-
-          <option value="Plumbing">
-            Plumbing
-          </option>
-
-          <option value="Landscaping">
-            Landscaping
-          </option>
-
-          <option value="Other Field Service">
-            Other Field Service
-          </option>
-
-          <option value="Other">
-            Other
-          </option>
-        </select>
       </div>
 
-      <div>
-        <label
-          htmlFor="message"
-          className="mb-2 block text-sm font-semibold text-slate-700"
+      {/* RESULT */}
+
+      {state.message && (
+        <div
+          className={`mt-6 rounded-xl border px-4 py-4 text-sm ${
+            state.success
+              ? "border-green-200 bg-green-50 text-green-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
         >
-          How Can We Help?
-        </label>
+          {state.success && (
+            <CheckCircle2 className="mr-2 inline-block h-5 w-5" />
+          )}
 
-        <textarea
-          id="message"
-          name="message"
-          required
-          rows={5}
-          placeholder="Tell us what you'd like to know about KoniqTech..."
-          className="w-full resize-none rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-
-      {status === "error" && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {errorMessage}
+          {state.message}
         </div>
       )}
 
+      {/* BUTTON */}
+
       <button
         type="submit"
-        disabled={status === "submitting"}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={pending}
+        className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-6 py-4 font-semibold text-white shadow-lg transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {status === "submitting" ? (
+        {pending ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" />
-            Sending Message...
+            Sending...
           </>
         ) : (
           <>
@@ -235,48 +247,9 @@ export default function ContactForm() {
         )}
       </button>
 
-      <p className="text-center text-xs leading-5 text-slate-500">
-        Your information is only used to respond to your enquiry.
+      <p className="mt-4 text-center text-xs text-slate-500">
+        We normally respond within one business day.
       </p>
     </form>
-  )
-}
-
-function Field({
-  label,
-  name,
-  placeholder,
-  type = "text",
-  required = false,
-}: {
-  label: string
-  name: string
-  placeholder: string
-  type?: string
-  required?: boolean
-}) {
-  return (
-    <div>
-      <label
-        htmlFor={name}
-        className="mb-2 block text-sm font-semibold text-slate-700"
-      >
-        {label}
-        {required && (
-          <span className="ml-1 text-orange-500">
-            *
-          </span>
-        )}
-      </label>
-
-      <input
-        id={name}
-        name={name}
-        type={type}
-        required={required}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      />
-    </div>
   )
 }

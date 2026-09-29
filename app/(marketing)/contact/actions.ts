@@ -7,39 +7,34 @@ export type ContactFormState = {
   message: string
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+}
+
 export async function sendContactForm(
-  _: ContactFormState,
+  _prevState: ContactFormState,
   formData: FormData
 ): Promise<ContactFormState> {
-
   try {
-
-    const firstName =
-      formData.get("firstName")?.toString().trim() || ""
-
-    const lastName =
-      formData.get("lastName")?.toString().trim() || ""
-
-    const business =
-      formData.get("business")?.toString().trim() || ""
-
-    const industry =
-      formData.get("industry")?.toString().trim() || ""
-
-    const companySize =
-      formData.get("companySize")?.toString().trim() || ""
-
-    const country =
-      formData.get("country")?.toString().trim() || ""
+    const name =
+      formData.get("name")?.toString().trim() || ""
 
     const email =
       formData.get("email")?.toString().trim().toLowerCase() || ""
 
+    const company =
+      formData.get("company")?.toString().trim() || ""
+
     const phone =
       formData.get("phone")?.toString().trim() || ""
 
-    const subject =
-      formData.get("subject")?.toString().trim() || ""
+    const industry =
+      formData.get("industry")?.toString().trim() || ""
 
     const message =
       formData.get("message")?.toString().trim() || ""
@@ -47,186 +42,421 @@ export async function sendContactForm(
     const demo =
       formData.get("demo") === "on"
 
-    const accepted =
+    const privacy =
       formData.get("privacy") === "on"
 
-    if (
-      !firstName ||
-      !email ||
-      !industry ||
-      !subject ||
-      !message
-    ) {
+    /* -----------------------------------------
+       VALIDATION
+    ----------------------------------------- */
 
+    if (!name || !email || !industry || !message) {
       return {
         success: false,
-        message: "Please complete all required fields."
+        message: "Please complete all required fields.",
       }
-
     }
 
-    if (!accepted) {
-
+    if (!privacy) {
       return {
         success: false,
-        message: "Please accept the Privacy Policy."
+        message: "Please accept the Privacy Policy.",
       }
-
     }
 
-    await resend.emails.send({
+    if (name.length > 100) {
+      return {
+        success: false,
+        message: "Name is too long.",
+      }
+    }
 
+    if (company.length > 150) {
+      return {
+        success: false,
+        message: "Company name is too long.",
+      }
+    }
+
+    if (email.length > 200) {
+      return {
+        success: false,
+        message: "Email address is too long.",
+      }
+    }
+
+    if (message.length > 5000) {
+      return {
+        success: false,
+        message: "Message is too long.",
+      }
+    }
+
+    /* -----------------------------------------
+       SANITIZE HTML
+    ----------------------------------------- */
+
+    const safeName = escapeHtml(name)
+    const safeEmail = escapeHtml(email)
+    const safeCompany = escapeHtml(company)
+    const safePhone = escapeHtml(phone)
+    const safeIndustry = escapeHtml(industry)
+    const safeMessage = escapeHtml(message)
+
+    /* -----------------------------------------
+       EMAIL TO KONIQTECH
+    ----------------------------------------- */
+
+    const adminEmail = await resend.emails.send({
       from: "KoniqTech <info@koniqtech.com>",
-
       to: "info@koniqtech.com",
-
       replyTo: email,
-
-      subject: `Contact Form • ${subject}`,
+      subject: `New Contact Enquiry — ${industry}`,
 
       html: `
-      <div style="font-family:Arial,sans-serif;padding:40px;background:#f8fafc">
+        <!DOCTYPE html>
+        <html>
+          <body
+            style="
+              margin:0;
+              padding:0;
+              background:#f8fafc;
+              font-family:Arial,Helvetica,sans-serif;
+              color:#0f172a;
+            "
+          >
 
-        <h1>KoniqTech Contact Form</h1>
+            <div style="max-width:680px;margin:40px auto;padding:0 20px;">
 
-        <table cellpadding="8">
+              <div
+                style="
+                  background:#0f172a;
+                  padding:28px 32px;
+                  border-radius:18px 18px 0 0;
+                  color:white;
+                "
+              >
+                <h1 style="margin:0;font-size:24px;">
+                  New KoniqTech Contact Enquiry
+                </h1>
 
-          <tr>
-            <td><strong>Name</strong></td>
-            <td>${firstName} ${lastName}</td>
-          </tr>
+                <p
+                  style="
+                    margin:8px 0 0;
+                    color:#cbd5e1;
+                    font-size:14px;
+                  "
+                >
+                  Submitted from koniqtech.com
+                </p>
+              </div>
 
-          <tr>
-            <td><strong>Email</strong></td>
-            <td>${email}</td>
-          </tr>
+              <div
+                style="
+                  background:white;
+                  padding:32px;
+                  border:1px solid #e2e8f0;
+                  border-top:0;
+                "
+              >
 
-          <tr>
-            <td><strong>Phone</strong></td>
-            <td>${phone}</td>
-          </tr>
+                <table
+                  width="100%"
+                  cellpadding="8"
+                  cellspacing="0"
+                  style="font-size:15px;"
+                >
 
-          <tr>
-            <td><strong>Business</strong></td>
-            <td>${business}</td>
-          </tr>
+                  <tr>
+                    <td
+                      style="
+                        width:160px;
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Name
+                    </td>
 
-          <tr>
-            <td><strong>Industry</strong></td>
-            <td>${industry}</td>
-          </tr>
+                    <td>${safeName}</td>
+                  </tr>
 
-          <tr>
-            <td><strong>Company Size</strong></td>
-            <td>${companySize}</td>
-          </tr>
+                  <tr>
+                    <td
+                      style="
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Email
+                    </td>
 
-          <tr>
-            <td><strong>Country</strong></td>
-            <td>${country}</td>
-          </tr>
+                    <td>
+                      <a
+                        href="mailto:${safeEmail}"
+                        style="color:#2563eb;"
+                      >
+                        ${safeEmail}
+                      </a>
+                    </td>
+                  </tr>
 
-          <tr>
-            <td><strong>Book Demo</strong></td>
-            <td>${demo ? "Yes" : "No"}</td>
-          </tr>
+                  <tr>
+                    <td
+                      style="
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Company
+                    </td>
 
-          <tr>
-            <td><strong>Subject</strong></td>
-            <td>${subject}</td>
-          </tr>
+                    <td>
+                      ${safeCompany || "Not provided"}
+                    </td>
+                  </tr>
 
-        </table>
+                  <tr>
+                    <td
+                      style="
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Phone
+                    </td>
 
-        <hr/>
+                    <td>
+                      ${safePhone || "Not provided"}
+                    </td>
+                  </tr>
 
-        <h3>Message</h3>
+                  <tr>
+                    <td
+                      style="
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Industry
+                    </td>
 
-        <p style="white-space:pre-wrap">
+                    <td>${safeIndustry}</td>
+                  </tr>
 
-          ${message}
+                  <tr>
+                    <td
+                      style="
+                        font-weight:bold;
+                        color:#475569;
+                      "
+                    >
+                      Demo Requested
+                    </td>
 
-        </p>
+                    <td>
+                      ${demo ? "Yes" : "No"}
+                    </td>
+                  </tr>
 
-      </div>
-      `
+                </table>
 
+                <div
+                  style="
+                    margin-top:28px;
+                    padding-top:24px;
+                    border-top:1px solid #e2e8f0;
+                  "
+                >
+
+                  <h3
+                    style="
+                      margin:0 0 12px;
+                      font-size:18px;
+                    "
+                  >
+                    Message
+                  </h3>
+
+                  <div
+                    style="
+                      background:#f8fafc;
+                      padding:18px;
+                      border-radius:12px;
+                      white-space:pre-wrap;
+                      line-height:1.6;
+                    "
+                  >
+                    ${safeMessage}
+                  </div>
+
+                </div>
+
+              </div>
+
+              <p
+                style="
+                  text-align:center;
+                  color:#94a3b8;
+                  font-size:12px;
+                  margin-top:20px;
+                "
+              >
+                KoniqTech Contact Form
+              </p>
+
+            </div>
+
+          </body>
+        </html>
+      `,
     })
 
-    //
-    // Auto Reply
-    //
+    if (adminEmail.error) {
+      console.error(
+        "[CONTACT_ADMIN_EMAIL]",
+        adminEmail.error
+      )
 
-    await resend.emails.send({
+      return {
+        success: false,
+        message:
+          "Unable to send your message right now. Please try again.",
+      }
+    }
 
+    /* -----------------------------------------
+       AUTO REPLY TO CUSTOMER
+    ----------------------------------------- */
+
+    const autoReply = await resend.emails.send({
       from: "KoniqTech <info@koniqtech.com>",
-
       to: email,
-
-      subject: "We've received your message",
+      subject: "We've received your message — KoniqTech",
 
       html: `
-      <div
-        style="
-        font-family:Arial,sans-serif;
-        padding:40px;
-        background:#f8fafc;
-        "
-      >
+        <!DOCTYPE html>
+        <html>
+          <body
+            style="
+              margin:0;
+              padding:0;
+              background:#f8fafc;
+              font-family:Arial,Helvetica,sans-serif;
+              color:#0f172a;
+            "
+          >
 
-        <h1>Thank you, ${firstName}!</h1>
+            <div
+              style="
+                max-width:620px;
+                margin:40px auto;
+                padding:0 20px;
+              "
+            >
 
-        <p>
+              <div
+                style="
+                  background:#0f172a;
+                  color:white;
+                  padding:28px 32px;
+                  border-radius:18px 18px 0 0;
+                "
+              >
 
-          We've received your message and one of our
-          specialists will get back to you shortly.
+                <h1
+                  style="
+                    margin:0;
+                    font-size:24px;
+                  "
+                >
+                  Thank you, ${safeName}!
+                </h1>
 
-        </p>
+              </div>
 
-        <p>
+              <div
+                style="
+                  background:white;
+                  padding:32px;
+                  border:1px solid #e2e8f0;
+                  border-top:0;
+                "
+              >
 
-          If your enquiry is urgent,
-          simply reply to this email.
+                <p
+                  style="
+                    font-size:16px;
+                    line-height:1.7;
+                  "
+                >
+                  We've received your message and our team
+                  will get back to you as soon as possible.
+                </p>
 
-        </p>
+                <p
+                  style="
+                    font-size:16px;
+                    line-height:1.7;
+                  "
+                >
+                  If your enquiry is urgent, simply reply
+                  to this email.
+                </p>
 
-        <br/>
+                <div
+                  style="
+                    margin-top:28px;
+                    padding-top:20px;
+                    border-top:1px solid #e2e8f0;
+                  "
+                >
 
-        <strong>
+                  <strong>
+                    KoniqTech Team
+                  </strong>
 
-          KoniqTech Team
+                  <br />
 
-        </strong>
+                  <span style="color:#64748b;">
+                    info@koniqtech.com
+                  </span>
 
-      </div>
-      `
+                </div>
 
+              </div>
+
+            </div>
+
+          </body>
+        </html>
+      `,
     })
 
-    return {
+    if (autoReply.error) {
+      console.error(
+        "[CONTACT_AUTO_REPLY]",
+        autoReply.error
+      )
 
+      // Admin email was already successfully sent.
+      // Do not report the whole submission as failed.
+    }
+
+    return {
       success: true,
-
       message:
-        "Thank you! Your message has been sent successfully."
-
+        "Thank you! Your message has been sent successfully.",
     }
-
-  }
-
-  catch (error) {
-
-    console.error(error)
+  } catch (error) {
+    console.error(
+      "[CONTACT_FORM_ERROR]",
+      error
+    )
 
     return {
-
       success: false,
-
       message:
-        "Unable to send your message. Please try again."
-
+        "Unable to send your message. Please try again.",
     }
-
   }
-
 }

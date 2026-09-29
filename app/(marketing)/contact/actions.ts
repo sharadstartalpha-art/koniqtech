@@ -106,223 +106,28 @@ export async function sendContactForm(
        EMAIL TO KONIQTECH
     ----------------------------------------- */
 
-    const adminEmail = await resend.emails.send({
-      from: "KoniqTech <info@koniqtech.com>",
-      to: "info@koniqtech.com",
-      replyTo: email,
-      subject: `New Contact Enquiry — ${industry}`,
+   const adminEmail = await resend.emails.send({
+  from: "KoniqTech <info@koniqtech.com>",
+  to: "info@koniqtech.com",
+  replyTo: email,
+  subject: `New Contact Enquiry — ${industry}`,
+  html: `...`,
+})
 
-      html: `
-        <!DOCTYPE html>
-        <html>
-          <body
-            style="
-              margin:0;
-              padding:0;
-              background:#f8fafc;
-              font-family:Arial,Helvetica,sans-serif;
-              color:#0f172a;
-            "
-          >
+console.log("[CONTACT_ADMIN_EMAIL_RESULT]", {
+  data: adminEmail.data,
+  error: adminEmail.error,
+})
 
-            <div style="max-width:680px;margin:40px auto;padding:0 20px;">
+if (adminEmail.error) {
+  console.error("[CONTACT_ADMIN_EMAIL_ERROR]", adminEmail.error)
 
-              <div
-                style="
-                  background:#0f172a;
-                  padding:28px 32px;
-                  border-radius:18px 18px 0 0;
-                  color:white;
-                "
-              >
-                <h1 style="margin:0;font-size:24px;">
-                  New KoniqTech Contact Enquiry
-                </h1>
-
-                <p
-                  style="
-                    margin:8px 0 0;
-                    color:#cbd5e1;
-                    font-size:14px;
-                  "
-                >
-                  Submitted from koniqtech.com
-                </p>
-              </div>
-
-              <div
-                style="
-                  background:white;
-                  padding:32px;
-                  border:1px solid #e2e8f0;
-                  border-top:0;
-                "
-              >
-
-                <table
-                  width="100%"
-                  cellpadding="8"
-                  cellspacing="0"
-                  style="font-size:15px;"
-                >
-
-                  <tr>
-                    <td
-                      style="
-                        width:160px;
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Name
-                    </td>
-
-                    <td>${safeName}</td>
-                  </tr>
-
-                  <tr>
-                    <td
-                      style="
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Email
-                    </td>
-
-                    <td>
-                      <a
-                        href="mailto:${safeEmail}"
-                        style="color:#2563eb;"
-                      >
-                        ${safeEmail}
-                      </a>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td
-                      style="
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Company
-                    </td>
-
-                    <td>
-                      ${safeCompany || "Not provided"}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td
-                      style="
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Phone
-                    </td>
-
-                    <td>
-                      ${safePhone || "Not provided"}
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td
-                      style="
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Industry
-                    </td>
-
-                    <td>${safeIndustry}</td>
-                  </tr>
-
-                  <tr>
-                    <td
-                      style="
-                        font-weight:bold;
-                        color:#475569;
-                      "
-                    >
-                      Demo Requested
-                    </td>
-
-                    <td>
-                      ${demo ? "Yes" : "No"}
-                    </td>
-                  </tr>
-
-                </table>
-
-                <div
-                  style="
-                    margin-top:28px;
-                    padding-top:24px;
-                    border-top:1px solid #e2e8f0;
-                  "
-                >
-
-                  <h3
-                    style="
-                      margin:0 0 12px;
-                      font-size:18px;
-                    "
-                  >
-                    Message
-                  </h3>
-
-                  <div
-                    style="
-                      background:#f8fafc;
-                      padding:18px;
-                      border-radius:12px;
-                      white-space:pre-wrap;
-                      line-height:1.6;
-                    "
-                  >
-                    ${safeMessage}
-                  </div>
-
-                </div>
-
-              </div>
-
-              <p
-                style="
-                  text-align:center;
-                  color:#94a3b8;
-                  font-size:12px;
-                  margin-top:20px;
-                "
-              >
-                KoniqTech Contact Form
-              </p>
-
-            </div>
-
-          </body>
-        </html>
-      `,
-    })
-
-    if (adminEmail.error) {
-      console.error(
-        "[CONTACT_ADMIN_EMAIL]",
-        adminEmail.error
-      )
-
-      return {
-        success: false,
-        message:
-          "Unable to send your message right now. Please try again.",
-      }
-    }
+  return {
+    success: false,
+    message:
+      "Unable to send your message right now. Please try again.",
+  }
+}
 
     /* -----------------------------------------
        AUTO REPLY TO CUSTOMER

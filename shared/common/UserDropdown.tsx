@@ -62,11 +62,11 @@ export interface DropdownUser{
 }
 
 interface Props {
-    open:boolean
-    setOpen:(open:boolean)=>void
-    user?:DropdownUser
-
-    basePath?:string
+    open: boolean
+    setOpen: (open: boolean) => void
+    user?: DropdownUser
+    basePath?: string
+    adminMode?: boolean
 }
 
 const ROLE_LABELS:Record<string,string>={
@@ -130,16 +130,12 @@ function RoleIcon({
 }
 
 export default function UserDropdown({
-
     open,
-
     setOpen,
-
-    user:userProp,
-
-    basePath=""
-
-}:Props){
+    user: userProp,
+    basePath = "",
+    adminMode = false,
+}: Props) {
 
     const router=
 
@@ -614,38 +610,28 @@ export default function UserDropdown({
 
 
 
-                            <Link
+                            {!adminMode && (
+    <Link
+        href={`${basePath}/tasks`}
+        onClick={() => setOpen(false)}
+        className="
+        flex
+        items-center
+        gap-3
+        px-6
+        py-3
+        transition
+        hover:bg-slate-50
+        dark:hover:bg-slate-800
+        "
+    >
+        <CheckSquare size={18} />
 
-                                href={`${basePath}/tasks`}
-
-                                onClick={()=>setOpen(false)}
-
-                                className="
-                                flex
-                                items-center
-                                gap-3
-                                px-6
-                                py-3
-                                transition
-                                hover:bg-slate-50
-                                dark:hover:bg-slate-800
-                                "
-
-                            >
-
-                                <CheckSquare
-                                    size={18}
-                                />
-
-                                <span
-                                    className="flex-1"
-                                >
-
-                                    My Tasks
-
-                                </span>
-
-                            </Link>
+        <span className="flex-1">
+            My Tasks
+        </span>
+    </Link>
+)}
 
 
 

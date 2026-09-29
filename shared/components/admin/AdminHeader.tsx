@@ -167,11 +167,12 @@ export default function AdminHeader() {
 
     </button>
 
-   <UserDropdown
+  <UserDropdown
     open={userOpen}
     setOpen={setUserOpen}
     user={user}
     basePath="/admin"
+    adminMode
 />
 
 </div>

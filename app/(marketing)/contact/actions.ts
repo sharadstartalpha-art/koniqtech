@@ -107,8 +107,8 @@ export async function sendContactForm(
     ----------------------------------------- */
 
    const adminEmail = await resend.emails.send({
-  from: "KoniqTech <sales@koniqtech.com>",
-  to: "sales@koniqtech.com",
+  from: "KoniqTech <info@koniqtech.com>",
+  to: "info@koniqtech.com",
   replyTo: email,
   subject: `New Contact Enquiry — ${industry}`,
   html: `...`,
@@ -134,7 +134,7 @@ if (adminEmail.error) {
     ----------------------------------------- */
 
     const autoReply = await resend.emails.send({
-      from: "KoniqTech <sales@koniqtech.com>",
+      from: "KoniqTech <info@koniqtech.com>",
       to: email,
       subject: "We've received your message — KoniqTech",
 
@@ -223,7 +223,7 @@ if (adminEmail.error) {
                   <br />
 
                   <span style="color:#64748b;">
-                    sales@koniqtech.com
+                    info@koniqtech.com
                   </span>
 
                 </div>

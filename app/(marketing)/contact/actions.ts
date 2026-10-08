@@ -111,7 +111,299 @@ export async function sendContactForm(
   to: "sales@koniqtech.com",
   replyTo: email,
   subject: `New Contact Enquiry — ${industry}`,
-  html: `...`,
+
+  html: `
+    <!DOCTYPE html>
+    <html>
+      <body
+        style="
+          margin:0;
+          padding:0;
+          background:#f8fafc;
+          font-family:Arial,Helvetica,sans-serif;
+          color:#0f172a;
+        "
+      >
+
+        <div
+          style="
+            max-width:680px;
+            margin:40px auto;
+            padding:0 20px;
+          "
+        >
+
+          <!-- Header -->
+          <div
+            style="
+              background:#0f172a;
+              color:#ffffff;
+              padding:28px 32px;
+              border-radius:18px 18px 0 0;
+            "
+          >
+
+            <h1
+              style="
+                margin:0;
+                font-size:24px;
+                line-height:1.3;
+              "
+            >
+              New Contact Enquiry
+            </h1>
+
+            <p
+              style="
+                margin:8px 0 0;
+                color:#cbd5e1;
+                font-size:15px;
+              "
+            >
+              ${safeIndustry} enquiry received from KoniqTech website
+            </p>
+
+          </div>
+
+          <!-- Content -->
+          <div
+            style="
+              background:#ffffff;
+              padding:32px;
+              border:1px solid #e2e8f0;
+              border-top:0;
+              border-radius:0 0 18px 18px;
+            "
+          >
+
+            <h2
+              style="
+                margin:0 0 24px;
+                font-size:20px;
+                color:#0f172a;
+              "
+            >
+              Contact Details
+            </h2>
+
+            <!-- Name -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Name
+              </div>
+
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:600;
+                "
+              >
+                ${safeName}
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Email
+              </div>
+
+              <div
+                style="
+                  font-size:16px;
+                "
+              >
+                <a
+                  href="mailto:${safeEmail}"
+                  style="
+                    color:#2563eb;
+                    text-decoration:none;
+                  "
+                >
+                  ${safeEmail}
+                </a>
+              </div>
+            </div>
+
+            <!-- Company -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Company
+              </div>
+
+              <div style="font-size:16px;">
+                ${safeCompany || "Not provided"}
+              </div>
+            </div>
+
+            <!-- Phone -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Phone
+              </div>
+
+              <div style="font-size:16px;">
+                ${safePhone || "Not provided"}
+              </div>
+            </div>
+
+            <!-- Industry -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Industry
+              </div>
+
+              <div style="font-size:16px;">
+                ${safeIndustry}
+              </div>
+            </div>
+
+            <!-- Demo -->
+            <div
+              style="
+                padding:14px 0;
+                border-bottom:1px solid #e2e8f0;
+              "
+            >
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:5px;
+                "
+              >
+                Demo Requested
+              </div>
+
+              <div
+                style="
+                  font-size:16px;
+                  font-weight:600;
+                "
+              >
+                ${demo ? "Yes" : "No"}
+              </div>
+            </div>
+
+            <!-- Message -->
+            <div style="padding:24px 0 0;">
+
+              <div
+                style="
+                  font-size:12px;
+                  color:#64748b;
+                  text-transform:uppercase;
+                  margin-bottom:10px;
+                "
+              >
+                Message
+              </div>
+
+              <div
+                style="
+                  background:#f8fafc;
+                  border:1px solid #e2e8f0;
+                  border-radius:10px;
+                  padding:18px;
+                  font-size:15px;
+                  line-height:1.7;
+                  white-space:pre-wrap;
+                "
+              >
+                ${safeMessage}
+              </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div
+              style="
+                margin-top:30px;
+                padding-top:20px;
+                border-top:1px solid #e2e8f0;
+                font-size:13px;
+                color:#64748b;
+              "
+            >
+
+              This enquiry was submitted through the
+              <strong>KoniqTech</strong> website.
+
+              <br /><br />
+
+              Reply directly to this email to respond to
+              <strong>${safeName}</strong>.
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </body>
+    </html>
+  `,
 })
 
 console.log("[CONTACT_ADMIN_EMAIL_RESULT]", {

@@ -108,7 +108,7 @@ export async function sendContactForm(
 
    const adminEmail = await resend.emails.send({
   from: "KoniqTech <sales@koniqtech.com>",
-  to: "sales@koniqtech.com",
+  to: "sharad@koniqtech.com",
   replyTo: email,
   subject: `New Contact Enquiry — ${industry}`,
 

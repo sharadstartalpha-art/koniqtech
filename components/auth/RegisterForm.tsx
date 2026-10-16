@@ -654,7 +654,7 @@ if (!valid) {
               <CheckCircle2 className="h-6 w-6 text-green-600" />
 
               <span className="font-medium text-slate-800">
-                Organization Created
+                Organization Created 
               </span>
             </div>
 

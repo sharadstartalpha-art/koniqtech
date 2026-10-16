@@ -322,14 +322,34 @@ const recentPayments =
 
     </div>
 
-    {canEdit(permissions, "Billing", isOwner) && (
-  <Link
-    href="/billing/plans"
-    className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
-  >
-    Manage Plan
-  </Link>
+    
+{canEdit(permissions, "Billing", isOwner) && (
+  <div className="flex flex-wrap items-center gap-3">
+    <Link
+      href="/billing/plans"
+      className="rounded-xl bg-orange-500 px-6 py-3 font-medium text-white hover:bg-orange-600"
+    >
+      Manage Plan
+    </Link>
+
+    <button
+      type="button"
+      onClick={() => {
+        const confirmed = window.confirm(
+          "Are you sure you want to cancel your KoniqTech subscription? We will send a verification code to your registered email. Your subscription will not be cancelled until you verify the code."
+        );
+
+        if (confirmed) {
+          window.location.href = "/settings/subscription/cancel";
+        }
+      }}
+      className="rounded-xl border border-red-300 px-6 py-3 font-medium text-red-600 hover:bg-red-50"
+    >
+      Cancel Subscription
+    </button>
+  </div>
 )}
+
 
     <Link
   href="/billing/history"

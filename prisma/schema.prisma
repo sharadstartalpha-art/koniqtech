@@ -6477,3 +6477,19 @@ model AiWorkflowRun {
   @@index([orgId, createdAt])
   @@index([status])
 }
+
+model SubscriptionCancellationOtp {
+  id         String    @id @default(cuid())
+  userId     String
+  orgId      String
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  verifiedAt DateTime?
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, orgId, createdAt])
+  @@index([expiresAt])
+}

@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
-
+import CancelSubscriptionButton from "./CancelSubscriptionButton";
 import { InvoiceStatus, Prisma } from "@prisma/client"
 
 import Link from "next/link";
@@ -332,21 +332,7 @@ const recentPayments =
       Manage Plan
     </Link>
 
-    <button
-      type="button"
-      onClick={() => {
-        const confirmed = window.confirm(
-          "Are you sure you want to cancel your KoniqTech subscription? We will send a verification code to your registered email. Your subscription will not be cancelled until you verify the code."
-        );
-
-        if (confirmed) {
-          window.location.href = "/settings/subscription/cancel";
-        }
-      }}
-      className="rounded-xl border border-red-300 px-6 py-3 font-medium text-red-600 hover:bg-red-50"
-    >
-      Cancel Subscription
-    </button>
+    <CancelSubscriptionButton />
   </div>
 )}
 

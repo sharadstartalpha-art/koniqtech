@@ -1,6 +1,9 @@
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
-import { SubscriptionPlan } from "@prisma/client";
+import {
+  SubscriptionPlan,
+  SubscriptionStatus,
+} from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -30,12 +33,43 @@ const currentPlan =
   subscription?.plan ??
   organization.plan;
 
+const now = new Date();
+
+const isTrial =
+  subscription?.status === SubscriptionStatus.trial;
+
+const trialEnd = subscription
+  ? subscription.trialEnd ?? organization.trialEndsAt
+  : null;
+
+const trialExpired =
+  isTrial &&
+  (!trialEnd || trialEnd <= now);
+
+const paidSubscriptionExpired =
+  subscription?.status === SubscriptionStatus.active &&
+  Boolean(
+    subscription.renewAt &&
+    subscription.renewAt <= now
+  );
+
 const subscriptionExpired =
   !subscription ||
-  subscription.status !== "active" ||
-  (
-    subscription.renewAt &&
-    subscription.renewAt <= new Date()
+  trialExpired ||
+  paidSubscriptionExpired ||
+  subscription.status === SubscriptionStatus.expired ||
+  subscription.status === SubscriptionStatus.cancelled;
+
+const subscriptionUsable =
+  Boolean(
+    subscription &&
+    (
+      (isTrial && trialEnd && trialEnd > now) ||
+      (
+        subscription.status === SubscriptionStatus.active &&
+        (!subscription.renewAt || subscription.renewAt > now)
+      )
+    )
   );
 
   const plans = [
@@ -127,7 +161,11 @@ const subscriptionExpired =
             : "text-green-600"
         }`}
       >
-        {subscriptionExpired ? "Expired" : "Active"}
+        {subscriptionExpired
+  ? "Expired"
+  : isTrial
+    ? "Trial"
+    : "Active"}
       </p>
     </div>
 
@@ -195,8 +233,10 @@ const subscriptionExpired =
     }`}
   >
     {subscriptionExpired
-      ? "Plan Expired"
-      : "Current Plan"}
+  ? "Plan Expired"
+  : isTrial
+    ? "Free Trial"
+    : "Current Plan"}
   </div>
 )}
 
@@ -230,17 +270,17 @@ const subscriptionExpired =
              <Link
   href={`/billing/plans/checkout?plan=${plan.id}`}
   className={`mt-10 block w-full rounded-xl py-4 text-lg font-semibold transition ${
-    isCurrent && !subscriptionExpired
-      ? "pointer-events-none bg-gray-300 text-gray-600"
-      : "bg-orange-500 text-white hover:bg-orange-600"
-  }`}
+  isCurrent && subscriptionUsable
+    ? "pointer-events-none bg-gray-300 text-gray-600"
+    : "bg-orange-500 text-white hover:bg-orange-600"
+}`}
 >
-             {isCurrent
-  ? (
-      subscriptionExpired
-        ? `Renew ${plan.title}`
-        : "Current Plan"
-    )
+            {isCurrent
+  ? subscriptionUsable
+    ? isTrial
+      ? "Trial Active"
+      : "Current Plan"
+    : `Renew ${plan.title}`
   : `Upgrade to ${plan.title}`}
               </Link>
 

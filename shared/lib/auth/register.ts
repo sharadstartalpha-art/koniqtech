@@ -11,7 +11,7 @@ import {
 import { prisma } from "@/shared/lib/prisma";
 import { hashPassword } from "@/shared/lib/auth/password";
 
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 3;
 
 export interface RegisterInput {
   fullName: string;

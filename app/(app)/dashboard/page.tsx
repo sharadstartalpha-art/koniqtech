@@ -238,31 +238,40 @@ export default async function DashboardPage() {
     }),
   ])
 
-  // ------------------------------------------------------------
-  // SUBSCRIPTION
+   // ------------------------------------------------------------
+  // SUBSCRIPTION / TRIAL
   // ------------------------------------------------------------
 
-  const subscriptionEnds =
-    dbUser.organization.subscriptionEndsAt
+  const subscription = await prisma.subscription.findUnique({
+    where: {
+      orgId: dbUser.orgId,
+    },
+  });
+
+  const isTrial = subscription?.status === "trial";
+
+  const subscriptionEnds = isTrial
+    ? subscription?.trialEnd ?? dbUser.organization.trialEndsAt
+    : subscription?.renewAt ?? dbUser.organization.subscriptionEndsAt;
+
+  const now = Date.now();
+
+  const millisecondsLeft = subscriptionEnds
+    ? new Date(subscriptionEnds).getTime() - now
+    : null;
 
   const daysLeft =
-    subscriptionEnds
-      ? Math.ceil(
-          (
-            new Date(subscriptionEnds).getTime() -
-            Date.now()
-          ) /
-            1000 /
-            60 /
-            60 /
-            24
-        )
-      : null
+    millisecondsLeft !== null
+      ? Math.max(0, Math.ceil(millisecondsLeft / (1000 * 60 * 60 * 24)))
+      : null;
 
   const expired =
-    daysLeft !== null &&
-    daysLeft < 0
-
+    isTrial
+      ? millisecondsLeft === null || millisecondsLeft <= 0
+      : subscription?.status === "expired" ||
+        (subscription?.status === "active" &&
+          millisecondsLeft !== null &&
+          millisecondsLeft <= 0);
   // ------------------------------------------------------------
   // ONBOARDING
   // ------------------------------------------------------------
@@ -650,142 +659,72 @@ export default async function DashboardPage() {
 
       </div>
 
-      {/* SUBSCRIPTION */}
+           {/* SUBSCRIPTION */}
 
-      <div
-        className="
-          bg-white
-          border
-          rounded-3xl
-          p-8
-        "
-      >
-
-        <div
-          className="
-            flex
-            justify-between
-            items-start
-          "
-        >
-
+      <div className="rounded-3xl border bg-white p-8">
+        <div className="flex items-start justify-between gap-6">
           <div>
-
-            <h2
-              className="
-                text-2xl
-                font-semibold
-              "
-            >
+            <h2 className="text-2xl font-semibold">
               Subscription
             </h2>
 
-            <div
-              className="
-                mt-6
-                space-y-3
-                text-sm
-              "
-            >
-
+            <div className="mt-6 space-y-3 text-sm">
               <p>
                 Plan
-
-                <span
-                  className="
-                    font-semibold
-                    ml-2
-                  "
-                >
-                  {dbUser.organization.plan ||
-                    "free"}
+                <span className="ml-2 font-semibold capitalize">
+                  {subscription?.plan ??
+                    dbUser.organization.plan ??
+                    "starter"}
                 </span>
               </p>
 
               <p>
-                Expires
-
-                <span
-                  className="
-                    font-semibold
-                    ml-2
-                  "
-                >
-                  {subscriptionEnds
-                    ? new Date(
-                        subscriptionEnds
-                      ).toLocaleDateString()
-                    : "No subscription"}
+                Status
+                <span className="ml-2 font-semibold capitalize">
+                  {subscription?.status ?? "unknown"}
                 </span>
               </p>
 
+              <p>
+                {isTrial ? "Trial ends" : "Renewal date"}
+                <span className="ml-2 font-semibold">
+                  {subscriptionEnds
+                    ? new Date(subscriptionEnds).toLocaleDateString()
+                    : "Not available"}
+                </span>
+              </p>
             </div>
 
-            {daysLeft !== null &&
-              !expired && (
-                <div
-                  className="
-                    mt-5
-                    inline-flex
-                    px-3
-                    py-1
-                    rounded-full
-                    bg-green-50
-                    text-green-700
-                    text-sm
-                    font-medium
-                  "
-                >
-                  {daysLeft} days remaining
-                </div>
-              )}
-
-            {expired && (
-              <div
-                className="
-                  mt-5
-                  inline-flex
-                  px-3
-                  py-1
-                  rounded-full
-                  bg-red-50
-                  text-red-700
-                  text-sm
-                  font-medium
-                "
-              >
-                Subscription expired
+            {isTrial && !expired && daysLeft !== null && (
+              <div className="mt-5 inline-flex rounded-full bg-orange-50 px-3 py-1 text-sm font-medium text-orange-700">
+                {daysLeft === 0
+                  ? "Less than one day remaining"
+                  : `${daysLeft} day${daysLeft === 1 ? "" : "s"} remaining`}
               </div>
             )}
 
+            {expired && (
+              <div className="mt-5 inline-flex rounded-full bg-red-50 px-3 py-1 text-sm font-medium text-red-700">
+                Trial or subscription expired
+              </div>
+            )}
+
+            {isTrial && !expired && (
+              <p className="mt-4 text-sm text-slate-500">
+                Explore your CRM during the free trial. Upgrade before
+                the trial ends to continue using paid features.
+              </p>
+            )}
           </div>
 
-          {canViewModule("Billing") && (
-            <Link
-              href="/billing"
-              className="
-                h-10
-                px-5
-                rounded-xl
-                border
-                text-sm
-                font-medium
-                flex
-                items-center
-                gap-2
-                hover:bg-slate-50
-              "
-            >
-              Manage
-
-              <ArrowRight
-                size={14}
-              />
-            </Link>
-          )}
-
+          <Link
+            href="/billing/plans"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border px-5 text-sm font-medium transition hover:bg-slate-50"
+          >
+            {isTrial ? "Upgrade" : "Manage"}
+            <ArrowRight size={14} />
+          </Link>
         </div>
-
       </div>
 
       {/* RECENT ACTIVITY */}

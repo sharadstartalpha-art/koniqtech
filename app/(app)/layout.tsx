@@ -2,7 +2,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import AppLayout from "@/app/components/AppLayout";
-import { requireActiveSubscription } from "@/shared/lib/check-subscription";
+
 import prisma from "@/shared/lib/prisma";
 
 export default async function Layout({
@@ -16,10 +16,9 @@ export default async function Layout({
     redirect("/login");
   }
 
-  // Don't check subscription for super admins
-  if (session.user.role !== "super_admin") {
-    await requireActiveSubscription(session.user.orgId);
-  }
+  // Subscription expiry should be handled by feature-level
+// access checks, not by blocking the entire CRM layout.
+// Keep dashboard and billing accessible after trial expiry.
 
   /*
    * Load locations assigned to the logged-in user.

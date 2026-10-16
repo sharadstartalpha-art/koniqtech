@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -122,44 +123,6 @@ export default function RegisterForm() {
 
 
 
-  useEffect(() => {
-  if (step !== 3) return;
-
-  const redirectToPaypal = async () => {
-    try {
-      const response = await fetch(
-        "/api/paypal/create-subscription",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            plan: getValues("plan"),
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Unable to create subscription."
-        );
-      }
-
-      window.location.href = data.approvalUrl;
-    } catch (err: any) {
-      console.error(err);
-
-      setApiError(
-        err.message || "Unable to connect to PayPal."
-      );
-    }
-  };
-
-  redirectToPaypal();
-}, [step]);
 
 
 
@@ -272,48 +235,26 @@ if (!valid) {
         return;
       }
 
-      setApiSuccess("Registration successful.");
+      // Create the account first, then sign the new owner in using
+      // the same Credentials provider as the existing login page.
+      const loginResult = await signIn("credentials", {
+        email: getValues("email").trim().toLowerCase(),
+        password: getValues("password"),
+        redirect: false,
+      });
 
-const orgId =
-  result.orgId ??
-  result.data?.organizationId;
-
-setStep(3);
-
-setTimeout(() => {
-  router.push(
-    `/register/plan?orgId=${orgId}`
-  );
-}, 1500);
-
-      useEffect(() => {
-  if (step !== 3) return;
-
-  const redirectToPaypal = async () => {
-    const response = await fetch(
-      "/api/paypal/create-subscription",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          plan: getValues("plan"),
-        }),
+      if (!loginResult?.ok) {
+        setApiSuccess(
+          "Your account was created. Please sign in to continue your trial."
+        );
+        setStep(3);
+        setTimeout(() => router.replace("/login"), 1500);
+        return;
       }
-    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-
-    window.location.href = data.approvalUrl;
-  };
-
-  redirectToPaypal();
-}, [step]);
+      setApiSuccess("Your 3-day free trial is ready!");
+      setStep(3);
+      setTimeout(() => router.replace("/dashboard"), 1000);
 
 
 
@@ -699,8 +640,8 @@ setTimeout(() => {
 
           <p className="mx-auto max-w-lg text-slate-600">
             Your workspace has been created successfully.
-            We're preparing your CRM and redirecting you to
-            complete your subscription.
+            Your 3-day free trial is ready. We're taking you
+            directly to your CRM dashboard.
           </p>
 
         </div>
@@ -752,7 +693,7 @@ setTimeout(() => {
             <div className="h-5 w-5 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" />
 
             <span className="font-medium text-orange-700">
-              Redirecting to Checkout...
+              Opening your dashboard...
             </span>
 
           </div>

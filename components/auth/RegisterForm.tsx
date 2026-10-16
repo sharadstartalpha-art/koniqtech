@@ -97,7 +97,7 @@ export default function RegisterForm() {
 
       language: "en",
 
-      plan: "starter",
+      plan: "professional",
 
       acceptTerms: false,
     },
@@ -106,6 +106,7 @@ export default function RegisterForm() {
   const password = watch("password");
 
   const industry = watch("industry");
+  const selectedPlan = watch("plan");
 
   const otp = watch("otp") ?? "";
 
@@ -440,6 +441,101 @@ if (!valid) {
           }
           {...register("confirmPassword")}
         />
+
+
+
+        {/* PLAN SELECTION */}
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Choose Your Plan
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Select a plan to start your 3-day free trial.
+              No payment is required to begin.
+            </p>
+          </div>
+
+          {[
+            {
+              id: "starter",
+              name: "Starter",
+              price: "$99",
+              description: "Core CRM features",
+              detail: "No AI features",
+            },
+            {
+              id: "professional",
+              name: "Professional",
+              price: "$199",
+              description: "Full CRM features",
+              detail: "One business location",
+            },
+            {
+              id: "enterprise",
+              name: "Enterprise",
+              price: "$499",
+              description: "Advanced business operations",
+              detail: "Multiple business locations",
+            },
+          ].map((plan) => {
+            const isSelected = selectedPlan === plan.id;
+
+            return (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() =>
+                  setValue(
+                    "plan",
+                    plan.id as RegisterSchema["plan"],
+                    { shouldValidate: true }
+                  )
+                }
+                className={`w-full rounded-2xl border-2 p-4 text-left transition ${
+                  isSelected
+                    ? "border-orange-500 bg-orange-50"
+                    : "border-slate-200 bg-white hover:border-orange-300"
+                }`}
+                aria-pressed={isSelected}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {plan.name}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {plan.description}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {plan.detail}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-slate-900">
+                      {plan.price}
+                    </p>
+                    <p className="text-xs text-slate-500">/month</p>
+                  </div>
+                </div>
+
+                <p
+                  className={`mt-3 text-sm font-medium ${
+                    isSelected
+                      ? "text-orange-700"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {isSelected ? "✓ Selected" : "Select plan"}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+
+
 
         <div className="space-y-3">
 

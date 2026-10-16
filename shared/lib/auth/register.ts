@@ -533,6 +533,21 @@ function getTrialDates() {
 }
 
 
+function validatePlan(plan: unknown): SubscriptionPlan {
+  if (
+    typeof plan !== "string" ||
+    !Object.values(SubscriptionPlan).includes(
+      plan as SubscriptionPlan
+    )
+  ) {
+    throw new RegisterError("Please select a valid subscription plan.");
+  }
+
+  return plan as SubscriptionPlan;
+}
+
+
+
 function prepareInput(
   input: RegisterInput
 ): RegisterInput {
@@ -556,7 +571,7 @@ function prepareInput(
     language:
       input.language ?? DEFAULT_LANGUAGE,
 
-    plan: input.plan ?? DEFAULT_PLAN,
+    plan: validatePlan(input.plan ?? DEFAULT_PLAN),
   };
 }
 

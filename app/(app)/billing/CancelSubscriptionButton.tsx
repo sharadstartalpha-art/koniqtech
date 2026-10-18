@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { signOut } from "next-auth/react";
 export default function CancelSubscriptionButton() {
   const router = useRouter();
 
@@ -81,9 +81,10 @@ export default function CancelSubscriptionButton() {
 
       setCancelled(true);
       setMessage(
-        result.message || "Your subscription was cancelled successfully."
-      );
+  result.message || "Your subscription was cancelled successfully."
+);
 
+     await signOut({ callbackUrl: "/login" });
       router.refresh();
     } catch (err) {
       setError(

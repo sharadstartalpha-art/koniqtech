@@ -6493,3 +6493,26 @@ model SubscriptionCancellationOtp {
   @@index([userId, orgId, createdAt])
   @@index([expiresAt])
 }
+
+model SupportTicket {
+  id           String    @id @default(cuid())
+  ticketNumber String    @unique
+  userId       String
+  orgId        String
+  userName     String
+  email        String
+  category     String
+  subject      String    @db.VarChar(150)
+  description  String    @db.Text
+  status       String    @default("open")
+  priority     String    @default("normal")
+  adminNotes   String?   @db.Text
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([orgId, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("SupportTicket")
+}

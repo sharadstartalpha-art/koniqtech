@@ -220,24 +220,24 @@ useEffect(() => {
   }
 }, [locations])
 
-function outside(
-e:any
-){
+function outside(e: MouseEvent) {
+  const target = e.target as Node;
 
-if(
+  // Close the header account dropdown when clicking outside it.
+  if (
+    headerRef.current &&
+    !headerRef.current.contains(target)
+  ) {
+    setUserOpen(false);
+  }
 
-ref.current &&
-
-!ref.current.contains(
-e.target
-)
-
-){
-
-setOpen(false)
-
-}
-
+  // Preserve the existing dropdown behavior.
+  if (
+    ref.current &&
+    !ref.current.contains(target)
+  ) {
+    setOpen(false);
+  }
 }
 
 async function load() {

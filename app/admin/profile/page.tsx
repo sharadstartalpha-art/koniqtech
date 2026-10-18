@@ -14,15 +14,18 @@ import {
 } from "next/navigation"
 
 import {
-    User,
-    Mail,
-    Shield,
-    Save,
-    Loader2,
-    CheckCircle2,
-    AlertCircle,
-    ArrowLeft
-} from "lucide-react"
+  User,
+  Mail,
+  Shield,
+  Save,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ArrowLeft,
+  KeyRound,
+  LockKeyhole,
+  X,
+} from "lucide-react";
 
 type ProfileUser = {
     id?: string
@@ -52,6 +55,14 @@ export default function AdminProfilePage() {
     const [user, setUser] = useState<ProfileUser>({})
 
     const [name, setName] = useState("")
+
+    const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+const [currentPassword, setCurrentPassword] = useState("");
+const [newPassword, setNewPassword] = useState("");
+const [confirmPassword, setConfirmPassword] = useState("");
+const [passwordSaving, setPasswordSaving] = useState(false);
+const [passwordError, setPasswordError] = useState("");
+const [passwordSuccess, setPasswordSuccess] = useState("");
 
     const [loading, setLoading] = useState(true)
 
@@ -216,6 +227,71 @@ export default function AdminProfilePage() {
         }
 
     }
+
+
+
+async function handleChangePassword(
+  e: React.FormEvent<HTMLFormElement>
+) {
+  e.preventDefault();
+  setPasswordError("");
+  setPasswordSuccess("");
+
+  if (newPassword.length < 12) {
+    setPasswordError(
+      "Your new password must contain at least 12 characters."
+    );
+    return;
+  }
+
+  if (newPassword.length > 128) {
+    setPasswordError("Your new password is too long.");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    setPasswordError("The new passwords do not match.");
+    return;
+  }
+
+  try {
+    setPasswordSaving(true);
+
+    const response = await fetch("/api/admin/change-password", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || "Unable to change your password."
+      );
+    }
+
+    setPasswordSuccess("Password changed successfully.");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch (err) {
+    setPasswordError(
+      err instanceof Error
+        ? err.message
+        : "Unable to change your password."
+    );
+  } finally {
+    setPasswordSaving(false);
+  }
+}
+
 
 
     /*
@@ -801,15 +877,19 @@ export default function AdminProfilePage() {
                         {/* Save */}
                         {/* ------------------------------------------------- */}
 
-                        <div className="
-                            mt-8
-                            flex
-                            justify-end
-                            border-t
-                            border-slate-200
-                            pt-6
-                            dark:border-slate-800
-                        ">
+                       <div className="mt-8 flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-6 dark:border-slate-800">
+  <button
+    type="button"
+    onClick={() => {
+      setPasswordError("");
+      setPasswordSuccess("");
+      setPasswordModalOpen(true);
+    }}
+    className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+  >
+    <KeyRound size={17} />
+    Change Password
+  </button>
 
                             <button
                                 type="submit"

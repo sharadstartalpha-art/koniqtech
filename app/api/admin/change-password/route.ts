@@ -110,24 +110,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        passwordHash: true,
-        role: true,
-        employee: {
-          select: { id: true },
-        },
-      },
-    });
+ const user = await prisma.user.findUnique({
+  where: { id: session.user.id },
+  select: {
+    id: true,
+    passwordHash: true,
+    role: true,
+  },
+});
 
-    if (!user || !user.employee) {
-      return NextResponse.json(
-        { success: false, message: "Administrator account not found." },
-        { status: 403 }
-      );
-    }
+if (
+  !user ||
+  String(user.role).trim().toLowerCase() !== "super_admin"
+) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Super Admin account not found or access denied.",
+    },
+    { status: 403 }
+  );
+}
 
     const validPassword = await bcrypt.compare(
       currentPassword,

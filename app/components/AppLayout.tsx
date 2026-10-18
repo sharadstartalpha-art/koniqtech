@@ -74,6 +74,10 @@ const [helpSubject, setHelpSubject] = useState("");
 const [helpDescription, setHelpDescription] = useState("");
 
 
+const [helpSubmitting, setHelpSubmitting] = useState(false);
+const [helpSuccess, setHelpSuccess] = useState("");
+const [helpError, setHelpError] = useState("");
+
 const [subscriptionPlan, setSubscriptionPlan] =
   useState<SubscriptionPlan>(SubscriptionPlan.starter);
 const [industry, setIndustry] = useState("")
@@ -1253,12 +1257,69 @@ justify-between
 
       <form
         className="mt-6 space-y-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          alert(
-            "The support form UI is ready. Submission will be connected to the backend in the next step."
-          );
-        }}
+        
+onSubmit={async (event) => {
+  event.preventDefault();
+
+  if (helpSubmitting) return;
+
+  setHelpSubmitting(true);
+  setHelpError("");
+  setHelpSuccess("");
+
+  try {
+
+{helpSuccess && (
+  <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+    {helpSuccess}
+  </p>
+)}
+
+{helpError && (
+  <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+    {helpError}
+  </p>
+)}
+
+    const response = await fetch("/api/support", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        category: helpCategory,
+        subject: helpSubject,
+        description: helpDescription,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.message || "Unable to submit your support request."
+      );
+    }
+
+    setHelpSuccess(
+      result.notificationSent === false
+        ? `Ticket ${result.ticketNumber} has been saved, but the email notification failed.`
+        : `Your request has been submitted successfully. Ticket number: ${result.ticketNumber}. Our team aims to respond within 24 hours.`
+    );
+
+    setHelpSubject("");
+    setHelpDescription("");
+  } catch (error) {
+    setHelpError(
+      error instanceof Error
+        ? error.message
+        : "Something went wrong. Please try again."
+    );
+  } finally {
+    setHelpSubmitting(false);
+  }
+}}
+
       >
         <div>
           <label
@@ -1348,12 +1409,13 @@ justify-between
             Close
           </button>
 
-          <button
-            type="submit"
-            className="rounded-lg bg-orange-600 px-5 py-2.5 font-semibold text-white hover:bg-orange-700"
-          >
-            Submit Request
-          </button>
+         <button
+  type="submit"
+  disabled={helpSubmitting}
+  className="rounded-lg bg-orange-600 px-5 py-2.5 font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+>
+  {helpSubmitting ? "Submitting..." : "Submit Request"}
+</button>
         </div>
       </form>
     </section>

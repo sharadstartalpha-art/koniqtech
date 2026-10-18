@@ -32,6 +32,7 @@ import {
   LogOut,
   MoreHorizontal,
   User,
+  CircleHelp,
   MapPin
 } from "lucide-react"
 
@@ -67,6 +68,10 @@ const [role,setRole] = useState("")
 const [permissions, setPermissions] =
   useState<Permission[]>([])
 
+  const [helpOpen, setHelpOpen] = useState(false);
+const [helpCategory, setHelpCategory] = useState("Technical issue");
+const [helpSubject, setHelpSubject] = useState("");
+const [helpDescription, setHelpDescription] = useState("");
 
 
 const [subscriptionPlan, setSubscriptionPlan] =
@@ -834,6 +839,20 @@ justify-between
     {/* Notification Bell */}
 
 
+{/* Help Button */}
+<button
+  type="button"
+  onClick={() => setHelpOpen(true)}
+  title="Get Help"
+  aria-label="Get Help"
+  className="flex h-11 items-center gap-2 rounded-2xl border bg-white px-3 text-slate-700 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+>
+  <CircleHelp size={18} />
+  <span className="hidden sm:inline text-sm font-medium">
+    Help
+  </span>
+</button>
+
     {/* Notifications */}
 
 <div className="relative">
@@ -1193,6 +1212,153 @@ justify-between
   </div>
 
 </header>
+
+{helpOpen && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        setHelpOpen(false);
+      }
+    }}
+  >
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-dialog-title"
+      className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2
+            id="help-dialog-title"
+            className="text-2xl font-bold text-slate-900"
+          >
+            How can we help?
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Tell us what you need help with.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setHelpOpen(false)}
+          aria-label="Close help form"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+        >
+          ✕
+        </button>
+      </div>
+
+      <form
+        className="mt-6 space-y-4"
+        onSubmit={(event) => {
+          event.preventDefault();
+          alert(
+            "The support form UI is ready. Submission will be connected to the backend in the next step."
+          );
+        }}
+      >
+        <div>
+          <label
+            htmlFor="help-email"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Your email
+          </label>
+          <input
+            id="help-email"
+            type="email"
+            value={email}
+            readOnly
+            className="w-full rounded-lg border bg-slate-50 px-4 py-3 text-slate-600"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="help-category"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Problem category
+          </label>
+          <select
+            id="help-category"
+            value={helpCategory}
+            onChange={(event) => setHelpCategory(event.target.value)}
+            className="w-full rounded-lg border px-4 py-3"
+          >
+            <option>Technical issue</option>
+            <option>Billing and subscription</option>
+            <option>Login and account</option>
+            <option>Feature request</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="help-subject"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Subject
+          </label>
+          <input
+            id="help-subject"
+            value={helpSubject}
+            onChange={(event) => setHelpSubject(event.target.value)}
+            required
+            maxLength={150}
+            placeholder="Briefly describe the problem"
+            className="w-full rounded-lg border px-4 py-3"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="help-description"
+            className="mb-1 block text-sm font-medium text-slate-700"
+          >
+            Describe your issue
+          </label>
+          <textarea
+            id="help-description"
+            value={helpDescription}
+            onChange={(event) => setHelpDescription(event.target.value)}
+            required
+            minLength={10}
+            maxLength={5000}
+            rows={5}
+            placeholder="What happened, and what did you expect?"
+            className="w-full resize-y rounded-lg border px-4 py-3"
+          />
+        </div>
+
+        <p className="text-sm text-slate-500">
+          Our support team aims to respond within 24 hours.
+        </p>
+
+        <div className="flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => setHelpOpen(false)}
+            className="rounded-lg border px-4 py-2.5 hover:bg-slate-50"
+          >
+            Close
+          </button>
+
+          <button
+            type="submit"
+            className="rounded-lg bg-orange-600 px-5 py-2.5 font-semibold text-white hover:bg-orange-700"
+          >
+            Submit Request
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+)}
 
 <main className="
 flex-1

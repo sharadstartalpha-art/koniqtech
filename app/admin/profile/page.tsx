@@ -951,6 +951,171 @@ async function handleChangePassword(
 
             </div>
 
+
+{passwordModalOpen && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4"
+    onMouseDown={(e) => {
+      if (e.target === e.currentTarget && !passwordSaving) {
+        setPasswordModalOpen(false);
+      }
+    }}
+  >
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="change-password-title"
+      className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900"
+    >
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h2
+            id="change-password-title"
+            className="text-xl font-bold text-slate-900 dark:text-white"
+          >
+            Change Password
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Update your administrator account password.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          disabled={passwordSaving}
+          onClick={() => setPasswordModalOpen(false)}
+          aria-label="Close password dialog"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-50 dark:hover:bg-slate-800"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {passwordError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"
+        >
+          {passwordError}
+        </div>
+      )}
+
+      {passwordSuccess && (
+        <div
+          role="status"
+          className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700"
+        >
+          {passwordSuccess}
+        </div>
+      )}
+
+      <form onSubmit={handleChangePassword} className="space-y-4">
+        <div>
+          <label
+            htmlFor="admin-current-password"
+            className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            Current Password
+          </label>
+          <div className="relative">
+            <LockKeyhole
+              size={17}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              id="admin-current-password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="admin-new-password"
+            className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            New Password
+          </label>
+          <input
+            id="admin-new-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={12}
+            maxLength={128}
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            Use at least 12 characters.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="admin-confirm-password"
+            className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+          >
+            Confirm New Password
+          </label>
+          <input
+            id="admin-confirm-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={12}
+            maxLength={128}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-3">
+          <button
+            type="button"
+            disabled={passwordSaving}
+            onClick={() => setPasswordModalOpen(false)}
+            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-white dark:hover:bg-slate-800"
+          >
+            Close
+          </button>
+
+          <button
+            type="submit"
+            disabled={
+              passwordSaving ||
+              !currentPassword ||
+              !newPassword ||
+              !confirmPassword
+            }
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {passwordSaving ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <KeyRound size={16} />
+                Update Password
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+)}
+
+
         </div>
 
     )

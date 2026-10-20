@@ -256,7 +256,9 @@ model Organization {
 
   aiWorkflows AiWorkflow[]
 
-  aiApprovals AiApproval[]
+  aiApprovals     AiApproval[]
+  AiLeadSearch    AiLeadSearch[]
+  AiLeadCandidate AiLeadCandidate[]
 }
 
 model User {
@@ -6515,4 +6517,114 @@ model SupportTicket {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("SupportTicket")
+}
+
+enum AiLeadSearchStatus {
+  queued
+  running
+  completed
+  failed
+  cancelled
+}
+
+enum AiLeadCandidateStatus {
+  discovered
+  qualified
+  disqualified
+  imported
+  dismissed
+}
+
+model AiLeadSearch {
+  id         String  @id @default(cuid())
+  orgId      String
+  locationId String?
+  userId     String
+
+  query    String  @db.Text
+  industry String?
+  city     String?
+  state    String?
+  country  String? @default("USA")
+
+  filters  Json?
+  provider String?
+  status   AiLeadSearchStatus @default(queued)
+
+  requestedCount Int @default(25)
+  resultCount    Int @default(0)
+
+  estimatedCost Decimal? @db.Decimal(12, 6)
+  error         String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  results AiLeadSearchResult[]
+
+  @@index([orgId, createdAt])
+  @@index([orgId, status])
+  @@index([orgId, locationId])
+  @@index([userId])
+}
+
+model AiLeadCandidate {
+  id    String @id @default(cuid())
+  orgId String
+
+  source        String
+  externalId    String
+  businessName  String
+  website       String?
+  businessPhone String?
+
+  industry String?
+  address  String?
+  city     String?
+  state    String?
+  country  String?
+
+  sourceUrl      String?
+  lastVerifiedAt DateTime?
+
+  matchScore   Int?
+  matchReasons Json?
+  status       AiLeadCandidateStatus @default(discovered)
+
+  importedLeadId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  searchResults AiLeadSearchResult[]
+
+  @@unique([orgId, source, externalId])
+  @@index([orgId, status])
+  @@index([orgId, city, industry])
+  @@index([orgId, createdAt])
+}
+
+model AiLeadSearchResult {
+  id          String @id @default(cuid())
+  searchId    String
+  candidateId String
+
+  rank         Int?
+  matchScore   Int?
+  matchReasons Json?
+
+  createdAt DateTime @default(now())
+
+  search AiLeadSearch @relation(fields: [searchId], references: [id], onDelete: Cascade)
+
+  candidate AiLeadCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@unique([searchId, candidateId])
+  @@index([candidateId])
 }

@@ -30,6 +30,9 @@ import {
   LucideIcon,
   ShoppingCart,
   MapPin,
+   Search,
+  UserCheck,
+  Workflow,
 } from "lucide-react";
 
 import type { ModuleName } from "@/shared/constants/modules";
@@ -461,32 +464,64 @@ export const MENU: MenuSection[] = [
     ],
   },
 
-  {
-    title: "Intelligence",
+ 
+{
+  title: "Intelligence",
+  items: [
+    {
+      label: "AI Tools",
+      href: "/ai",
+      permission: "AI Assistant",
+      icon: Brain,
 
-    items: [
-      {
-        label: "AI Assistant",
-        href: "/ai",
-        permission: "AI Assistant",
-        icon: Brain,
+      plans: [
+        SubscriptionPlan.professional,
+        SubscriptionPlan.enterprise,
+      ],
 
-        
+      industries: [
+        Industry.roofing,
+        Industry.hvac,
+        Industry.plumbing,
+        Industry.landscaping,
+      ],
 
-        plans: [
-          SubscriptionPlan.professional,
-          SubscriptionPlan.enterprise,
-        ],
+      children: [
+        {
+          label: "AI Assistant",
+          href: "/ai",
+          permission: "AI Assistant",
+          icon: Brain,
+        },
+        {
+          label: "AI Lead Finder",
+          href: "/ai/lead-finder",
+          permission: "AI Assistant",
+          icon: Search,
+        },
+        {
+          label: "Lead Qualification",
+          href: "/ai/lead-qualification",
+          permission: "AI Assistant",
+          icon: UserCheck,
+        },
+        {
+          label: "AI Outreach",
+          href: "/ai/outreach",
+          permission: "AI Assistant",
+          icon: Mail,
+        },
+        {
+          label: "AI Automations",
+          href: "/ai/automations",
+          permission: "AI Assistant",
+          icon: Workflow,
+        },
+      ],
+    },
+  ],
+},
 
-        industries: [
-          Industry.roofing,
-          Industry.hvac,
-          Industry.plumbing,
-          Industry.landscaping,
-        ],
-      },
-    ],
-  },
 
   {
     title: "My Account",

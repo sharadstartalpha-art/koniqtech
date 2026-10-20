@@ -421,19 +421,19 @@ export const SUPER_ADMIN_MENU: AdminMenuSection[] = [
  
         {
           label: "Lead Qualification",
-          href: "/ai/lead-qualification",
+          href: "/admin/ai/lead-qualification",
           
           icon: UserCheck,
         },
         {
           label: "AI Outreach",
-          href: "/ai/outreach",
+          href: "/admin/ai/outreach",
           
           icon: Mail,
         },
         {
           label: "AI Automations",
-          href: "/ai/automations",
+          href: "/admin/ai/automations",
          
           icon: Workflow,
         },

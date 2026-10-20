@@ -411,6 +411,12 @@ export const SUPER_ADMIN_MENU: AdminMenuSection[] = [
       },
 
       {
+  label: "Lead Finder",
+  href: "/admin/ai/lead-finder",
+  icon: Target,
+},
+
+      {
         label: "AI Agents",
         href: "/admin/ai/agents",
         icon: Bot,

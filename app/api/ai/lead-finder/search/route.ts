@@ -5,8 +5,9 @@ import { prisma } from "@/shared/lib/prisma";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const GOOGLE_SEARCH_ENDPOINT = "https://www.googleapis.com/customsearch/v1";
-const MAX_LIMIT = 10; // Google Custom Search JSON API returns at most 10 results per request.
+const PLACES_SEARCH_ENDPOINT = "https://places.googleapis.com/v1/places:searchText";
+const MAX_LIMIT = 10;
+const SOURCE = "google_places";
 
 type SessionUser = {
   id?: string;
@@ -14,20 +15,18 @@ type SessionUser = {
   email?: string | null;
 };
 
-type GoogleSearchItem = {
-  title?: string;
-  link?: string;
-  snippet?: string;
-  displayLink?: string;
-  pagemap?: {
-    metatags?: Array<Record<string, string | undefined>>;
-    localbusiness?: Array<Record<string, string | undefined>>;
-  };
+type PlacesItem = {
+  id?: string;
+  displayName?: { text?: string; languageCode?: string };
+  formattedAddress?: string;
+  nationalPhoneNumber?: string;
+  websiteUri?: string;
+  googleMapsUri?: string;
 };
 
-type GoogleSearchResponse = {
-  items?: GoogleSearchItem[];
-  error?: { message?: string };
+type PlacesResponse = {
+  places?: PlacesItem[];
+  error?: { message?: string; status?: string; code?: number };
 };
 
 function jsonError(message: string, status: number) {
@@ -36,40 +35,25 @@ function jsonError(message: string, status: number) {
 
 function safeWebsite(url?: string): string | null {
   if (!url) return null;
+
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
-    return `${parsed.protocol}//${parsed.hostname}`;
+    return `${parsed.protocol}//${parsed.hostname}${parsed.pathname === "/" ? "" : parsed.pathname}`;
   } catch {
     return null;
   }
-}
-
-function getBusinessPhone(item: GoogleSearchItem): string | null {
-  const localBusiness = item.pagemap?.localbusiness?.[0];
-  const metadata = item.pagemap?.metatags?.[0];
-  return (
-    localBusiness?.telephone ||
-    localBusiness?.phone ||
-    metadata?.["telephone"] ||
-    metadata?.["og:phone_number"] ||
-    null
-  );
 }
 
 async function getAuthenticatedUser() {
   const session = await auth();
   const user = session?.user as SessionUser | undefined;
 
-  if (!user?.id || !user.orgId) {
-    return null;
-  }
+  if (!user?.id || !user.orgId) return null;
 
-  return {
-    id: user.id,
-    orgId: user.orgId,
-  };
+  return { id: user.id, orgId: user.orgId };
 }
+
 export async function GET() {
   try {
     const user = await getAuthenticatedUser();
@@ -107,10 +91,9 @@ export async function POST(request: NextRequest) {
     if (!user) return jsonError("Please sign in to use AI Lead Finder.", 401);
 
     const apiKey = process.env.GOOGLE_API_KEY;
-    const searchEngineId = process.env.GOOGLE_CSE_ID;
-    if (!apiKey || !searchEngineId) {
+    if (!apiKey) {
       return jsonError(
-        "Google search is not configured. Set GOOGLE_API_KEY and GOOGLE_CSE_ID in the server environment.",
+        "Google Places is not configured. Set GOOGLE_API_KEY in the server environment.",
         503,
       );
     }
@@ -124,23 +107,33 @@ export async function POST(request: NextRequest) {
       limit?: unknown;
     } | null;
 
-    if (!body || typeof body !== "object") return jsonError("Invalid request body.", 400);
+    if (!body || typeof body !== "object") {
+      return jsonError("Invalid request body.", 400);
+    }
 
-    const industry = typeof body.industry === "string" ? body.industry.trim().slice(0, 80) : "";
+    const industry =
+      typeof body.industry === "string" ? body.industry.trim().slice(0, 80) : "";
     const city = typeof body.city === "string" ? body.city.trim().slice(0, 100) : "";
-    const state = typeof body.state === "string" ? body.state.trim().slice(0, 100) : "";
-    const country = typeof body.country === "string" ? body.country.trim().slice(0, 100) : "USA";
-    const keywords = typeof body.keywords === "string" ? body.keywords.trim().slice(0, 160) : "";
+    const state =
+      typeof body.state === "string" ? body.state.trim().slice(0, 100) : "";
+    const country =
+      typeof body.country === "string" ? body.country.trim().slice(0, 100) : "USA";
+    const keywords =
+      typeof body.keywords === "string" ? body.keywords.trim().slice(0, 160) : "";
     const requested = Number(body.limit);
-    const limit = Number.isFinite(requested) ? Math.max(1, Math.min(MAX_LIMIT, Math.floor(requested))) : 10;
+    const limit = Number.isFinite(requested)
+      ? Math.max(1, Math.min(MAX_LIMIT, Math.floor(requested)))
+      : MAX_LIMIT;
 
     if (!industry) return jsonError("Choose an industry before searching.", 400);
     if (!city) return jsonError("Enter a city before searching.", 400);
 
-    const queryParts = [industry, "business", city, state, country, keywords].filter(Boolean);
-    const query = queryParts.join(" ").replace(/\s+/g, " ").slice(0, 500);
+    const query = [industry, "businesses", city, state, country, keywords]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .slice(0, 500);
 
-    // Only accept a location belonging to this user's organization when one is selected by the UI.
     const defaultLocation = await prisma.organizationLocation.findFirst({
       where: { orgId: user.orgId, active: true, isDefault: true },
       select: { id: true },
@@ -156,7 +149,7 @@ export async function POST(request: NextRequest) {
         city,
         state: state || null,
         country: country || "USA",
-        provider: "google_custom_search",
+        provider: SOURCE,
         status: "running",
         requestedCount: limit,
         filters: { keywords, limit },
@@ -166,27 +159,42 @@ export async function POST(request: NextRequest) {
     });
     searchId = search.id;
 
-    const googleUrl = new URL(GOOGLE_SEARCH_ENDPOINT);
-    googleUrl.searchParams.set("key", apiKey);
-    googleUrl.searchParams.set("cx", searchEngineId);
-    googleUrl.searchParams.set("q", query);
-    googleUrl.searchParams.set("num", String(limit));
-
-    const googleResponse = await fetch(googleUrl.toString(), {
-      method: "GET",
-      headers: { Accept: "application/json" },
+    const placesResponse = await fetch(PLACES_SEARCH_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri,places.googleMapsUri",
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        pageSize: limit,
+      }),
       cache: "no-store",
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
     });
 
-    const googleData = (await googleResponse.json().catch(() => ({}))) as GoogleSearchResponse;
-    if (!googleResponse.ok) {
-      const googleMessage = googleData.error?.message;
-      const detail = googleResponse.status === 403
-        ? "Google rejected the request. Check API access, billing/quota, and Custom Search API availability for your account."
-        : googleResponse.status === 400
-          ? "Google rejected the search configuration. Check GOOGLE_CSE_ID and your search settings."
-          : "The search provider could not complete the request.";
+    const placesData = (await placesResponse.json().catch(() => ({}))) as PlacesResponse;
+
+    if (!placesResponse.ok) {
+      const googleMessage = placesData.error?.message;
+      console.error("Google Places API error:", {
+        status: placesResponse.status,
+        code: placesData.error?.code,
+        reason: placesData.error?.status,
+        message: googleMessage,
+      });
+
+      const detail =
+        placesResponse.status === 400
+          ? "Google Places rejected the search request. Check the search parameters and API configuration."
+          : placesResponse.status === 401 || placesResponse.status === 403
+            ? "Google Places denied the request. Check that Places API (New) is enabled, the API key permits it, and billing is active."
+            : placesResponse.status === 429
+              ? "Google Places quota or rate limit reached. Please wait and try again."
+              : "Google Places could not complete the request.";
+
       await prisma.aiLeadSearch.update({
         where: { id: search.id },
         data: {
@@ -195,59 +203,65 @@ export async function POST(request: NextRequest) {
           completedAt: new Date(),
         },
       });
-      return jsonError(detail, 502);
+
+      return jsonError(detail, placesResponse.status === 429 ? 429 : 502);
     }
 
-    const items = (googleData.items ?? []).slice(0, limit);
+    const places = (placesData.places ?? []).slice(0, limit);
     const results: Array<{
       id: string;
       businessName: string;
       website: string | null;
       businessPhone: string | null;
       industry: string;
-      address: string | null;
+      address: string;
       city: string;
-      state: string | null;
+      state: string;
       country: string;
       sourceUrl: string | null;
       status: string;
       matchScore: number | null;
     }> = [];
 
-    for (let index = 0; index < items.length; index += 1) {
-      const item = items[index];
-      const sourceUrl = item.link ?? null;
-      if (!sourceUrl) continue;
-      const businessName = (item.title || item.displayLink || "Untitled business").slice(0, 240);
-      // Stable ID per canonical result URL. The unique constraint also prevents duplicate candidates per org.
-      const externalId = sourceUrl.slice(0, 500);
-      const website = safeWebsite(sourceUrl);
-      const snippet = (item.snippet || "").slice(0, 1000);
-      const businessPhone = getBusinessPhone(item);
+    for (let index = 0; index < places.length; index += 1) {
+      const place = places[index];
+      if (!place.id) continue;
+
+      const businessName = (place.displayName?.text || "Unnamed business").slice(0, 240);
+      const address = (place.formattedAddress || "").slice(0, 500);
+      const website = safeWebsite(place.websiteUri ?? undefined);
+      const businessPhone = place.nationalPhoneNumber?.slice(0, 80) ?? null;
+      const sourceUrl = place.googleMapsUri ?? place.websiteUri ?? null;
+      const externalId = place.id.slice(0, 500);
+      const matchReasons = {
+        provider: SOURCE,
+        formattedAddress: address || null,
+        googleMapsUri: place.googleMapsUri ?? null,
+      };
 
       const candidate = await prisma.aiLeadCandidate.upsert({
         where: {
           orgId_source_externalId: {
             orgId: user.orgId,
-            source: "google_custom_search",
+            source: SOURCE,
             externalId,
           },
         },
         create: {
           orgId: user.orgId,
-          source: "google_custom_search",
+          source: SOURCE,
           externalId,
           businessName,
           website,
           businessPhone,
           industry,
-          address: null,
+          address: address || null,
           city,
           state: state || null,
           country: country || "USA",
           sourceUrl,
           lastVerifiedAt: new Date(),
-          matchReasons: { snippet },
+          matchReasons,
           status: "discovered",
         },
         update: {
@@ -255,13 +269,13 @@ export async function POST(request: NextRequest) {
           website,
           businessPhone,
           industry,
-          address: null,
+          address: address || null,
           city,
           state: state || null,
           country: country || "USA",
           sourceUrl,
           lastVerifiedAt: new Date(),
-          matchReasons: { snippet },
+          matchReasons,
         },
         select: {
           id: true,
@@ -288,25 +302,29 @@ export async function POST(request: NextRequest) {
           candidateId: candidate.id,
           rank: index + 1,
           matchScore: candidate.matchScore,
-          matchReasons: { snippet },
+          matchReasons,
         },
-        update: { rank: index + 1, matchScore: candidate.matchScore, matchReasons: { snippet } },
+        update: {
+          rank: index + 1,
+          matchScore: candidate.matchScore,
+          matchReasons,
+        },
       });
 
-     results.push({
-  id: candidate.id,
-  businessName: candidate.businessName,
-  website: candidate.website,
-  businessPhone: candidate.businessPhone,
-  industry: candidate.industry ?? industry,
-  address: candidate.address ?? "",
-  city: candidate.city ?? "",
-  state: candidate.state ?? "",
-  country: candidate.country ?? "",
-  sourceUrl: candidate.sourceUrl,
-  status: candidate.status,
-  matchScore: candidate.matchScore,
-});
+      results.push({
+        id: candidate.id,
+        businessName: candidate.businessName,
+        website: candidate.website,
+        businessPhone: candidate.businessPhone,
+        industry: candidate.industry ?? industry,
+        address: candidate.address ?? "",
+        city: candidate.city ?? city,
+        state: candidate.state ?? state,
+        country: candidate.country ?? country,
+        sourceUrl: candidate.sourceUrl,
+        status: candidate.status,
+        matchScore: candidate.matchScore,
+      });
     }
 
     await prisma.aiLeadSearch.update({
@@ -319,16 +337,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ searchId: search.id, results, searches: await getRecentSearches(user.orgId, user.id) });
+    return NextResponse.json({
+      searchId: search.id,
+      results,
+      searches: await getRecentSearches(user.orgId, user.id),
+    });
   } catch (error) {
-    console.error("AI Lead Finder search error:", error);
+    console.error("AI Lead Finder Places search error:", error);
+
     if (searchId) {
       try {
         await prisma.aiLeadSearch.update({
           where: { id: searchId },
           data: {
             status: "failed",
-            error: (error instanceof Error ? error.message : "Unknown search error").slice(0, 1000),
+            error: (error instanceof Error ? error.message : "Unknown search error").slice(
+              0,
+              1000,
+            ),
             completedAt: new Date(),
           },
         });
@@ -336,9 +362,11 @@ export async function POST(request: NextRequest) {
         console.error("Could not update failed lead search:", updateError);
       }
     }
+
     if (error instanceof Error && error.name === "TimeoutError") {
       return jsonError("The business search timed out. Please try again.", 504);
     }
+
     return jsonError("The business search failed. Check the server logs for details.", 500);
   }
 }

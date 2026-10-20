@@ -493,25 +493,7 @@ export const MENU: MenuSection[] = [
           permission: "AI Assistant",
           icon: Brain,
         },
-        
-        {
-          label: "Lead Qualification",
-          href: "/ai/lead-qualification",
-          permission: "AI Assistant",
-          icon: UserCheck,
-        },
-        {
-          label: "AI Outreach",
-          href: "/ai/outreach",
-          permission: "AI Assistant",
-          icon: Mail,
-        },
-        {
-          label: "AI Automations",
-          href: "/ai/automations",
-          permission: "AI Assistant",
-          icon: Workflow,
-        },
+       
       ],
     },
   ],

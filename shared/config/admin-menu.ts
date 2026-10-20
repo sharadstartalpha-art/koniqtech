@@ -69,6 +69,8 @@ import {
   LucideIcon,
   MonitorPlay,
   Send,
+  UserCheck,
+  Workflow,
 } from "lucide-react"
 
 /* ===========================================================
@@ -415,6 +417,27 @@ export const SUPER_ADMIN_MENU: AdminMenuSection[] = [
   href: "/admin/ai/lead-finder",
   icon: Target,
 },
+
+ 
+        {
+          label: "Lead Qualification",
+          href: "/ai/lead-qualification",
+          
+          icon: UserCheck,
+        },
+        {
+          label: "AI Outreach",
+          href: "/ai/outreach",
+          
+          icon: Mail,
+        },
+        {
+          label: "AI Automations",
+          href: "/ai/automations",
+         
+          icon: Workflow,
+        },
+
 
       {
         label: "AI Agents",

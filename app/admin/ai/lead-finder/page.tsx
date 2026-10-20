@@ -76,36 +76,18 @@ export default function LeadFinderPage() {
   const [country, setCountry] = useState("USA");
   const [keywords, setKeywords] = useState("");
   const [limit, setLimit] = useState("10");
-  const [locationId, setLocationId] = useState("");
-  const [locations, setLocations] = useState<LocationOption[]>([]);
+ 
   const [results, setResults] = useState<Candidate[]>([]);
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [activeSearchId, setActiveSearchId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [loadingLocations, setLoadingLocations] = useState(true);
+  
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const loadLocations = useCallback(async () => {
-    setLoadingLocations(true);
-    try {
-      const response = await fetch("/api/ai/lead-finder/locations", {
-        cache: "no-store",
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Could not load CRM locations.");
-      const items: LocationOption[] = Array.isArray(data.locations) ? data.locations : [];
-      setLocations(items);
-      setLocationId((current) => current || items.find((item) => item.isDefault)?.id || items[0]?.id || "");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load CRM locations.");
-    } finally {
-      setLoadingLocations(false);
-    }
-  }, []);
-
+ 
   const loadHistory = useCallback(async () => {
     try {
       const response = await fetch("/api/ai/lead-finder/search", { cache: "no-store" });
@@ -118,9 +100,8 @@ export default function LeadFinderPage() {
   }, []);
 
   useEffect(() => {
-    void loadLocations();
-    void loadHistory();
-  }, [loadLocations, loadHistory]);
+  void loadHistory();
+}, [loadHistory]);
 
   const selectedOnScreen = useMemo(
     () => results.filter((candidate) => selected.includes(candidate.id)),
@@ -186,43 +167,62 @@ export default function LeadFinderPage() {
     );
   }
 
-  async function handleImport() {
-    setError("");
-    setNotice("");
-    if (!selected.length) {
-      setError("Select at least one prospect to import.");
-      return;
-    }
-    if (!locationId) {
-      setError("Choose a CRM location before importing. Your CRM requires each lead to belong to a location.");
-      return;
+ 
+async function handleImport() {
+  setError("");
+  setNotice("");
+
+  if (!selected.length) {
+    setError("Select at least one prospect.");
+    return;
+  }
+
+  setIsImporting(true);
+
+  try {
+    const response = await fetch("/api/ai/lead-finder/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateIds: selected }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.error || "Could not save selected prospects.");
     }
 
-    setIsImporting(true);
-    try {
-      const response = await fetch("/api/ai/lead-finder/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ candidateIds: selected, locationId }),
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Could not import selected prospects.");
-      const importedIds: string[] = Array.isArray(data.importedCandidateIds)
-        ? data.importedCandidateIds
-        : selected;
-      setResults((current) =>
-        current.map((item) =>
-          importedIds.includes(item.id) ? { ...item, status: "imported" } : item,
-        ),
-      );
-      setSelected((current) => current.filter((id) => !importedIds.includes(id)));
-      setNotice(data.message || `Successfully imported ${importedIds.length} prospect${importedIds.length === 1 ? "" : "s"} into your CRM.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not import selected prospects.");
-    } finally {
-      setIsImporting(false);
-    }
+    const savedIds: string[] = Array.isArray(data.saved)
+      ? data.saved.map(
+          (item: { candidateId: string }) => item.candidateId,
+        )
+      : [];
+
+    setResults((current) =>
+      current.map((item) =>
+        savedIds.includes(item.id)
+          ? { ...item, status: "qualified" }
+          : item,
+      ),
+    );
+
+    setSelected((current) =>
+      current.filter((id) => !savedIds.includes(id)),
+    );
+
+    setNotice(data.message || "Prospects updated successfully.");
+    await loadHistory();
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Could not save selected prospects.",
+    );
+  } finally {
+    setIsImporting(false);
   }
+}
+
 
   return (
     <main className="min-h-screen bg-slate-50/70 px-4 py-6 text-slate-900 sm:px-6 lg:px-8">
@@ -233,9 +233,9 @@ export default function LeadFinderPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-blue-600" /> AI SALES TOOL
             </div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">AI Lead Finder</h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-500">
-              Discover potential customers, review business details, and add qualified prospects to your CRM.
-            </p>
+           <p className="text-xs text-slate-500">
+  Search · Review · Qualify
+</p>
           </div>
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700">✦</span>
@@ -321,29 +321,35 @@ export default function LeadFinderPage() {
           </section>
 
           <aside className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-bold">Import to CRM</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">Selected businesses become CRM leads in your chosen organization location.</p>
-              <label className="mt-4 block text-sm font-medium text-slate-700">
-                CRM location
-                <select className={inputClass} value={locationId} onChange={(event) => setLocationId(event.target.value)} disabled={loadingLocations || locations.length === 0}>
-                  <option value="">{loadingLocations ? "Loading locations…" : locations.length ? "Choose a location" : "No active locations found"}</option>
-                  {locations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.name} — {[location.city, location.state].filter(Boolean).join(", ")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-3">
-                <span className="text-sm text-slate-600">Selected prospects</span>
-                <span className="text-lg font-bold tabular-nums">{selected.length}</span>
-              </div>
-              <button type="button" onClick={handleImport} disabled={isImporting || selected.length === 0 || !locationId} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
-                {isImporting ? "Importing…" : `Import ${selected.length || "selected"} to CRM`}
-              </button>
-              <p className="mt-3 text-xs leading-5 text-slate-400">Existing prospects should be deduplicated by the server before a new CRM lead is created.</p>
-            </section>
+           
+<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+  <h2 className="text-base font-bold">Platform Prospects</h2>
+  <p className="mt-1 text-sm leading-6 text-slate-500">
+    Save selected businesses to KoniqTech's internal prospect database.
+    These prospects will not become customer CRM leads.
+  </p>
+
+  <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-50 px-3.5 py-3">
+    <span className="text-sm text-slate-600">Selected prospects</span>
+    <span className="text-lg font-bold tabular-nums">{selected.length}</span>
+  </div>
+
+  <button
+    type="button"
+    onClick={handleImport}
+    disabled={isImporting || selected.length === 0}
+    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+  >
+    {isImporting
+      ? "Saving prospects…"
+      : `Qualify ${selected.length || "selected"} prospects`}
+  </button>
+
+  <p className="mt-3 text-xs leading-5 text-slate-400">
+    Only Super Admin can access this platform prospecting workflow.
+  </p>
+</section>
+
 
             <section className="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
               <h3 className="text-sm font-bold text-slate-900">A quick prospecting tip</h3>

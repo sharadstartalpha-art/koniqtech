@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { requirePlatformSuperAdmin } from "@/shared/lib/require-platform-super-admin";
 import { prisma } from "@/shared/lib/prisma";
+import { auth } from "@/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +55,17 @@ async function getAuthenticatedUser() {
   return { id: user.id, orgId: user.orgId };
 }
 
+
 export async function GET() {
+
+  const access = await requirePlatformSuperAdmin();
+
+  if (access.response) {
+    return access.response;
+  }
+
+  const user = access.user;
+
   try {
     const user = await getAuthenticatedUser();
     if (!user) return jsonError("Please sign in to use AI Lead Finder.", 401);
@@ -83,7 +94,15 @@ export async function GET() {
   }
 }
 
+
 export async function POST(request: NextRequest) {
+  const access = await requirePlatformSuperAdmin();
+
+  if (access.response) {
+    return access.response;
+  }
+
+  const user = access.user;
   let searchId: string | undefined;
 
   try {
@@ -340,7 +359,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       searchId: search.id,
       results,
-      searches: await getRecentSearches(user.orgId, user.id),
+     searches: await getRecentSearches(user.orgId),
     });
   } catch (error) {
     console.error("AI Lead Finder Places search error:", error);
@@ -371,9 +390,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getRecentSearches(orgId: string, userId: string) {
+async function getRecentSearches(orgId: string) {
   return prisma.aiLeadSearch.findMany({
-    where: { orgId, userId },
+    where: { orgId },
     orderBy: { createdAt: "desc" },
     take: 10,
     select: {

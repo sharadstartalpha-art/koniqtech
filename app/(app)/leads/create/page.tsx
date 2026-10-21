@@ -3,171 +3,120 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
-async function createLead(
-  formData: FormData
-){
 
-  "use server"
+async function createLead(formData: FormData) {
+  "use server";
 
-  const session = await auth()
+  const session = await auth();
 
-  const orgId =
-    (session?.user as any)?.orgId
+  const orgId = (session?.user as any)?.orgId;
 
- if (!orgId) {
-  redirect("/welcome")
-}
+  if (!orgId) {
+    redirect("/welcome");
+  }
 
-const firstName =
-  String(formData.get("firstName")).trim()
+  const firstName = String(
+    formData.get("firstName") ?? ""
+  ).trim();
 
-if (!firstName) {
-  throw new Error("First name is required")
-}
+  if (!firstName) {
+    throw new Error("First name is required");
+  }
 
-const location =
-  await prisma.organizationLocation.findFirst({
+  const location = await prisma.organizationLocation.findFirst({
     where: {
       orgId,
       active: true,
     },
     orderBy: [
-      {
-        isDefault: "desc",
-      },
-      {
-        createdAt: "asc",
-      },
+      { isDefault: "desc" },
+      { createdAt: "asc" },
     ],
     select: {
       id: true,
     },
   });
 
-if (!location) {
-  throw new Error(
-    "No active location is configured for this organization."
-  );
-}
-
-await prisma.lead.create({
-
-  data: {
-
-    orgId,
-
-    locationId: location.id,
-
-    source: String(
-      formData.get("source")
-    ),
-
-    firstName,
-
-    lastName: String(
-      formData.get("lastName")
-    ),
-
-    email: String(
-      formData.get("email")
-    ),
-
-    phone: String(
-      formData.get("phone")
-    ),
-
-    companyName: String(
-      formData.get("companyName")
-    ),
-
-    address: String(
-      formData.get("address")
-    ),
-
-    budget: Number(
-      formData.get("budget")
-    ) || 0,
-
-    priority: String(
-      formData.get("priority")
-    ),
-
-    tags: String(
-      formData.get("tags")
-    ),
-
-    assignedToId:
-      String(
-        formData.get("assignedTo")
-      ) || null,
-
+  if (!location) {
+    throw new Error(
+      "No active location is configured for this organization."
+    );
   }
 
-});
+  const assignedToId = String(
+    formData.get("assignedTo") ?? ""
+  ).trim();
 
-if (!location) {
-  throw new Error(
-    "No active location is configured for this organization."
-  );
-}
+  // Verify that the assigned representative belongs
+  // to the current organization.
+  if (assignedToId) {
+    const assignedUser = await prisma.user.findFirst({
+      where: {
+        id: assignedToId,
+        orgId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!assignedUser) {
+      throw new Error(
+        "Invalid assigned representative."
+      );
+    }
+  }
 
   await prisma.lead.create({
-
-    data:{
-
+    data: {
       orgId,
       locationId: location.id,
-      source:String(
-        formData.get("source")
+
+      source: String(
+        formData.get("source") ?? "Other"
       ),
 
-     firstName,
+      firstName,
 
-      lastName:String(
-        formData.get("lastName")
+      lastName: String(
+        formData.get("lastName") ?? ""
       ),
 
-      email:String(
-        formData.get("email")
+      email: String(
+        formData.get("email") ?? ""
       ),
 
-      phone:String(
-        formData.get("phone")
+      phone: String(
+        formData.get("phone") ?? ""
       ),
 
-      companyName:String(
-        formData.get("companyName")
+      companyName: String(
+        formData.get("companyName") ?? ""
       ),
 
-      address:String(
-        formData.get("address")
+      address: String(
+        formData.get("address") ?? ""
       ),
 
-      budget:Number(
-        formData.get("budget")
-      ) || 0,
+      budget:
+        Number(formData.get("budget")) || 0,
 
-      priority:String(
-        formData.get("priority")
+      priority: String(
+        formData.get("priority") ?? "Medium"
       ),
 
       tags: String(
-  formData.get("tags")
-),
+        formData.get("tags") ?? ""
+      ),
 
-assignedToId:
-  String(
-    formData.get("assignedTo")
-  ) || null
+      assignedToId: assignedToId || null,
+    },
+  });
 
-  
-    }
-
-  })
-
-  revalidatePath("/leads")
-  redirect("/leads")
+  revalidatePath("/leads");
+  redirect("/leads");
 }
+
 
 export default async function Page(){
 

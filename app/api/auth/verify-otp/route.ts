@@ -4,7 +4,7 @@ export async function POST() {
   return NextResponse.json(
     {
       success: false,
-      message: "This endpoint is no longer available.",
+      message: "This endpoint is no longer available..",
     },
     {
       status: 410,

@@ -394,19 +394,7 @@ const recentPayments =
 
     </div>
 
-    <div>
-
-      <p className="text-sm text-slate-500">
-        Users
-      </p>
-
-      <h3 className="mt-2 text-2xl font-bold">
-
-        {organization?.subscriptions?.userLimit}
-
-      </h3>
-
-    </div>
+    
 
   </div>
 

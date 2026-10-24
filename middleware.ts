@@ -17,7 +17,6 @@ export default auth((req) => {
     "/api/auth/login",
     "/api/auth/register",
     "/api/auth/send-otp",
-    "/api/auth/verify-otp",
     "/api/auth/logout",
   ];
 

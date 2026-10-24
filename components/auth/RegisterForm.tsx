@@ -142,11 +142,10 @@ export default function RegisterForm() {
   "acceptTerms",
 ]);
 
-console.log("VALID =", valid);
-console.log("VALUES =", getValues());
+
 
 if (!valid) {
-  console.log("ERRORS =", errors);
+ 
   return;
 }
 
@@ -276,7 +275,7 @@ if (!valid) {
   };
 
   const onSubmit = async () => {
-  console.log("onSubmit called. Step =", step);
+  
 
   if (step === 1) {
     await goToOtpStep();
@@ -297,10 +296,9 @@ if (!valid) {
  <form
   onSubmit={handleSubmit(
     onSubmit,
-    (errors) => {
-      console.log("FORM ERRORS:", errors);
-      alert("Validation failed. Open Console.");
-    }
+    () => {
+  setApiError("Please check the form and correct the highlighted fields.");
+}
   )}
   className="space-y-8"
   noValidate

@@ -161,17 +161,40 @@ const users =
         "
       >
 
-        <div className="mb-8">
+       
+<div className="mb-8">
 
-          <h1 className="text-5xl font-bold">
-            Create Lead
-          </h1>
+  <a
+    href="/leads"
+    className="
+      inline-flex
+      items-center
+      gap-2
+      mb-5
+      px-4
+      py-2
+      border
+      border-slate-200
+      rounded-xl
+      text-slate-700
+      hover:bg-slate-50
+      transition
+    "
+  >
+    <span aria-hidden="true">←</span>
+    Back to Leads
+  </a>
 
-          <p className="text-slate-500 mt-2">
-            Capture and qualify a new sales opportunity.
-          </p>
+  <h1 className="text-5xl font-bold">
+    Create Lead
+  </h1>
 
-        </div>
+  <p className="text-slate-500 mt-2">
+    Capture and qualify a new sales opportunity.
+  </p>
+
+</div>
+
 
         <form
           action={createLead}

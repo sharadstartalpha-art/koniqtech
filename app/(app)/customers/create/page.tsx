@@ -89,15 +89,25 @@ export default function Page() {
       action={createCustomer}
       className="max-w-3xl space-y-8"
     >
-      <div>
-        <h1 className="text-4xl font-bold">
-          Create Customer
-        </h1>
+      
+<div>
+  <a
+    href="/customers"
+    className="inline-flex items-center gap-2 mb-5 px-4 py-2 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 transition"
+  >
+    <span aria-hidden="true">←</span>
+    Back to Customers
+  </a>
 
-        <p className="text-slate-500 mt-2">
-          Add a new customer to your CRM.
-        </p>
-      </div>
+  <h1 className="text-4xl font-bold">
+    Create Customer
+  </h1>
+
+  <p className="text-slate-500 mt-2">
+    Add a new customer to your CRM.
+  </p>
+</div>
+
 
       <div className="bg-white border rounded-3xl p-8 space-y-6">
 

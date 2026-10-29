@@ -163,27 +163,29 @@ export async function POST(request: Request) {
     let notificationSent = true;
 
     try {
-      const result = await resend.emails.send({
-        from: "KoniqTech Support <noreply@koniqtech.com>",
-        to: "info@koniqtech.com",
-        replyTo: email,
-        subject: `[${ticket.ticketNumber}] ${subject}`,
-        text: [
-          "New KoniqTech support request",
-          "",
-          `Ticket: ${ticket.ticketNumber}`,
-          `Name: ${user.name?.trim() || "Not provided"}`,
-          `Email: ${email}`,
-          `Organization ID: ${user.orgId}`,
-          `Category: ${category}`,
-          `Subject: ${subject}`,
-          "",
-          "Description:",
-          description,
-          "",
-          `Created: ${ticket.createdAt.toISOString()}`,
-        ].join("\n"),
-      });
+     
+const result = await resend.emails.send({
+  from: "KoniqTech Support <noreply@koniqtech.com>",
+  to: "sharad@koniqtech.com",
+  replyTo: email,
+  subject: `[${ticket.ticketNumber}] ${subject}`,
+  text: [
+    "New KoniqTech support request",
+    "",
+    `Ticket: ${ticket.ticketNumber}`,
+    `Name: ${user.name?.trim() || "Not provided"}`,
+    `Email: ${email}`,
+    `Organization ID: ${user.orgId}`,
+    `Category: ${category}`,
+    `Subject: ${subject}`,
+    "",
+    "Description:",
+    description,
+    "",
+    `Created: ${ticket.createdAt.toISOString()}`,
+  ].join("\n"),
+});
+
 
       if (result.error) {
         notificationSent = false;

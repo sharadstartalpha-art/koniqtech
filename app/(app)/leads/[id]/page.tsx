@@ -143,6 +143,23 @@ return (
 
       </div>
 
+{canCreate(permissions, "Pipeline", isOwner) && (
+  <Link
+    href={`/pipeline/create?leadId=${lead.id}`}
+    className="
+      px-5
+      py-3
+      rounded-2xl
+      bg-orange-600
+      hover:bg-orange-700
+      text-white
+    "
+  >
+    Create Opportunity
+  </Link>
+)}
+
+
       <div className="flex gap-3">
 {canEdit(permissions, "Leads", isOwner) && (
         <Link

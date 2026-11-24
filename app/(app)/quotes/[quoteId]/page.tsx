@@ -199,6 +199,12 @@ export default async function QuoteDetailsPage({
             Back
           </Link>
 
+
+          <Link
+          href={`/quotes/${quote.id}/pdf`}
+          className="rounded-xl border border-orange-500 px-5 py-3 text-orange-600 hover:bg-orange-50">
+          Download PDF
+          </Link>
           <Link
             href={`/quotes/${quote.id}/edit`}
             className="rounded-xl bg-orange-500 px-5 py-3 text-white hover:bg-orange-600"

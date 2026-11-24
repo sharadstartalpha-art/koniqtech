@@ -1,3 +1,4 @@
+
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
 
@@ -6,192 +7,114 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomerReportPage() {
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 
-  const session =
-    await auth();
+export default async function CustomerReportPage() {
+  const session = await auth();
 
   if (!session?.user?.orgId) {
     redirect("/login");
   }
 
-  const orgId =
-    session.user.orgId;
+  const orgId = session.user.orgId;
 
-  const [
-
-    totalCustomers,
-
-    activeCustomers,
-
-    invoices,
-
-    customers,
-
-  ] = await Promise.all([
-
-    prisma.customer.count({
-
-      where: {
-
-        orgId,
-
-      },
-
-    }),
-
-    prisma.customer.count({
-
-      where: {
-
-        orgId,
-
-        jobs: {
-
-          some: {},
-
-        },
-
-      },
-
-    }),
-
-    prisma.invoice.findMany({
-
-      where: {
-
-        orgId,
-
-      },
-
-      select: {
-
-        customerId: true,
-
-        total: true,
-
-      },
-
-    }),
-
+  const [customers, revenueGroups] = await Promise.all([
+    // Fetch only required customer fields
     prisma.customer.findMany({
-
       where: {
-
         orgId,
-
       },
-
-      include: {
-
-        jobs: {
-
+      select: {
+        id: true,
+        companyName: true,
+        firstName: true,
+        lastName: true,
+        _count: {
           select: {
-
-            id: true,
-
-            status: true,
-
+            jobs: true,
           },
-
         },
-
       },
-
       orderBy: {
-
         companyName: "asc",
-
       },
-
     }),
 
+    // Match Invoice Report revenue rules
+    prisma.invoice.groupBy({
+      by: ["customerId"],
+      where: {
+        orgId,
+        status: {
+          in: ["paid", "sent", "overdue"],
+        },
+      },
+      _sum: {
+        total: true,
+      },
+    }),
   ]);
 
-  const revenueByCustomer =
-    new Map<
-      string,
-      number
-    >();
+  // Revenue by customer
+  const revenueByCustomer = new Map<string, number>();
 
-  for (const invoice of invoices) {
-
-    const current =
-
-      revenueByCustomer.get(
-        invoice.customerId,
-      ) ?? 0;
-
+  for (const group of revenueGroups) {
     revenueByCustomer.set(
-
-      invoice.customerId,
-
-      current +
-        Number(
-          invoice.total,
-        ),
-
+      group.customerId,
+      Number(group._sum.total ?? 0)
     );
-
   }
 
-  const customerRows =
+  const customerRows = customers
+    .map((customer) => ({
+      ...customer,
+      revenue: revenueByCustomer.get(customer.id) ?? 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue);
 
-    customers
+  const totalCustomers = customers.length;
 
-      .map((customer) => ({
+  // Customers with at least one job
+  const activeCustomers = customers.filter(
+    (customer) => customer._count.jobs > 0
+  ).length;
 
-        ...customer,
+  const totalRevenue = revenueGroups.reduce(
+    (sum, group) =>
+      sum + Number(group._sum.total ?? 0),
+    0
+  );
 
-        revenue:
+  const averageRevenue =
+    totalCustomers === 0
+      ? 0
+      : totalRevenue / totalCustomers;
 
-          revenueByCustomer.get(
-            customer.id,
-          ) ?? 0,
+  const revenueProducingCustomers = customerRows.filter(
+    (customer) => customer.revenue > 0
+  ).length;
 
-      }))
-
-      .sort(
-
-        (a, b) =>
-
-          b.revenue -
-          a.revenue,
-
-      );
-
-  const totalRevenue =
-
-    Array.from(
-
-      revenueByCustomer.values(),
-
-    ).reduce(
-
-      (sum, value) =>
-
-        sum + value,
-
-      0,
-
-    );
+  const topCustomers = customerRows.slice(0, 10);
 
   return (
-
     <div className="space-y-8">
 
+      {/* Header */}
       <div className="flex items-center justify-between">
-
         <div>
-
-          <h1 className="text-5xl font-bold">
+          <h1 className="text-4xl md:text-5xl font-bold">
             Customer Report
           </h1>
 
           <p className="mt-2 text-slate-600">
             Customer activity, revenue and engagement overview.
           </p>
-
         </div>
 
         <Link
@@ -200,13 +123,12 @@ export default async function CustomerReportPage() {
         >
           Back
         </Link>
-
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
+      {/* KPI Cards */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
             Total Customers
           </p>
@@ -214,64 +136,44 @@ export default async function CustomerReportPage() {
           <h2 className="mt-3 text-4xl font-bold">
             {totalCustomers}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
-            Active Customers
+            Customers With Jobs
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-green-600">
             {activeCustomers}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
             Total Revenue
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold text-blue-600">
-
-            $
-            {totalRevenue.toLocaleString()}
-
+          <h2 className="mt-3 text-3xl font-bold text-blue-600">
+            {formatCurrency(totalRevenue)}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
             Average Revenue
           </p>
 
-          <h2 className="mt-3 text-4xl font-bold">
-
-            $
-            {(
-              totalCustomers === 0
-                ? 0
-                : totalRevenue /
-                  totalCustomers
-            ).toLocaleString(
-              undefined,
-              {
-                maximumFractionDigits: 2,
-              },
-            )}
-
+          <h2 className="mt-3 text-3xl font-bold">
+            {formatCurrency(averageRevenue)}
           </h2>
-
         </div>
 
       </div>
-            <div className="grid gap-6 lg:grid-cols-2">
 
+      {/* Summary Cards */}
+      <div className="grid gap-6 lg:grid-cols-2">
+
+        {/* Customer Summary */}
         <div className="rounded-3xl border bg-white p-8">
 
           <h2 className="mb-6 text-2xl font-bold">
@@ -281,39 +183,33 @@ export default async function CustomerReportPage() {
           <dl className="space-y-5">
 
             <div className="flex items-center justify-between">
-
               <dt>Total Customers</dt>
 
               <dd className="font-semibold">
                 {totalCustomers}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
-              <dt>Active Customers</dt>
+              <dt>Customers With Jobs</dt>
 
               <dd className="font-semibold text-green-600">
                 {activeCustomers}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
-              <dt>Inactive Customers</dt>
+              <dt>Customers Without Jobs</dt>
 
               <dd className="font-semibold text-red-600">
                 {totalCustomers - activeCustomers}
               </dd>
-
             </div>
 
           </dl>
-
         </div>
 
+        {/* Revenue Summary */}
         <div className="rounded-3xl border bg-white p-8">
 
           <h2 className="mb-6 text-2xl font-bold">
@@ -322,167 +218,130 @@ export default async function CustomerReportPage() {
 
           <dl className="space-y-5">
 
-            <div className="flex items-center justify-between">
-
+            <div className="flex items-center justify-between gap-4">
               <dt>Total Revenue</dt>
 
               <dd className="font-semibold text-blue-600">
-                ${totalRevenue.toLocaleString()}
+                {formatCurrency(totalRevenue)}
               </dd>
-
             </div>
 
-            <div className="flex items-center justify-between">
-
+            <div className="flex items-center justify-between gap-4">
               <dt>Average Revenue / Customer</dt>
 
               <dd className="font-semibold">
-                ${(
-                  totalCustomers === 0
-                    ? 0
-                    : totalRevenue / totalCustomers
-                ).toLocaleString(undefined, {
-                  maximumFractionDigits: 2,
-                })}
+                {formatCurrency(averageRevenue)}
               </dd>
-
             </div>
 
-            <div className="flex items-center justify-between">
-
+            <div className="flex items-center justify-between gap-4">
               <dt>Revenue-Producing Customers</dt>
 
               <dd className="font-semibold">
-                {customerRows.filter(
-                  (customer) => customer.revenue > 0,
-                ).length}
+                {revenueProducingCustomers}
               </dd>
-
             </div>
 
           </dl>
-
         </div>
 
       </div>
 
+      {/* Top Customers */}
       <div className="overflow-hidden rounded-3xl border bg-white">
 
-        <div className="border-b px-8 py-6">
-
+        <div className="border-b px-6 md:px-8 py-6">
           <h2 className="text-2xl font-bold">
             Top Customers
           </h2>
 
+          <p className="mt-1 text-sm text-slate-500">
+            Top 10 customers ranked by invoice revenue.
+          </p>
         </div>
 
-        <table className="min-w-full">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
 
-          <thead className="border-b bg-slate-50">
-
-            <tr>
-
-              <th className="px-6 py-4 text-left">
-                Customer
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Jobs
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Revenue
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Actions
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-                        {customerRows.length === 0 && (
-
+            <thead className="border-b bg-slate-50">
               <tr>
+                <th className="px-6 py-4 text-left">
+                  Customer
+                </th>
 
-                <td
-                  colSpan={4}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
-                  No customers found.
-                </td>
+                <th className="px-6 py-4 text-right">
+                  Jobs
+                </th>
 
+                <th className="px-6 py-4 text-right">
+                  Revenue
+                </th>
+
+                <th className="px-6 py-4 text-right">
+                  Actions
+                </th>
               </tr>
+            </thead>
 
-            )}
+            <tbody>
 
-            {customerRows.map((customer) => (
-
-              <tr
-                key={customer.id}
-                className="border-t hover:bg-slate-50"
-              >
-
-                <td className="px-6 py-4">
-
-                  <Link
-                    href={`/customers/${customer.id}`}
-                    className="font-medium text-blue-600 hover:underline"
+              {topCustomers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-12 text-center text-slate-500"
                   >
-                    {customer.companyName ||
-                      `${customer.firstName} ${customer.lastName ?? ""}`}
-                  </Link>
+                    No customers found.
+                  </td>
+                </tr>
+              )}
 
-                </td>
+              {topCustomers.map((customer) => {
+                const customerName =
+                  customer.companyName ||
+                  `${customer.firstName} ${
+                    customer.lastName ?? ""
+                  }`.trim();
 
-                <td className="px-6 py-4 text-right">
+                return (
+                  <tr
+                    key={customer.id}
+                    className="border-t hover:bg-slate-50"
+                  >
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        {customerName || "Unnamed Customer"}
+                      </Link>
+                    </td>
 
-                  {customer.jobs.length}
+                    <td className="px-6 py-4 text-right">
+                      {customer._count.jobs}
+                    </td>
 
-                </td>
+                    <td className="px-6 py-4 text-right font-semibold text-green-600">
+                      {formatCurrency(customer.revenue)}
+                    </td>
 
-                <td className="px-6 py-4 text-right font-semibold text-green-600">
+                    <td className="px-6 py-4 text-right">
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
 
-                  $
-                  {customer.revenue.toLocaleString(
-                    undefined,
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  )}
-
-                </td>
-
-                <td className="px-6 py-4">
-
-                  <div className="flex justify-end">
-
-                    <Link
-                      href={`/customers/${customer.id}`}
-                      className="font-medium text-blue-600 hover:underline"
-                    >
-                      View
-                    </Link>
-
-                  </div>
-
-                </td>
-
-              </tr>
-
-            ))}
-
-          </tbody>
-
-        </table>
-
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
-
   );
-
 }

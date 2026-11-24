@@ -1,3 +1,4 @@
+
 import { auth } from "@/auth";
 import prisma from "@/shared/lib/prisma";
 
@@ -7,131 +8,104 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function TechnicianReportPage() {
-
-  const session =
-    await auth();
+  const session = await auth();
 
   if (!session?.user?.orgId) {
     redirect("/login");
   }
 
-  const orgId =
-    session.user.orgId;
+  const orgId = session.user.orgId;
 
-  const [
-
-    totalTechnicians,
-
-    dispatchJobs,
-
-    completedJobs,
-
-    technicians,
-
-  ] = await Promise.all([
-
-    prisma.user.count({
-
-    where:{
-
-        orgId,
-
-        employee:{
-            role:{
-                name:"Technician"
-            }
-        }
-
-    }
-
-}),
-
-    prisma.dispatchJob.count({
-
-      where: {
-
-        dispatchBoard: {
-
-          orgId,
-
+  const technicians = await prisma.user.findMany({
+    where: {
+      orgId,
+      employee: {
+        role: {
+          name: "Technician",
         },
-
       },
-
-    }),
-
-    prisma.dispatchJob.count({
-
-      where: {
-
-        dispatchBoard: {
-
-          orgId,
-
+    },
+    select: {
+      id: true,
+      name: true,
+      employee: {
+        select: {
+          role: {
+            select: {
+              name: true,
+            },
+          },
         },
-
-        status: "completed",
-
       },
-
-    }),
-
-    prisma.user.findMany({
-  where: {
-    orgId,
-
-    employee: {
-      role: {
-        name: "Technician",
+      dispatchJobs: {
+        select: {
+          id: true,
+          status: true,
+        },
       },
     },
-  },
-
-  include: {
-
-    employee: {
-      include: {
-        role: true,
-      },
+    orderBy: {
+      name: "asc",
     },
+  });
 
-    dispatchJobs: {
-      include: {
-        job: true,
-      },
-    },
+  // Calculate assignments from technician records
+  const technicianStats = technicians.map((technician) => {
+    const assignedJobs = technician.dispatchJobs.length;
 
-  },
+    const completed = technician.dispatchJobs.filter(
+      (dispatch) => dispatch.status === "completed"
+    ).length;
 
-  orderBy: {
-    name: "asc",
-  },
+    const notCompleted = assignedJobs - completed;
 
-}),
+    return {
+      ...technician,
+      assignedJobs,
+      completed,
+      notCompleted,
+    };
+  });
 
-  ]);
+  // Organization technician metrics
+  const totalTechnicians = technicianStats.length;
 
-  const activeDispatches =
+  const dispatchJobs = technicianStats.reduce(
+    (sum, technician) => sum + technician.assignedJobs,
+    0
+  );
 
-    dispatchJobs -
-    completedJobs;
+  const completedJobs = technicianStats.reduce(
+    (sum, technician) => sum + technician.completed,
+    0
+  );
+
+  const notCompletedJobs = dispatchJobs - completedJobs;
+
+  const averageJobs =
+    totalTechnicians === 0
+      ? 0
+      : dispatchJobs / totalTechnicians;
+
+  const completionRate =
+    dispatchJobs === 0
+      ? 0
+      : (completedJobs / dispatchJobs) * 100;
 
   return (
-
     <div className="space-y-8">
 
+      {/* Header */}
       <div className="flex items-center justify-between">
 
         <div>
-
-          <h1 className="text-5xl font-bold">
+          <h1 className="text-4xl md:text-5xl font-bold">
             Technician Report
           </h1>
 
           <p className="mt-2 text-slate-600">
             Technician workload, assignments and field performance.
           </p>
-
         </div>
 
         <Link
@@ -143,22 +117,20 @@ export default async function TechnicianReportPage() {
 
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-4">
+      {/* KPI Cards */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
-            Technicians
+            Total Technicians
           </p>
 
           <h2 className="mt-3 text-4xl font-bold">
             {totalTechnicians}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
             Assigned Jobs
           </p>
@@ -166,11 +138,9 @@ export default async function TechnicianReportPage() {
           <h2 className="mt-3 text-4xl font-bold text-blue-600">
             {dispatchJobs}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
             Completed Jobs
           </p>
@@ -178,23 +148,22 @@ export default async function TechnicianReportPage() {
           <h2 className="mt-3 text-4xl font-bold text-green-600">
             {completedJobs}
           </h2>
-
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-
           <p className="text-slate-500">
-            Active Dispatches
+            Not Completed
           </p>
 
           <h2 className="mt-3 text-4xl font-bold text-orange-600">
-            {activeDispatches}
+            {notCompletedJobs}
           </h2>
-
         </div>
 
       </div>
-            <div className="grid gap-6 lg:grid-cols-2">
+
+      {/* Summary */}
+      <div className="grid gap-6 lg:grid-cols-2">
 
         <div className="rounded-3xl border bg-white p-8">
 
@@ -205,49 +174,38 @@ export default async function TechnicianReportPage() {
           <dl className="space-y-5">
 
             <div className="flex items-center justify-between">
-
               <dt>Total Technicians</dt>
-
               <dd className="font-semibold">
                 {totalTechnicians}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
               <dt>Total Assigned Jobs</dt>
-
               <dd className="font-semibold text-blue-600">
                 {dispatchJobs}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
               <dt>Completed Jobs</dt>
-
               <dd className="font-semibold text-green-600">
                 {completedJobs}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
-              <dt>Active Dispatches</dt>
-
+              <dt>Not Completed</dt>
               <dd className="font-semibold text-orange-600">
-                {activeDispatches}
+                {notCompletedJobs}
               </dd>
-
             </div>
 
           </dl>
 
         </div>
 
+        {/* Performance Metrics */}
         <div className="rounded-3xl border bg-white p-8">
 
           <h2 className="mb-6 text-2xl font-bold">
@@ -257,46 +215,31 @@ export default async function TechnicianReportPage() {
           <dl className="space-y-5">
 
             <div className="flex items-center justify-between">
-
               <dt>Average Jobs / Technician</dt>
-
               <dd className="font-semibold">
-                {totalTechnicians === 0
-                  ? "0"
-                  : (
-                      dispatchJobs /
-                      totalTechnicians
-                    ).toFixed(1)}
+                {averageJobs.toFixed(1)}
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
               <dt>Completion Rate</dt>
-
               <dd className="font-semibold text-green-600">
-
-                {dispatchJobs === 0
-                  ? "0%"
-                  : `${(
-                      (completedJobs /
-                        dispatchJobs) *
-                      100
-                    ).toFixed(1)}%`}
-
+                {completionRate.toFixed(1)}%
               </dd>
-
             </div>
 
             <div className="flex items-center justify-between">
-
-              <dt>Open Assignments</dt>
-
-              <dd className="font-semibold text-orange-600">
-                {activeDispatches}
+              <dt>Completed Assignments</dt>
+              <dd className="font-semibold text-green-600">
+                {completedJobs}
               </dd>
+            </div>
 
+            <div className="flex items-center justify-between">
+              <dt>Remaining Assignments</dt>
+              <dd className="font-semibold text-orange-600">
+                {notCompletedJobs}
+              </dd>
             </div>
 
           </dl>
@@ -305,77 +248,65 @@ export default async function TechnicianReportPage() {
 
       </div>
 
+      {/* Technician Performance Table */}
       <div className="overflow-hidden rounded-3xl border bg-white">
 
-        <div className="border-b px-8 py-6">
+        <div className="border-b px-6 md:px-8 py-6">
 
           <h2 className="text-2xl font-bold">
             Technician Performance
           </h2>
 
+          <p className="mt-1 text-sm text-slate-500">
+            Individual technician assignment and completion statistics.
+          </p>
+
         </div>
 
-        <table className="min-w-full">
+        <div className="overflow-x-auto">
 
-          <thead className="border-b bg-slate-50">
+          <table className="min-w-full">
 
-            <tr>
-
-              <th className="px-6 py-4 text-left">
-                Technician
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Assigned Jobs
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Completed
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Active
-              </th>
-
-              <th className="px-6 py-4 text-right">
-                Actions
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-                        {technicians.length === 0 && (
+            <thead className="border-b bg-slate-50">
 
               <tr>
+                <th className="px-6 py-4 text-left">
+                  Technician
+                </th>
 
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-slate-500"
-                >
-                  No technicians found.
-                </td>
+                <th className="px-6 py-4 text-right">
+                  Assigned Jobs
+                </th>
 
+                <th className="px-6 py-4 text-right">
+                  Completed
+                </th>
+
+                <th className="px-6 py-4 text-right">
+                  Not Completed
+                </th>
+
+                <th className="px-6 py-4 text-right">
+                  Actions
+                </th>
               </tr>
 
-            )}
+            </thead>
 
-            {technicians.map((technician) => {
+            <tbody>
 
-              const assignedJobs =
-                technician.dispatchJobs.length;
+              {technicianStats.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    No technicians found.
+                  </td>
+                </tr>
+              )}
 
-              const completed =
-                technician.dispatchJobs.filter(
-                  (dispatchJob) =>
-                    dispatchJob.status === "completed",
-                ).length;
-
-              const active =
-                assignedJobs - completed;
-
-              return (
+              {technicianStats.map((technician) => (
 
                 <tr
                   key={technician.id}
@@ -388,52 +319,46 @@ export default async function TechnicianReportPage() {
                       href={`/users/${technician.id}`}
                       className="font-medium text-blue-600 hover:underline"
                     >
-                      {technician.name}
+                      {technician.name || "Unnamed Technician"}
                     </Link>
 
                   </td>
 
                   <td className="px-6 py-4 text-right">
-                    {assignedJobs}
+                    {technician.assignedJobs}
                   </td>
 
-                  <td className="px-6 py-4 text-right text-green-600 font-semibold">
-                    {completed}
+                  <td className="px-6 py-4 text-right font-semibold text-green-600">
+                    {technician.completed}
                   </td>
 
-                  <td className="px-6 py-4 text-right text-orange-600 font-semibold">
-                    {active}
+                  <td className="px-6 py-4 text-right font-semibold text-orange-600">
+                    {technician.notCompleted}
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-right">
 
-                    <div className="flex justify-end">
-
-                      <Link
-                        href={`/users/${technician.id}`}
-                        className="font-medium text-blue-600 hover:underline"
-                      >
-                        View
-                      </Link>
-
-                    </div>
+                    <Link
+                      href={`/users/${technician.id}`}
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      View
+                    </Link>
 
                   </td>
 
                 </tr>
 
-              );
+              ))}
 
-            })}
+            </tbody>
 
-          </tbody>
+          </table>
 
-        </table>
+        </div>
 
       </div>
 
     </div>
-
   );
-
 }

@@ -1,180 +1,129 @@
+
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import prisma from "@/shared/lib/prisma";
 import { auth } from "@/auth";
-import { uploadObject } from "@/shared/lib/storage";
+import { uploadObject, getObjectUrl } from "@/shared/lib/storage";
 import {
   canView,
   canEdit,
 } from "@/shared/lib/permissions";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
-    // -----------------------------------
-    // AUTHENTICATION
-    // -----------------------------------
-
     const session = await auth();
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        {
-          error: "Unauthorized",
-        },
-        {
-          status: 401,
-        }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
-
-    // -----------------------------------
-    // FORM DATA
-    // -----------------------------------
 
     const formData = await req.formData();
 
     const logo = formData.get("logo");
 
     const tenantName =
-      formData
-        .get("tenantName")
-        ?.toString()
-        .trim() ?? "";
+      formData.get("tenantName")?.toString().trim() ?? "";
 
-    const primaryColor =
-      formData
-        .get("primaryColor")
-        ?.toString()
-        .trim() ?? "#f97316";
+    const submittedColor =
+      formData.get("primaryColor")?.toString().trim() ?? "";
 
-    // -----------------------------------
-    // FIND CURRENT USER
-    // -----------------------------------
-
-    const dbUser =
-      await prisma.user.findUnique({
-        where: {
-          id: session.user.id,
-        },
-        include: {
-          organizationRole: {
-            include: {
-              permissions: true,
-            },
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        organizationRole: {
+          include: {
+            permissions: true,
           },
         },
-      });
+      },
+    });
 
-    if (!dbUser) {
+    if (!dbUser?.orgId) {
       return NextResponse.json(
-        {
-          error: "User not found",
-        },
-        {
-          status: 404,
-        }
+        { error: "Organization not found." },
+        { status: 404 }
       );
     }
-
-    if (!dbUser.orgId) {
-      return NextResponse.json(
-        {
-          error: "Organization not found",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // -----------------------------------
-    // CHECK PERMISSION
-    // -----------------------------------
 
     const permissions =
       dbUser.organizationRole?.permissions ?? [];
 
     const isOwner =
-      dbUser.organizationRole?.name?.toLowerCase() ===
-      "owner";
+      dbUser.organizationRole?.name?.toLowerCase() === "owner";
 
-    const canViewBranding = canView(
+    const allowedToView = canView(
       permissions,
       "Branding",
       isOwner
     );
 
-    const canEditBranding = canEdit(
+    const allowedToEdit = canEdit(
       permissions,
       "Branding",
       isOwner
     );
 
-    if (!canViewBranding || !canEditBranding) {
+    if (!allowedToView || !allowedToEdit) {
       return NextResponse.json(
-        {
-          error:
-            "You do not have permission to edit branding.",
-        },
-        {
-          status: 403,
-        }
+        { error: "You do not have permission to edit branding." },
+        { status: 403 }
       );
     }
 
-    // -----------------------------------
-    // GET CURRENT ORGANIZATION
-    // -----------------------------------
-
-    const organization =
-      await prisma.organization.findUnique({
-        where: {
-          id: dbUser.orgId,
-        },
+    const [organization, existingSettings] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: dbUser.orgId },
         select: {
-          logo: true,
+          id: true,
           name: true,
+          logo: true,
         },
-      });
+      }),
+
+      prisma.organizationSettings.findUnique({
+        where: { orgId: dbUser.orgId },
+        select: {
+          branding: true,
+        },
+      }),
+    ]);
 
     if (!organization) {
       return NextResponse.json(
-        {
-          error: "Organization not found",
-        },
-        {
-          status: 404,
-        }
+        { error: "Organization not found." },
+        { status: 404 }
       );
     }
 
-    // -----------------------------------
-    // LOGO UPLOAD
-    // -----------------------------------
+    const existingBranding =
+      existingSettings?.branding &&
+      typeof existingSettings.branding === "object" &&
+      !Array.isArray(existingSettings.branding)
+        ? existingSettings.branding as Record<string, unknown>
+        : {};
 
-    let logoKey =
-      organization.logo ?? null;
+    const primaryColor =
+      submittedColor ||
+      (typeof existingBranding.primaryColor === "string"
+        ? existingBranding.primaryColor
+        : "#f97316");
 
-    // Only upload when a new logo
-    // was actually selected.
+    if (!/^#[0-9a-fA-F]{6}$/.test(primaryColor)) {
+      return NextResponse.json(
+        { error: "Invalid primary brand color." },
+        { status: 400 }
+      );
+    }
 
-    if (logo instanceof File) {
+    // Preserve existing logo unless a new one is uploaded.
+    let logoKey = organization.logo;
 
-      if (logo.size === 0) {
-        return NextResponse.json(
-          {
-            error:
-              "Uploaded logo is empty.",
-          },
-          {
-            status: 400,
-          }
-        );
-      }
-
-      // -----------------------------------
-      // VALIDATE FILE TYPE
-      // -----------------------------------
-
+    if (logo instanceof File && logo.size > 0) {
       const allowedTypes = [
         "image/png",
         "image/jpeg",
@@ -183,96 +132,60 @@ export async function POST(req: Request) {
         "image/svg+xml",
       ];
 
-      if (
-        !allowedTypes.includes(
-          logo.type
-        )
-      ) {
+      if (!allowedTypes.includes(logo.type)) {
         return NextResponse.json(
-          {
-            error:
-              "Invalid logo format. Please upload PNG, JPG, WEBP or SVG.",
-          },
-          {
-            status: 400,
-          }
+          { error: "Invalid logo format." },
+          { status: 400 }
         );
       }
 
-      // -----------------------------------
-      // VALIDATE FILE SIZE
-      // -----------------------------------
-
-      const maxSize =
-        5 * 1024 * 1024;
-
-      if (logo.size > maxSize) {
+      if (logo.size > 5 * 1024 * 1024) {
         return NextResponse.json(
-          {
-            error:
-              "Logo must be smaller than 5 MB.",
-          },
-          {
-            status: 400,
-          }
+          { error: "Logo must be smaller than 5 MB." },
+          { status: 400 }
         );
       }
 
-      // -----------------------------------
-      // CREATE S3 KEY
-      // -----------------------------------
-
-      const fileExtension =
-        logo.name
-          .split(".")
-          .pop()
-          ?.toLowerCase() || "png";
+      const extension =
+        logo.name.split(".").pop()?.toLowerCase() || "png";
 
       logoKey =
-        `organizations/${dbUser.orgId}/branding/logo-${Date.now()}.${fileExtension}`;
+        `organizations/${dbUser.orgId}/branding/logo-${Date.now()}.${extension}`;
 
-      // -----------------------------------
-      // CONVERT FILE TO BUFFER
-      // -----------------------------------
-
-      const logoBuffer =
-        Buffer.from(
-          await logo.arrayBuffer()
-        );
-
-      // -----------------------------------
-      // UPLOAD TO S3
-      // -----------------------------------
+      const buffer = Buffer.from(
+        await logo.arrayBuffer()
+      );
 
       await uploadObject(
         logoKey,
-        logoBuffer,
+        buffer,
         logo.type
       );
     }
 
-    // -----------------------------------
-    // UPDATE ORGANIZATION
-    // -----------------------------------
+    // Update company details only when changed.
+    const organizationData: Prisma.OrganizationUpdateInput = {};
 
-    await prisma.organization.update({
-      where: {
-        id: dbUser.orgId,
-      },
-      data: {
-        logo: logoKey,
+    if (tenantName && tenantName !== organization.name) {
+      organizationData.name = tenantName;
+    }
 
-        ...(tenantName
-          ? {
-              name: tenantName,
-            }
-          : {}),
-      },
-    });
+    if (logoKey && logoKey !== organization.logo) {
+      organizationData.logo = logoKey;
+    }
 
-    // -----------------------------------
-    // UPDATE BRANDING SETTINGS
-    // -----------------------------------
+    if (Object.keys(organizationData).length > 0) {
+      await prisma.organization.update({
+        where: { id: dbUser.orgId },
+        data: organizationData,
+      });
+    }
+
+    // Preserve other branding JSON properties.
+    const brandingData = {
+      ...existingBranding,
+      primaryColor,
+    } as Prisma.InputJsonObject;
 
     await prisma.organizationSettings.upsert({
       where: {
@@ -280,35 +193,30 @@ export async function POST(req: Request) {
       },
 
       update: {
-        branding: {
-          primaryColor,
-        },
+        branding: brandingData,
       },
 
       create: {
         orgId: dbUser.orgId,
-
-        branding: {
-          primaryColor,
-        },
+        branding: brandingData,
       },
     });
 
-    // -----------------------------------
-    // SUCCESS
-    // -----------------------------------
+    // Generate a temporary URL for displaying the saved logo.
+    const logoUrl = logoKey
+      ? await getObjectUrl(logoKey)
+      : null;
 
     return NextResponse.json({
       success: true,
+      tenantName: tenantName || organization.name,
       logo: logoKey,
+      logoUrl,
+      primaryColor,
     });
 
   } catch (error) {
-
-    console.error(
-      "BRANDING UPLOAD ERROR:",
-      error
-    );
+    console.error("BRANDING UPDATE ERROR:", error);
 
     return NextResponse.json(
       {
@@ -317,9 +225,7 @@ export async function POST(req: Request) {
             ? error.message
             : "Failed to save branding.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }

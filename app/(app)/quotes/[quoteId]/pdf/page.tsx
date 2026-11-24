@@ -104,10 +104,75 @@ export default async function QuotePdfPage({
     .filter(Boolean)
     .join(", ");
 
-  return (
+ return (
+  <>
+    <style>{`
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      @media print {
+        html,
+        body {
+          background: #ffffff !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        body * {
+          visibility: hidden !important;
+        }
+
+        #quote-print,
+        #quote-print * {
+          visibility: visible !important;
+        }
+
+        #quote-print {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          max-width: none !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+          box-shadow: none !important;
+        }
+
+        #quote-print table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        #quote-print tr {
+          break-inside: avoid;
+        }
+
+        #quote-print img {
+          max-height: 80px;
+          object-fit: contain;
+        }
+
+        #quote-print h1,
+        #quote-print h2,
+        #quote-print h3 {
+          break-after: avoid;
+        }
+
+        #quote-print .quote-section {
+          break-inside: avoid;
+        }
+      }
+    `}</style>
+
     <div className="min-h-screen bg-slate-100 py-10 print:bg-white print:py-0">
 
-      <div className="mx-auto max-w-4xl bg-white p-12 shadow-xl print:max-w-none print:p-8 print:shadow-none">
+  <div
+    id="quote-print"
+    className="mx-auto max-w-4xl bg-white p-12 shadow-xl print:max-w-none print:p-0 print:shadow-none"
+  >
 
         {/* ACTIONS */}
 
@@ -443,7 +508,8 @@ export default async function QuotePdfPage({
           Thank you for considering {organization.name}.
         </div>
 
-      </div>
+          </div>
     </div>
+  </>
   );
 }

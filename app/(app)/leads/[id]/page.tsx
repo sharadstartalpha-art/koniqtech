@@ -1,6 +1,7 @@
 import prisma from "@/shared/lib/prisma"
 import Link from "next/link"
 import {
+  canView,
   canCreate,
   canEdit,
   canDelete,
@@ -24,7 +25,6 @@ if (!session?.user) {
 }
 
 
-
 const user = await prisma.user.findUnique({
   where: {
     id: session.user.id,
@@ -38,17 +38,27 @@ const user = await prisma.user.findUnique({
   },
 });
 
+if (!user) {
+  redirect("/login");
+}
+
 const permissions: Permission[] =
-  (user?.organizationRole?.permissions as Permission[]) ?? [];
+  (user.organizationRole?.permissions as Permission[]) ?? [];
 
 const isOwner =
   session.user.organizationRole === "Owner";
 
-const orgId = (session.user as any).orgId
+const orgId = (session.user as any).orgId;
 
 if (!orgId) {
-  redirect("/welcome")
+  redirect("/welcome");
 }
+
+if (!canView(permissions, "Leads", isOwner)) {
+  redirect("/dashboard");
+}
+
+
 
   const {id}=await params
 

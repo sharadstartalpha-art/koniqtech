@@ -498,6 +498,8 @@ model User {
   UserJobDocument      UserJobDocument[]
   WarehouseTransaction WarehouseTransaction[]
 
+  opportunities Opportunity[] @relation("OpportunityOwner")
+
   aiConversations AiConversation[] @relation("AiUserConversations")
 
   aiAgentCreations AiAgent[] @relation("AiAgentCreator")
@@ -628,6 +630,8 @@ model OrganizationLocation {
   quotes    Quote[]
   invoices  Invoice[]
 
+  opportunities Opportunity[]
+
   @@unique([orgId, name])
   @@index([orgId])
   @@index([orgId, active])
@@ -701,6 +705,7 @@ model Lead {
   activities LeadActivity[]
 
   CustomerFile CustomerFile[]
+  opportunities Opportunity[]
 
   assignedTo User? @relation(fields: [assignedToId], references: [id])
 
@@ -852,18 +857,16 @@ model Plan {
 }
 
 model Opportunity {
-  id String @id @default(uuid())
-
-  orgId String
-
+  id         String @id @default(uuid())
+  orgId      String
   customerId String?
+  leadId     String?
+  locationId String?
+  ownerId    String?
 
-  title String
-
-  stage String @default("new")
-
-  value Float?
-
+  title       String
+  stage       String   @default("new")
+  value       Float?
   probability Int?
 
   expectedCloseDate DateTime?
@@ -871,18 +874,31 @@ model Opportunity {
   description String?
   status      String   @default("open")
   source      String?
-  ownerId     String?
   contractId  String?
   quoteId     String?
   notes       String?
-  createdAt   DateTime @default(now())
 
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  location OrganizationLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  owner User? @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([orgId])
+  @@index([orgId, locationId])
+  @@index([ownerId])
+  @@index([leadId])
+  @@index([customerId])
+  @@index([orgId, stage])
 }
+
 
 model Pipeline {
   id           String          @id @default(uuid())

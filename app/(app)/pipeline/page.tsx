@@ -23,17 +23,17 @@ export default async function PipelinePage() {
   }
 
   const dbUser = await prisma.user.findUnique({
-    where: {
-      email: session.user.email!,
-    },
-    include: {
-      organizationRole: {
-        include: {
-          permissions: true,
-        },
+  where: {
+    id: session.user.id,
+  },
+  include: {
+    organizationRole: {
+      include: {
+        permissions: true,
       },
     },
-  });
+  },
+});
 
   if (!dbUser) {
     redirect("/login");
@@ -43,7 +43,7 @@ export default async function PipelinePage() {
     dbUser.organizationRole?.permissions ?? [];
 
   const isOwner =
-    dbUser.organizationRole?.name === "Owner";
+  dbUser.organizationRole?.name?.toLowerCase() === "owner";
 
   if (!canView(permissions, "Pipeline", isOwner)) {
     redirect("/unauthorized");

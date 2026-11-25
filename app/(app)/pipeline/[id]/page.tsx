@@ -2,15 +2,24 @@
 import prisma from "@/shared/lib/prisma";
 import { auth } from "@/auth";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import {
   canView,
   canEdit,
-  canDelete,
+  canAssign,
   type Permission,
 } from "@/shared/lib/permissions";
 
 export const dynamic = "force-dynamic";
+
+const STAGES = [
+  "new",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "won",
+  "lost",
+] as const;
 
 export default async function Page({
   params,
@@ -40,9 +49,7 @@ export default async function Page({
     redirect("/login");
   }
 
-  const orgId = dbUser.orgId;
-
-  if (!orgId) {
+  if (!dbUser.orgId) {
     redirect("/welcome");
   }
 
@@ -56,12 +63,16 @@ export default async function Page({
     redirect("/unauthorized");
   }
 
+  if (!canEdit(permissions, "Pipeline", isOwner)) {
+    redirect("/pipeline");
+  }
+
   const { id } = await params;
 
   const opportunity = await prisma.opportunity.findFirst({
     where: {
       id,
-      orgId,
+      orgId: dbUser.orgId,
     },
     include: {
       customer: true,
@@ -75,397 +86,289 @@ export default async function Page({
     notFound();
   }
 
-  const badgeColor: Record<string, string> = {
-    new: "bg-slate-100 text-slate-700",
-    qualified: "bg-blue-100 text-blue-700",
-    proposal: "bg-yellow-100 text-yellow-700",
-    negotiation: "bg-purple-100 text-purple-700",
-    won: "bg-green-100 text-green-700",
-    lost: "bg-red-100 text-red-700",
-  };
+  const canAssignOwner =
+    canAssign(permissions, "Pipeline", isOwner);
 
-  const currentBadge =
-    badgeColor[opportunity.stage] ??
-    "bg-slate-100 text-slate-700";
-
-  const notes = [
-    opportunity.description,
-    opportunity.notes,
-  ].filter(
-    (value, index, array): value is string =>
-      Boolean(value) && array.indexOf(value) === index
-  );
+  const users = canAssignOwner
+    ? await prisma.user.findMany({
+        where: {
+          orgId: dbUser.orgId,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+        orderBy: {
+          name: "asc",
+        },
+      })
+    : [];
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6">
 
-      {/* Header */}
+      <div>
+        <Link
+          href={`/pipeline/${opportunity.id}`}
+          className="text-slate-500 hover:text-orange-600"
+        >
+          ← Back to Opportunity
+        </Link>
 
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-5">
+        <h1 className="text-3xl md:text-4xl font-bold mt-4">
+          Edit Opportunity
+        </h1>
 
-        <div>
-          <Link
-            href="/pipeline"
-            className="text-slate-500 hover:text-orange-600"
-          >
-            ← Back to Pipeline
-          </Link>
-
-          <h1 className="text-3xl md:text-5xl font-bold mt-4 break-words">
-            {opportunity.title}
-          </h1>
-
-          <p className="text-slate-500 mt-2">
-            Opportunity Details
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-
-          {canEdit(permissions, "Pipeline", isOwner) && (
-            <Link
-              href={`/pipeline/${opportunity.id}/edit`}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl"
-            >
-              Edit Opportunity
-            </Link>
-          )}
-
-          {canDelete(permissions, "Pipeline", isOwner) && (
-            <Link
-              href={`/pipeline/${opportunity.id}/delete`}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl"
-            >
-              Delete
-            </Link>
-          )}
-
-        </div>
+        <p className="text-slate-500 mt-2">
+          Update sales details, stage and assignment.
+        </p>
       </div>
 
-      {/* Summary */}
+      <form
+        action={`/api/opportunities/${opportunity.id}`}
+        method="POST"
+        className="bg-white border rounded-3xl p-6 md:p-8 space-y-6"
+      >
 
-      <div className="bg-white border rounded-3xl p-6 md:p-8">
+        {/* Linked records */}
 
-        <h2 className="text-xl font-bold mb-6">
-          Opportunity Overview
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-
-          <div>
-            <p className="text-slate-500 text-sm">
-              Estimated Value
-            </p>
-
-            <p className="font-bold text-2xl text-green-600 mt-1">
-              ${(opportunity.value ?? 0).toLocaleString()}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
           <div>
-            <p className="text-slate-500 text-sm">
-              Stage
-            </p>
+            <label className="block mb-2 text-sm text-slate-500">
+              Linked Lead
+            </label>
 
-            <span
-              className={`inline-flex mt-2 px-4 py-2 rounded-full text-sm capitalize ${currentBadge}`}
-            >
-              {opportunity.stage}
-            </span>
-          </div>
-
-          <div>
-            <p className="text-slate-500 text-sm">
-              Probability
-            </p>
-
-            <p className="font-semibold text-xl mt-1">
-              {opportunity.probability ?? 0}%
-            </p>
-          </div>
-
-          <div>
-            <p className="text-slate-500 text-sm">
-              Expected Close
-            </p>
-
-            <p className="font-semibold mt-1">
-              {opportunity.expectedCloseDate
-                ? opportunity.expectedCloseDate.toLocaleDateString()
-                : "-"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-slate-500 text-sm">
-              Created
-            </p>
-
-            <p className="font-semibold mt-1">
-              {opportunity.createdAt.toLocaleDateString()}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-slate-500 text-sm">
-              Last Updated
-            </p>
-
-            <p className="font-semibold mt-1">
-              {opportunity.updatedAt.toLocaleDateString()}
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-      {/* Lead and Customer */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <div className="bg-white border rounded-3xl p-7">
-
-          <h2 className="text-xl font-bold mb-5">
-            Lead Information
-          </h2>
-
-          {opportunity.lead ? (
-            <div className="space-y-3">
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Lead Name
-                </p>
-
-                <p className="font-semibold">
+            <div className="border rounded-xl p-3 bg-slate-50">
+              {opportunity.lead ? (
+                <Link
+                  href={`/leads/${opportunity.lead.id}`}
+                  className="font-medium text-orange-600"
+                >
                   {opportunity.lead.firstName}{" "}
                   {opportunity.lead.lastName ?? ""}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Company
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.lead.companyName || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Email
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.lead.email || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Phone
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.lead.phone || "-"}
-                </p>
-              </div>
-
-              <Link
-                href={`/leads/${opportunity.lead.id}`}
-                className="inline-flex text-orange-600 hover:text-orange-700 font-medium mt-3"
-              >
-                View Lead →
-              </Link>
-
+                </Link>
+              ) : (
+                <span className="text-slate-500">
+                  No linked lead
+                </span>
+              )}
             </div>
-          ) : (
-            <p className="text-slate-500">
-              No lead linked to this opportunity.
-            </p>
-          )}
+          </div>
 
-        </div>
+          <div>
+            <label className="block mb-2 text-sm text-slate-500">
+              Linked Customer
+            </label>
 
-        <div className="bg-white border rounded-3xl p-7">
-
-          <h2 className="text-xl font-bold mb-5">
-            Customer Information
-          </h2>
-
-          {opportunity.customer ? (
-            <div className="space-y-3">
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Customer Name
-                </p>
-
-                <p className="font-semibold">
+            <div className="border rounded-xl p-3 bg-slate-50">
+              {opportunity.customer ? (
+                <Link
+                  href={`/customers/${opportunity.customer.id}`}
+                  className="font-medium text-orange-600"
+                >
                   {opportunity.customer.firstName}{" "}
                   {opportunity.customer.lastName ?? ""}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Company
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.customer.companyName || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Email
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.customer.email || "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-slate-500">
-                  Phone
-                </p>
-
-                <p className="font-medium">
-                  {opportunity.customer.phone || "-"}
-                </p>
-              </div>
-
-              <Link
-                href={`/customers/${opportunity.customer.id}`}
-                className="inline-flex text-orange-600 hover:text-orange-700 font-medium mt-3"
-              >
-                View Customer →
-              </Link>
-
+                </Link>
+              ) : (
+                <span className="text-slate-500">
+                  No linked customer
+                </span>
+              )}
             </div>
+          </div>
+
+        </div>
+
+        {/* Title */}
+
+        <div>
+          <label className="block mb-2 font-medium">
+            Opportunity Title
+          </label>
+
+          <input
+            name="title"
+            defaultValue={opportunity.title}
+            required
+            maxLength={200}
+            className="w-full border rounded-xl p-4"
+          />
+        </div>
+
+        {/* Stage and probability */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Sales Stage
+            </label>
+
+            <select
+              name="stage"
+              defaultValue={opportunity.stage}
+              className="w-full border rounded-xl p-4"
+            >
+              {STAGES.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Probability %
+            </label>
+
+            <input
+              type="number"
+              name="probability"
+              min={0}
+              max={100}
+              defaultValue={opportunity.probability ?? 10}
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+        </div>
+
+        {/* Value and close date */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Estimated Value
+            </label>
+
+            <input
+              type="number"
+              name="value"
+              min={0}
+              step="0.01"
+              defaultValue={opportunity.value ?? ""}
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium">
+              Expected Close Date
+            </label>
+
+            <input
+              type="date"
+              name="expectedCloseDate"
+              defaultValue={
+                opportunity.expectedCloseDate
+                  ? opportunity.expectedCloseDate
+                      .toISOString()
+                      .split("T")[0]
+                  : ""
+              }
+              className="w-full border rounded-xl p-4"
+            />
+          </div>
+
+        </div>
+
+        {/* Owner assignment */}
+
+        <div>
+          <label className="block mb-2 font-medium">
+            Assigned Sales Representative
+          </label>
+
+          {canAssignOwner ? (
+            <select
+              name="ownerId"
+              defaultValue={opportunity.ownerId ?? ""}
+              className="w-full border rounded-xl p-4"
+            >
+              <option value="">
+                Unassigned
+              </option>
+
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name || user.email}
+                  {user.name && user.email
+                    ? ` (${user.email})`
+                    : ""}
+                </option>
+              ))}
+            </select>
           ) : (
-            <p className="text-slate-500">
-              No customer linked to this opportunity.
-            </p>
+            <div className="border rounded-xl p-4 bg-slate-50">
+              {opportunity.owner?.name || "Unassigned"}
+              <p className="text-xs text-slate-500 mt-1">
+                You do not have permission to change the assigned representative.
+              </p>
+            </div>
           )}
 
-        </div>
-
-      </div>
-
-      {/* Assignment */}
-
-      <div className="bg-white border rounded-3xl p-7">
-
-        <h2 className="text-xl font-bold mb-5">
-          Assignment Information
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-          <div>
-            <p className="text-sm text-slate-500">
-              Assigned Sales Representative
-            </p>
-
-            <p className="font-semibold mt-1">
-              {opportunity.owner?.name || "Unassigned"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-slate-500">
-              Organization Location
-            </p>
-
-            <p className="font-semibold mt-1">
-              {opportunity.location?.name || "Not assigned"}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Notes */}
-
-      <div className="bg-white border rounded-3xl p-7">
-
-        <h2 className="text-xl font-bold mb-5">
-          Notes and Description
-        </h2>
-
-        {notes.length > 0 ? (
-          <div className="space-y-5">
-
-            {notes.map((note, index) => (
-              <div
-                key={index}
-                className="whitespace-pre-wrap text-slate-700 border-l-2 border-orange-500 pl-4"
-              >
-                {note}
-              </div>
-            ))}
-
-          </div>
-        ) : (
-          <p className="text-slate-500">
-            No notes or description available.
+          <p className="text-xs text-slate-500 mt-2">
+            Location: {opportunity.location?.name || "Not assigned"}
           </p>
-        )}
+        </div>
 
-      </div>
+        {/* Description */}
 
-      {/* Quick Actions */}
+        <div>
+          <label className="block mb-2 font-medium">
+            Description
+          </label>
 
-      <div className="bg-white border rounded-3xl p-7">
+          <textarea
+            name="description"
+            rows={5}
+            defaultValue={opportunity.description ?? ""}
+            maxLength={5000}
+            className="w-full border rounded-xl p-4"
+          />
+        </div>
 
-        <h2 className="text-xl font-bold mb-6">
-          Quick Actions
-        </h2>
+        {/* Notes */}
 
-        <div className="flex flex-wrap gap-4">
+        <div>
+          <label className="block mb-2 font-medium">
+            Notes
+          </label>
+
+          <textarea
+            name="notes"
+            rows={5}
+            defaultValue={opportunity.notes ?? ""}
+            maxLength={5000}
+            className="w-full border rounded-xl p-4"
+          />
+        </div>
+
+        {/* Actions */}
+
+        <div className="flex flex-wrap gap-4 pt-3">
+
+          <button
+            type="submit"
+            className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-4 rounded-2xl"
+          >
+            Save Changes
+          </button>
 
           <Link
-            href={`/quotes/create?opportunityId=${opportunity.id}`}
-            className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
+            href={`/pipeline/${opportunity.id}`}
+            className="border px-8 py-4 rounded-2xl hover:bg-slate-50"
           >
-            Create Quote
+            Cancel
           </Link>
-
-          {opportunity.customerId && (
-            <Link
-              href={`/customers/${opportunity.customerId}`}
-              className="px-5 py-3 rounded-xl border hover:bg-slate-50"
-            >
-              View Customer
-            </Link>
-          )}
-
-          {opportunity.leadId && (
-            <Link
-              href={`/leads/${opportunity.leadId}`}
-              className="px-5 py-3 rounded-xl border hover:bg-slate-50"
-            >
-              View Lead
-            </Link>
-          )}
 
         </div>
 
-      </div>
-
-      {/* Record ID */}
-
-      <div className="text-xs text-slate-400">
-        Opportunity ID: {opportunity.id}
-      </div>
-
+      </form>
     </div>
   );
 }
